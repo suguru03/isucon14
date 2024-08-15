@@ -12,8 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// ベンチマークターゲット
-var target string
+var (
+	// ベンチマークターゲット
+	target string
+	// 負荷走行秒数
+	loadTimeoutSeconds int64
+)
 
 var runCmd = &cobra.Command{
 	Use:   "run",
@@ -30,7 +34,7 @@ var runCmd = &cobra.Command{
 
 		b, err := isucandar.NewBenchmark(
 			isucandar.WithoutPanicRecover(),
-			isucandar.WithLoadTimeout(1*time.Second),
+			isucandar.WithLoadTimeout(time.Duration(loadTimeoutSeconds)*time.Second),
 		)
 		if err != nil {
 			l.Error("Failed to create benchmark", zap.Error(err))
@@ -92,5 +96,6 @@ var runCmd = &cobra.Command{
 
 func init() {
 	runCmd.Flags().StringVar(&target, "target", "http://localhost:8080", "benchmark target")
+	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds")
 	rootCmd.AddCommand(runCmd)
 }
