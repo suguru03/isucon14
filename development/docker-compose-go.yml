@@ -1,0 +1,7 @@
+services:
+  webapp:
+    build:
+      context: ../webapp/go
+    ports:
+      - 8080:8080
+    working_dir: /home/isucon/webapp/go
