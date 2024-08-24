@@ -1,0 +1,42 @@
+name: Go CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - bench/**/*
+      - webapp/go/**/*
+      - .github/workflows/go.yml
+  pull_request:
+    paths:
+      - bench/**/*
+      - webapp/go/**/*
+      - .github/workflows/go.yml
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - name: Build bench
+        working-directory: ./bench
+        run: |
+          task build
+      - name: Setup webapp/go
+        working-directory: ./development
+        run: |
+          sudo docker compose -f docker-compose-go.yml up -d --build
+      - name: Run bench
+        working-directory: ./bench
+        run: |
+          task run-local
+      - name: Down webapp/go
+        working-directory: ./development
+        if: ${{ always() }}
+        run: |
+          sudo docker compose -f docker-compose-go.yml down -v
