@@ -6,6 +6,8 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import "./tailwind.css";
+import { FooterNavigation } from "./components/FooterNavigation";
+import { CircleIcon } from "./components/icon/circle";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +22,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        <FooterNavigation navigationMenus={
+          [{icon: CircleIcon, link: "/ride", label: "ride"}, {icon: CircleIcon, link: "/history", label: "history"}]
+        }/>
       </body>
     </html>
   );
