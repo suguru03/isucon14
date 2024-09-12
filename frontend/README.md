@@ -16,6 +16,13 @@ You can develop your SPA app just like you would a normal Remix app, via:
 npm run dev
 ```
 
+## Format
+
+```shellscript
+npm run fmtcheck # format check
+npm run fmt # format fix
+```
+
 ## Production
 
 When you are ready to build a production version of your app, `npm run build` will generate your assets and an `index.html` for the SPA.
