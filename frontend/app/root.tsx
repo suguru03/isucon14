@@ -22,9 +22,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <FooterNavigation navigationMenus={
-          [{icon: CircleIcon, link: "/ride", label: "ride"}, {icon: CircleIcon, link: "/history", label: "history"}]
-        }/>
+        <FooterNavigation
+          navigationMenus={[
+            { icon: CircleIcon, link: "/ride", label: "ride" },
+            { icon: CircleIcon, link: "/history", label: "history" },
+          ]}
+        />
       </body>
     </html>
   );
