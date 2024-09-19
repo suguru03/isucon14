@@ -1,0 +1,11 @@
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: isucon
+      MYSQL_DATABASE: isucon
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql/db:/var/lib/mysql
+      - ../webapp/sql:/docker-entrypoint-initdb.d
