@@ -9,11 +9,11 @@ type NavigationMenuType = {
 export const FooterNavigation = ({
   navigationMenus,
 }: {
-  navigationMenus: NavigationMenuType[];
+  navigationMenus: [NavigationMenuType, NavigationMenuType];
 }) => {
   return (
     <nav className="sticky bottom-0 z-10 border-t border-secondary-border bg-white">
-      <ul className={`grid grid-cols-${navigationMenus.length}`}>
+      <ul className={`grid grid-cols-2`}>
         {navigationMenus.map((menu, index) => (
           <li key={index}>
             <a
