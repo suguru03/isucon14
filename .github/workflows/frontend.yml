@@ -2,6 +2,7 @@ name: Front-end CI
 on:
   push:
     paths:
+      - .github/workflows/frontend.yml
       - frontend/**/*
 defaults:
   run:
