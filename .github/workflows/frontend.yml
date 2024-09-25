@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
       - run: pnpm install
       - run: pnpm run lint
       - run: pnpm run fmtcheck
