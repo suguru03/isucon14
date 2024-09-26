@@ -30,7 +30,7 @@ jobs:
       - name: Setup webapp/go
         working-directory: ./development
         run: |
-          sudo docker compose -f docker-compose-go.yml up -d --build
+          sudo docker compose -f compose-go.yml up -d --build
       - name: Run bench
         working-directory: ./bench
         run: |
@@ -39,4 +39,4 @@ jobs:
         working-directory: ./development
         if: ${{ always() }}
         run: |
-          sudo docker compose -f docker-compose-go.yml down -v
+          sudo docker compose -f compose-go.yml down -v
