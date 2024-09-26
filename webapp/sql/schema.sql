@@ -9,11 +9,13 @@ create table drivers
   username   varchar(30) not null comment 'ユーザー名',
   firstname  varchar(30) not null comment '本名(名前)',
   lastname   varchar(30) not null comment '本名(名字)',
+  date_of_birth varchar(30)      not null comment '生年月日',
   car_model  text        not null comment '車種',
   car_no     varchar(30) not null comment 'カーナンバー',
   is_active  tinyint(1)  not null comment '配車受付中かどうか',
-  created_at timestamp   not null comment '登録日時',
-  updated_at timestamp   not null comment '更新日時',
+  access_token varchar(255) not null comment 'アクセストークン',
+  created_at timestamp   not null comment '登録日時' default current_timestamp,
+  updated_at timestamp   not null comment '更新日時' default current_timestamp on update current_timestamp,
   primary key (id)
 )
   comment = 'ドライバー情報テーブル';
@@ -23,7 +25,7 @@ create table driver_locations
   driver_id  varchar(26) not null comment 'ドライバーID',
   latitude   double      not null comment '経度',
   longitude  double      not null comment '緯度',
-  updated_at timestamp   not null comment '更新日時',
+  updated_at timestamp   not null comment '更新日時' default current_timestamp on update current_timestamp,
   primary key (driver_id),
   constraint driver_locations_drivers_id_fk
     foreign key (driver_id) references drivers (id)
@@ -37,6 +39,7 @@ create table users
   username   varchar(30) not null comment 'ユーザー名',
   firstname  varchar(30) not null comment '本名(名前)',
   lastname   varchar(30) not null comment '本名(名字)',
+  date_of_birth varchar(30)      not null comment '生年月日',
   access_token varchar(255) not null comment 'アクセストークン',
   created_at timestamp   not null comment '登録日時' default current_timestamp,
   updated_at timestamp   not null comment '更新日時' default current_timestamp on update current_timestamp,
@@ -52,7 +55,7 @@ create table inquiries
   user_id    varchar(26) not null comment 'ユーザーID',
   subject    text        not null comment '件名',
   body       text        not null comment '本文',
-  created_at timestamp   not null comment '問い合わせ日時',
+  created_at timestamp   not null comment '問い合わせ日時' default current_timestamp,
   primary key (id),
   constraint inquiries_users_id_fk
     foreign key (user_id) references users (id)

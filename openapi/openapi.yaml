@@ -1,10 +1,11 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   version: '1.0'
   title: isu
 servers:
   - url: 'http://localhost:3000/api'
     description: api
+security: []
 paths:
   /initialize:
     post:
@@ -32,13 +33,10 @@ paths:
                     description: 実装言語
                 required:
                   - language
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /app/register:
     post:
       tags:
-        - user
+        - app
       summary: ユーザーが会員登録を行う
       operationId: register-user
       requestBody:
@@ -70,24 +68,21 @@ paths:
         '200':
           description: ユーザー登録が完了した
           content:
-              application/json:
+            application/json:
               schema:
                 type: object
                 properties:
                   access_token:
-                      type: string
-                      description: アクセストークン
-                  required:
+                    type: string
+                    description: アクセストークン
+                required:
                   - access_token
         '400':
           description: Bad Request
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /app/requests:
     post:
       tags:
-        - user
+        - app
       summary: ユーザーが配車要求を行う
       operationId: post-request
       requestBody:
@@ -118,11 +113,10 @@ paths:
                     description: 配車要求ID
                 required:
                   - request_id
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/app/requests/{request_id}':
     get:
+      tags:
+        - app
       summary: ユーザーが配車要求の状態を確認する
       operationId: get-app-request
       parameters:
@@ -150,10 +144,10 @@ paths:
                     $ref: '#/components/schemas/Driver'
                     description: ドライバー情報
                   created_at:
-                    type: string
+                    type: number
                     description: 配車要求日時
                   updated_at:
-                    type: string
+                    type: number
                     description: 配車要求更新日時
                 required:
                   - request_id
@@ -164,11 +158,10 @@ paths:
                   - updated_at
         '404':
           description: Not Found
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/app/requests/{request_id}/evaluate':
     post:
+      tags:
+        - app
       summary: ユーザーがドライバーを評価する
       operationId: evaluate
       parameters:
@@ -198,13 +191,10 @@ paths:
           description: ドライバーが目的地に到着していない、ユーザーが乗車していない、すでに到着しているなど
         '404':
           description: 存在しない配車要求
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /app/inquiry:
     post:
       tags:
-        - support
+        - app
       summary: ユーザーが問い合わせを送信する
       operationId: post-inquiry
       requestBody:
@@ -225,20 +215,16 @@ paths:
       responses:
         '204':
           description: 問い合わせ内容が送信できた
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /app/notification:
     get:
+      tags:
+        - app
       summary: ユーザー向け通知エンドポイント
       description: ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
       operationId: get-app-notification
       responses:
         '200':
           description: Server Sent Eventsで通知レスポンスが送信されます
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /driver/register:
     post:
       tags:
@@ -276,9 +262,19 @@ paths:
                 - date_of_birth
                 - car_model
                 - car_no
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
+      responses:
+        '201':
+          description: ドライバー登録が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: アクセストークン
+                required:
+                  - access_token
   /driver/activate:
     post:
       tags:
@@ -294,9 +290,6 @@ paths:
       responses:
         '204':
           description: サービスがドライバーが配車受付を開始したことを了解した
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /driver/deactivate:
     post:
       tags:
@@ -312,9 +305,6 @@ paths:
       responses:
         '204':
           description: サービスがドライバーが配車受付を停止したことを了解した
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /driver/coordinate:
     post:
       tags:
@@ -329,11 +319,10 @@ paths:
       responses:
         '204':
           description: サービスがドライバーの座標を認識した
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/driver/requests/{request_id}':
     get:
+      tags:
+        - driver
       summary: ドライバーが配車要求情報を取得する
       description: ドライバー向け通知エンドポイントから通知されたidの情報を取得する想定
       operationId: get-request
@@ -360,9 +349,6 @@ paths:
                   - destination_coordinate
         '404':
           description: 存在しない配車要求、対象のドライバーにマッチングされていない配車要求を取得しようとした場合など
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/driver/requests/{request_id}/accept':
     post:
       tags:
@@ -376,11 +362,10 @@ paths:
           description: No Content
         '404':
           description: Not Found
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/driver/requests/{request_id}/deny':
     post:
+      tags:
+        - driver
       summary: ドライバーが配車要求を拒否する
       operationId: deny-request
       parameters:
@@ -390,11 +375,10 @@ paths:
           description: No Content
         '404':
           description: Not Found
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/driver/requests/{request_id}/depart':
     post:
+      tags:
+        - driver
       summary: ドライバーが配車位置から出発する(ユーザーが乗車完了した)
       operationId: depart
       parameters:
@@ -411,9 +395,6 @@ paths:
           description: ドライバーが乗車位置の座標に居ない、既に出発しているなど
         '404':
           description: 存在しない配車要求
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /driver/notification:
     get:
       tags:
@@ -424,9 +405,6 @@ paths:
       responses:
         '200':
           description: Server Sent Eventsで通知レスポンスが送信されます
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   /admin/inquiries:
     get:
       tags:
@@ -464,7 +442,7 @@ paths:
                           type: string
                           description: 件名
                         created_at:
-                          type: string
+                          type: number
                           description: 問い合わせ日時
                       required:
                         - id
@@ -472,9 +450,6 @@ paths:
                         - created_at
                 required:
                   - inquiries
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
   '/admin/inquiries/{inquiry_id}':
     get:
       tags:
@@ -497,9 +472,6 @@ paths:
                 $ref: '#/components/schemas/InquiryContent'
         '404':
           description: Not Found
-      servers:
-        - url: 'http://localhost:3000/api'
-          description: api
 components:
   parameters:
     request_id:
@@ -597,7 +569,7 @@ components:
           type: string
           description: 問い合わせ内容
         created_at:
-          type: string
+          type: number
           description: 問い合わせ日時
       required:
         - id
