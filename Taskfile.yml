@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  init:
+    cmds:
+      - go install github.com/sqldef/sqldef/cmd/mysqldef@latest
+  prepare:
+    cmds:
+      - docker compose -f compose-local.yml up -d
+    dir: ./development
+  migrate:
+    cmds:
+      - mysqldef -p isucon isucon < webapp/sql/schema.sql
+    sources:
+      - webapp/sql/schema.sql
+    deps:
+      - prepare
+  build:go:
+    cmds:
+      - go build -o isucon .
+    dir: ./webapp/go

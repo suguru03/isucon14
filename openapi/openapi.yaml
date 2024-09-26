@@ -1,0 +1,578 @@
+openapi: 3.0.3
+info:
+  version: '1.0'
+  title: isu
+servers:
+  - url: 'http://localhost:3000/api'
+    description: api
+security: []
+paths:
+  /initialize:
+    post:
+      summary: サービスを初期化する
+      description: ''
+      operationId: initialize
+      responses:
+        '200':
+          description: サービスの初期化が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  language:
+                    type: string
+                    enum:
+                      - go
+                      - perl
+                      - php
+                      - python
+                      - ruby
+                      - rust
+                      - node
+                    description: 実装言語
+                required:
+                  - language
+  /app/register:
+    post:
+      tags:
+        - app
+      summary: ユーザーが会員登録を行う
+      operationId: register-user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                firstname:
+                  type: string
+                  description: 名前
+                lastname:
+                  type: string
+                  description: 名字
+                date_of_birth:
+                  type: string
+                  description: 生年月日
+                '':
+                  type: string
+              required:
+                - username
+                - firstname
+                - lastname
+                - date_of_birth
+      responses:
+        '200':
+          description: ユーザー登録が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: アクセストークン
+                required:
+                  - access_token
+        '400':
+          description: Bad Request
+  /app/requests:
+    post:
+      tags:
+        - app
+      summary: ユーザーが配車要求を行う
+      operationId: post-request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pickup_coordinate:
+                  $ref: '#/components/schemas/Coordinate'
+                  description: 配車位置
+                destination_coordinate:
+                  $ref: '#/components/schemas/Coordinate'
+                  description: 目的地
+              required:
+                - pickup_coordinate
+                - destination_coordinate
+      responses:
+        '202':
+          description: 配車要求を受け付けた
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: 配車要求ID
+                required:
+                  - request_id
+  '/app/requests/{request_id}':
+    get:
+      tags:
+        - app
+      summary: ユーザーが配車要求の状態を確認する
+      operationId: get-app-request
+      parameters:
+        - $ref: '#/components/parameters/request_id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: 配車要求ID
+                  pickup_coordinate:
+                    $ref: '#/components/schemas/Coordinate'
+                    description: 配車位置
+                  destination_coordinate:
+                    $ref: '#/components/schemas/Coordinate'
+                    description: 目的地
+                  status:
+                    $ref: '#/components/schemas/RequestStatus'
+                  driver:
+                    $ref: '#/components/schemas/Driver'
+                    description: ドライバー情報
+                  created_at:
+                    type: number
+                    description: 配車要求日時
+                  updated_at:
+                    type: number
+                    description: 配車要求更新日時
+                required:
+                  - request_id
+                  - pickup_coordinate
+                  - destination_coordinate
+                  - status
+                  - created_at
+                  - updated_at
+        '404':
+          description: Not Found
+  '/app/requests/{request_id}/evaluate':
+    post:
+      tags:
+        - app
+      summary: ユーザーがドライバーを評価する
+      operationId: evaluate
+      parameters:
+        - name: request_id
+          in: path
+          description: 配車要求ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evaluation:
+                  type: number
+                  description: ドライバーの評価
+                  minimum: 1
+                  maximum: 5
+              required:
+                - evaluation
+      responses:
+        '204':
+          description: ユーザーがドライバーを評価した
+        '400':
+          description: ドライバーが目的地に到着していない、ユーザーが乗車していない、すでに到着しているなど
+        '404':
+          description: 存在しない配車要求
+  /app/inquiry:
+    post:
+      tags:
+        - app
+      summary: ユーザーが問い合わせを送信する
+      operationId: post-inquiry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  description: 件名
+                body:
+                  type: string
+                  description: 問い合わせ内容
+              required:
+                - subject
+                - body
+      responses:
+        '204':
+          description: 問い合わせ内容が送信できた
+  /app/notification:
+    get:
+      tags:
+        - app
+      summary: ユーザー向け通知エンドポイント
+      description: ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
+      operationId: get-app-notification
+      responses:
+        '200':
+          description: Server Sent Eventsで通知レスポンスが送信されます
+  /driver/register:
+    post:
+      tags:
+        - driver
+      summary: ドライバー登録を行う
+      operationId: register-driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ドライバー名
+                firstname:
+                  type: string
+                  description: 名前
+                lastname:
+                  type: string
+                  description: 名字
+                date_of_birth:
+                  type: string
+                  description: 生年月日
+                car_model:
+                  type: string
+                  description: 車種
+                car_no:
+                  type: string
+                  description: カーナンバー
+              required:
+                - username
+                - firstname
+                - lastname
+                - date_of_birth
+                - car_model
+                - car_no
+      responses:
+        '201':
+          description: ドライバー登録が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: アクセストークン
+                required:
+                  - access_token
+  /driver/activate:
+    post:
+      tags:
+        - driver
+      summary: ドライバーが配車受付を開始する
+      description: ''
+      operationId: activate-driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: サービスがドライバーが配車受付を開始したことを了解した
+  /driver/deactivate:
+    post:
+      tags:
+        - driver
+      summary: ドライバーが配車受付を停止する
+      description: ''
+      operationId: deactivate-driver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: サービスがドライバーが配車受付を停止したことを了解した
+  /driver/coordinate:
+    post:
+      tags:
+        - driver
+      summary: ドライバーが位置情報を送信する
+      operationId: post-driver-coordinate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Coordinate'
+      responses:
+        '204':
+          description: サービスがドライバーの座標を認識した
+  '/driver/requests/{request_id}':
+    get:
+      tags:
+        - driver
+      summary: ドライバーが配車要求情報を取得する
+      description: ドライバー向け通知エンドポイントから通知されたidの情報を取得する想定
+      operationId: get-request
+      parameters:
+        - $ref: '#/components/parameters/request_id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                    description: ユーザー情報
+                  destination_coordinate:
+                    $ref: '#/components/schemas/Coordinate'
+                    description: 目的地
+                  status:
+                    $ref: '#/components/schemas/RequestStatus'
+                required:
+                  - user
+                  - destination_coordinate
+        '404':
+          description: 存在しない配車要求、対象のドライバーにマッチングされていない配車要求を取得しようとした場合など
+  '/driver/requests/{request_id}/accept':
+    post:
+      tags:
+        - driver
+      summary: ドライバーが配車要求を受理する
+      operationId: accept-request
+      parameters:
+        - $ref: '#/components/parameters/request_id'
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  '/driver/requests/{request_id}/deny':
+    post:
+      tags:
+        - driver
+      summary: ドライバーが配車要求を拒否する
+      operationId: deny-request
+      parameters:
+        - $ref: '#/components/parameters/request_id'
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  '/driver/requests/{request_id}/depart':
+    post:
+      tags:
+        - driver
+      summary: ドライバーが配車位置から出発する(ユーザーが乗車完了した)
+      operationId: depart
+      parameters:
+        - name: request_id
+          in: path
+          description: 配車要求ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ドライバーが出発した
+        '400':
+          description: ドライバーが乗車位置の座標に居ない、既に出発しているなど
+        '404':
+          description: 存在しない配車要求
+  /driver/notification:
+    get:
+      tags:
+        - driver
+      summary: ドライバー向け通知エンドポイント
+      description: ドライバーに配車要求を通知するなどで使う想定
+      operationId: get-driver-notification
+      responses:
+        '200':
+          description: Server Sent Eventsで通知レスポンスが送信されます
+  /admin/inquiries:
+    get:
+      tags:
+        - admin
+      summary: 問い合わせの一覧を取得する
+      operationId: get-inquiries
+      parameters:
+        - name: limit
+          in: query
+          description: 取得件数
+          schema:
+            type: number
+        - name: cursor
+          in: query
+          description: 取得カーソル
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inquiries:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 問い合わせID
+                        subject:
+                          type: string
+                          description: 件名
+                        created_at:
+                          type: number
+                          description: 問い合わせ日時
+                      required:
+                        - id
+                        - subject
+                        - created_at
+                required:
+                  - inquiries
+  '/admin/inquiries/{inquiry_id}':
+    get:
+      tags:
+        - admin
+      summary: 指定したIDの問い合わせ内容を取得
+      operationId: get-inquiry
+      parameters:
+        - name: inquiry_id
+          in: path
+          description: 問い合わせID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InquiryContent'
+        '404':
+          description: Not Found
+components:
+  parameters:
+    request_id:
+      name: request_id
+      in: path
+      description: 配車要求ID
+      required: true
+      schema:
+        type: string
+  schemas:
+    Coordinate:
+      type: object
+      title: Coordinate
+      description: 座標情報
+      additionalProperties: false
+      properties:
+        latitude:
+          type: number
+          description: 経度
+        longitude:
+          type: number
+          description: 緯度
+      required:
+        - latitude
+        - longitude
+    RequestStatus:
+      type: string
+      enum:
+        - matching
+        - dispatching
+        - carrying
+        - arrived
+        - completed
+        - canceled
+        - dispatched
+      title: RequestStatus
+      description: |
+        配車要求ステータス
+
+        matching: サービス上でマッチング処理を行なっていてドライバーが確定していない
+        dispatching: ドライバーが確定し、乗車位置に向かっている
+        dispatched: ドライバーが乗車位置に到着して、ユーザーの乗車を待機している
+        carrying: ユーザーが乗車し、ドライバーが目的地に向かっている
+        arrived: 目的地に到着した
+        completed: ユーザーの決済・ドライバー評価が完了した
+        canceled: 何らかの理由により途中でキャンセルされた(一定時間待ったがドライバーを割り当てられなかった場合などを想定)
+    Driver:
+      type: object
+      title: Driver
+      description: 簡易ドライバー情報
+      properties:
+        id:
+          type: string
+          description: ドライバーID
+        name:
+          type: string
+          description: ドライバー名
+        car_model:
+          type: string
+          description: 車種
+        car_no:
+          type: string
+          description: カーナンバー
+      required:
+        - id
+        - name
+        - car_model
+        - car_no
+    User:
+      type: object
+      title: User
+      description: 簡易ユーザー情報
+      properties:
+        id:
+          type: string
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名
+      required:
+        - id
+        - name
+    InquiryContent:
+      type: object
+      title: InquiryContent
+      description: 問い合わせ内容
+      properties:
+        id:
+          type: string
+          description: 問い合わせID
+        subject:
+          type: string
+          description: 件名
+        body:
+          type: string
+          description: 問い合わせ内容
+        created_at:
+          type: number
+          description: 問い合わせ日時
+      required:
+        - id
+        - subject
+        - body
+        - created_at
