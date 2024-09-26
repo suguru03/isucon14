@@ -73,6 +73,10 @@ module.exports = {
         "plugin:import/recommended",
         "plugin:import/typescript",
       ],
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
     },
 
     // Node
