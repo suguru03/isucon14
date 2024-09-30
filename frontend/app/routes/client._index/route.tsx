@@ -6,8 +6,6 @@ export const meta: MetaFunction = () => {
 
 export default function ClientLayout() {
   return (
-    <>
-      <h1 className="text-3xl">ISUCON 14 ride</h1>
-    </>
+    <div className="h-full text-center content-center bg-blue-200">Map</div>
   );
 }

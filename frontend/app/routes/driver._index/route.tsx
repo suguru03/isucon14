@@ -1,4 +1,4 @@
-import { ButtonLink } from "../components/primitives/button/button";
+import { ButtonLink } from "~/components/primitives/button/button";
 
 export default function Index() {
   return (

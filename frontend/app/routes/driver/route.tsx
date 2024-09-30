@@ -9,16 +9,16 @@ export const meta: MetaFunction = () => {
 
 export default function DriverLayout() {
   return (
-    <>
-    <div className="font-sans p-4">
-      <Outlet />
+    <div className="font-sans h-screen flex relative flex-col">
+      <div className="flex-1">
+        <Outlet />
+      </div>
+      <FooterNavigation
+        navigationMenus={[
+          { icon: CircleIcon, link: "/driver/", label: "ride" },
+          { icon: CircleIcon, link: "/driver/history", label: "history" },
+        ]}
+      />
     </div>
-    <FooterNavigation
-          navigationMenus={[
-            { icon: CircleIcon, link: "/driver/", label: "ride" },
-            { icon: CircleIcon, link: "/driver/history", label: "history" },
-          ]}
-        />
-    </>
   );
 }
