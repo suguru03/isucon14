@@ -19,7 +19,7 @@ module.exports = {
     commonjs: true,
     es6: true,
   },
-  ignorePatterns: ["!**/.server", "!**/.client", "api-fetcher/*"],
+  ignorePatterns: ["!**/.server", "!**/.client", "app/api-fetcher/*"],
 
   // Base config
   extends: ["eslint:recommended"],
