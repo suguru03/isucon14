@@ -9,8 +9,8 @@ export const meta: MetaFunction = () => {
 
 export default function DriverLayout() {
   return (
-    <>
-      <div className="font-sans p-4">
+    <div className="font-sans h-screen flex relative flex-col">
+      <div className="flex-1">
         <Outlet />
       </div>
       <FooterNavigation
@@ -19,6 +19,6 @@ export default function DriverLayout() {
           { icon: CircleIcon, link: "/driver/history", label: "history" },
         ]}
       />
-    </>
+    </div>
   );
 }
