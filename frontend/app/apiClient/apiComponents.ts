@@ -4,10 +4,10 @@
  * @version 1.0
  */
 import * as reactQuery from "@tanstack/react-query";
-import { useIsuconContext, IsuconContext } from "./isuconContext";
-import type * as Fetcher from "./isuconFetcher";
-import { isuconFetch } from "./isuconFetcher";
-import type * as Schemas from "./isuconSchemas";
+import { useApiContext, ApiContext } from "./apiContext";
+import type * as Fetcher from "./apiFetcher";
+import { apiFetch } from "./apiFetcher";
+import type * as Schemas from "./apiSchemas";
 
 export type InitializeError = Fetcher.ErrorWrapper<undefined>;
 
@@ -18,13 +18,13 @@ export type InitializeResponse = {
   language: "go" | "perl" | "php" | "python" | "ruby" | "rust" | "node";
 };
 
-export type InitializeVariables = IsuconContext["fetcherOptions"];
+export type InitializeVariables = ApiContext["fetcherOptions"];
 
 export const fetchInitialize = (
   variables: InitializeVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<InitializeResponse, InitializeError, undefined, {}, {}, {}>({
+  apiFetch<InitializeResponse, InitializeError, undefined, {}, {}, {}>({
     url: "/initialize",
     method: "post",
     ...variables,
@@ -41,7 +41,7 @@ export const useInitialize = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     InitializeResponse,
     InitializeError,
@@ -84,13 +84,13 @@ export type RegisterUserRequestBody = {
 
 export type RegisterUserVariables = {
   body: RegisterUserRequestBody;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchRegisterUser = (
   variables: RegisterUserVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     RegisterUserResponse,
     RegisterUserError,
     RegisterUserRequestBody,
@@ -109,7 +109,7 @@ export const useRegisterUser = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     RegisterUserResponse,
     RegisterUserError,
@@ -143,13 +143,13 @@ export type PostRequestRequestBody = {
 
 export type PostRequestVariables = {
   body: PostRequestRequestBody;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchPostRequest = (
   variables: PostRequestVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     PostRequestResponse,
     PostRequestError,
     PostRequestRequestBody,
@@ -168,7 +168,7 @@ export const usePostRequest = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     PostRequestResponse,
     PostRequestError,
@@ -219,13 +219,13 @@ export type GetAppRequestResponse = {
 
 export type GetAppRequestVariables = {
   pathParams: GetAppRequestPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchGetAppRequest = (
   variables: GetAppRequestVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     GetAppRequestResponse,
     GetAppRequestError,
     undefined,
@@ -245,8 +245,7 @@ export const useGetAppRequest = <TData = GetAppRequestResponse,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<GetAppRequestResponse, GetAppRequestError, TData>({
     queryKey: queryKeyFn({
       path: "/app/requests/{requestId}",
@@ -282,13 +281,13 @@ export type EvaluateRequestBody = {
 export type EvaluateVariables = {
   body: EvaluateRequestBody;
   pathParams: EvaluatePathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchEvaluate = (
   variables: EvaluateVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     undefined,
     EvaluateError,
     EvaluateRequestBody,
@@ -308,7 +307,7 @@ export const useEvaluate = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<undefined, EvaluateError, EvaluateVariables>({
     mutationFn: (variables: EvaluateVariables) =>
       fetchEvaluate({ ...fetcherOptions, ...variables }),
@@ -331,13 +330,13 @@ export type PostInquiryRequestBody = {
 
 export type PostInquiryVariables = {
   body: PostInquiryRequestBody;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchPostInquiry = (
   variables: PostInquiryVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<undefined, PostInquiryError, PostInquiryRequestBody, {}, {}, {}>({
+  apiFetch<undefined, PostInquiryError, PostInquiryRequestBody, {}, {}, {}>({
     url: "/app/inquiry",
     method: "post",
     ...variables,
@@ -354,7 +353,7 @@ export const usePostInquiry = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     PostInquiryError,
@@ -368,7 +367,7 @@ export const usePostInquiry = (
 
 export type GetAppNotificationError = Fetcher.ErrorWrapper<undefined>;
 
-export type GetAppNotificationVariables = IsuconContext["fetcherOptions"];
+export type GetAppNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
  * ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
@@ -377,7 +376,7 @@ export const fetchGetAppNotification = (
   variables: GetAppNotificationVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<undefined, GetAppNotificationError, undefined, {}, {}, {}>({
+  apiFetch<undefined, GetAppNotificationError, undefined, {}, {}, {}>({
     url: "/app/notification",
     method: "get",
     ...variables,
@@ -394,8 +393,7 @@ export const useGetAppNotification = <TData = undefined,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<undefined, GetAppNotificationError, TData>({
     queryKey: queryKeyFn({
       path: "/app/notification",
@@ -447,13 +445,13 @@ export type RegisterDriverRequestBody = {
 
 export type RegisterDriverVariables = {
   body: RegisterDriverRequestBody;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchRegisterDriver = (
   variables: RegisterDriverVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     RegisterDriverResponse,
     RegisterDriverError,
     RegisterDriverRequestBody,
@@ -472,7 +470,7 @@ export const useRegisterDriver = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     RegisterDriverResponse,
     RegisterDriverError,
@@ -488,13 +486,13 @@ export type ActivateDriverError = Fetcher.ErrorWrapper<undefined>;
 
 export type ActivateDriverVariables = {
   body?: Record<string, any>;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchActivateDriver = (
   variables: ActivateDriverVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<undefined, ActivateDriverError, Record<string, any>, {}, {}, {}>({
+  apiFetch<undefined, ActivateDriverError, Record<string, any>, {}, {}, {}>({
     url: "/driver/activate",
     method: "post",
     ...variables,
@@ -511,7 +509,7 @@ export const useActivateDriver = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     ActivateDriverError,
@@ -527,20 +525,18 @@ export type DeactivateDriverError = Fetcher.ErrorWrapper<undefined>;
 
 export type DeactivateDriverVariables = {
   body?: Record<string, any>;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchDeactivateDriver = (
   variables: DeactivateDriverVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
-    undefined,
-    DeactivateDriverError,
-    Record<string, any>,
-    {},
-    {},
-    {}
-  >({ url: "/driver/deactivate", method: "post", ...variables, signal });
+  apiFetch<undefined, DeactivateDriverError, Record<string, any>, {}, {}, {}>({
+    url: "/driver/deactivate",
+    method: "post",
+    ...variables,
+    signal,
+  });
 
 export const useDeactivateDriver = (
   options?: Omit<
@@ -552,7 +548,7 @@ export const useDeactivateDriver = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     DeactivateDriverError,
@@ -568,13 +564,13 @@ export type PostDriverCoordinateError = Fetcher.ErrorWrapper<undefined>;
 
 export type PostDriverCoordinateVariables = {
   body: Schemas.Coordinate;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchPostDriverCoordinate = (
   variables: PostDriverCoordinateVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     undefined,
     PostDriverCoordinateError,
     Schemas.Coordinate,
@@ -593,7 +589,7 @@ export const usePostDriverCoordinate = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     PostDriverCoordinateError,
@@ -628,7 +624,7 @@ export type GetRequestResponse = {
 
 export type GetRequestVariables = {
   pathParams: GetRequestPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 /**
  * ドライバー向け通知エンドポイントから通知されたidの情報を取得する想定
@@ -637,7 +633,7 @@ export const fetchGetRequest = (
   variables: GetRequestVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     GetRequestResponse,
     GetRequestError,
     undefined,
@@ -661,8 +657,7 @@ export const useGetRequest = <TData = GetRequestResponse,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<GetRequestResponse, GetRequestError, TData>({
     queryKey: queryKeyFn({
       path: "/driver/requests/{requestId}",
@@ -687,13 +682,13 @@ export type AcceptRequestError = Fetcher.ErrorWrapper<undefined>;
 
 export type AcceptRequestVariables = {
   pathParams: AcceptRequestPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchAcceptRequest = (
   variables: AcceptRequestVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     undefined,
     AcceptRequestError,
     undefined,
@@ -717,7 +712,7 @@ export const useAcceptRequest = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     AcceptRequestError,
@@ -740,13 +735,13 @@ export type DenyRequestError = Fetcher.ErrorWrapper<undefined>;
 
 export type DenyRequestVariables = {
   pathParams: DenyRequestPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchDenyRequest = (
   variables: DenyRequestVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     undefined,
     DenyRequestError,
     undefined,
@@ -770,7 +765,7 @@ export const useDenyRequest = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
     DenyRequestError,
@@ -793,10 +788,10 @@ export type DepartError = Fetcher.ErrorWrapper<undefined>;
 
 export type DepartVariables = {
   pathParams: DepartPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchDepart = (variables: DepartVariables, signal?: AbortSignal) =>
-  isuconFetch<undefined, DepartError, undefined, {}, {}, DepartPathParams>({
+  apiFetch<undefined, DepartError, undefined, {}, {}, DepartPathParams>({
     url: "/driver/requests/{requestId}/depart",
     method: "post",
     ...variables,
@@ -809,7 +804,7 @@ export const useDepart = (
     "mutationFn"
   >,
 ) => {
-  const { fetcherOptions } = useIsuconContext();
+  const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<undefined, DepartError, DepartVariables>({
     mutationFn: (variables: DepartVariables) =>
       fetchDepart({ ...fetcherOptions, ...variables }),
@@ -819,7 +814,7 @@ export const useDepart = (
 
 export type GetDriverNotificationError = Fetcher.ErrorWrapper<undefined>;
 
-export type GetDriverNotificationVariables = IsuconContext["fetcherOptions"];
+export type GetDriverNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
  * ドライバーに配車要求を通知するなどで使う想定
@@ -828,7 +823,7 @@ export const fetchGetDriverNotification = (
   variables: GetDriverNotificationVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<undefined, GetDriverNotificationError, undefined, {}, {}, {}>({
+  apiFetch<undefined, GetDriverNotificationError, undefined, {}, {}, {}>({
     url: "/driver/notification",
     method: "get",
     ...variables,
@@ -845,8 +840,7 @@ export const useGetDriverNotification = <TData = undefined,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<undefined, GetDriverNotificationError, TData>({
     queryKey: queryKeyFn({
       path: "/driver/notification",
@@ -892,13 +886,13 @@ export type GetInquiriesResponse = {
 
 export type GetInquiriesVariables = {
   queryParams?: GetInquiriesQueryParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchGetInquiries = (
   variables: GetInquiriesVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     GetInquiriesResponse,
     GetInquiriesError,
     undefined,
@@ -914,8 +908,7 @@ export const useGetInquiries = <TData = GetInquiriesResponse,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<GetInquiriesResponse, GetInquiriesError, TData>({
     queryKey: queryKeyFn({
       path: "/admin/inquiries",
@@ -940,13 +933,13 @@ export type GetInquiryError = Fetcher.ErrorWrapper<undefined>;
 
 export type GetInquiryVariables = {
   pathParams: GetInquiryPathParams;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
 export const fetchGetInquiry = (
   variables: GetInquiryVariables,
   signal?: AbortSignal,
 ) =>
-  isuconFetch<
+  apiFetch<
     Schemas.InquiryContent,
     GetInquiryError,
     undefined,
@@ -967,8 +960,7 @@ export const useGetInquiry = <TData = Schemas.InquiryContent,>(
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } =
-    useIsuconContext(options);
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<Schemas.InquiryContent, GetInquiryError, TData>({
     queryKey: queryKeyFn({
       path: "/admin/inquiries/{inquiryId}",
