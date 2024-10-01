@@ -10,15 +10,15 @@ export const meta: MetaFunction = () => {
 export default function ClientLayout() {
   return (
     <>
-    <div className="font-sans p-4">
-      <Outlet />
-    </div>
-    <FooterNavigation
-          navigationMenus={[
-            { icon: CircleIcon, link: "/client", label: "ride" },
-            { icon: CircleIcon, link: "/client/history", label: "history" },
-          ]}
-        />
+      <div className="font-sans p-4">
+        <Outlet />
+      </div>
+      <FooterNavigation
+        navigationMenus={[
+          { icon: CircleIcon, link: "/client", label: "ride" },
+          { icon: CircleIcon, link: "/client/history", label: "history" },
+        ]}
+      />
     </>
   );
 }
