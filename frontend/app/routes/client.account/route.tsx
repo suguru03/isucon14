@@ -2,14 +2,14 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { Avatar } from "~/components/primitives/avatar/avatar";
 import { ButtonLink } from "~/components/primitives/button/button";
-import { useClient } from "../client/userProvider";
+import { useUser } from "../client/userProvider";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 
 export default function Index() {
-  const { name } = useClient();
+  const { name } = useUser();
 
   return (
     <div className="font-sans p-4 flex flex-col h-full">
