@@ -5,17 +5,13 @@ export type AccessToken = string;
 /**
  * フロント側で利用するクライアント情報
  */
-type UserInfo = {
+type User = {
   id: string;
   name: string;
   accessToken: AccessToken;
 };
 
-const userContext = createContext<UserInfo>({
-  id: "",
-  name: "",
-  accessToken: "",
-});
+const userContext = createContext<Partial<User>>({});
 
 export const UserProvider = ({
   children,

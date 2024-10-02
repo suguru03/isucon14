@@ -24,9 +24,7 @@ const ClientHeader = () => {
 };
 
 const ClientOutlet = () => {
-  const [accessToken, setAccessToken] = useState<AccessToken | undefined>(
-    undefined,
-  );
+  const [accessToken, setAccessToken] = useState<AccessToken | undefined>();
   /**
    * セッション管理は、クッキーではなく、ブラウザで管理
    */
