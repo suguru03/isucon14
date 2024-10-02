@@ -24,7 +24,7 @@ const ClientHeader = () => {
 };
 
 const ClientOutlet = () => {
-  const [accessToken, setAccessToken] = useState<AccessToken | undefined>();
+  const [accessToken, setAccessToken] = useState<AccessToken>();
   useEffect(() => {
     const localStorageAccessToken = localStorage.getItem("access_token");
     if (localStorageAccessToken !== null) {
