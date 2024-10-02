@@ -34,6 +34,8 @@ const (
 	ErrorCodeChairAlreadyHasRequest
 	// ErrorCodeFailedToGetRequestDetail リクエスト詳細の取得が失敗した
 	ErrorCodeFailedToGetRequestDetail
+	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗した
+	ErrorCodeFailedToRegisterUser
 )
 
 type codeError struct {

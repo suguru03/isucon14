@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/isucon/isucon14/bench/internal/random"
 	"github.com/oklog/ulid/v2"
 )
@@ -90,6 +91,11 @@ func (s *FastServerStub) GetRequestByChair(ctx *Context, chair *Chair, serverReq
 	return &GetRequestByChairResponse{}, nil
 }
 
+func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {
+	time.Sleep(s.latency)
+	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
+}
+
 func (s *FastServerStub) MatchingLoop() {
 	for id := range s.requestQueue {
 		matched := false
@@ -123,6 +129,17 @@ func TestWorld(t *testing.T) {
 			ChairDB:   NewGenericDB[ChairID, *Chair](),
 			RequestDB: NewRequestDB(),
 		}
+		client = &FastServerStub{
+			t:            t,
+			world:        world,
+			latency:      1 * time.Millisecond,
+			requestQueue: make(chan string, 1000),
+		}
+		ctx = &Context{
+			rand:   rand.New(random.NewLockedSource(rand.NewPCG(rand.Uint64(), rand.Uint64()))),
+			world:  world,
+			client: client,
+		}
 	)
 
 	for range 100 {
@@ -134,28 +151,28 @@ func TestWorld(t *testing.T) {
 		})
 	}
 	for range 20 {
-		world.UserDB.Create(&User{
-			Region: region,
-		})
+		u, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+		if err != nil {
+			t.Fatal(err)
+		}
+		u.State = UserStateActive
 	}
 
-	client := &FastServerStub{
-		t:            t,
-		world:        world,
-		latency:      1 * time.Millisecond,
-		requestQueue: make(chan string, 1000),
-	}
 	go client.MatchingLoop()
-	ctx := &Context{
-		rand:   rand.New(random.NewLockedSource(rand.NewPCG(rand.Uint64(), rand.Uint64()))),
-		world:  world,
-		client: client,
-	}
 
 	for range convertHour(24 * 3) {
 		world.Tick(ctx)
 	}
+
+	for _, user := range world.UserDB.Iter() {
+		t.Log(user)
+	}
+	sales := 0
 	for _, req := range world.RequestDB.Iter() {
 		t.Log(req)
+		if req.DesiredStatus == RequestStatusCompleted {
+			sales += req.Fare()
+		}
 	}
+	t.Logf("sales: %d", sales)
 }

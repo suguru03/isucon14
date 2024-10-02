@@ -11,6 +11,8 @@ type ChairID int
 type Chair struct {
 	// ID ベンチマーカー内部椅子ID
 	ID ChairID
+	// ServerID サーバー上での椅子ID
+	ServerID string
 	// Current 現在地
 	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離

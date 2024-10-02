@@ -3,6 +3,8 @@ package world
 import (
 	"log"
 	"sync"
+
+	"github.com/isucon/isucon14/bench/internal/random"
 )
 
 const (
@@ -77,4 +79,37 @@ func (w *World) UpdateRequestUserStatus(userID UserID, status RequestStatus) err
 func (w *World) AssignRequest(chairID ChairID, serverRequestID string) error {
 	chair := w.ChairDB.Get(chairID)
 	return chair.AssignRequest(serverRequestID)
+}
+
+type CreateUserArgs struct {
+	// Region ユーザーを配置する地域
+	Region *Region
+}
+
+// CreateUser 仮想世界ユーザーを作成する
+func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
+	registeredData := RegisteredUserData{
+		UserName:    random.GenerateUserName(),
+		FirstName:   random.GenerateFirstName(),
+		LastName:    random.GenerateLastName(),
+		DateOfBirth: random.GenerateDateOfBirth(),
+	}
+
+	res, err := ctx.client.RegisterUser(ctx, &RegisterUserRequest{
+		UserName:    registeredData.UserName,
+		FirstName:   registeredData.FirstName,
+		LastName:    registeredData.LastName,
+		DateOfBirth: registeredData.DateOfBirth,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
+	}
+
+	return w.UserDB.Create(&User{
+		ServerID:       res.ServerUserID,
+		Region:         args.Region,
+		State:          UserStateInactive,
+		RegisteredData: registeredData,
+		AccessToken:    res.AccessToken,
+	}), nil
 }
