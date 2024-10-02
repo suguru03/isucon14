@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FooterNavigation } from "~/components/FooterNavigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import {UserProvider, type AccessToken} from "./userProvider";
+import { UserProvider, type AccessToken } from "./userProvider";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -13,39 +13,41 @@ export const meta: MetaFunction = () => {
 const ClientHeader = () => {
   return (
     <header className="h-12 bg-slate-400 px-6 flex items-center justify-end">
-    <NavLink
-      to="/client/account"
-      className={({ isActive }) => (isActive ? "pointer-events-none" : "")}
-    >
-      <Avatar size="sm" />
-    </NavLink>
-  </header>
-  )
-}
+      <NavLink
+        to="/client/account"
+        className={({ isActive }) => (isActive ? "pointer-events-none" : "")}
+      >
+        <Avatar size="sm" />
+      </NavLink>
+    </header>
+  );
+};
 
 const ClientOutlet = () => {
-  const [accessToken,setAccessToken] = useState<AccessToken | undefined>(undefined);
+  const [accessToken, setAccessToken] = useState<AccessToken | undefined>(
+    undefined,
+  );
   /**
    * セッション管理は、クッキーではなく、ブラウザで管理
    */
-    useEffect(() => {
-      const localStorageAccessToken = localStorage.getItem('access_token')
-      if (localStorageAccessToken !== null) {
-        setAccessToken(localStorageAccessToken)
-      }
-    },[])
-    if (accessToken === undefined) {
-      return <></>
-    } else {
-      return (<UserProvider accessToken={accessToken}>
-      <Outlet />
-      </UserProvider>)
+  useEffect(() => {
+    const localStorageAccessToken = localStorage.getItem("access_token");
+    if (localStorageAccessToken !== null) {
+      setAccessToken(localStorageAccessToken);
     }
-}
-
+  }, []);
+  if (accessToken === undefined) {
+    return <></>;
+  } else {
+    return (
+      <UserProvider accessToken={accessToken}>
+        <Outlet />
+      </UserProvider>
+    );
+  }
+};
 
 export default function ClientLayout() {
-
   return (
     <div className="font-sans flex flex-col h-screen">
       <ClientHeader />

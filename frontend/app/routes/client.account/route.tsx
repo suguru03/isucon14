@@ -9,8 +9,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-
-  const {name} = useClient()
+  const { name } = useClient();
 
   return (
     <div className="font-sans p-4 flex flex-col h-full">
