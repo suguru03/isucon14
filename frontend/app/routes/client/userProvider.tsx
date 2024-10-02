@@ -5,19 +5,19 @@ export type AccessToken = string;
 /**
  * フロント側で利用するクライアント情報
  */
-type ClientInfo = {
+type UserInfo = {
   id: string,
   name: string,
   accessToken: AccessToken
 }
 
-const clientContext = createContext<ClientInfo>({
+const userContext = createContext<UserInfo>({
   id: "",
   name: "",
   accessToken: "",
 })
 
-export const ClientProvider = ({children, accessToken}: { children: ReactNode, accessToken: string }) => {
+export const UserProvider = ({children, accessToken}: { children: ReactNode, accessToken: string }) => {
   /**
    * openapi上にfetchするものがないので一旦仮置き
    * 想定では、ここで通信を行い子供に流す。
@@ -25,9 +25,9 @@ export const ClientProvider = ({children, accessToken}: { children: ReactNode, a
   const fetchedValue = {id: "fetched-id", name: "fetched-name", accessToken}
 
   return (
-  <clientContext.Provider value={fetchedValue}>
+  <userContext.Provider value={fetchedValue}>
     {children}
-  </clientContext.Provider>)
+  </userContext.Provider>)
 }
 
-export const useClient = () => useContext(clientContext);
+export const useClient = () => useContext(userContext);

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FooterNavigation } from "~/components/FooterNavigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import {ClientProvider, type AccessToken} from "./clientProvider";
+import {UserProvider, type AccessToken} from "./userProvider";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -37,9 +37,9 @@ const ClientOutlet = () => {
     if (accessToken === undefined) {
       return <></>
     } else {
-      return (<ClientProvider accessToken={accessToken}>
+      return (<UserProvider accessToken={accessToken}>
       <Outlet />
-      </ClientProvider>)
+      </UserProvider>)
     }
 }
 
