@@ -4,6 +4,7 @@ import (
 	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-sql-driver/mysql"
@@ -14,6 +15,7 @@ var db *sqlx.DB
 
 func main() {
 	mux := setup()
+	slog.Info("Listening on :8080")
 	http.ListenAndServe(":8080", mux)
 }
 
