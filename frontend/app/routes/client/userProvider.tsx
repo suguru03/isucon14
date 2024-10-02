@@ -2,9 +2,6 @@ import { ReactNode, createContext, useContext } from "react";
 
 export type AccessToken = string;
 
-/**
- * フロント側で利用するクライアント情報
- */
 type User = {
   id: string;
   name: string;
@@ -22,7 +19,7 @@ export const UserProvider = ({
 }) => {
   /**
    * openapi上にfetchするものがないので一旦仮置き
-   * 想定では、ここで通信を行い子供に流す。
+   * TODO:通信を行い、APIのデータを取得する
    */
   const fetchedValue = { id: "fetched-id", name: "fetched-name", accessToken };
 

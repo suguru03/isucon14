@@ -25,9 +25,6 @@ const ClientHeader = () => {
 
 const ClientOutlet = () => {
   const [accessToken, setAccessToken] = useState<AccessToken | undefined>();
-  /**
-   * セッション管理は、クッキーではなく、ブラウザで管理
-   */
   useEffect(() => {
     const localStorageAccessToken = localStorage.getItem("access_token");
     if (localStorageAccessToken !== null) {
