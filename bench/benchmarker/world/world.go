@@ -1,7 +1,9 @@
 package world
 
 import (
+	"fmt"
 	"log"
+	"math/rand/v2"
 	"sync"
 
 	"github.com/isucon/isucon14/bench/internal/random"
@@ -86,7 +88,7 @@ type CreateUserArgs struct {
 	Region *Region
 }
 
-// CreateUser 仮想世界ユーザーを作成する
+// CreateUser 仮想世界にユーザーを作成する
 func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	registeredData := RegisteredUserData{
 		UserName:    random.GenerateUserName(),
@@ -109,6 +111,48 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		ServerID:       res.ServerUserID,
 		Region:         args.Region,
 		State:          UserStateInactive,
+		RegisteredData: registeredData,
+		AccessToken:    res.AccessToken,
+	}), nil
+}
+
+type CreateChairArgs struct {
+	// InitialCoordinate 椅子の初期位置
+	InitialCoordinate Coordinate
+	// WorkTime 稼働時間
+	WorkTime Interval[int]
+}
+
+// CreateChair 仮想世界に椅子を作成する
+func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
+	registeredData := RegisteredChairData{
+		UserName:    random.GenerateUserName(),
+		FirstName:   random.GenerateFirstName(),
+		LastName:    random.GenerateLastName(),
+		DateOfBirth: random.GenerateDateOfBirth(),
+		// TODO model, noの扱い
+		ChairModel: "ISU_X",
+		ChairNo:    fmt.Sprintf("%d", rand.Uint32()),
+	}
+
+	res, err := ctx.client.RegisterChair(ctx, &RegisterChairRequest{
+		UserName:    registeredData.UserName,
+		FirstName:   registeredData.FirstName,
+		LastName:    registeredData.LastName,
+		DateOfBirth: registeredData.DateOfBirth,
+		ChairModel:  registeredData.ChairModel,
+		ChairNo:     registeredData.ChairNo,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
+	}
+
+	return w.ChairDB.Create(&Chair{
+		ServerID:       res.ServerUserID,
+		Current:        args.InitialCoordinate,
+		Speed:          2, // TODO 速度どうする
+		State:          ChairStateInactive,
+		WorkTime:       args.WorkTime,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 	}), nil

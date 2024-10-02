@@ -21,6 +21,8 @@ type Client interface {
 	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
+	// RegisterChair サーバーにユーザーを登録する
+	RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error)
 }
 
 type SendCreateRequestResponse struct {
@@ -37,6 +39,20 @@ type RegisterUserRequest struct {
 }
 
 type RegisterUserResponse struct {
+	ServerUserID string
+	AccessToken  string
+}
+
+type RegisterChairRequest struct {
+	UserName    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
+	ChairModel  string
+	ChairNo     string
+}
+
+type RegisterChairResponse struct {
 	ServerUserID string
 	AccessToken  string
 }

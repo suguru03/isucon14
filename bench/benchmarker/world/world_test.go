@@ -96,11 +96,16 @@ func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (
 	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
 }
 
+func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error) {
+	time.Sleep(s.latency)
+	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
+}
+
 func (s *FastServerStub) MatchingLoop() {
 	for id := range s.requestQueue {
 		matched := false
 		for chairID, chair := range s.world.ChairDB.Iter() {
-			if chair.Active && !chair.ServerRequestID.Valid {
+			if chair.State == ChairStateActive && !chair.ServerRequestID.Valid {
 				err := s.world.AssignRequest(chairID, id)
 				if err != nil {
 					panic(err)
@@ -142,13 +147,14 @@ func TestWorld(t *testing.T) {
 		}
 	)
 
-	for range 100 {
-		world.ChairDB.Create(&Chair{
-			Current:  RandomCoordinateOnRegion(region),
-			Speed:    5,
-			Active:   true,
-			WorkTime: NewInterval(convertHour(0), convertHour(24)),
+	for range 30 {
+		_, err := world.CreateChair(ctx, &CreateChairArgs{
+			InitialCoordinate: RandomCoordinateOnRegion(region),
+			WorkTime:          NewInterval(convertHour(0), convertHour(24)),
 		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	for range 20 {
 		u, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
