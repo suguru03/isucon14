@@ -2,13 +2,16 @@ import { ReactNode, createContext, useContext } from "react";
 
 export type AccessToken = string;
 
-type User = {
-  id: string;
-  name: string;
-  accessToken: AccessToken;
-};
+type User =
+  /**
+   * API依存のためoptional
+   */
+  Partial<{
+    id: string;
+    name: string;
+  }> & { accessToken: AccessToken };
 
-const userContext = createContext<Partial<User>>({});
+const userContext = createContext<User | undefined>(undefined);
 
 export const UserProvider = ({
   children,
