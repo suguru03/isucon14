@@ -7,6 +7,25 @@ import (
 	"github.com/guregu/null/v5"
 )
 
+const (
+	// InitialFare 初乗り運賃
+	InitialFare = 500
+	// FarePerDistance １距離あたりの運賃
+	FarePerDistance = 100
+)
+
+type RequestStatus int
+
+const (
+	RequestStatusMatching RequestStatus = iota
+	RequestStatusDispatching
+	RequestStatusDispatched
+	RequestStatusCarrying
+	RequestStatusArrived
+	RequestStatusCompleted
+	RequestStatusCanceled
+)
+
 type RequestID int
 
 type Request struct {
@@ -62,14 +81,8 @@ func (r *Request) SetID(id RequestID) {
 	r.ID = id
 }
 
-type RequestStatus int
-
-const (
-	RequestStatusMatching RequestStatus = iota
-	RequestStatusDispatching
-	RequestStatusDispatched
-	RequestStatusCarrying
-	RequestStatusArrived
-	RequestStatusCompleted
-	RequestStatusCanceled
-)
+// Fare 料金
+func (r *Request) Fare() int {
+	// TODO 料金計算
+	return InitialFare + r.PickupPoint.DistanceTo(r.DestinationPoint)*FarePerDistance
+}
