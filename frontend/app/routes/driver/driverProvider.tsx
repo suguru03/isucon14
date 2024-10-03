@@ -3,31 +3,33 @@ import { ReactNode, createContext, useContext } from "react";
 
 export type AccessToken = string;
 
-type User = {
+type Driver = {
   id: string;
   name: string;
   accessToken: AccessToken;
 };
-const userContext = createContext<Partial<User>>({});
+const driverContext = createContext<Partial<Driver>>({});
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
+export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("user_access_token") ?? undefined;
+  const accessToken = searchParams.get("driver_access_token") ?? undefined;
   if (accessToken === undefined) {
     return;
   }
   /**
    * TODO: ログイン情報取得処理
    */
-  const fetchedValue: User = {
+  const fetchedValue: Driver = {
     id: "fetched-id",
     name: "fetched-name",
     accessToken,
   };
 
   return (
-    <userContext.Provider value={fetchedValue}>{children}</userContext.Provider>
+    <driverContext.Provider value={fetchedValue}>
+      {children}
+    </driverContext.Provider>
   );
 };
 
-export const useUser = () => useContext(userContext);
+export const useDriver = () => useContext(driverContext);
