@@ -65,22 +65,10 @@ func (w *World) Tick(ctx *Context) {
 	w.TimeOfDay = int(w.Time % LengthOfDay)
 }
 
-// UpdateRequestChairStatus 椅子が認識しているリクエストのステータスを変更する
-func (w *World) UpdateRequestChairStatus(chairID ChairID, status RequestStatus) error {
-	chair := w.ChairDB.Get(chairID)
-	return chair.ChangeRequestStatus(status)
-}
-
 // UpdateRequestUserStatus ユーザーが認識しているリクエストのステータスを変更する
 func (w *World) UpdateRequestUserStatus(userID UserID, status RequestStatus) error {
 	user := w.UserDB.Get(userID)
 	return user.ChangeRequestStatus(status)
-}
-
-// AssignRequest 椅子にリクエストを割り当てる
-func (w *World) AssignRequest(chairID ChairID, serverRequestID string) error {
-	chair := w.ChairDB.Get(chairID)
-	return chair.AssignRequest(serverRequestID)
 }
 
 type CreateUserArgs struct {

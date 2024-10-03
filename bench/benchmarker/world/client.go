@@ -23,6 +23,8 @@ type Client interface {
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
 	RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error)
+	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する
+	ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error)
 }
 
 type SendCreateRequestResponse struct {
@@ -56,3 +58,14 @@ type RegisterChairResponse struct {
 	ServerUserID string
 	AccessToken  string
 }
+
+type NotificationReceiverFunc func(eventType, eventData string)
+
+type NotificationStream interface {
+	Close()
+}
+
+const (
+	ChairNotificationEventMatched   = "matched"
+	ChairNotificationEventCompleted = "completed"
+)
