@@ -26,7 +26,9 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <driverContext.Provider value={fetchedValue}>{children}</driverContext.Provider>
+    <driverContext.Provider value={fetchedValue}>
+      {children}
+    </driverContext.Provider>
   );
 };
 
