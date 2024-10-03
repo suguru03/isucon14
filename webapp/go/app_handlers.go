@@ -52,8 +52,8 @@ func postAppRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func appAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func appAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -61,15 +61,15 @@ func appAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		user := &User{}
-		err := db.Get(user, "SELECT * FROM users WHERE accesstoken = ?", accessToken)
+		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), "user", user)
-		next(w, r.WithContext(ctx))
-	}
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 type postAppRequestsRequest struct {
@@ -177,9 +177,10 @@ func getAppRequest(w http.ResponseWriter, r *http.Request) {
 		RequestID:             rideRequest.ID,
 		PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 		DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
-		Status:                rideRequest.Status,
-		CreatedAt:             rideRequest.RequestedAt.Unix(),
-		UpdateAt:              rideRequest.UpdatedAt.Unix(),
+		// TODO
+		Status:    strings.ToLower(rideRequest.Status),
+		CreatedAt: rideRequest.RequestedAt.Unix(),
+		UpdateAt:  rideRequest.UpdatedAt.Unix(),
 	}
 
 	driver := &Driver{}
@@ -205,11 +206,11 @@ func getAppRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 type postAppEvaluateRequest struct {
-	RequestID  string `json:"request_id"`
-	Evaluation int    `json:"evaluation"`
+	Evaluation int `json:"evaluation"`
 }
 
 func postAppEvaluate(w http.ResponseWriter, r *http.Request) {
+	requestID := r.PathValue("request_id")
 	postAppEvaluateRequest := &postAppEvaluateRequest{}
 	if err := bindJSON(r, postAppEvaluateRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -217,8 +218,8 @@ func postAppEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := db.Exec(
-		`UPDATE ride_requests SET evaluation = ? WHERE id = ?`,
-		postAppEvaluateRequest.Evaluation, postAppEvaluateRequest.RequestID)
+		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
+		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

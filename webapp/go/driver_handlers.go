@@ -41,7 +41,7 @@ func postDriverRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO drivers (id, username, firstname, lastname, date_of_birth, car_model, car_no, is_active, accesstoken) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO drivers (id, username, firstname, lastname, date_of_birth, car_model, car_no, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		driverID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.CarModel, req.CarNo, false, accessToken,
 	)
 	if err != nil {
@@ -55,8 +55,8 @@ func postDriverRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func driverAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func driverAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -64,15 +64,15 @@ func driverAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		driver := &Driver{}
-		err := db.Get(driver, "SELECT * FROM drivers WHERE access_token", accessToken)
+		err := db.Get(driver, "SELECT * FROM drivers WHERE access_token = ?", accessToken)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), "driver", driver)
-		next(w, r.WithContext(ctx))
-	}
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func postDriverActivate(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,25 @@ func getDriverNotification(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 
-			if err := writeSSE(w, "matched", rideRequest); err != nil {
+			user := &User{}
+			err = db.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			if err := writeSSE(w, "matched", &getDriverRequestResponse{
+				RequestID: rideRequest.ID,
+				User: simpleUser{
+					ID:   user.ID,
+					Name: user.Firstname + " " + user.Lastname,
+				},
+				DestinationCoordinate: Coordinate{
+					Latitude:  rideRequest.DestinationLatitude,
+					Longitude: rideRequest.DestinationLongitude,
+				},
+				Status: rideRequest.Status,
+			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -212,7 +230,7 @@ func getDriverRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func postDriverAccept(w http.ResponseWriter, r *http.Request) {
-	requestID := r.URL.Query().Get("request_id")
+	requestID := r.PathValue("request_id")
 
 	driver, ok := r.Context().Value("driver").(*Driver)
 	if !ok {
@@ -243,7 +261,7 @@ func postDriverAccept(w http.ResponseWriter, r *http.Request) {
 }
 
 func postDriverDeny(w http.ResponseWriter, r *http.Request) {
-	requestID := r.URL.Query().Get("request_id")
+	requestID := r.PathValue("request_id")
 
 	driver, ok := r.Context().Value("driver").(*Driver)
 	if !ok {
@@ -273,7 +291,7 @@ func postDriverDeny(w http.ResponseWriter, r *http.Request) {
 }
 
 func postDriverDepart(w http.ResponseWriter, r *http.Request) {
-	requestID := r.URL.Query().Get("request_id")
+	requestID := r.PathValue("request_id")
 
 	driver, ok := r.Context().Value("driver").(*Driver)
 	if !ok {

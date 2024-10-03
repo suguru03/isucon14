@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +21,7 @@ func main() {
 	http.ListenAndServe(":8080", mux)
 }
 
-func setup() *http.ServeMux {
+func setup() http.Handler {
 	dbConfig := &mysql.Config{
 		User:      "isucon",
 		Passwd:    "isucon",
@@ -35,33 +37,78 @@ func setup() *http.ServeMux {
 	}
 	db = _db
 
-	mux := http.NewServeMux()
+	mux := chi.NewRouter()
+	mux.Use(middleware.Logger)
+	mux.Use(middleware.Recoverer)
 	mux.HandleFunc("POST /api/initialize", postInitialize)
 
-	mux.HandleFunc("POST /app/register", postAppRegister)
-	mux.HandleFunc("POST /app/requests", appAuthMiddleware(postAppRequests))
-	mux.HandleFunc("GET /app/requests/{request_id}", appAuthMiddleware(getAppRequest))
-	mux.HandleFunc("POST /app/requests/{request_id}/evaluate", appAuthMiddleware(postAppEvaluate))
-	mux.HandleFunc("GET /app/notification", appAuthMiddleware(getAppNotification))
-	mux.HandleFunc("POST /app/inquiry", appAuthMiddleware(postAppInquiry))
+	// app
+	{
+		mux.HandleFunc("POST /app/register", postAppRegister)
 
-	mux.HandleFunc("POST /driver/register", postDriverRegister)
-	mux.HandleFunc("POST /driver/activate", driverAuthMiddleware(postDriverActivate))
-	mux.HandleFunc("POST /driver/deactivate", driverAuthMiddleware(postDriverDeactivate))
-	mux.HandleFunc("POST /driver/coordinate", driverAuthMiddleware(postDriverCoordinate))
-	mux.HandleFunc("GET /driver/notification", driverAuthMiddleware(getDriverNotification))
-	mux.HandleFunc("GET /driver/requests/{request_id}", driverAuthMiddleware(getDriverRequest))
-	mux.HandleFunc("POST /driver/requests/{request_id}/accept", driverAuthMiddleware(postDriverAccept))
-	mux.HandleFunc("POST /driver/requests/{request_id}/deny", driverAuthMiddleware(postDriverDeny))
-	mux.HandleFunc("POST /driver/requests/{request_id}/depart", driverAuthMiddleware(postDriverDepart))
+		authedMux := mux.With(appAuthMiddleware)
+		authedMux.HandleFunc("POST /app/requests", postAppRequests)
+		authedMux.HandleFunc("GET /app/requests/{request_id}", getAppRequest)
+		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", postAppEvaluate)
+		authedMux.HandleFunc("GET /app/notification", getAppNotification)
+		authedMux.HandleFunc("POST /app/inquiry", postAppInquiry)
 
-	mux.HandleFunc("GET /admin/inquiries", getAdminInquiries)
-	mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", getAdminInquiry)
+		mux.Mount("/app", authedMux)
+	}
+
+	// driver
+	{
+		mux.HandleFunc("POST /driver/register", postDriverRegister)
+
+		authedMux := mux.With(driverAuthMiddleware)
+		authedMux.HandleFunc("POST /driver/activate", postDriverActivate)
+		authedMux.HandleFunc("POST /driver/deactivate", postDriverDeactivate)
+		authedMux.HandleFunc("POST /driver/coordinate", postDriverCoordinate)
+		authedMux.HandleFunc("GET /driver/notification", getDriverNotification)
+		authedMux.HandleFunc("GET /driver/requests/{request_id}", getDriverRequest)
+		authedMux.HandleFunc("POST /driver/requests/{request_id}/accept", postDriverAccept)
+		authedMux.HandleFunc("POST /driver/requests/{request_id}/deny", postDriverDeny)
+		authedMux.HandleFunc("POST /driver/requests/{request_id}/depart", postDriverDepart)
+	}
+
+	// admin
+	{
+		mux.HandleFunc("GET /admin/inquiries", getAdminInquiries)
+		mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", getAdminInquiry)
+	}
 
 	return mux
 }
 
 func postInitialize(w http.ResponseWriter, r *http.Request) {
+	tables := []string{
+		"driver_locations",
+		"ride_requests",
+		"inquiries",
+		"users",
+		"drivers",
+	}
+	tx, err := db.Beginx()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	tx.MustExec("SET FOREIGN_KEY_CHECKS = 0")
+	for _, table := range tables {
+		_, err := tx.Exec("TRUNCATE TABLE " + table)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	tx.MustExec("SET FOREIGN_KEY_CHECKS = 1")
+	if err := tx.Commit(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write([]byte(`{"language":"golang"}`))
 }
