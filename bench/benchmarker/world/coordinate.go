@@ -43,3 +43,23 @@ func RandomCoordinateOnRegion(region *Region) Coordinate {
 func RandomCoordinateOnRegionWithRand(region *Region, rand *rand.Rand) Coordinate {
 	return C(region.RegionOffsetX+rand.IntN(region.RegionWidth)-region.RegionWidth/2, region.RegionOffsetY+rand.IntN(region.RegionHeight)-region.RegionHeight/2)
 }
+
+func RandomCoordinateAwayFromHereWithRand(here Coordinate, distance int, rand *rand.Rand) Coordinate {
+	// 移動量の決定
+	x := rand.IntN(distance + 1)
+	y := distance - x
+
+	// 移動方向の決定
+	switch rand.IntN(4) {
+	case 0:
+		x *= -1
+	case 1:
+		y *= -1
+	case 2:
+		x *= -1
+		y *= -1
+	case 3:
+		break
+	}
+	return C(here.X+x, here.Y+y)
+}

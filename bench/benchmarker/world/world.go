@@ -117,6 +117,8 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 }
 
 type CreateChairArgs struct {
+	// Region 椅子を配置する地域
+	Region *Region
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
 	// WorkTime 稼働時間
@@ -149,6 +151,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 
 	return w.ChairDB.Create(&Chair{
 		ServerID:       res.ServerUserID,
+		Region:         args.Region,
 		Current:        args.InitialCoordinate,
 		Speed:          2, // TODO 速度どうする
 		State:          ChairStateInactive,

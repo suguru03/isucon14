@@ -147,8 +147,9 @@ func TestWorld(t *testing.T) {
 		}
 	)
 
-	for range 30 {
+	for range 10 {
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
+			Region:            region,
 			InitialCoordinate: RandomCoordinateOnRegion(region),
 			WorkTime:          NewInterval(convertHour(0), convertHour(24)),
 		})

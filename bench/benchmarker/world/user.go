@@ -106,7 +106,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 
 	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, ctx.rand)
-	dest := RandomCoordinateOnRegionWithRand(u.Region, ctx.rand)
+	dest := RandomCoordinateAwayFromHereWithRand(pickup, ctx.rand.IntN(100)+5, ctx.rand)
 
 	req := &Request{
 		User:             u,

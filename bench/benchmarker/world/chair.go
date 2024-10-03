@@ -20,6 +20,8 @@ type Chair struct {
 	ID ChairID
 	// ServerID サーバー上での椅子ID
 	ServerID string
+	// Region 椅子がいる地域
+	Region *Region
 	// Current 現在地
 	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離
@@ -174,15 +176,21 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 未稼働
 	case c.State == ChairStateInactive:
+		// TODO 動かし方調整
+		// 退勤時の座標と出勤時の座標を変えておきたいためにある程度動かしておく
+		c.moveRandom(ctx)
+
 		if c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻になっているので出勤する
-			err := ctx.client.SendDeactivate(ctx, c)
+			err := ctx.client.SendActivate(ctx, c)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToActivate, err)
 			}
 
 			// 出勤
 			c.State = ChairStateActive
+
+			// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 		}
 	}
 
@@ -288,28 +296,7 @@ func (c *Chair) moveToward(ctx *Context, target Coordinate) {
 }
 
 func (c *Chair) moveRandom(ctx *Context) {
-	// 移動量の決定
-	x := ctx.rand.IntN(c.Speed + 1)
-	y := c.Speed - x
-
-	// 移動方向の決定
-	switch ctx.rand.IntN(4) {
-	case 0:
-		x *= -1
-	case 1:
-		y *= -1
-	case 2:
-		x *= -1
-		y *= -1
-	case 3:
-		break
-	}
-	c.moveBy(x, y)
-}
-
-func (c *Chair) moveBy(x int, y int) {
-	c.Current.X += x
-	c.Current.Y += y
+	c.Current = RandomCoordinateAwayFromHereWithRand(c.Current, c.Speed, ctx.rand)
 }
 
 func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
