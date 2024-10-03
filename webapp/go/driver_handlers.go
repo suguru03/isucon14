@@ -22,6 +22,7 @@ type postDriverRegisterRequest struct {
 
 type postDriverRegisterResponse struct {
 	AccessToken string `json:"access_token"`
+	ID          string `json:"id"`
 }
 
 func postDriverRegister(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +51,7 @@ func postDriverRegister(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusCreated, &postDriverRegisterResponse{
 		AccessToken: accessToken,
+		ID:          driverID,
 	})
 }
 

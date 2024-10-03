@@ -5,7 +5,7 @@ info:
 servers:
   - url: 'http://localhost:8080/'
     description: api
-security: []
+security: [ ]
 paths:
   /initialize:
     post:
@@ -75,8 +75,12 @@ paths:
                   access_token:
                     type: string
                     description: アクセストークン
+                  id:
+                    type: string
+                    description: ユーザーID
                 required:
                   - access_token
+                  - id
         '400':
           description: Bad Request
   /app/requests:
@@ -273,8 +277,12 @@ paths:
                   access_token:
                     type: string
                     description: アクセストークン
+                  id:
+                    type: string
+                    description: ドライバーID
                 required:
                   - access_token
+                  - id
   /driver/activate:
     post:
       tags:
