@@ -3,8 +3,10 @@ module github.com/isucon/isucon14/bench
 go 1.23
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/guregu/null/v5 v5.0.0
 	github.com/isucon/isucandar v0.0.0-20220322062028-6dd56dc57d72
+	github.com/mattn/go-gimei v0.0.4
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
@@ -21,6 +23,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

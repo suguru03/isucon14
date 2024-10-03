@@ -6,17 +6,28 @@ import (
 	"github.com/guregu/null/v5"
 )
 
+type ChairState int
+
+const (
+	ChairStateInactive ChairState = iota
+	ChairStateActive
+)
+
 type ChairID int
 
 type Chair struct {
 	// ID ベンチマーカー内部椅子ID
 	ID ChairID
+	// ServerID サーバー上での椅子ID
+	ServerID string
+	// Region 椅子がいる地域
+	Region *Region
 	// Current 現在地
 	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離
 	Speed int
-	// Active 稼働中の椅子かどうか
-	Active bool
+	// State 椅子の状態
+	State ChairState
 	// WorkTime 稼働時刻
 	WorkTime Interval[int]
 
@@ -24,6 +35,11 @@ type Chair struct {
 	ServerRequestID null.String
 	// Request 進行中のリクエスト
 	Request *Request
+
+	// RegisteredData サーバーに登録されている椅子情報
+	RegisteredData RegisteredChairData
+	// AccessToken サーバーアクセストークン
+	AccessToken string
 }
 
 func (c *Chair) String() string {
@@ -143,7 +159,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 
 	// 進行中のリクエストが存在せず、稼働中
-	case c.Active:
+	case c.State == ChairStateActive:
 		if !c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻を過ぎたので退勤する
 			err := ctx.client.SendDeactivate(ctx, c)
@@ -152,27 +168,33 @@ func (c *Chair) Tick(ctx *Context) error {
 			}
 
 			// 退勤
-			c.Active = false
+			c.State = ChairStateInactive
 		} else {
 			// ランダムに徘徊する
 			c.moveRandom(ctx)
 		}
 
 	// 未稼働
-	case !c.Active:
+	case c.State == ChairStateInactive:
+		// TODO 動かし方調整
+		// 退勤時の座標と出勤時の座標を変えておきたいためにある程度動かしておく
+		c.moveRandom(ctx)
+
 		if c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻になっているので出勤する
-			err := ctx.client.SendDeactivate(ctx, c)
+			err := ctx.client.SendActivate(ctx, c)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToActivate, err)
 			}
 
 			// 出勤
-			c.Active = true
+			c.State = ChairStateActive
+
+			// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 		}
 	}
 
-	if c.Active {
+	if c.State == ChairStateActive {
 		// 稼働中なら自身の座標をサーバーに送信
 		err := ctx.client.SendChairCoordinate(ctx, c)
 		if err != nil {
@@ -274,32 +296,11 @@ func (c *Chair) moveToward(ctx *Context, target Coordinate) {
 }
 
 func (c *Chair) moveRandom(ctx *Context) {
-	// 移動量の決定
-	x := ctx.rand.IntN(c.Speed + 1)
-	y := c.Speed - x
-
-	// 移動方向の決定
-	switch ctx.rand.IntN(4) {
-	case 0:
-		x *= -1
-	case 1:
-		y *= -1
-	case 2:
-		x *= -1
-		y *= -1
-	case 3:
-		break
-	}
-	c.moveBy(x, y)
-}
-
-func (c *Chair) moveBy(x int, y int) {
-	c.Current.X += x
-	c.Current.Y += y
+	c.Current = RandomCoordinateAwayFromHereWithRand(c.Current, c.Speed, ctx.rand)
 }
 
 func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
-	if !c.Active {
+	if c.State != ChairStateActive {
 		// 稼働してないなら拒否
 		return false
 	}
@@ -312,4 +313,13 @@ func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
 	}
 
 	return true
+}
+
+type RegisteredChairData struct {
+	UserName    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
+	ChairModel  string
+	ChairNo     string
 }

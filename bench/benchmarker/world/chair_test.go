@@ -139,14 +139,16 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 		expected  bool
 	}{
 		{
-			name:     "稼働中でない",
-			chair:    &Chair{Active: false},
+			name: "稼働中でない",
+			chair: &Chair{
+				State: ChairStateInactive,
+			},
 			expected: false,
 		},
 		{
 			name: "稼働中で勤務時間内に完了できる",
 			chair: &Chair{
-				Active:   true,
+				State:    ChairStateActive,
 				Current:  C(0, 0),
 				Speed:    speed,
 				WorkTime: workTime8to16,
@@ -161,7 +163,7 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 		{
 			name: "稼働中で勤務時間内に完了できない",
 			chair: &Chair{
-				Active:   true,
+				State:    ChairStateActive,
 				Current:  C(0, 0),
 				Speed:    speed,
 				WorkTime: workTime8to16,

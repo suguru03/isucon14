@@ -2,22 +2,40 @@ package world
 
 import "fmt"
 
+type UserState int
+
+const (
+	UserStateInactive UserState = iota
+	UserStateActive
+)
+
 type UserID int
 
 type User struct {
 	// ID ベンチマーカー内部ユーザーID
 	ID UserID
+	// ServerID サーバー上でのユーザーID
+	ServerID string
 	// Region ユーザーが居る地域
 	Region *Region
+	// State ユーザーの状態
+	State UserState
 	// Request 進行中の配椅子・送迎リクエスト
 	Request *Request
+
+	// RegisteredData サーバーに登録されているユーザー情報
+	RegisteredData RegisteredUserData
+	// AccessToken サーバーアクセストークン
+	AccessToken string
+	// RequestHistory リクエスト履歴
+	RequestHistory []*Request
 }
 
 func (u *User) String() string {
 	if u.Request != nil {
-		return fmt.Sprintf("User{id=%d,reqId=%d}", u.ID, u.Request.ID)
+		return fmt.Sprintf("User{id=%d,totalReqs=%d,reqId=%d}", u.ID, len(u.RequestHistory), u.Request.ID)
 	}
-	return fmt.Sprintf("User{id=%d}", u.ID)
+	return fmt.Sprintf("User{id=%d,totalReqs=%d}", u.ID, len(u.RequestHistory))
 }
 
 func (u *User) SetID(id UserID) {
@@ -25,8 +43,9 @@ func (u *User) SetID(id UserID) {
 }
 
 func (u *User) Tick(ctx *Context) error {
-	if u.Request != nil {
-		// 進行中の配椅子・送迎リクエストが存在
+	switch {
+	// 進行中のリクエストが存在
+	case u.Request != nil:
 		switch u.Request.UserStatus {
 		case RequestStatusMatching:
 			// マッチングされるまで待機する
@@ -67,7 +86,9 @@ func (u *User) Tick(ctx *Context) error {
 			// ここに分岐することはありえない
 			panic("unexpected state")
 		}
-	} else {
+
+	// 進行中のリクエストは存在しないが、ユーザーがアクティブ状態
+	case u.Request == nil && u.State == UserStateActive:
 		// リクエストを作成する
 		// TODO 作成する条件・頻度
 		err := u.CreateRequest(ctx)
@@ -85,7 +106,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 
 	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, ctx.rand)
-	dest := RandomCoordinateOnRegionWithRand(u.Region, ctx.rand)
+	dest := RandomCoordinateAwayFromHereWithRand(pickup, ctx.rand.IntN(100)+5, ctx.rand)
 
 	req := &Request{
 		User:             u,
@@ -102,6 +123,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 	}
 	req.ServerID = res.ServerRequestID
 	u.Request = req
+	u.RequestHistory = append(u.RequestHistory, req)
 	ctx.world.RequestDB.Create(req)
 	return nil
 }
@@ -116,4 +138,11 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 	}
 	request.UserStatus = status
 	return nil
+}
+
+type RegisteredUserData struct {
+	UserName    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
 }
