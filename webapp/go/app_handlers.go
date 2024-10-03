@@ -20,6 +20,7 @@ type postAppRegisterRequest struct {
 
 type postAppRegisterResponse struct {
 	AccessToken string `json:"access_token"`
+	ID          string `json:"id"`
 }
 
 func postAppRegister(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +48,7 @@ func postAppRegister(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusCreated, &postAppRegisterResponse{
 		AccessToken: accessToken,
+		ID:          userID,
 	})
 }
 
