@@ -1,7 +1,9 @@
 package world
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/guregu/null/v5"
 )
@@ -40,6 +42,17 @@ type Chair struct {
 	RegisteredData RegisteredChairData
 	// AccessToken サーバーアクセストークン
 	AccessToken string
+	// 通知ストリームコネクション
+	NotificationConn NotificationStream
+}
+
+type RegisteredChairData struct {
+	UserName    string
+	FirstName   string
+	LastName    string
+	DateOfBirth string
+	ChairModel  string
+	ChairNo     string
 }
 
 func (c *Chair) String() string {
@@ -169,6 +182,9 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			// 退勤
 			c.State = ChairStateInactive
+			// 通知コネクションを切断
+			c.NotificationConn.Close()
+			c.NotificationConn = nil
 		} else {
 			// ランダムに徘徊する
 			c.moveRandom(ctx)
@@ -182,6 +198,16 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		if c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻になっているので出勤する
+
+			if c.NotificationConn == nil {
+				// 先に通知コネクションを繋いでおく
+				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, c.HandleNotification)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
+				}
+				c.NotificationConn = conn
+			}
+
 			err := ctx.client.SendActivate(ctx, c)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToActivate, err)
@@ -315,11 +341,31 @@ func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
 	return true
 }
 
-type RegisteredChairData struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
-	ChairModel  string
-	ChairNo     string
+func (c *Chair) HandleNotification(eventType, eventData string) {
+	switch eventType {
+	case ChairNotificationEventMatched:
+		var data struct {
+			ID string `json:"id"`
+		}
+		err := json.Unmarshal([]byte(eventData), &data)
+		if err != nil {
+			log.Println(err)
+			// TODO エラーハンドリング
+			return
+		}
+
+		err = c.AssignRequest(data.ID)
+		if err != nil {
+			log.Println(err)
+			// TODO エラーハンドリング
+			return
+		}
+	case ChairNotificationEventCompleted:
+		err := c.ChangeRequestStatus(RequestStatusCompleted)
+		if err != nil {
+			log.Println(err)
+			// TODO エラーハンドリング
+			return
+		}
+	}
 }

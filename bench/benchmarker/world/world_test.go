@@ -1,20 +1,23 @@
 package world
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 	"github.com/oklog/ulid/v2"
 )
 
 type FastServerStub struct {
-	t            *testing.T
-	world        *World
-	latency      time.Duration
-	requestQueue chan string
+	t                            *testing.T
+	world                        *World
+	latency                      time.Duration
+	requestQueue                 chan string
+	chairNotificationReceiverMap *concurrent.SimpleMap[string, NotificationReceiverFunc]
 }
 
 func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
@@ -60,12 +63,9 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 
 func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
-	go func() {
-		err := s.world.UpdateRequestChairStatus(req.Chair.ID, RequestStatusCompleted)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
+		go f(ChairNotificationEventCompleted, "")
+	}
 	return nil
 }
 
@@ -101,14 +101,27 @@ func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest)
 	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
 }
 
+type notificationConnectionImpl struct {
+	close func()
+}
+
+func (c *notificationConnectionImpl) Close() {
+	c.close()
+}
+
+func (s *FastServerStub) ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error) {
+	time.Sleep(s.latency)
+	s.chairNotificationReceiverMap.Set(chair.ServerID, receiver)
+	return &notificationConnectionImpl{close: func() { s.chairNotificationReceiverMap.Delete(chair.ServerID) }}, nil
+}
+
 func (s *FastServerStub) MatchingLoop() {
 	for id := range s.requestQueue {
 		matched := false
-		for chairID, chair := range s.world.ChairDB.Iter() {
+		for _, chair := range s.world.ChairDB.Iter() {
 			if chair.State == ChairStateActive && !chair.ServerRequestID.Valid {
-				err := s.world.AssignRequest(chairID, id)
-				if err != nil {
-					panic(err)
+				if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
+					f(ChairNotificationEventMatched, fmt.Sprintf(`{"id":"%s"}`, id))
 				}
 				matched = true
 				break
@@ -135,10 +148,11 @@ func TestWorld(t *testing.T) {
 			RequestDB: NewRequestDB(),
 		}
 		client = &FastServerStub{
-			t:            t,
-			world:        world,
-			latency:      1 * time.Millisecond,
-			requestQueue: make(chan string, 1000),
+			t:                            t,
+			world:                        world,
+			latency:                      1 * time.Millisecond,
+			requestQueue:                 make(chan string, 1000),
+			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 		}
 		ctx = &Context{
 			rand:   rand.New(random.NewLockedSource(rand.NewPCG(rand.Uint64(), rand.Uint64()))),
@@ -151,7 +165,7 @@ func TestWorld(t *testing.T) {
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: RandomCoordinateOnRegion(region),
-			WorkTime:          NewInterval(convertHour(0), convertHour(24)),
+			WorkTime:          NewInterval(convertHour(0), convertHour(23)),
 		})
 		if err != nil {
 			t.Fatal(err)

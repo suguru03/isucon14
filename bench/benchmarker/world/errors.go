@@ -38,6 +38,8 @@ const (
 	ErrorCodeFailedToRegisterUser
 	// ErrorCodeFailedToRegisterChair 椅子登録に失敗した
 	ErrorCodeFailedToRegisterChair
+	// ErrorCodeFailedToConnectNotificationStream 通知ストリームへの接続に失敗した
+	ErrorCodeFailedToConnectNotificationStream
 )
 
 type codeError struct {
