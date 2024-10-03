@@ -1,0 +1,7 @@
+version: '3'
+
+tasks:
+  build:
+    - go build -o isucon .
+  run:
+    - ./isucon
