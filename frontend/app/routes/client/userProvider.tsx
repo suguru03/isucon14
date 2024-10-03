@@ -12,7 +12,7 @@ const userContext = createContext<Partial<User>>({});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? undefined;
+  const accessToken = searchParams.get("user_access_token") ?? undefined;
   if (accessToken === undefined) {
     return;
   }
