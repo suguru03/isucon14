@@ -1,7 +1,7 @@
 import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
-import { QueryOperation } from "./isuconComponents";
+import { QueryOperation } from "./apiComponents";
 
-export type IsuconContext = {
+export type ApiContext = {
   fetcherOptions: {
     /**
      * Headers to inject in the fetcher
@@ -30,7 +30,7 @@ export type IsuconContext = {
  *
  * @param queryOptions options from the useQuery wrapper
  */
-export function useIsuconContext<
+export function useApiContext<
   TQueryFnData = unknown,
   TError = unknown,
   TData = TQueryFnData,
@@ -40,7 +40,7 @@ export function useIsuconContext<
     UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     "queryKey" | "queryFn"
   >,
-): IsuconContext {
+): ApiContext {
   return {
     fetcherOptions: {},
     queryOptions: {},

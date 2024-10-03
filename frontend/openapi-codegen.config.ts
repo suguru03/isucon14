@@ -9,9 +9,9 @@ export default defineConfig({
       relativePath: "../openapi/openapi.yaml",
       source: "file",
     },
-    outputDir: "./api-fetcher",
+    outputDir: "./app/apiClient",
     to: async (context) => {
-      const filenamePrefix = "isucon";
+      const filenamePrefix = "API";
       const { schemasFiles } = await generateSchemaTypes(context, {
         filenamePrefix,
       });

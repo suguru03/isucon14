@@ -1,12 +1,12 @@
-import { IsuconContext } from "./isuconContext";
+import { ApiContext } from "./apiContext";
 
-const baseUrl = "http://localhost:3000/api";
+const baseUrl = "http://localhost:8080/";
 
 export type ErrorWrapper<TError> =
   | TError
   | { status: "unknown"; payload: string };
 
-export type IsuconFetcherOptions<TBody, THeaders, TQueryParams, TPathParams> = {
+export type ApiFetcherOptions<TBody, THeaders, TQueryParams, TPathParams> = {
   url: string;
   method: string;
   body?: TBody;
@@ -14,9 +14,9 @@ export type IsuconFetcherOptions<TBody, THeaders, TQueryParams, TPathParams> = {
   queryParams?: TQueryParams;
   pathParams?: TPathParams;
   signal?: AbortSignal;
-} & IsuconContext["fetcherOptions"];
+} & ApiContext["fetcherOptions"];
 
-export async function isuconFetch<
+export async function apiFetch<
   TData,
   TError,
   TBody extends {} | FormData | undefined | null,
@@ -31,7 +31,7 @@ export async function isuconFetch<
   pathParams,
   queryParams,
   signal,
-}: IsuconFetcherOptions<
+}: ApiFetcherOptions<
   TBody,
   THeaders,
   TQueryParams,
