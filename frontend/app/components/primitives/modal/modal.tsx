@@ -60,15 +60,19 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
     }));
 
     return (
-      <div
-        className={
-          "fixed bottom-0 left-0 right-0 h-[90vh] bg-white border-t border-l border-r border-gray-300 rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out"
-        }
-        ref={sheetRef}
-        style={{ willChange: "transform", transform: "translateY(100%)" }}
-      >
-        <div className="p-4">{children}</div>
-      </div>
+      <>
+        {/* オーバーレイを追加 */}
+        <div className="fixed inset-0 bg-black opacity-50 z-40"></div>
+        <div
+          className={
+            "fixed bottom-0 left-0 right-0 h-[90vh] bg-white border-t border-l border-r border-gray-300 rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50"
+          }
+          ref={sheetRef}
+          style={{ willChange: "transform", transform: "translateY(100%)" }}
+        >
+          <div className="p-4">{children}</div>
+        </div>
+      </>
     );
   },
 );
