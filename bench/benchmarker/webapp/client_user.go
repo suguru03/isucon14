@@ -5,29 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strings"
-	"time"
 
-	"github.com/mattn/go-gimei"
 	"go.uber.org/zap"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) Register(ctx context.Context) (*api.RegisterUserOK, error) {
-	// TODO: Username被りとかはどうする？
-	name := gimei.NewName()
-
-	dateOfBirth := time.Now().AddDate(rand.Intn(50)+20, rand.Intn(12)+1, rand.Intn(28)+1)
-	reqBody := api.RegisterUserReq{
-		strings.ToLower(strings.Replace(name.Romaji(), " ", "_", -1)),
-		name.First.Kanji(),
-		name.Last.Kanji(),
-		dateOfBirth.Format("2006-01-02"),
-	}
-
+func (c *Client) Register(ctx context.Context, reqBody *api.RegisterUserReq) (*api.RegisterUserOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err

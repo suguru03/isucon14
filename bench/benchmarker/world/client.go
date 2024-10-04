@@ -6,7 +6,7 @@ type Client interface {
 	// SendAcceptRequest サーバーに配椅子要求を受理することを報告する
 	SendAcceptRequest(ctx *Context, req *Request) error
 	// SendDenyRequest サーバーに配椅子要求を受理することを報告する
-	SendDenyRequest(ctx *Context, serverRequestID string) error
+	SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error
 	// SendDepart サーバーに客が搭乗完了して出発することを報告する
 	SendDepart(ctx *Context, req *Request) error
 	// SendEvaluation サーバーに今回の送迎の評価を送信する

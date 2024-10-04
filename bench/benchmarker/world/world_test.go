@@ -45,7 +45,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, req *Request) error {
 	return nil
 }
 
-func (s *FastServerStub) SendDenyRequest(ctx *Context, serverRequestID string) error {
+func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error {
 	time.Sleep(s.latency)
 	return nil
 }
