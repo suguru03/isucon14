@@ -5,6 +5,9 @@ services:
     ports:
       - 8080:8080
     working_dir: /home/isucon/webapp/go
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     image: mysql:8
     environment:
@@ -15,3 +18,5 @@ services:
     volumes:
       - ./mysql/db:/var/lib/mysql
       - ../webapp/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
