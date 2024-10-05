@@ -1,7 +1,6 @@
 package world
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -26,9 +25,9 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 		if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 			switch req.DesiredStatus {
 			case RequestStatusDispatched:
-				go f(UserNotificationEventDispatched, "")
+				go f(&UserNotificationEventDispatched{})
 			case RequestStatusArrived:
-				go f(UserNotificationEventArrived, "")
+				go f(&UserNotificationEventArrived{})
 			}
 		}
 	}
@@ -38,7 +37,7 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(UserNotificationEventDispatching, "")
+		go f(&UserNotificationEventDispatching{})
 	}
 	return nil
 }
@@ -51,7 +50,7 @@ func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverReque
 func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(UserNotificationEventCarrying, "")
+		go f(&UserNotificationEventCarrying{})
 	}
 	return nil
 }
@@ -59,7 +58,7 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		go f(ChairNotificationEventCompleted, "")
+		go f(&ChairNotificationEventCompleted{})
 	}
 	return nil
 }
@@ -122,7 +121,7 @@ func (s *FastServerStub) MatchingLoop() {
 		for _, chair := range s.world.ChairDB.Iter() {
 			if chair.State == ChairStateActive && !chair.ServerRequestID.Valid {
 				if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
-					f(ChairNotificationEventMatched, fmt.Sprintf(`{"id":"%s"}`, id))
+					f(&ChairNotificationEventMatched{ServerRequestID: id})
 				}
 				matched = true
 				break

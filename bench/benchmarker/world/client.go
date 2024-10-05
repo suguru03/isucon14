@@ -61,20 +61,8 @@ type RegisterChairResponse struct {
 	AccessToken  string
 }
 
-type NotificationReceiverFunc func(eventType, eventData string)
+type NotificationReceiverFunc func(event NotificationEvent)
 
 type NotificationStream interface {
 	Close()
 }
-
-const (
-	ChairNotificationEventMatched   = "matched"
-	ChairNotificationEventCompleted = "completed"
-)
-
-const (
-	UserNotificationEventDispatching = "dispatching"
-	UserNotificationEventDispatched  = "dispatched"
-	UserNotificationEventCarrying    = "carrying"
-	UserNotificationEventArrived     = "arrived"
-)
