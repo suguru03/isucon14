@@ -3,6 +3,7 @@ package world
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"sync/atomic"
 )
@@ -100,10 +101,8 @@ func (u *User) Tick(ctx *Context) error {
 
 		case RequestStatusArrived:
 			// 送迎の評価を行う
-			// TODO: マッチング時間ペナルティ
-			// TODO: 到着待ち時間ペナルティ
-			// TODO: 出発待ち時間ペナルティ
-			// TODO: 乗車時間ペナルティ
+			// TODO 評価を送る
+			log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
 			err := ctx.client.SendEvaluation(ctx, u.Request)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToEvaluate, err)
