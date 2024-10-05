@@ -338,19 +338,51 @@ func (c *Chair) moveToward(target Coordinate) {
 }
 
 func (c *Chair) moveRandom() {
-	c.Current = RandomCoordinateAwayFromHereWithRand(c.Current, c.Speed, c.Rand)
-	if c.Current.X < c.Region.RegionOffsetX-c.Region.RegionWidth/2 {
-		c.Current.X = c.Region.RegionOffsetX - c.Region.RegionWidth/2
+	// 移動量の決定
+	x := c.Rand.IntN(c.Speed + 1)
+	y := c.Speed - x
+
+	// 移動方向の決定
+	left, right := c.Region.RangeX()
+	bottom, top := c.Region.RangeY()
+
+	switch c.Rand.IntN(4) {
+	case 0:
+		x *= -1
+		if c.Current.X+x < left {
+			x *= -1 // 逆側に戻す
+		}
+		if top < c.Current.Y+y {
+			y *= -1 // 逆側に戻す
+		}
+	case 1:
+		y *= -1
+		if right < c.Current.X+x {
+			x *= -1 // 逆側に戻す
+		}
+		if c.Current.Y+y < bottom {
+			y *= -1 // 逆側に戻す
+		}
+	case 2:
+		x *= -1
+		y *= -1
+		if c.Current.X+x < left {
+			x *= -1 // 逆側に戻す
+		}
+		if c.Current.Y+y < bottom {
+			y *= -1 // 逆側に戻す
+		}
+	case 3:
+		if right < c.Current.X+x {
+			x *= -1 // 逆側に戻す
+		}
+		if top < c.Current.Y+y {
+			y *= -1 // 逆側に戻す
+		}
+		break
 	}
-	if c.Current.X > c.Region.RegionOffsetX+c.Region.RegionWidth/2 {
-		c.Current.X = c.Region.RegionOffsetX + c.Region.RegionWidth/2
-	}
-	if c.Current.Y < c.Region.RegionOffsetY-c.Region.RegionHeight/2 {
-		c.Current.Y = c.Region.RegionOffsetY - c.Region.RegionHeight/2
-	}
-	if c.Current.Y > c.Region.RegionOffsetY+c.Region.RegionHeight/2 {
-		c.Current.Y = c.Region.RegionOffsetY + c.Region.RegionHeight/2
-	}
+
+	c.Current = C(c.Current.X+x, c.Current.Y+y)
 }
 
 func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
