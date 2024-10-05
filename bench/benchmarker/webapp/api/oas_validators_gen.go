@@ -350,19 +350,19 @@ func (s PostInitializeOKLanguage) Validate() error {
 
 func (s RequestStatus) Validate() error {
 	switch s {
-	case "matching":
+	case "MATCHING":
 		return nil
-	case "dispatching":
+	case "DISPATCHING":
 		return nil
-	case "carrying":
+	case "DISPATCHED":
 		return nil
-	case "arrived":
+	case "CARRYING":
 		return nil
-	case "completed":
+	case "ARRIVED":
 		return nil
-	case "canceled":
+	case "COMPLETED":
 		return nil
-	case "dispatched":
+	case "CANCELED":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

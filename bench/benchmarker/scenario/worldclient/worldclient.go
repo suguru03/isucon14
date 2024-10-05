@@ -296,20 +296,20 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 				var event world.NotificationEvent
 				// TODO: 意図しない通知の種類の減点
 				switch receivedRequest.Status {
-				case api.RequestStatusMatching:
+				case api.RequestStatusMATCHING:
 					// event = &world.UserNotificationEventMatching{}
-				case api.RequestStatusDispatching:
+				case api.RequestStatusDISPATCHING:
 					event = &world.UserNotificationEventDispatching{}
-				case api.RequestStatusCarrying:
-					event = &world.UserNotificationEventCarrying{}
-				case api.RequestStatusArrived:
-					event = &world.UserNotificationEventArrived{}
-				case api.RequestStatusCompleted:
-					// event = &world.UserNotificationEventCompleted{}
-				case api.RequestStatusCanceled:
-					// event = &world.UserNotificationEventCanceled{}
-				case api.RequestStatusDispatched:
+				case api.RequestStatusDISPATCHED:
 					event = &world.UserNotificationEventDispatched{}
+				case api.RequestStatusCARRYING:
+					event = &world.UserNotificationEventCarrying{}
+				case api.RequestStatusARRIVED:
+					event = &world.UserNotificationEventArrived{}
+				case api.RequestStatusCOMPLETED:
+					// event = &world.UserNotificationEventCompleted{}
+				case api.RequestStatusCANCELED:
+					// event = &world.UserNotificationEventCanceled{}
 				}
 				if event == nil {
 					c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
@@ -361,22 +361,22 @@ func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				var event world.NotificationEvent
 				// TODO: 意図しない通知の種類の減点
 				switch receivedRequest.Status.Value {
-				case api.RequestStatusMatching:
+				case api.RequestStatusMATCHING:
 					event = &world.ChairNotificationEventMatched{
 						ServerRequestID: receivedRequest.RequestID,
 					}
-				case api.RequestStatusDispatching:
+				case api.RequestStatusDISPATCHING:
 					// event = &world.ChairNotificationEventDispatching{}
-				case api.RequestStatusCarrying:
-					// event = &world.ChairNotificationEventCarrying{}
-				case api.RequestStatusArrived:
-					// event = &world.ChairNotificationEventArrived{}
-				case api.RequestStatusCompleted:
-					event = &world.ChairNotificationEventCompleted{}
-				case api.RequestStatusCanceled:
-					// event = &world.ChairNotificationEventCanceled{}
-				case api.RequestStatusDispatched:
+				case api.RequestStatusDISPATCHED:
 					// event = &world.ChairNotificationEventDispatched{}
+				case api.RequestStatusCARRYING:
+					// event = &world.ChairNotificationEventCarrying{}
+				case api.RequestStatusARRIVED:
+					// event = &world.ChairNotificationEventArrived{}
+				case api.RequestStatusCOMPLETED:
+					event = &world.ChairNotificationEventCompleted{}
+				case api.RequestStatusCANCELED:
+					// event = &world.ChairNotificationEventCanceled{}
 				}
 				if event == nil {
 					c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))

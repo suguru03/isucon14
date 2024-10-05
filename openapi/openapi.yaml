@@ -511,24 +511,24 @@ components:
     RequestStatus:
       type: string
       enum:
-        - matching
-        - dispatching
-        - carrying
-        - arrived
-        - completed
-        - canceled
-        - dispatched
+        - MATCHING
+        - DISPATCHING
+        - DISPATCHED
+        - CARRYING
+        - ARRIVED
+        - COMPLETED
+        - CANCELED
       title: RequestStatus
       description: |
         配車要求ステータス
 
-        matching: サービス上でマッチング処理を行なっていて椅子が確定していない
-        dispatching: 椅子が確定し、乗車位置に向かっている
-        dispatched: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
-        carrying: ユーザーが乗車し、椅子が目的地に向かっている
-        arrived: 目的地に到着した
-        completed: ユーザーの決済・椅子評価が完了した
-        canceled: 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定)
+        MATCHING: サービス上でマッチング処理を行なっていて椅子が確定していない
+        DISPATCHING: 椅子が確定し、乗車位置に向かっている
+        DISPATCHED: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
+        CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
+        ARRIVED: 目的地に到着した
+        COMPLETED: ユーザーの決済・椅子評価が完了した
+        CANCELED: 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定)
     Chair:
       type: object
       title: Chair

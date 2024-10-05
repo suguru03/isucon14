@@ -200,7 +200,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 					Latitude:  rideRequest.DestinationLatitude,
 					Longitude: rideRequest.DestinationLongitude,
 				},
-				Status: strings.ToLower(rideRequest.Status),
+				Status: rideRequest.Status,
 			}); err != nil {
 				respondError(w, http.StatusInternalServerError, err)
 				return
@@ -262,7 +262,7 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 			Latitude:  rideRequest.DestinationLatitude,
 			Longitude: rideRequest.DestinationLongitude,
 		},
-		Status: strings.ToLower(rideRequest.Status),
+		Status: rideRequest.Status,
 	})
 }
 
