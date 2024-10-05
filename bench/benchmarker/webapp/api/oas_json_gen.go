@@ -2470,20 +2470,20 @@ func (s *RequestStatus) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch RequestStatus(v) {
-	case RequestStatusMatching:
-		*s = RequestStatusMatching
-	case RequestStatusDispatching:
-		*s = RequestStatusDispatching
-	case RequestStatusCarrying:
-		*s = RequestStatusCarrying
-	case RequestStatusArrived:
-		*s = RequestStatusArrived
-	case RequestStatusCompleted:
-		*s = RequestStatusCompleted
-	case RequestStatusCanceled:
-		*s = RequestStatusCanceled
-	case RequestStatusDispatched:
-		*s = RequestStatusDispatched
+	case RequestStatusMATCHING:
+		*s = RequestStatusMATCHING
+	case RequestStatusDISPATCHING:
+		*s = RequestStatusDISPATCHING
+	case RequestStatusDISPATCHED:
+		*s = RequestStatusDISPATCHED
+	case RequestStatusCARRYING:
+		*s = RequestStatusCARRYING
+	case RequestStatusARRIVED:
+		*s = RequestStatusARRIVED
+	case RequestStatusCOMPLETED:
+		*s = RequestStatusCOMPLETED
+	case RequestStatusCANCELED:
+		*s = RequestStatusCANCELED
 	default:
 		*s = RequestStatus(v)
 	}

@@ -1247,57 +1247,57 @@ func (s *PostInitializeOKLanguage) UnmarshalText(data []byte) error {
 }
 
 // 配車要求ステータス
-// matching:
+// MATCHING:
 // サービス上でマッチング処理を行なっていて椅子が確定していない
-// dispatching: 椅子が確定し、乗車位置に向かっている
-// dispatched: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
-// carrying: ユーザーが乗車し、椅子が目的地に向かっている
-// arrived: 目的地に到着した
-// completed: ユーザーの決済・椅子評価が完了した
-// canceled:
+// DISPATCHING: 椅子が確定し、乗車位置に向かっている
+// DISPATCHED: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
+// CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
+// ARRIVED: 目的地に到着した
+// COMPLETED: ユーザーの決済・椅子評価が完了した
+// CANCELED:
 // 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定).
 // Ref: #/components/schemas/RequestStatus
 type RequestStatus string
 
 const (
-	RequestStatusMatching    RequestStatus = "matching"
-	RequestStatusDispatching RequestStatus = "dispatching"
-	RequestStatusCarrying    RequestStatus = "carrying"
-	RequestStatusArrived     RequestStatus = "arrived"
-	RequestStatusCompleted   RequestStatus = "completed"
-	RequestStatusCanceled    RequestStatus = "canceled"
-	RequestStatusDispatched  RequestStatus = "dispatched"
+	RequestStatusMATCHING    RequestStatus = "MATCHING"
+	RequestStatusDISPATCHING RequestStatus = "DISPATCHING"
+	RequestStatusDISPATCHED  RequestStatus = "DISPATCHED"
+	RequestStatusCARRYING    RequestStatus = "CARRYING"
+	RequestStatusARRIVED     RequestStatus = "ARRIVED"
+	RequestStatusCOMPLETED   RequestStatus = "COMPLETED"
+	RequestStatusCANCELED    RequestStatus = "CANCELED"
 )
 
 // AllValues returns all RequestStatus values.
 func (RequestStatus) AllValues() []RequestStatus {
 	return []RequestStatus{
-		RequestStatusMatching,
-		RequestStatusDispatching,
-		RequestStatusCarrying,
-		RequestStatusArrived,
-		RequestStatusCompleted,
-		RequestStatusCanceled,
-		RequestStatusDispatched,
+		RequestStatusMATCHING,
+		RequestStatusDISPATCHING,
+		RequestStatusDISPATCHED,
+		RequestStatusCARRYING,
+		RequestStatusARRIVED,
+		RequestStatusCOMPLETED,
+		RequestStatusCANCELED,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s RequestStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case RequestStatusMatching:
+	case RequestStatusMATCHING:
 		return []byte(s), nil
-	case RequestStatusDispatching:
+	case RequestStatusDISPATCHING:
 		return []byte(s), nil
-	case RequestStatusCarrying:
+	case RequestStatusDISPATCHED:
 		return []byte(s), nil
-	case RequestStatusArrived:
+	case RequestStatusCARRYING:
 		return []byte(s), nil
-	case RequestStatusCompleted:
+	case RequestStatusARRIVED:
 		return []byte(s), nil
-	case RequestStatusCanceled:
+	case RequestStatusCOMPLETED:
 		return []byte(s), nil
-	case RequestStatusDispatched:
+	case RequestStatusCANCELED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1307,26 +1307,26 @@ func (s RequestStatus) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *RequestStatus) UnmarshalText(data []byte) error {
 	switch RequestStatus(data) {
-	case RequestStatusMatching:
-		*s = RequestStatusMatching
+	case RequestStatusMATCHING:
+		*s = RequestStatusMATCHING
 		return nil
-	case RequestStatusDispatching:
-		*s = RequestStatusDispatching
+	case RequestStatusDISPATCHING:
+		*s = RequestStatusDISPATCHING
 		return nil
-	case RequestStatusCarrying:
-		*s = RequestStatusCarrying
+	case RequestStatusDISPATCHED:
+		*s = RequestStatusDISPATCHED
 		return nil
-	case RequestStatusArrived:
-		*s = RequestStatusArrived
+	case RequestStatusCARRYING:
+		*s = RequestStatusCARRYING
 		return nil
-	case RequestStatusCompleted:
-		*s = RequestStatusCompleted
+	case RequestStatusARRIVED:
+		*s = RequestStatusARRIVED
 		return nil
-	case RequestStatusCanceled:
-		*s = RequestStatusCanceled
+	case RequestStatusCOMPLETED:
+		*s = RequestStatusCOMPLETED
 		return nil
-	case RequestStatusDispatched:
-		*s = RequestStatusDispatched
+	case RequestStatusCANCELED:
+		*s = RequestStatusCANCELED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
