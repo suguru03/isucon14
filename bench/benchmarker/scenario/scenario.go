@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/isucon/isucandar"
+	"github.com/isucon/isucandar/score"
 	"go.uber.org/zap"
+
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
 	"github.com/isucon/isucon14/bench/benchmarker/scenario/worldclient"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 // Scenario はシナリオを表す構造体
@@ -33,16 +34,14 @@ type Scenario struct {
 	worldCtx         *world.Context
 	step             *isucandar.BenchmarkStep
 
-	requestQueue                 chan string // あんまり考えて導入してないです
-	userNotificationReceiverMap  *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
-	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
+	requestQueue         chan string // あんまり考えて導入してないです
+	completedRequestChan chan *world.Request
 }
 
 func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
-	userNotificationReceiverMap := concurrent.NewSimpleMap[string, world.NotificationReceiverFunc]()
-	chairNotificationReceiverMap := concurrent.NewSimpleMap[string, world.NotificationReceiverFunc]()
 	requestQueue := make(chan string, 1000)
-	w := world.NewWorld()
+	completedRequestChan := make(chan *world.Request, 1000)
+	w := world.NewWorld(completedRequestChan)
 	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
 		TargetBaseURL:         target,
 		DefaultClientTimeout:  5 * time.Second,
@@ -58,9 +57,8 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		world:            w,
 		worldCtx:         worldCtx,
 
-		requestQueue:                 requestQueue,
-		userNotificationReceiverMap:  userNotificationReceiverMap,
-		chairNotificationReceiverMap: chairNotificationReceiverMap,
+		requestQueue:         requestQueue,
+		completedRequestChan: completedRequestChan,
 	}
 }
 
@@ -113,6 +111,13 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//}
 	//
 	//w.Process(ctx)
+
+	go func() {
+		for req := range s.completedRequestChan {
+			s.contestantLogger.Info("request completed", zap.Any("request", req))
+			step.AddScore(score.ScoreTag("completed_request"))
+		}
+	}()
 
 	region := s.world.Regions[1]
 	for range 1 {

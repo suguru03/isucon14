@@ -153,6 +153,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusCompleted:
 			// 完了時間を記録
 			c.Request.CompletedAt = ctx.world.Time
+			ctx.world.CompletedRequestChan <- c.Request
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.ServerRequestID = null.String{}

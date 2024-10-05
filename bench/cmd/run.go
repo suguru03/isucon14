@@ -46,11 +46,15 @@ var runCmd = &cobra.Command{
 
 		l.Info("benchmark started")
 		result := b.Start(context.Background())
-		result.Score.Set("sales", 1)
+		result.Score.Set("completed_request", 1)
 
 		errors := result.Errors.All()
 		for _, err := range errors {
 			l.Error("benchmark error", zap.Error(err))
+		}
+
+		for scoreTag, count := range result.Score.Breakdown() {
+			l.Info("score", zap.String("tag", string(scoreTag)), zap.Int64("count", count))
 		}
 
 		l.Info("benchmark finished", zap.Int64("score", result.Score.Total()))
