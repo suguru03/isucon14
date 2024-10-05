@@ -281,7 +281,30 @@ func (s *Coordinate) Validate() error {
 	return nil
 }
 
-func (s *InitializeOK) Validate() error {
+func (s *InquiryContent) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.Float{}).Validate(float64(s.CreatedAt)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "created_at",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *PostInitializeOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -304,7 +327,7 @@ func (s *InitializeOK) Validate() error {
 	return nil
 }
 
-func (s InitializeOKLanguage) Validate() error {
+func (s PostInitializeOKLanguage) Validate() error {
 	switch s {
 	case "go":
 		return nil
@@ -323,29 +346,6 @@ func (s InitializeOKLanguage) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
-}
-
-func (s *InquiryContent) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.CreatedAt)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "created_at",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
 }
 
 func (s RequestStatus) Validate() error {

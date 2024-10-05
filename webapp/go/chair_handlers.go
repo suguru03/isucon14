@@ -16,8 +16,8 @@ type postChairRegisterRequest struct {
 	Firstname   string `json:"firstname"`
 	Lastname    string `json:"lastname"`
 	DateOfBirth string `json:"date_of_birth"`
-	CarModel    string `json:"car_model"`
-	CarNo       string `json:"car_no"`
+	ChairModel  string `json:"chair_model"`
+	ChairNo     string `json:"chair_no"`
 }
 
 type postChairRegisterResponse struct {
@@ -34,18 +34,18 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	chairID := ulid.Make().String()
 
-	if req.Username == "" || req.Firstname == "" || req.Lastname == "" || req.DateOfBirth == "" || req.CarModel == "" || req.CarNo == "" {
-		w.WriteHeader(http.StatusBadRequest)
+	if req.Username == "" || req.Firstname == "" || req.Lastname == "" || req.DateOfBirth == "" || req.ChairModel == "" || req.ChairNo == "" {
+		respondError(w, http.StatusBadRequest, errors.New("required fields(username, firstname, lastname, date_of_birth, chair_model, chair_no) are empty"))
 		return
 	}
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO chairs (id, username, firstname, lastname, date_of_birth, car_model, car_no, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		chairID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.CarModel, req.CarNo, false, accessToken,
+		"INSERT INTO chairs (id, username, firstname, lastname, date_of_birth, chair_model, chair_no, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		chairID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.ChairModel, req.ChairNo, false, accessToken,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -59,14 +59,14 @@ func chairAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
-			w.WriteHeader(http.StatusUnauthorized)
+			respondError(w, http.StatusUnauthorized, errors.New("access token is required"))
 			return
 		}
 
 		chair := &Chair{}
 		err := db.Get(chair, "SELECT * FROM chairs WHERE access_token = ?", accessToken)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
 			return
 		}
 
@@ -76,15 +76,11 @@ func chairAuthMiddleware(next http.Handler) http.Handler {
 }
 
 func chairPostActivate(w http.ResponseWriter, r *http.Request) {
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", true, chair.ID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -92,15 +88,11 @@ func chairPostActivate(w http.ResponseWriter, r *http.Request) {
 }
 
 func chairPostDeactivate(w http.ResponseWriter, r *http.Request) {
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", false, chair.ID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -114,18 +106,14 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	_, err := db.Exec(
 		`INSERT INTO chair_locations (chair_id, latitude, longitude) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE latitude = ?, longitude = ?`,
 		chair.ID, req.Latitude, req.Longitude, req.Latitude, req.Longitude,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -133,16 +121,13 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 }
 
 func chairGetNotification(w http.ResponseWriter, r *http.Request) {
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	// Server Sent Events
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 
+	var lastRideRequest *RideRequest
 	for {
 		select {
 		case <-r.Context().Done():
@@ -151,19 +136,23 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = ?", chair.ID, "DISPATCHING")
+			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, chair.ID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					time.Sleep(1 * time.Second)
+					time.Sleep(100 * time.Millisecond)
 					continue
 				}
-				w.WriteHeader(http.StatusInternalServerError)
+				respondError(w, http.StatusInternalServerError, err)
+			}
+			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
+				time.Sleep(100 * time.Millisecond)
+				continue
 			}
 
 			user := &User{}
 			err = db.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				respondError(w, http.StatusInternalServerError, err)
 				return
 			}
 
@@ -179,9 +168,10 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 				},
 				Status: rideRequest.Status,
 			}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				respondError(w, http.StatusInternalServerError, err)
 				return
 			}
+			lastRideRequest = rideRequest
 		}
 	}
 }
@@ -202,16 +192,29 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
+		}
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	user := &User{}
-	err = db.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
-	if err != nil {
+	if err := tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -229,31 +232,39 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
+func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
-	// TODO: トランザクションを使って排他制御を行う
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
+		}
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
-		w.WriteHeader(http.StatusBadRequest)
+	if rideRequest.ChairID.String != chair.ID {
+		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -263,27 +274,36 @@ func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE ", requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
+		}
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
-		w.WriteHeader(http.StatusBadRequest)
+	if rideRequest.ChairID.String != chair.ID {
+		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, status = 'MATCHING', matched_at = NULL WHERE id = ?", requestID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -293,27 +313,36 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	chair, ok := r.Context().Value("chair").(*Chair)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	chair := r.Context().Value("chair").(*Chair)
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE", requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
+		}
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
-		w.WriteHeader(http.StatusBadRequest)
+	if rideRequest.ChairID.String != chair.ID {
+		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "CARRYING", requestID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	if _, err = tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "CARRYING", requestID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 

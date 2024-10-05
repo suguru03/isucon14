@@ -297,9 +297,9 @@ type Chair struct {
 	// 椅子名.
 	Name string `json:"name"`
 	// 車種.
-	CarModel string `json:"car_model"`
+	ChairModel string `json:"chair_model"`
 	// カーナンバー.
-	CarNo string `json:"car_no"`
+	ChairNo string `json:"chair_no"`
 }
 
 // GetID returns the value of ID.
@@ -312,14 +312,14 @@ func (s *Chair) GetName() string {
 	return s.Name
 }
 
-// GetCarModel returns the value of CarModel.
-func (s *Chair) GetCarModel() string {
-	return s.CarModel
+// GetChairModel returns the value of ChairModel.
+func (s *Chair) GetChairModel() string {
+	return s.ChairModel
 }
 
-// GetCarNo returns the value of CarNo.
-func (s *Chair) GetCarNo() string {
-	return s.CarNo
+// GetChairNo returns the value of ChairNo.
+func (s *Chair) GetChairNo() string {
+	return s.ChairNo
 }
 
 // SetID sets the value of ID.
@@ -332,14 +332,14 @@ func (s *Chair) SetName(val string) {
 	s.Name = val
 }
 
-// SetCarModel sets the value of CarModel.
-func (s *Chair) SetCarModel(val string) {
-	s.CarModel = val
+// SetChairModel sets the value of ChairModel.
+func (s *Chair) SetChairModel(val string) {
+	s.ChairModel = val
 }
 
-// SetCarNo sets the value of CarNo.
-func (s *Chair) SetCarNo(val string) {
-	s.CarNo = val
+// SetChairNo sets the value of ChairNo.
+func (s *Chair) SetChairNo(val string) {
+	s.ChairNo = val
 }
 
 type ChairGetInquiriesOK struct {
@@ -510,9 +510,9 @@ type ChairPostRegisterReq struct {
 	// 生年月日.
 	DateOfBirth string `json:"date_of_birth"`
 	// 車種.
-	CarModel string `json:"car_model"`
+	ChairModel string `json:"chair_model"`
 	// カーナンバー.
-	CarNo string `json:"car_no"`
+	ChairNo string `json:"chair_no"`
 }
 
 // GetUsername returns the value of Username.
@@ -535,14 +535,14 @@ func (s *ChairPostRegisterReq) GetDateOfBirth() string {
 	return s.DateOfBirth
 }
 
-// GetCarModel returns the value of CarModel.
-func (s *ChairPostRegisterReq) GetCarModel() string {
-	return s.CarModel
+// GetChairModel returns the value of ChairModel.
+func (s *ChairPostRegisterReq) GetChairModel() string {
+	return s.ChairModel
 }
 
-// GetCarNo returns the value of CarNo.
-func (s *ChairPostRegisterReq) GetCarNo() string {
-	return s.CarNo
+// GetChairNo returns the value of ChairNo.
+func (s *ChairPostRegisterReq) GetChairNo() string {
+	return s.ChairNo
 }
 
 // SetUsername sets the value of Username.
@@ -565,14 +565,14 @@ func (s *ChairPostRegisterReq) SetDateOfBirth(val string) {
 	s.DateOfBirth = val
 }
 
-// SetCarModel sets the value of CarModel.
-func (s *ChairPostRegisterReq) SetCarModel(val string) {
-	s.CarModel = val
+// SetChairModel sets the value of ChairModel.
+func (s *ChairPostRegisterReq) SetChairModel(val string) {
+	s.ChairModel = val
 }
 
-// SetCarNo sets the value of CarNo.
-func (s *ChairPostRegisterReq) SetCarNo(val string) {
-	s.CarNo = val
+// SetChairNo sets the value of ChairNo.
+func (s *ChairPostRegisterReq) SetChairNo(val string) {
+	s.ChairNo = val
 }
 
 // ChairPostRequestAcceptNoContent is response for ChairPostRequestAccept operation.
@@ -637,98 +637,6 @@ func (s *Coordinate) SetLatitude(val float64) {
 // SetLongitude sets the value of Longitude.
 func (s *Coordinate) SetLongitude(val float64) {
 	s.Longitude = val
-}
-
-type InitializeOK struct {
-	// 実装言語.
-	Language InitializeOKLanguage `json:"language"`
-}
-
-// GetLanguage returns the value of Language.
-func (s *InitializeOK) GetLanguage() InitializeOKLanguage {
-	return s.Language
-}
-
-// SetLanguage sets the value of Language.
-func (s *InitializeOK) SetLanguage(val InitializeOKLanguage) {
-	s.Language = val
-}
-
-// 実装言語.
-type InitializeOKLanguage string
-
-const (
-	InitializeOKLanguageGo     InitializeOKLanguage = "go"
-	InitializeOKLanguagePerl   InitializeOKLanguage = "perl"
-	InitializeOKLanguagePhp    InitializeOKLanguage = "php"
-	InitializeOKLanguagePython InitializeOKLanguage = "python"
-	InitializeOKLanguageRuby   InitializeOKLanguage = "ruby"
-	InitializeOKLanguageRust   InitializeOKLanguage = "rust"
-	InitializeOKLanguageNode   InitializeOKLanguage = "node"
-)
-
-// AllValues returns all InitializeOKLanguage values.
-func (InitializeOKLanguage) AllValues() []InitializeOKLanguage {
-	return []InitializeOKLanguage{
-		InitializeOKLanguageGo,
-		InitializeOKLanguagePerl,
-		InitializeOKLanguagePhp,
-		InitializeOKLanguagePython,
-		InitializeOKLanguageRuby,
-		InitializeOKLanguageRust,
-		InitializeOKLanguageNode,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s InitializeOKLanguage) MarshalText() ([]byte, error) {
-	switch s {
-	case InitializeOKLanguageGo:
-		return []byte(s), nil
-	case InitializeOKLanguagePerl:
-		return []byte(s), nil
-	case InitializeOKLanguagePhp:
-		return []byte(s), nil
-	case InitializeOKLanguagePython:
-		return []byte(s), nil
-	case InitializeOKLanguageRuby:
-		return []byte(s), nil
-	case InitializeOKLanguageRust:
-		return []byte(s), nil
-	case InitializeOKLanguageNode:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *InitializeOKLanguage) UnmarshalText(data []byte) error {
-	switch InitializeOKLanguage(data) {
-	case InitializeOKLanguageGo:
-		*s = InitializeOKLanguageGo
-		return nil
-	case InitializeOKLanguagePerl:
-		*s = InitializeOKLanguagePerl
-		return nil
-	case InitializeOKLanguagePhp:
-		*s = InitializeOKLanguagePhp
-		return nil
-	case InitializeOKLanguagePython:
-		*s = InitializeOKLanguagePython
-		return nil
-	case InitializeOKLanguageRuby:
-		*s = InitializeOKLanguageRuby
-		return nil
-	case InitializeOKLanguageRust:
-		*s = InitializeOKLanguageRust
-		return nil
-	case InitializeOKLanguageNode:
-		*s = InitializeOKLanguageNode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 // 問い合わせ内容.
@@ -1244,6 +1152,98 @@ func (o OptString) Or(d string) string {
 		return v
 	}
 	return d
+}
+
+type PostInitializeOK struct {
+	// 実装言語.
+	Language PostInitializeOKLanguage `json:"language"`
+}
+
+// GetLanguage returns the value of Language.
+func (s *PostInitializeOK) GetLanguage() PostInitializeOKLanguage {
+	return s.Language
+}
+
+// SetLanguage sets the value of Language.
+func (s *PostInitializeOK) SetLanguage(val PostInitializeOKLanguage) {
+	s.Language = val
+}
+
+// 実装言語.
+type PostInitializeOKLanguage string
+
+const (
+	PostInitializeOKLanguageGo     PostInitializeOKLanguage = "go"
+	PostInitializeOKLanguagePerl   PostInitializeOKLanguage = "perl"
+	PostInitializeOKLanguagePhp    PostInitializeOKLanguage = "php"
+	PostInitializeOKLanguagePython PostInitializeOKLanguage = "python"
+	PostInitializeOKLanguageRuby   PostInitializeOKLanguage = "ruby"
+	PostInitializeOKLanguageRust   PostInitializeOKLanguage = "rust"
+	PostInitializeOKLanguageNode   PostInitializeOKLanguage = "node"
+)
+
+// AllValues returns all PostInitializeOKLanguage values.
+func (PostInitializeOKLanguage) AllValues() []PostInitializeOKLanguage {
+	return []PostInitializeOKLanguage{
+		PostInitializeOKLanguageGo,
+		PostInitializeOKLanguagePerl,
+		PostInitializeOKLanguagePhp,
+		PostInitializeOKLanguagePython,
+		PostInitializeOKLanguageRuby,
+		PostInitializeOKLanguageRust,
+		PostInitializeOKLanguageNode,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PostInitializeOKLanguage) MarshalText() ([]byte, error) {
+	switch s {
+	case PostInitializeOKLanguageGo:
+		return []byte(s), nil
+	case PostInitializeOKLanguagePerl:
+		return []byte(s), nil
+	case PostInitializeOKLanguagePhp:
+		return []byte(s), nil
+	case PostInitializeOKLanguagePython:
+		return []byte(s), nil
+	case PostInitializeOKLanguageRuby:
+		return []byte(s), nil
+	case PostInitializeOKLanguageRust:
+		return []byte(s), nil
+	case PostInitializeOKLanguageNode:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PostInitializeOKLanguage) UnmarshalText(data []byte) error {
+	switch PostInitializeOKLanguage(data) {
+	case PostInitializeOKLanguageGo:
+		*s = PostInitializeOKLanguageGo
+		return nil
+	case PostInitializeOKLanguagePerl:
+		*s = PostInitializeOKLanguagePerl
+		return nil
+	case PostInitializeOKLanguagePhp:
+		*s = PostInitializeOKLanguagePhp
+		return nil
+	case PostInitializeOKLanguagePython:
+		*s = PostInitializeOKLanguagePython
+		return nil
+	case PostInitializeOKLanguageRuby:
+		*s = PostInitializeOKLanguageRuby
+		return nil
+	case PostInitializeOKLanguageRust:
+		*s = PostInitializeOKLanguageRust
+		return nil
+	case PostInitializeOKLanguageNode:
+		*s = PostInitializeOKLanguageNode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // 配車要求ステータス

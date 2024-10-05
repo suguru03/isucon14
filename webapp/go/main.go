@@ -64,7 +64,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
 		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
 		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", charitPostRequestAccept)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}
@@ -157,7 +157,7 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 func respondError(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
-	buf, marshalError := json.Marshal(map[string]string{"error": err.Error()})
+	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})
 	if marshalError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error":"marshaling error failed"}`))

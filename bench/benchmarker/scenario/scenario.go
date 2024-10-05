@@ -115,7 +115,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//w.Process(ctx)
 
 	region := s.world.Regions[1]
-	for range 1 {
+	for range 100 {
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
@@ -152,8 +152,12 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}()
 
-	for range world.ConvertHour(24 * 2) {
+	for now := range world.ConvertHour(24 * 14) {
 		s.world.Tick(s.worldCtx)
+
+		if now%world.ConvertHour(1) == 0 {
+			s.contestantLogger.Info("tick", zap.Int("time", now/world.ConvertHour(1)))
+		}
 	}
 
 	return nil
