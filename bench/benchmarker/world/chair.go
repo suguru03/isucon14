@@ -158,7 +158,11 @@ func (c *Chair) Tick(ctx *Context) error {
 			c.ServerRequestID = null.String{}
 
 		case RequestStatusCanceled:
-			// TODO
+			// サーバー側でリクエストがキャンセルされた
+
+			// 進行中のリクエストが無い状態にする
+			c.Request = nil
+			c.ServerRequestID = null.String{}
 		}
 
 	// オファーされたリクエストが存在するが、詳細を未取得
@@ -247,8 +251,8 @@ func (c *Chair) ChangeRequestStatus(status RequestStatus) error {
 	if request == nil {
 		return CodeError(ErrorCodeChairNotAssignedButStatusChanged)
 	}
-	if request.DesiredStatus != status {
-		return CodeError(ErrorCodeUnexpectedStatusTransitionOccurred)
+	if status != RequestStatusCanceled && request.DesiredStatus != status {
+		return CodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred)
 	}
 	request.ChairStatus = status
 	return nil
