@@ -75,7 +75,7 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		go f(&ChairNotificationEventCompleted{})
+		go f(&ChairNotificationEventCompleted{ServerRequestID: req.ServerID})
 	}
 	return nil
 }

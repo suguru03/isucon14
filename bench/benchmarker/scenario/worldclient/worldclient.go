@@ -372,7 +372,9 @@ func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				case api.RequestStatusARRIVED:
 					// event = &world.ChairNotificationEventArrived{}
 				case api.RequestStatusCOMPLETED:
-					event = &world.ChairNotificationEventCompleted{}
+					event = &world.ChairNotificationEventCompleted{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCANCELED:
 					// event = &world.ChairNotificationEventCanceled{}
 				}
