@@ -2,7 +2,6 @@ package scenario
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/isucon/isucandar"
@@ -141,7 +140,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			for _, chair := range s.world.ChairDB.Iter() {
 				if chair.State == world.ChairStateActive && !chair.ServerRequestID.Valid {
 					if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
-						f(world.ChairNotificationEventMatched, fmt.Sprintf(`{"id":"%s"}`, id))
+						f(&world.ChairNotificationEventMatched{ServerRequestID: id})
 					}
 					matched = true
 					break

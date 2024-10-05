@@ -1,7 +1,6 @@
 package world
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand/v2"
@@ -354,23 +353,14 @@ func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
 	return true
 }
 
-func (c *Chair) HandleNotification(eventType, eventData string) {
-	switch eventType {
-	case ChairNotificationEventMatched:
-		var data struct {
-			ID string `json:"id"`
-		}
-		err := json.Unmarshal([]byte(eventData), &data)
-		if err != nil {
-			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
-			return
-		}
-
-		err = c.AssignRequest(data.ID)
+func (c *Chair) HandleNotification(event NotificationEvent) {
+	switch data := event.(type) {
+	case *ChairNotificationEventMatched:
+		err := c.AssignRequest(data.ServerRequestID)
 		if err != nil {
 			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
 		}
-	case ChairNotificationEventCompleted:
+	case *ChairNotificationEventCompleted:
 		err := c.ChangeRequestStatus(RequestStatusCompleted)
 		if err != nil {
 			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)

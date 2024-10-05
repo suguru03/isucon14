@@ -81,9 +81,9 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 			switch req.DesiredStatus {
 			case world.RequestStatusDispatched:
-				go f(world.UserNotificationEventDispatched, "")
+				go f(&world.UserNotificationEventDispatched{})
 			case world.RequestStatusArrived:
-				go f(world.UserNotificationEventArrived, "")
+				go f(&world.UserNotificationEventArrived{})
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 
 	// TODO: webapp側から通知してもらうようにする
 	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(world.UserNotificationEventDispatching, "")
+		go f(&world.UserNotificationEventDispatching{})
 	}
 	return nil
 }
@@ -135,7 +135,7 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 
 	// TODO webapp側から通知してもらうようにする
 	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(world.UserNotificationEventCarrying, "")
+		go f(&world.UserNotificationEventCarrying{})
 	}
 	return nil
 }
@@ -156,7 +156,7 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 
 	// TODO webapp側から通知してもらうようにする
 	if f, ok := c.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		go f(world.ChairNotificationEventCompleted, "")
+		go f(&world.ChairNotificationEventCompleted{})
 	}
 	return nil
 }
