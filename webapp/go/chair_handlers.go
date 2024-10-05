@@ -127,6 +127,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 
+	var lastRideRequest *RideRequest
 	for {
 		select {
 		case <-r.Context().Done():
@@ -135,13 +136,17 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = ?", chair.ID, "DISPATCHING")
+			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, chair.ID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					time.Sleep(1 * time.Second)
+					time.Sleep(100 * time.Millisecond)
 					continue
 				}
 				respondError(w, http.StatusInternalServerError, err)
+			}
+			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
+				time.Sleep(100 * time.Millisecond)
+				continue
 			}
 
 			user := &User{}
@@ -166,6 +171,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 				respondError(w, http.StatusInternalServerError, err)
 				return
 			}
+			lastRideRequest = rideRequest
 		}
 	}
 }
@@ -207,6 +213,11 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	respondJSON(w, http.StatusOK, &getChairRequestResponse{
 		RequestID: rideRequest.ID,
 		User: simpleUser{
@@ -242,12 +253,17 @@ func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
+	if rideRequest.ChairID.String != chair.ID {
 		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
 
 	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -276,12 +292,17 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
+	if rideRequest.ChairID.String != chair.ID {
 		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
 
 	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -310,7 +331,7 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.ChairID != chair.ID {
+	if rideRequest.ChairID.String != chair.ID {
 		respondError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
 		return
 	}
