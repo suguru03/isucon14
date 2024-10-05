@@ -105,14 +105,30 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+LOOP:
 	for {
 		// TODO: トランザクションを利用する
-		chair := &Chair{}
-		err := db.Get(
-			chair,
-			`SELECT * FROM chairs WHERE is_active = 1 ORDER BY RAND() LIMIT 1`,
-		)
+		tx, err := db.Beginx()
 		if err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+		defer tx.Rollback()
+
+		rideRequest := &RideRequest{}
+		if err := tx.Get(
+			rideRequest,
+			`SELECT * FROM ride_requests WHERE id = ? FOR UPDATE`,
+			requestID,
+		); err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+		}
+
+		chair := &Chair{}
+		if err := tx.Get(
+			chair,
+			`SELECT * FROM chairs WHERE is_active = 1 ORDER BY RAND() LIMIT 1 FOR UPDATE`,
+		); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				time.Sleep(1 * time.Second)
 				continue
@@ -121,11 +137,32 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = db.Exec(
+		rideRequests := []RideRequest{}
+		if err := tx.Select(
+			&rideRequests,
+			`SELECT * FROM ride_requests WHERE chair_id = ?`,
+			chair.ID,
+		); err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+		}
+
+		for _, rideRequest := range rideRequests {
+			if rideRequest.Status != "COMPLETED" && rideRequest.Status != "CANCELED" {
+				tx.Rollback()
+				continue LOOP
+			}
+		}
+
+		_, err = tx.Exec(
 			`UPDATE ride_requests SET chair_id = ?, status = ? WHERE id = ?`,
 			chair.ID, "DISPATCHING", requestID,
 		)
 		if err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
 			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
