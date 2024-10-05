@@ -24,16 +24,18 @@ type WorldClient struct {
 	webappClientConfig           webapp.ClientConfig
 	world                        *world.World
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
+	requestQueue                 chan string
 	chairClients                 map[string]*chairClient
 	userClients                  map[string]*userClient
 }
 
-func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]) *WorldClient {
+func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], requestQueue chan string) *WorldClient {
 	return &WorldClient{
 		ctx:                          ctx,
 		world:                        w,
 		webappClientConfig:           webappClientConfig,
 		chairNotificationReceiverMap: chairNotificationReceiverMap,
+		requestQueue:                 requestQueue,
 		chairClients:                 map[string]*chairClient{},
 		userClients:                  map[string]*userClient{},
 	}
@@ -70,18 +72,20 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 	}
 
 	req := chair.Request
-	if req != nil && req.DesiredStatus != req.UserStatus {
-		err := c.world.UpdateRequestUserStatus(req.User.ID, req.DesiredStatus)
-		if err != nil {
-			return err
+	go func() {
+		if req != nil && req.DesiredStatus != req.UserStatus {
+			err := c.world.UpdateRequestUserStatus(req.User.ID, req.DesiredStatus)
+			if err != nil {
+				panic(err)
+			}
 		}
-	}
+	}()
 
 	return nil
 }
 
-func (c *WorldClient) SendAcceptRequest(ctx *world.Context, req *world.Request) error {
-	chairClient, err := c.getChairClient(req.Chair.ServerID)
+func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
+	chairClient, err := c.getChairClient(chair.ServerID)
 	if err != nil {
 		return err
 	}
@@ -91,10 +95,12 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, req *world.Request) 
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
 
-	err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusDispatching)
-	if err != nil {
-		return err
-	}
+	go func() {
+		err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusDispatching)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	return nil
 }
@@ -124,10 +130,12 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
 
-	err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusCarrying)
-	if err != nil {
-		return err
-	}
+	go func() {
+		err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusCarrying)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	return nil
 }
 
@@ -153,7 +161,6 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 }
 
 func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) (*world.SendCreateRequestResponse, error) {
-	// TODO: queue
 	userClient, err := c.getUserClient(req.User.ServerID)
 	if err != nil {
 		return nil, err
@@ -174,6 +181,8 @@ func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) 
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToPostRequest, err)
 	}
+
+	c.requestQueue <- response.RequestID
 
 	return &world.SendCreateRequestResponse{ServerRequestID: response.RequestID}, nil
 }
@@ -259,6 +268,8 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 		Firstname:   data.FirstName,
 		Lastname:    data.LastName,
 		DateOfBirth: data.DateOfBirth,
+		CarModel:    data.ChairModel,
+		CarNo:       data.ChairNo,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterDriver, err)

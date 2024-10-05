@@ -4,7 +4,7 @@ type Client interface {
 	// SendChairCoordinate サーバーに椅子の座標を送信する
 	SendChairCoordinate(ctx *Context, chair *Chair) error
 	// SendAcceptRequest サーバーに配椅子要求を受理することを報告する
-	SendAcceptRequest(ctx *Context, req *Request) error
+	SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error
 	// SendDenyRequest サーバーに配椅子要求を受理することを報告する
 	SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error
 	// SendDepart サーバーに客が搭乗完了して出発することを報告する

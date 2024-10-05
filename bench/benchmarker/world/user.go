@@ -1,6 +1,8 @@
 package world
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type UserState int
 
@@ -134,7 +136,7 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 		return CodeError(ErrorCodeUserNotRequestingButStatusChanged)
 	}
 	if request.DesiredStatus != status {
-		return CodeError(ErrorCodeUnexpectedStatusTransitionOccurred)
+		return WrapCodeError(ErrorCodeUnexpectedStatusTransitionOccurred, fmt.Errorf("request server id: %v, request request status: %v, status: %v", request.ServerID, request.DesiredStatus, status))
 	}
 	request.UserStatus = status
 	return nil

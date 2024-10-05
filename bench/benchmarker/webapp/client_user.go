@@ -42,6 +42,10 @@ func (c *Client) Register(ctx context.Context, reqBody *api.RegisterUserReq) (*a
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
 
+	c.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+resBody.AccessToken)
+	})
+
 	return resBody, nil
 }
 

@@ -71,7 +71,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
-				err := ctx.client.SendAcceptRequest(ctx, c.Request)
+				err := ctx.client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToAcceptRequest, err)
 				}

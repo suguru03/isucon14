@@ -16,7 +16,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriverReq) (*api.RegisterUserOK, error) {
+func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriverReq) (*api.RegisterDriverCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -41,10 +41,14 @@ func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriver
 		return nil, fmt.Errorf("POST /driver/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
-	resBody := &api.RegisterUserOK{}
+	resBody := &api.RegisterDriverCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
+
+	c.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+resBody.AccessToken)
+	})
 
 	return resBody, nil
 }
@@ -77,6 +81,10 @@ func (c *Client) PostDeactivate(ctx context.Context) (*api.DeactivateDriverNoCon
 	req, err := c.agent.NewRequest(http.MethodPost, "/driver/deactivate", nil)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
 	}
 
 	resp, err := c.agent.Do(ctx, req)
@@ -128,6 +136,10 @@ func (c *Client) GetDriverRequest(ctx context.Context, requestID string) (*api.G
 		return nil, err
 	}
 
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
 		c.contestantLogger.Warn("GET /driver/requests/{requestID} のリクエストが失敗しました", zap.Error(err))
@@ -174,6 +186,10 @@ func (c *Client) PostDeny(ctx context.Context, requestID string) (*api.DenyReque
 	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/driver/requests/%s/deny", requestID), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
 	}
 
 	resp, err := c.agent.Do(ctx, req)

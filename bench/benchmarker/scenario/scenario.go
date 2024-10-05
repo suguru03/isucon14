@@ -34,6 +34,7 @@ type Scenario struct {
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
+	step             *isucandar.BenchmarkStep
 
 	requestQueue                 chan string // あんまり考えて導入してないです
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
@@ -41,6 +42,7 @@ type Scenario struct {
 
 func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 	chairNotificationReceiverMap := concurrent.NewSimpleMap[string, world.NotificationReceiverFunc]()
+	requestQueue := make(chan string, 1000)
 	w := world.NewWorld()
 	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
 		TargetBaseURL:         target,
@@ -48,7 +50,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ClientIdleConnTimeout: 10 * time.Second,
 		InsecureSkipVerify:    true,
 		ContestantLogger:      contestantLogger,
-	}, chairNotificationReceiverMap)
+	}, chairNotificationReceiverMap, requestQueue)
 	worldCtx := world.NewContext(w, worldClient)
 
 	return &Scenario{
@@ -57,7 +59,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		world:            w,
 		worldCtx:         worldCtx,
 
-		requestQueue:                 make(chan string, 1000),
+		requestQueue:                 requestQueue,
 		chairNotificationReceiverMap: chairNotificationReceiverMap,
 	}
 }
@@ -118,18 +120,17 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//w.Process(ctx)
 
 	region := s.world.Regions[1]
-	for range 10 {
-		chair, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
+	for range 1 {
+		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
 			WorkTime:          world.NewInterval(convertHour(0), convertHour(23)),
 		})
-		s.contestantLogger.Info("CreateChair", zap.Any("chair", chair))
 		if err != nil {
 			return err
 		}
 	}
-	for range 20 {
+	for range 2 {
 		u, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {
 			return err
@@ -155,22 +156,9 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}()
 
-	for range convertHour(24 * 3) {
+	for range convertHour(24 * 2) {
 		s.world.Tick(s.worldCtx)
 	}
-
-	for _, u := range s.world.UserDB.Iter() {
-		s.contestantLogger.Info("User", zap.Any("user", u))
-	}
-	sales := 0
-	for _, req := range s.world.RequestDB.Iter() {
-		s.contestantLogger.Info("Request", zap.Any("request", req))
-		if req.DesiredStatus == world.RequestStatusCompleted {
-			sales += req.Fare()
-		}
-	}
-
-	s.contestantLogger.Info("Sales", zap.Int("sales", sales))
 
 	return nil
 }

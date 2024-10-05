@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 
 		l.Info("benchmark started")
 		result := b.Start(context.Background())
-		result.Score.Set("ping", 1)
+		result.Score.Set("sales", 1)
 
 		errors := result.Errors.All()
 		for _, err := range errors {
