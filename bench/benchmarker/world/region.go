@@ -20,7 +20,7 @@ func (r *Region) Contains(c Coordinate) bool {
 // RangeX RegionのX座標の範囲
 func (r *Region) RangeX() (left, right int) {
 	halfWidth := r.RegionWidth / 2
-	return r.RegionOffsetX - halfWidth, r.RegionOffsetY + halfWidth
+	return r.RegionOffsetX - halfWidth, r.RegionOffsetX + halfWidth
 }
 
 // RangeY RegionのY座標の範囲
