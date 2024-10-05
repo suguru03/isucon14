@@ -38,8 +38,9 @@ type World struct {
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout   time.Duration
-	timeoutTicker *time.Ticker
+	tickTimeout     time.Duration
+	timeoutTicker   *time.Ticker
+	criticalErrorCh chan error
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
@@ -59,10 +60,11 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		CompletedRequestChan: completedRequestChan,
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(1 * time.Hour),
+		criticalErrorCh:      make(chan error),
 	}
 }
 
-func (w *World) Tick(ctx *Context) {
+func (w *World) Tick(ctx *Context) error {
 	var wg sync.WaitGroup
 
 	w.timeoutTicker.Reset(w.tickTimeout)
@@ -75,8 +77,7 @@ func (w *World) Tick(ctx *Context) {
 				defer wg.Done()
 				err := c.Tick(ctx)
 				if err != nil {
-					// TODO: エラーペナルティ
-					log.Println(err)
+					w.HandleTickError(ctx, err)
 				}
 			}()
 		}
@@ -89,14 +90,16 @@ func (w *World) Tick(ctx *Context) {
 				defer wg.Done()
 				err := u.Tick(ctx)
 				if err != nil {
-					// TODO: エラーペナルティ
-					log.Println(err)
+					w.HandleTickError(ctx, err)
 				}
 			}()
 		}
 	}
 
 	select {
+	case err := <-w.criticalErrorCh:
+		// クリティカルエラーが発生
+		return err
 	case <-concurrent.WaitChan(&wg):
 		// タイムアウトする前に完了
 
@@ -121,6 +124,8 @@ func (w *World) Tick(ctx *Context) {
 
 	w.Time++
 	w.TimeOfDay = int(w.Time % LengthOfDay)
+
+	return nil
 }
 
 type CreateUserArgs struct {
@@ -205,4 +210,22 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	}
 	c.tickDone.Store(true)
 	return w.ChairDB.Create(c), nil
+}
+
+func (w *World) HandleTickError(ctx *Context, err error) {
+	if errs, ok := UnwrapMultiError(err); ok {
+		for _, err2 := range errs {
+			if IsCriticalError(err2) {
+				w.criticalErrorCh <- err2
+			} else {
+				// TODO: エラーペナルティ
+				log.Println(err2)
+			}
+		}
+	} else if IsCriticalError(err) {
+		w.criticalErrorCh <- err
+	} else {
+		// TODO: エラーペナルティ
+		log.Println(err)
+	}
 }

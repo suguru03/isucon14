@@ -46,6 +46,14 @@ const (
 	ErrorCodeRequestCanceledByServer
 )
 
+var CriticalErrorCodes = map[ErrorCode]bool{
+	ErrorCodeUserNotRequestingButStatusChanged:              true,
+	ErrorCodeChairNotAssignedButStatusChanged:               true,
+	ErrorCodeUnexpectedUserRequestStatusTransitionOccurred:  true,
+	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: true,
+	ErrorCodeChairAlreadyHasRequest:                         true,
+}
+
 type codeError struct {
 	code ErrorCode
 	err  error
@@ -80,4 +88,12 @@ func WrapCodeError(code ErrorCode, err error) error {
 
 func CodeError(code ErrorCode) error {
 	return &codeError{code, nil}
+}
+
+func IsCriticalError(err error) bool {
+	var t *codeError
+	if errors.As(err, &t) {
+		return CriticalErrorCodes[t.code]
+	}
+	return false
 }
