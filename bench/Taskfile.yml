@@ -7,6 +7,9 @@ tasks:
   build:
     cmds:
       - go build -ldflags "-s -w"
+  test:
+    cmds:
+      - go test ./...
   image-build:
     cmds:
       - ko build -L .
