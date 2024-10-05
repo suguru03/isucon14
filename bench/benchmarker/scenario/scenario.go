@@ -7,8 +7,6 @@ import (
 
 	"github.com/isucon/isucandar"
 	"go.uber.org/zap"
-	"golang.org/x/exp/constraints"
-
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
 	"github.com/isucon/isucon14/bench/benchmarker/scenario/worldclient"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
@@ -88,11 +86,6 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 	return nil
 }
 
-// convertHour h時間を仮想世界時間に変換する
-func convertHour[T constraints.Integer](h T) T {
-	return h * world.LengthOfHour
-}
-
 // Load はシナリオのメイン処理を行う
 func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
 	// agent, err := verify.NewAgent(s.target, s.contestantLogger)
@@ -127,7 +120,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
-			WorkTime:          world.NewInterval(convertHour(0), convertHour(23)),
+			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(23)),
 		})
 		if err != nil {
 			return err
@@ -160,7 +153,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}()
 
-	for range convertHour(24 * 2) {
+	for range world.ConvertHour(24 * 2) {
 		s.world.Tick(s.worldCtx)
 	}
 

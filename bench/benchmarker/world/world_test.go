@@ -2,13 +2,11 @@ package world
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
-	"github.com/isucon/isucon14/bench/internal/random"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -138,18 +136,7 @@ func (s *FastServerStub) MatchingLoop() {
 
 func TestWorld(t *testing.T) {
 	var (
-		region = &Region{
-			RegionWidth:   1000,
-			RegionHeight:  1000,
-			RegionOffsetX: 0,
-			RegionOffsetY: 0,
-		}
-		world = &World{
-			Regions:   map[int]*Region{1: region},
-			UserDB:    NewGenericDB[UserID, *User](),
-			ChairDB:   NewGenericDB[ChairID, *Chair](),
-			RequestDB: NewRequestDB(),
-		}
+		world  = NewWorld()
 		client = &FastServerStub{
 			t:                            t,
 			world:                        world,
@@ -159,17 +146,17 @@ func TestWorld(t *testing.T) {
 			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 		}
 		ctx = &Context{
-			rand:   rand.New(random.NewLockedSource(rand.NewPCG(rand.Uint64(), rand.Uint64()))),
 			world:  world,
 			client: client,
 		}
+		region = world.Regions[1]
 	)
 
 	for range 10 {
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: RandomCoordinateOnRegion(region),
-			WorkTime:          NewInterval(convertHour(0), convertHour(23)),
+			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(23)),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -185,7 +172,7 @@ func TestWorld(t *testing.T) {
 
 	go client.MatchingLoop()
 
-	for range convertHour(24 * 3) {
+	for range ConvertHour(24 * 3) {
 		world.Tick(ctx)
 	}
 

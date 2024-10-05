@@ -45,7 +45,7 @@ func neededTime[T constraints.Integer](d T, s T) T {
 	return t
 }
 
-// convertHour h時間を仮想世界時間に変換する
-func convertHour[T constraints.Integer](h T) T {
+// ConvertHour h時間を仮想世界時間に変換する
+func ConvertHour[T constraints.Integer](h T) T {
 	return h * LengthOfHour
 }

@@ -31,6 +31,25 @@ type World struct {
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
 	RequestDB *RequestDB
+	// RootRand ルートの乱数生成器
+	RootRand *rand.Rand
+}
+
+func NewWorld() *World {
+	region := &Region{
+		RegionWidth:   1000,
+		RegionHeight:  1000,
+		RegionOffsetX: 0,
+		RegionOffsetY: 0,
+	}
+	return &World{
+		Regions:   map[int]*Region{1: region},
+		UserDB:    NewGenericDB[UserID, *User](),
+		ChairDB:   NewGenericDB[ChairID, *Chair](),
+		RequestDB: NewRequestDB(),
+		// TODO シードをどうする
+		RootRand: random.NewLockedRand(rand.NewPCG(0, 0)),
+	}
 }
 
 func (w *World) Tick(ctx *Context) {
@@ -95,6 +114,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		State:          UserStateInactive,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
 	}), nil
 }
 
@@ -140,20 +160,6 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		WorkTime:       args.WorkTime,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
 	}), nil
-}
-
-func NewWorld() *World {
-	region := &Region{
-		RegionWidth:   1000,
-		RegionHeight:  1000,
-		RegionOffsetX: 0,
-		RegionOffsetY: 0,
-	}
-	return &World{
-		Regions:   map[int]*Region{1: region},
-		UserDB:    NewGenericDB[UserID, *User](),
-		ChairDB:   NewGenericDB[ChairID, *Chair](),
-		RequestDB: NewRequestDB(),
-	}
 }

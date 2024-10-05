@@ -10,26 +10,19 @@ import (
 )
 
 func TestChair_moveRandom(t *testing.T) {
-	ctx := &Context{
-		rand: rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
-	}
-
 	c := Chair{
 		Current: C(0, 0),
 		Speed:   13,
+		Rand:    rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
 	}
 	for range 1000 {
 		prev := c.Current
-		c.moveRandom(ctx)
+		c.moveRandom()
 		assert.Equal(t, c.Speed, prev.DistanceTo(c.Current), "ランダムに動く量は常にSpeedと一致しなければならない")
 	}
 }
 
 func TestChair_moveToward(t *testing.T) {
-	ctx := &Context{
-		rand: rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
-	}
-
 	tests := []struct {
 		chair *Chair
 		dest  Coordinate
@@ -99,6 +92,7 @@ func TestChair_moveToward(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt.chair.Rand = rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
 		t.Run(fmt.Sprintf("%s->%s,speed:%d", tt.chair.Current, tt.dest, tt.chair.Speed), func(t *testing.T) {
 			initialCurrent := tt.chair.Current
 
@@ -116,7 +110,7 @@ func TestChair_moveToward(t *testing.T) {
 					require.NotEqual(t, tt.dest, tt.chair.Current, "必要なループ数より前に到着している")
 
 					prev := tt.chair.Current
-					tt.chair.moveToward(ctx, tt.dest)
+					tt.chair.moveToward(tt.dest)
 					if !tt.dest.Equals(tt.chair.Current) {
 						require.Equal(t, tt.chair.Speed, prev.DistanceTo(tt.chair.Current), "目的地に到着するまでの１ループあたりの移動量は常にSpeedと一致しないといけない")
 					}
@@ -129,7 +123,7 @@ func TestChair_moveToward(t *testing.T) {
 
 func TestChair_isRequestAcceptable(t *testing.T) {
 	const speed = 10
-	workTime8to16 := NewInterval(convertHour(8), convertHour(16))
+	workTime8to16 := NewInterval(ConvertHour(8), ConvertHour(16))
 
 	tests := []struct {
 		name      string
@@ -153,10 +147,10 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 				Speed:    speed,
 				WorkTime: workTime8to16,
 			},
-			timeOfDay: convertHour(10),
+			timeOfDay: ConvertHour(10),
 			req: &Request{
 				PickupPoint:      C(speed*10, 0),
-				DestinationPoint: C(speed*10, speed*convertHour(1)),
+				DestinationPoint: C(speed*10, speed*ConvertHour(1)),
 			},
 			expected: true,
 		},
@@ -168,10 +162,10 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 				Speed:    speed,
 				WorkTime: workTime8to16,
 			},
-			timeOfDay: convertHour(10),
+			timeOfDay: ConvertHour(10),
 			req: &Request{
 				PickupPoint:      C(speed*10, 0),
-				DestinationPoint: C(speed*10, speed*convertHour(8)),
+				DestinationPoint: C(speed*10, speed*ConvertHour(8)),
 			},
 			expected: false,
 		},
