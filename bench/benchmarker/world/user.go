@@ -74,25 +74,30 @@ func (u *User) Tick(ctx *Context) error {
 		switch u.Request.UserStatus {
 		case RequestStatusMatching:
 			// マッチングされるまで待機する
+			// 一向にマッチングされない場合は、このユーザーの行動はハングする
 			break
 
 		case RequestStatusDispatching:
 			// 椅子が到着するまで待つ
-			// TODO: 椅子が一向に到着しない場合の対応
+			// 一向に到着しない場合は、このユーザーの行動はハングする
 			break
 
 		case RequestStatusDispatched:
 			// 椅子が出発するのを待つ
-			// TODO: 椅子が一向に出発しない場合の対応
+			// 一向に到着しない場合は、このユーザーの行動はハングする
 			break
 
 		case RequestStatusCarrying:
 			// 椅子が到着するのを待つ
-			// TODO: 椅子が一向に到着しない場合の対応
+			// 一向に到着しない場合は、このユーザーの行動はハングする
 			break
 
 		case RequestStatusArrived:
 			// 送迎の評価を行う
+			// TODO: マッチング時間ペナルティ
+			// TODO: 到着待ち時間ペナルティ
+			// TODO: 出発待ち時間ペナルティ
+			// TODO: 乗車時間ペナルティ
 			err := ctx.client.SendEvaluation(ctx, u.Request)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToEvaluate, err)

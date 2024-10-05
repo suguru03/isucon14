@@ -28,6 +28,11 @@ func (c Coordinate) DistanceTo(c2 Coordinate) int {
 	return abs(c.X-c2.X) + abs(c.Y-c2.Y)
 }
 
+// Within 座標がregion内にあるかどうか
+func (c Coordinate) Within(region *Region) bool {
+	return region.Contains(c)
+}
+
 func RandomCoordinate(worldX, worldY int) Coordinate {
 	return C(rand.IntN(worldX), rand.IntN(worldY))
 }
