@@ -138,6 +138,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		u.State = world.UserStateActive
 	}
 
+	lastLogTime := time.Now()
 	for now := range world.ConvertHour(24 * 14) {
 		err := s.world.Tick(s.worldCtx)
 		if err != nil {
@@ -146,7 +147,8 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 
 		if now%world.ConvertHour(1) == 0 {
-			s.contestantLogger.Info("tick", zap.Int("time", now/world.ConvertHour(1)))
+			s.contestantLogger.Info("tick", zap.Duration("since", time.Since(lastLogTime)), zap.Int("time", now/world.ConvertHour(1)))
+			lastLogTime = time.Now()
 		}
 	}
 
