@@ -114,9 +114,10 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
+	chairLocationID := ulid.Make().String()
 	if _, err := tx.Exec(
-		`INSERT INTO chair_locations (chair_id, latitude, longitude) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE latitude = ?, longitude = ?`,
-		chair.ID, req.Latitude, req.Longitude, req.Latitude, req.Longitude,
+		`INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)`,
+		chairLocationID, chair.ID, req.Latitude, req.Longitude,
 	); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
@@ -176,6 +177,10 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 				}
 				defer tx.Rollback()
 
+				if _, err := tx.Exec("SELECT * FROM chairs WHERE id = ? FOR UPDATE", chair.ID); err != nil {
+					return err
+				}
+
 				if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						found = false
@@ -186,7 +191,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 				if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
 					matchRequest := &RideRequest{}
-					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
+					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
 						if errors.Is(err, sql.ErrNoRows) {
 							return nil
 						}
