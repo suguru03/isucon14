@@ -272,7 +272,68 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 }
 
 func appGetNotification(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	user := r.Context().Value("user").(*User)
+
+	// Server Sent Events
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+
+	var lastRideRequest *RideRequest
+	for {
+		select {
+		case <-r.Context().Done():
+			w.WriteHeader(http.StatusOK)
+			return
+
+		default:
+			rideRequest := &RideRequest{}
+			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, user.ID)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+				respondError(w, http.StatusInternalServerError, err)
+			}
+			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			chair := &Chair{}
+			if rideRequest.ChairID.Valid {
+				if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+					respondError(w, http.StatusInternalServerError, err)
+					return
+				}
+			}
+
+			if err := writeSSE(w, "matched", &getAppRequestResponse{
+				RequestID: rideRequest.ID,
+				PickupCoordinate: Coordinate{
+					Latitude:  rideRequest.PickupLatitude,
+					Longitude: rideRequest.PickupLongitude,
+				},
+				DestinationCoordinate: Coordinate{
+					Latitude:  rideRequest.DestinationLatitude,
+					Longitude: rideRequest.DestinationLongitude,
+				},
+				Status: rideRequest.Status,
+				Chair: simpleChair{
+					ID:         chair.ID,
+					Name:       chair.Firstname + " " + chair.Lastname,
+					ChairModel: chair.ChairModel,
+					ChairNo:    chair.ChairNo,
+				},
+				CreatedAt: rideRequest.RequestedAt.Unix(),
+				UpdateAt:  rideRequest.UpdatedAt.Unix(),
+			}); err != nil {
+				respondError(w, http.StatusInternalServerError, err)
+				return
+			}
+			lastRideRequest = rideRequest
+		}
+	}
 }
 
 type postAppInquiryRequest struct {
