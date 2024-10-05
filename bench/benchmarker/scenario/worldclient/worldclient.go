@@ -37,6 +37,7 @@ func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig weba
 		ctx:                          ctx,
 		world:                        w,
 		webappClientConfig:           webappClientConfig,
+		userNotificationReceiverMap:  userNotificationReceiverMap,
 		chairNotificationReceiverMap: chairNotificationReceiverMap,
 		requestQueue:                 requestQueue,
 		chairClients:                 map[string]*chairClient{},

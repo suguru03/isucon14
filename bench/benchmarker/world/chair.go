@@ -2,8 +2,8 @@ package world
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/guregu/null/v5"
 )
@@ -42,8 +42,10 @@ type Chair struct {
 	RegisteredData RegisteredChairData
 	// AccessToken サーバーアクセストークン
 	AccessToken string
-	// 通知ストリームコネクション
+	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
+	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
+	NotificationHandleErrors []error
 }
 
 type RegisteredChairData struct {
@@ -65,6 +67,13 @@ func (c *Chair) SetID(id ChairID) {
 
 func (c *Chair) Tick(ctx *Context) error {
 	switch {
+	// 通知処理にエラーが発生している
+	case len(c.NotificationHandleErrors) > 0:
+		// TODO この処理に1tick使って良いか考える
+		err := errors.Join(c.NotificationHandleErrors...)
+		c.NotificationHandleErrors = c.NotificationHandleErrors[:0] // 配列クリア
+		return err
+
 	// 進行中のリクエストが存在
 	case c.Request != nil:
 		switch c.Request.ChairStatus {
@@ -349,23 +358,18 @@ func (c *Chair) HandleNotification(eventType, eventData string) {
 		}
 		err := json.Unmarshal([]byte(eventData), &data)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
+			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
 			return
 		}
 
 		err = c.AssignRequest(data.ID)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
 		}
 	case ChairNotificationEventCompleted:
 		err := c.ChangeRequestStatus(RequestStatusCompleted)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
 		}
 	}
 }
