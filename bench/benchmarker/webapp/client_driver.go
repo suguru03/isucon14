@@ -16,13 +16,13 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriverReq) (*api.RegisterDriverCreated, error) {
+func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRegisterReq) (*api.ChairPostRegisterCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/driver/register", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/chair/register", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +33,15 @@ func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriver
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/register のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/register のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /driver/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
-	resBody := &api.RegisterDriverCreated{}
+	resBody := &api.ChairPostRegisterCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -53,8 +53,8 @@ func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriver
 	return resBody, nil
 }
 
-func (c *Client) PostActivate(ctx context.Context) (*api.ActivateDriverNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, "/driver/activate", nil)
+func (c *Client) ChairPostActivate(ctx context.Context) (*api.ChairPostActivateNoContent, error) {
+	req, err := c.agent.NewRequest(http.MethodPost, "/chair/activate", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -65,20 +65,20 @@ func (c *Client) PostActivate(ctx context.Context) (*api.ActivateDriverNoContent
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/activate のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/activate のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/activate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/activate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.ActivateDriverNoContent{}
+	resBody := &api.ChairPostActivateNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) PostDeactivate(ctx context.Context) (*api.DeactivateDriverNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, "/driver/deactivate", nil)
+func (c *Client) ChairPostDeactivate(ctx context.Context) (*api.ChairPostDeactivateNoContent, error) {
+	req, err := c.agent.NewRequest(http.MethodPost, "/chair/deactivate", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,25 +89,25 @@ func (c *Client) PostDeactivate(ctx context.Context) (*api.DeactivateDriverNoCon
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/deactivate のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/deactivate のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/deactivate へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/deactivate へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.DeactivateDriverNoContent{}
+	resBody := &api.ChairPostDeactivateNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) PostCoordinate(ctx context.Context, reqBody *api.Coordinate) (*api.PostDriverCoordinateNoContent, error) {
+func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinate) (*api.ChairPostCoordinateNoContent, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/driver/coordinate", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/chair/coordinate", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -118,20 +118,20 @@ func (c *Client) PostCoordinate(ctx context.Context, reqBody *api.Coordinate) (*
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/coordinate のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/coordinate のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/coordinate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/coordinate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.PostDriverCoordinateNoContent{}
+	resBody := &api.ChairPostCoordinateNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) GetDriverRequest(ctx context.Context, requestID string) (*api.GetRequestOK, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/driver/requests/%s", requestID), nil)
+func (c *Client) ChairGetRequest(ctx context.Context, requestID string) (*api.ChairGetRequestOK, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/chair/requests/%s", requestID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -142,15 +142,15 @@ func (c *Client) GetDriverRequest(ctx context.Context, requestID string) (*api.G
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /driver/requests/{requestID} のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("GET /chair/requests/{requestID} のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /driver/requests/{requestID} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /chair/requests/{requestID} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.GetRequestOK{}
+	resBody := &api.ChairGetRequestOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -158,8 +158,8 @@ func (c *Client) GetDriverRequest(ctx context.Context, requestID string) (*api.G
 	return resBody, nil
 }
 
-func (c *Client) PostAccept(ctx context.Context, requestID string) (*api.AcceptRequestNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/driver/requests/%s/accept", requestID), nil)
+func (c *Client) ChairPostRequestAccept(ctx context.Context, requestID string) (*api.ChairPostRequestAcceptNoContent, error) {
+	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/chair/requests/%s/accept", requestID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -170,20 +170,20 @@ func (c *Client) PostAccept(ctx context.Context, requestID string) (*api.AcceptR
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/requests/{requestID}/accept のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/requests/{requestID}/accept のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/requests/{requestID}/accept へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/accept へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.AcceptRequestNoContent{}
+	resBody := &api.ChairPostRequestAcceptNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) PostDeny(ctx context.Context, requestID string) (*api.DenyRequestNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/driver/requests/%s/deny", requestID), nil)
+func (c *Client) ChairPostRequestDeny(ctx context.Context, requestID string) (*api.ChairPostRequestDenyNoContent, error) {
+	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/chair/requests/%s/deny", requestID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -194,20 +194,20 @@ func (c *Client) PostDeny(ctx context.Context, requestID string) (*api.DenyReque
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/requests/{requestID}/deny のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/requests/{requestID}/deny のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/requests/{requestID}/deny へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/deny へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.DenyRequestNoContent{}
+	resBody := &api.ChairPostRequestDenyNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) PostDepart(ctx context.Context, requestID string) (*api.DepartNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/driver/requests/%s/depart", requestID), nil)
+func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (*api.ChairPostRequestDepartNoContent, error) {
+	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/chair/requests/%s/depart", requestID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -218,20 +218,20 @@ func (c *Client) PostDepart(ctx context.Context, requestID string) (*api.DepartN
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /driver/requests/{requestID}/depart のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("POST /chair/requests/{requestID}/depart のリクエストが失敗しました", zap.Error(err))
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /driver/requests/{requestID}/depart へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/depart へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.DepartNoContent{}
+	resBody := &api.ChairPostRequestDepartNoContent{}
 	return resBody, nil
 }
 
-func (c *Client) ReceiveNotifications(ctx context.Context) (iter.Seq[*api.GetRequestOK], func() error, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, "/driver/notification", nil)
+func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairGetRequestOK], func() error, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, "/chair/notification", nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -247,16 +247,16 @@ func (c *Client) ReceiveNotifications(ctx context.Context) (iter.Seq[*api.GetReq
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /driver/notifications のリクエストが失敗しました", zap.Error(err))
+		c.contestantLogger.Warn("GET /chair/notifications のリクエストが失敗しました", zap.Error(err))
 		return nil, nil, err
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
 	resultErr := new(error)
-	return func(yield func(ok *api.GetRequestOK) bool) {
+	return func(yield func(ok *api.ChairGetRequestOK) bool) {
 			defer resp.Body.Close()
 			for scanner.Scan() {
-				request := &api.GetRequestOK{}
+				request := &api.ChairGetRequestOK{}
 				line := scanner.Text()
 				if strings.HasPrefix(line, "data:") {
 

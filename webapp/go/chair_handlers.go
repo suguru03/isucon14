@@ -11,7 +11,7 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-type postDriverRegisterRequest struct {
+type postChairRegisterRequest struct {
 	Username    string `json:"username"`
 	Firstname   string `json:"firstname"`
 	Lastname    string `json:"lastname"`
@@ -20,19 +20,19 @@ type postDriverRegisterRequest struct {
 	CarNo       string `json:"car_no"`
 }
 
-type postDriverRegisterResponse struct {
+type postChairRegisterResponse struct {
 	AccessToken string `json:"access_token"`
 	ID          string `json:"id"`
 }
 
-func postDriverRegister(w http.ResponseWriter, r *http.Request) {
-	req := &postDriverRegisterRequest{}
+func chairPostRegister(w http.ResponseWriter, r *http.Request) {
+	req := &postChairRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	driverID := ulid.Make().String()
+	chairID := ulid.Make().String()
 
 	if req.Username == "" || req.Firstname == "" || req.Lastname == "" || req.DateOfBirth == "" || req.CarModel == "" || req.CarNo == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -41,21 +41,21 @@ func postDriverRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO drivers (id, username, firstname, lastname, date_of_birth, car_model, car_no, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		driverID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.CarModel, req.CarNo, false, accessToken,
+		"INSERT INTO chairs (id, username, firstname, lastname, date_of_birth, car_model, car_no, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		chairID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.CarModel, req.CarNo, false, accessToken,
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, &postDriverRegisterResponse{
+	respondJSON(w, http.StatusCreated, &postChairRegisterResponse{
 		AccessToken: accessToken,
-		ID:          driverID,
+		ID:          chairID,
 	})
 }
 
-func driverAuthMiddleware(next http.Handler) http.Handler {
+func chairAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
@@ -63,26 +63,26 @@ func driverAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		driver := &Driver{}
-		err := db.Get(driver, "SELECT * FROM drivers WHERE access_token = ?", accessToken)
+		chair := &Chair{}
+		err := db.Get(chair, "SELECT * FROM chairs WHERE access_token = ?", accessToken)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "driver", driver)
+		ctx := context.WithValue(r.Context(), "chair", chair)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func postDriverActivate(w http.ResponseWriter, r *http.Request) {
-	driver, ok := r.Context().Value("driver").(*Driver)
+func chairPostActivate(w http.ResponseWriter, r *http.Request) {
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	_, err := db.Exec("UPDATE drivers SET is_active = ? WHERE id = ?", true, driver.ID)
+	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", true, chair.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -91,14 +91,14 @@ func postDriverActivate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func postDriverDeactivate(w http.ResponseWriter, r *http.Request) {
-	driver, ok := r.Context().Value("driver").(*Driver)
+func chairPostDeactivate(w http.ResponseWriter, r *http.Request) {
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	_, err := db.Exec("UPDATE drivers SET is_active = ? WHERE id = ?", false, driver.ID)
+	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", false, chair.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -107,22 +107,22 @@ func postDriverDeactivate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func postDriverCoordinate(w http.ResponseWriter, r *http.Request) {
+func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 	req := &Coordinate{}
 	if err := bindJSON(r, req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	driver, ok := r.Context().Value("driver").(*Driver)
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	_, err := db.Exec(
-		`INSERT INTO driver_locations (driver_id, latitude, longitude) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE latitude = ?, longitude = ?`,
-		driver.ID, req.Latitude, req.Longitude, req.Latitude, req.Longitude,
+		`INSERT INTO chair_locations (chair_id, latitude, longitude) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE latitude = ?, longitude = ?`,
+		chair.ID, req.Latitude, req.Longitude, req.Latitude, req.Longitude,
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -132,8 +132,8 @@ func postDriverCoordinate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func getDriverNotification(w http.ResponseWriter, r *http.Request) {
-	driver, ok := r.Context().Value("driver").(*Driver)
+func chairGetNotification(w http.ResponseWriter, r *http.Request) {
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -151,7 +151,7 @@ func getDriverNotification(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE driver_id = ? AND status = ?", driver.ID, "DISPATCHING")
+			err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = ?", chair.ID, "DISPATCHING")
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					time.Sleep(1 * time.Second)
@@ -167,7 +167,7 @@ func getDriverNotification(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := writeSSE(w, "matched", &getDriverRequestResponse{
+			if err := writeSSE(w, "matched", &getChairRequestResponse{
 				RequestID: rideRequest.ID,
 				User: simpleUser{
 					ID:   user.ID,
@@ -191,14 +191,14 @@ type simpleUser struct {
 	Name string `json:"name"`
 }
 
-type getDriverRequestResponse struct {
+type getChairRequestResponse struct {
 	RequestID             string     `json:"request_id"`
 	User                  simpleUser `json:"user"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	Status                string     `json:"status"`
 }
 
-func getDriverRequest(w http.ResponseWriter, r *http.Request) {
+func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
 	rideRequest := &RideRequest{}
@@ -215,7 +215,7 @@ func getDriverRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, &getDriverRequestResponse{
+	respondJSON(w, http.StatusOK, &getChairRequestResponse{
 		RequestID: rideRequest.ID,
 		User: simpleUser{
 			ID:   user.ID,
@@ -229,10 +229,10 @@ func getDriverRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func postDriverAccept(w http.ResponseWriter, r *http.Request) {
+func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	driver, ok := r.Context().Value("driver").(*Driver)
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -246,7 +246,7 @@ func postDriverAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.DriverID != driver.ID {
+	if rideRequest.ChairID != chair.ID {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -260,10 +260,10 @@ func postDriverAccept(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func postDriverDeny(w http.ResponseWriter, r *http.Request) {
+func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	driver, ok := r.Context().Value("driver").(*Driver)
+	chaier, ok := r.Context().Value("chaier").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -276,12 +276,12 @@ func postDriverDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.DriverID != driver.ID {
+	if rideRequest.ChairID != chaier.ID {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET driver_id = NULL, matched_at = NULL WHERE id = ?", requestID)
+	_, err = db.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -290,10 +290,10 @@ func postDriverDeny(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func postDriverDepart(w http.ResponseWriter, r *http.Request) {
+func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	driver, ok := r.Context().Value("driver").(*Driver)
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -306,7 +306,7 @@ func postDriverDepart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.DriverID != driver.ID {
+	if rideRequest.ChairID != chair.ID {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -2,52 +2,52 @@
 
 package api
 
-// AcceptRequestParams is parameters of accept-request operation.
-type AcceptRequestParams struct {
+// AppGetRequestParams is parameters of app-get-request operation.
+type AppGetRequestParams struct {
 	// 配車要求ID.
 	RequestID string
 }
 
-// DenyRequestParams is parameters of deny-request operation.
-type DenyRequestParams struct {
+// AppPostRequestEvaluateParams is parameters of app-post-request-evaluate operation.
+type AppPostRequestEvaluateParams struct {
 	// 配車要求ID.
 	RequestID string
 }
 
-// DepartParams is parameters of depart operation.
-type DepartParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
-// EvaluateParams is parameters of evaluate operation.
-type EvaluateParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
-// GetAppRequestParams is parameters of get-app-request operation.
-type GetAppRequestParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
-// GetInquiriesParams is parameters of get-inquiries operation.
-type GetInquiriesParams struct {
+// ChairGetInquiriesParams is parameters of chair-get-inquiries operation.
+type ChairGetInquiriesParams struct {
 	// 取得件数.
 	Limit OptFloat64
 	// 取得カーソル.
 	Cursor OptString
 }
 
-// GetInquiryParams is parameters of get-inquiry operation.
-type GetInquiryParams struct {
+// ChairGetInquiryParams is parameters of chair-get-inquiry operation.
+type ChairGetInquiryParams struct {
 	// 問い合わせID.
 	InquiryID string
 }
 
-// GetRequestParams is parameters of get-request operation.
-type GetRequestParams struct {
+// ChairGetRequestParams is parameters of chair-get-request operation.
+type ChairGetRequestParams struct {
+	// 配車要求ID.
+	RequestID string
+}
+
+// ChairPostRequestAcceptParams is parameters of chair-post-request-accept operation.
+type ChairPostRequestAcceptParams struct {
+	// 配車要求ID.
+	RequestID string
+}
+
+// ChairPostRequestDenyParams is parameters of chair-post-request-deny operation.
+type ChairPostRequestDenyParams struct {
+	// 配車要求ID.
+	RequestID string
+}
+
+// ChairPostRequestDepartParams is parameters of chair-post-request-depart operation.
+type ChairPostRequestDepartParams struct {
 	// 配車要求ID.
 	RequestID string
 }
