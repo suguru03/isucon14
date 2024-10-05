@@ -65,12 +65,6 @@ func (w *World) Tick(ctx *Context) {
 	w.TimeOfDay = int(w.Time % LengthOfDay)
 }
 
-// UpdateRequestUserStatus ユーザーが認識しているリクエストのステータスを変更する
-func (w *World) UpdateRequestUserStatus(userID UserID, status RequestStatus) error {
-	user := w.UserDB.Get(userID)
-	return user.ChangeRequestStatus(status)
-}
-
 type CreateUserArgs struct {
 	// Region ユーザーを配置する地域
 	Region *Region
