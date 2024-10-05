@@ -500,10 +500,10 @@ components:
       additionalProperties: false
       properties:
         latitude:
-          type: number
+          type: integer
           description: 経度
         longitude:
-          type: number
+          type: integer
           description: 緯度
       required:
         - latitude

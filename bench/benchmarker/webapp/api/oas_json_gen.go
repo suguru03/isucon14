@@ -1797,11 +1797,11 @@ func (s *Coordinate) Encode(e *jx.Encoder) {
 func (s *Coordinate) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("latitude")
-		e.Float64(s.Latitude)
+		e.Int(s.Latitude)
 	}
 	{
 		e.FieldStart("longitude")
-		e.Float64(s.Longitude)
+		e.Int(s.Longitude)
 	}
 }
 
@@ -1822,8 +1822,8 @@ func (s *Coordinate) Decode(d *jx.Decoder) error {
 		case "latitude":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := d.Float64()
-				s.Latitude = float64(v)
+				v, err := d.Int()
+				s.Latitude = int(v)
 				if err != nil {
 					return err
 				}
@@ -1834,8 +1834,8 @@ func (s *Coordinate) Decode(d *jx.Decoder) error {
 		case "longitude":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Float64()
-				s.Longitude = float64(v)
+				v, err := d.Int()
+				s.Longitude = int(v)
 				if err != nil {
 					return err
 				}

@@ -112,8 +112,8 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 }
 
 type Coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  int `json:"latitude"`
+	Longitude int `json:"longitude"`
 }
 
 func bindJSON(r *http.Request, v interface{}) error {

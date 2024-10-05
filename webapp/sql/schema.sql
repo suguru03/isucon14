@@ -26,8 +26,8 @@ create table chairs
 create table chair_locations
 (
   chair_id  varchar(26) not null comment '椅子ID',
-  latitude   double      not null comment '経度',
-  longitude  double      not null comment '緯度',
+  latitude   integer    not null comment '経度',
+  longitude  integer    not null comment '緯度',
   updated_at timestamp   not null comment '更新日時' default current_timestamp on update current_timestamp,
   primary key (chair_id),
   constraint chair_locations_chairs_id_fk
@@ -71,11 +71,11 @@ create table ride_requests
   user_id               varchar(26)                                                                                    not null comment 'ユーザーID',
   chair_id              varchar(26)                                                                                    null comment '割り当てられた椅子ID',
   status                enum ('MATCHING', 'DISPATCHING', 'DISPATCHED', 'CARRYING', 'ARRIVED', 'COMPLETED', 'CANCELED') not null comment '状態',
-  pickup_latitude       double                                                                                         not null comment '配車位置(経度)',
-  pickup_longitude      double                                                                                         not null comment '配車位置(緯度)',
-  destination_latitude  double                                                                                         not null comment '目的地(経度)',
-  destination_longitude double                                                                                         not null comment '目的地(緯度)',
-  evaluation            int                                                                                            null comment '評価',
+  pickup_latitude       integer                                                                                         not null comment '配車位置(経度)',
+  pickup_longitude      integer                                                                                         not null comment '配車位置(緯度)',
+  destination_latitude  integer                                                                                         not null comment '目的地(経度)',
+  destination_longitude integer                                                                                         not null comment '目的地(緯度)',
+  evaluation            integer                                                                                            null comment '評価',
   requested_at          timestamp                                                                                      not null comment '要求日時' default current_timestamp,
   matched_at            timestamp                                                                                      null comment '椅子割り当て完了日時',
   dispatched_at         timestamp                                                                                      null comment '配車到着日時',
