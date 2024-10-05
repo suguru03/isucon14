@@ -2,7 +2,6 @@ package worldclient
 
 import (
 	"context"
-	"fmt"
 
 	"go.uber.org/zap"
 
