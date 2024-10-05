@@ -7,31 +7,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/mattn/go-gimei"
 	"go.uber.org/zap"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) RegisterDriver(ctx context.Context) (*api.RegisterUserOK, error) {
-	// TODO: Username被りとかはどうする？
-	name := gimei.NewName()
-
-	dateOfBirth := time.Now().AddDate(rand.Intn(50)+20, rand.Intn(12)+1, rand.Intn(28)+1)
-	reqBody := api.RegisterDriverReq{
-		Username:    strings.ToLower(strings.Replace(name.Romaji(), " ", "_", -1)),
-		Firstname:   name.First.Kanji(),
-		Lastname:    name.Last.Kanji(),
-		DateOfBirth: dateOfBirth.Format("2006-01-02"),
-		CarModel:    "A",
-		CarNo:       fmt.Sprintf("%04d-%04d", rand.Intn(1000), rand.Intn(1000)),
-	}
-
+func (c *Client) RegisterDriver(ctx context.Context, reqBody *api.RegisterDriverReq) (*api.RegisterDriverCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -56,10 +41,14 @@ func (c *Client) RegisterDriver(ctx context.Context) (*api.RegisterUserOK, error
 		return nil, fmt.Errorf("POST /driver/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
-	resBody := &api.RegisterUserOK{}
+	resBody := &api.RegisterDriverCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
+
+	c.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+resBody.AccessToken)
+	})
 
 	return resBody, nil
 }
@@ -92,6 +81,10 @@ func (c *Client) PostDeactivate(ctx context.Context) (*api.DeactivateDriverNoCon
 	req, err := c.agent.NewRequest(http.MethodPost, "/driver/deactivate", nil)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
 	}
 
 	resp, err := c.agent.Do(ctx, req)
@@ -143,6 +136,10 @@ func (c *Client) GetDriverRequest(ctx context.Context, requestID string) (*api.G
 		return nil, err
 	}
 
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
 		c.contestantLogger.Warn("GET /driver/requests/{requestID} のリクエストが失敗しました", zap.Error(err))
@@ -189,6 +186,10 @@ func (c *Client) PostDeny(ctx context.Context, requestID string) (*api.DenyReque
 	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/driver/requests/%s/deny", requestID), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
 	}
 
 	resp, err := c.agent.Do(ctx, req)

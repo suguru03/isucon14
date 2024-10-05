@@ -34,7 +34,7 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 	return nil
 }
 
-func (s *FastServerStub) SendAcceptRequest(ctx *Context, req *Request) error {
+func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {
 	time.Sleep(s.latency)
 	go func() {
 		err := s.world.UpdateRequestUserStatus(req.User.ID, RequestStatusDispatching)
@@ -45,7 +45,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, req *Request) error {
 	return nil
 }
 
-func (s *FastServerStub) SendDenyRequest(ctx *Context, serverRequestID string) error {
+func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error {
 	time.Sleep(s.latency)
 	return nil
 }

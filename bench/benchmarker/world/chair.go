@@ -71,7 +71,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
-				err := ctx.client.SendAcceptRequest(ctx, c.Request)
+				err := ctx.client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToAcceptRequest, err)
 				}
@@ -83,7 +83,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.StartPoint = null.ValueFrom(c.Current)
 				c.Request.MatchedAt = ctx.world.Time
 			} else {
-				err := ctx.client.SendDenyRequest(ctx, c.Request.ServerID)
+				err := ctx.client.SendDenyRequest(ctx, c, c.Request.ServerID)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
 				}
@@ -154,7 +154,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		req := ctx.world.RequestDB.GetByServerID(c.ServerRequestID.String)
 		if req == nil {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
-			err := ctx.client.SendDenyRequest(ctx, c.ServerRequestID.String)
+			err := ctx.client.SendDenyRequest(ctx, c, c.ServerRequestID.String)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
 			}

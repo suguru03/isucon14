@@ -199,7 +199,7 @@ type getDriverRequestResponse struct {
 }
 
 func getDriverRequest(w http.ResponseWriter, r *http.Request) {
-	requestID := r.URL.Query().Get("request_id")
+	requestID := r.PathValue("request_id")
 
 	rideRequest := &RideRequest{}
 	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
