@@ -42,6 +42,8 @@ const (
 	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToConnectNotificationStream 通知ストリームへの接続に失敗した
 	ErrorCodeFailedToConnectNotificationStream
+	// ErrorCodeRequestCanceledByServer リクエストがサーバー側でキャンセルされた
+	ErrorCodeRequestCanceledByServer
 )
 
 type codeError struct {
