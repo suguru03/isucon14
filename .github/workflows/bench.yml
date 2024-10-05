@@ -1,0 +1,41 @@
+name: Benchmarker Code CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - bench/**/*
+      - .github/workflows/go.yml
+  pull_request:
+    paths:
+      - bench/**/*
+      - .github/workflows/go.yml
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'bench/go.mod'
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - name: Build bench
+        working-directory: ./bench
+        run: |
+          task build
+  test:
+    name: Bench Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'bench/go.mod'
+      - name: Install Task
+        uses: arduino/setup-task@v2
+      - name: Run bench Test
+        working-directory: ./bench
+        run: |
+          task test
