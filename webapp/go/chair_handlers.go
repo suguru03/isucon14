@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -108,11 +109,44 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 
 	chair := r.Context().Value("chair").(*Chair)
 
-	_, err := db.Exec(
+	tx, err := db.Beginx()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(
 		`INSERT INTO chair_locations (chair_id, latitude, longitude) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE latitude = ?, longitude = ?`,
 		chair.ID, req.Latitude, req.Longitude, req.Latitude, req.Longitude,
-	)
-	if err != nil {
+	); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	rideRequest := &RideRequest{}
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, chair.ID); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		// TODO
+		if math.Abs(req.Latitude-rideRequest.PickupLatitude) < 0.1 && math.Abs(req.Longitude-rideRequest.PickupLongitude) < 0.1 {
+			if _, err := tx.Exec("UPDATE ride_requests SET status = 'DISPATCHED' WHERE id = ? AND status = 'DISPATCHING'", rideRequest.ID); err != nil {
+				respondError(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		if math.Abs(req.Latitude-rideRequest.DestinationLatitude) < 0.1 && math.Abs(req.Longitude-rideRequest.DestinationLongitude) < 0.1 {
+			if _, err := tx.Exec("UPDATE ride_requests SET status = 'ARRIVED' WHERE id = ? AND status = 'CARRYING'", rideRequest.ID); err != nil {
+				respondError(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -136,7 +170,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, chair.ID)
+			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY requested_at DESC LIMIT 1`, chair.ID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					time.Sleep(100 * time.Millisecond)
@@ -166,7 +200,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 					Latitude:  rideRequest.DestinationLatitude,
 					Longitude: rideRequest.DestinationLongitude,
 				},
-				Status: rideRequest.Status,
+				Status: strings.ToLower(rideRequest.Status),
 			}); err != nil {
 				respondError(w, http.StatusInternalServerError, err)
 				return
@@ -228,7 +262,7 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 			Latitude:  rideRequest.DestinationLatitude,
 			Longitude: rideRequest.DestinationLongitude,
 		},
-		Status: rideRequest.Status,
+		Status: strings.ToLower(rideRequest.Status),
 	})
 }
 
@@ -258,7 +292,7 @@ func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID); err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHING", requestID); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}

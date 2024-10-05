@@ -127,6 +127,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	time.Sleep(1 * time.Second)
 	for {
 		ok, err := func() (bool, error) {
 			// TODO: トランザクションを利用する
@@ -173,8 +174,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 			}
 
 			_, err = tx.Exec(
-				`UPDATE ride_requests SET chair_id = ?, status = ? WHERE id = ?`,
-				chair.ID, "DISPATCHING", requestID,
+				`UPDATE ride_requests SET chair_id = ?, matched_at = NOW() WHERE id = ?`,
+				chair.ID, requestID,
 			)
 			if err != nil {
 				return false, err
@@ -311,7 +312,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, user.ID)
+			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					time.Sleep(100 * time.Millisecond)
@@ -342,7 +343,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 					Latitude:  rideRequest.DestinationLatitude,
 					Longitude: rideRequest.DestinationLongitude,
 				},
-				Status: rideRequest.Status,
+				Status: strings.ToLower(rideRequest.Status),
 				Chair: simpleChair{
 					ID:         chair.ID,
 					Name:       chair.Firstname + " " + chair.Lastname,

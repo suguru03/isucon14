@@ -115,7 +115,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//w.Process(ctx)
 
 	region := s.world.Regions[1]
-	for range 100 {
+	for range 1 {
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
@@ -125,7 +125,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 	}
-	for range 2 {
+	for range 1 {
 		u, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {
 			return err
