@@ -31,6 +31,8 @@ type World struct {
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
 	RequestDB *RequestDB
+	// RootRand ルートの乱数生成器
+	RootRand *rand.Rand
 }
 
 func (w *World) Tick(ctx *Context) {
@@ -95,6 +97,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		State:          UserStateInactive,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
 	}), nil
 }
 
@@ -140,6 +143,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		WorkTime:       args.WorkTime,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
 	}), nil
 }
 

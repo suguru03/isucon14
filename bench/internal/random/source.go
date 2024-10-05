@@ -21,3 +21,11 @@ func NewLockedSource(src rand.Source) rand.Source {
 		inner: src,
 	}
 }
+
+func CreateChildSource(parent rand.Source) rand.Source {
+	return rand.NewPCG(parent.Uint64(), parent.Uint64())
+}
+
+func CreateChildRand(parent rand.Source) *rand.Rand {
+	return rand.New(NewLockedSource(CreateChildSource(parent)))
+}

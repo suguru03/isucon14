@@ -149,6 +149,7 @@ func TestWorld(t *testing.T) {
 			UserDB:    NewGenericDB[UserID, *User](),
 			ChairDB:   NewGenericDB[ChairID, *Chair](),
 			RequestDB: NewRequestDB(),
+			RootRand:  rand.New(random.NewLockedSource(rand.NewPCG(0, 0))),
 		}
 		client = &FastServerStub{
 			t:                            t,
@@ -159,7 +160,6 @@ func TestWorld(t *testing.T) {
 			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 		}
 		ctx = &Context{
-			rand:   rand.New(random.NewLockedSource(rand.NewPCG(rand.Uint64(), rand.Uint64()))),
 			world:  world,
 			client: client,
 		}
