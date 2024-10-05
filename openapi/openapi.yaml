@@ -82,6 +82,10 @@ paths:
                   - id
         '400':
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /app/requests:
     post:
       tags:
@@ -161,6 +165,10 @@ paths:
                   - updated_at
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/app/requests/{request_id}/evaluate':
     post:
       tags:
@@ -192,8 +200,16 @@ paths:
           description: ユーザーが椅子を評価した
         '400':
           description: 椅子が目的地に到着していない、ユーザーが乗車していない、すでに到着しているなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: 存在しない配車要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /app/inquiry:
     post:
       tags:
@@ -360,6 +376,10 @@ paths:
                   - destination_coordinate
         '404':
           description: 存在しない配車要求、対象の椅子にマッチングされていない配車要求を取得しようとした場合など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/chair/requests/{request_id}/accept':
     post:
       tags:
@@ -373,6 +393,10 @@ paths:
           description: No Content
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/chair/requests/{request_id}/deny':
     post:
       tags:
@@ -386,6 +410,10 @@ paths:
           description: No Content
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/chair/requests/{request_id}/depart':
     post:
       tags:
@@ -404,8 +432,16 @@ paths:
           description: 椅子が出発した
         '400':
           description: 椅子が乗車位置の座標に居ない、既に出発しているなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: 存在しない配車要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /chair/notification:
     get:
       tags:
@@ -483,6 +519,10 @@ paths:
                 $ref: '#/components/schemas/InquiryContent'
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   parameters:
     request_id:
@@ -587,3 +627,11 @@ components:
         - subject
         - body
         - created_at
+    Error:
+      type: object
+      title: Error
+      properties:
+        message:
+          type: string
+      required:
+        - message

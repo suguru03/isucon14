@@ -25,11 +25,12 @@ create table chairs
 
 create table chair_locations
 (
-  chair_id  varchar(26) not null comment '椅子ID',
+  id         varchar(26)         not null,
+  chair_id   varchar(26) not null comment '椅子ID',
   latitude   integer    not null comment '経度',
   longitude  integer    not null comment '緯度',
   updated_at datetime(6)   not null comment '更新日時' default current_timestamp(6) on update current_timestamp(6),
-  primary key (chair_id),
+  primary key (id),
   constraint chair_locations_chairs_id_fk
     foreign key (chair_id) references chairs (id)
       on update cascade on delete cascade
