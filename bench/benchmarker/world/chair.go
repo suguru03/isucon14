@@ -126,7 +126,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			if c.Request.UserStatus != RequestStatusDispatched {
 				// ただし、ユーザーに到着通知が行っていないとユーザーは乗らない振る舞いをするので
 				// ユーザー側の状態が変わるまで待機する
-				// TODO 一向にユーザーが乗らない場合の対応
+				// 一向にユーザーの状態が変わらない場合は、この椅子の行動はハングする
 				break
 			}
 
@@ -153,7 +153,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusArrived:
 			// 客が評価するまで待機する
-			// TODO 一向に評価されない場合の対応
+			// 一向に評価されない場合は、この椅子の行動はハングする
 			break
 
 		case RequestStatusCompleted:

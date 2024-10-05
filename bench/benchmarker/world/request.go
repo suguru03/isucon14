@@ -107,3 +107,77 @@ func (r *Request) Fare() int {
 	// TODO 料金計算
 	return InitialFare + r.PickupPoint.DistanceTo(r.DestinationPoint)*FarePerDistance
 }
+
+// CalculateEvaluation 送迎の評価値を計算する
+func (r *Request) CalculateEvaluation() Evaluation {
+	if !(r.MatchedAt > 0 && r.DispatchedAt > 0 && r.PickedUpAt > 0 && r.ArrivedAt > 0) {
+		panic("計算に必要な時間情報が足りていない状況なのに評価値を計算しようとしている")
+	}
+
+	// TODO: いい感じにする
+	result := Evaluation{}
+	{
+		// マッチング待ち時間評価
+		time := int(r.MatchedAt - r.RequestedAt)
+		if time < 100 {
+			// 100ticks以内ならOK
+			result.Matching = true
+		}
+	}
+	{
+		// 配椅子時間評価
+		idealTime := neededTime(r.StartPoint.V.DistanceTo(r.PickupPoint), r.Chair.Speed)
+		actualTime := int(r.DispatchedAt - r.MatchedAt)
+		if actualTime-idealTime < 5 {
+			// 理想時間との誤差が5ticks以内ならOK
+			result.Dispatch = true
+		}
+	}
+	{
+		// 到着待ち時間評価
+		time := int(r.PickedUpAt - r.DispatchedAt)
+		if time < 10 {
+			// 理想時間との誤差が10ticks以内ならOK
+			result.Pickup = true
+		}
+	}
+	{
+		// 乗車時間評価
+		idealTime := neededTime(r.PickupPoint.DistanceTo(r.DestinationPoint), r.Chair.Speed)
+		actualTime := int(r.ArrivedAt - r.PickedUpAt)
+		if actualTime-idealTime < 5 {
+			// 理想時間との誤差が5ticks以内ならOK
+			result.Drive = true
+		}
+	}
+
+	return result
+}
+
+type Evaluation struct {
+	Matching bool
+	Dispatch bool
+	Pickup   bool
+	Drive    bool
+}
+
+func (e Evaluation) String() string {
+	return fmt.Sprintf("score: %d (matching: %v, dispath: %v, pickup: %v, drive: %v)", e.Score(), e.Matching, e.Dispatch, e.Pickup, e.Drive)
+}
+
+func (e Evaluation) Score() int {
+	result := 1
+	if e.Matching {
+		result++
+	}
+	if e.Dispatch {
+		result++
+	}
+	if e.Pickup {
+		result++
+	}
+	if e.Drive {
+		result++
+	}
+	return result
+}
