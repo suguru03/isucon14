@@ -15,6 +15,8 @@ type ChairNotificationEventMatched struct {
 }
 
 type ChairNotificationEventCompleted struct {
+	ServerRequestID string
+
 	unimplementedNotificationEvent
 }
 

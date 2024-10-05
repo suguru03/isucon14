@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"sync/atomic"
 
 	"github.com/guregu/null/v5"
@@ -38,6 +39,8 @@ type Chair struct {
 	ServerRequestID null.String
 	// Request 進行中のリクエスト
 	Request *Request
+	// RequestHistory 引き受けたリクエストの履歴
+	RequestHistory []*Request
 	// oldRequest Completedだが後処理されてないRequest
 	oldRequest *Request
 
@@ -114,6 +117,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.ChairStatus = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Current)
 				c.Request.MatchedAt = ctx.world.Time
+				c.RequestHistory = append(c.RequestHistory, c.Request)
 			} else {
 				err := ctx.client.SendDenyRequest(ctx, c, c.Request.ServerID)
 				if err != nil {
@@ -269,18 +273,6 @@ func (c *Chair) Tick(ctx *Context) error {
 
 func (c *Chair) TickCompleted() bool {
 	return c.tickDone.Load()
-}
-
-func (c *Chair) ChangeRequestStatus(status RequestStatus) error {
-	request := c.Request
-	if request == nil {
-		return CodeError(ErrorCodeChairNotAssignedButStatusChanged)
-	}
-	if status != RequestStatusCanceled && request.DesiredStatus != status {
-		return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, status))
-	}
-	request.ChairStatus = status
-	return nil
 }
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
@@ -442,9 +434,21 @@ func (c *Chair) HandleNotification(event NotificationEvent) {
 		}
 
 	case *ChairNotificationEventCompleted:
-		err := c.ChangeRequestStatus(RequestStatusCompleted)
-		if err != nil {
-			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
+		request := c.Request
+		if request == nil {
+			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			for _, r := range slices.Backward(c.RequestHistory) {
+				if r.ServerID == data.ServerRequestID && r.DesiredStatus == RequestStatusCompleted {
+					return
+				}
+			}
+			c.NotificationHandleErrors = append(c.NotificationHandleErrors, WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest)))
+			return
 		}
+		if request.DesiredStatus != RequestStatusCompleted {
+			c.NotificationHandleErrors = append(c.NotificationHandleErrors, WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, RequestStatusCompleted)))
+			return
+		}
+		request.ChairStatus = RequestStatusCompleted
 	}
 }
