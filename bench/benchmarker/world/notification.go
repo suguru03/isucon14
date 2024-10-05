@@ -33,3 +33,7 @@ type UserNotificationEventCarrying struct {
 type UserNotificationEventArrived struct {
 	unimplementedNotificationEvent
 }
+
+type UserNotificationEventCanceled struct {
+	unimplementedNotificationEvent
+}
