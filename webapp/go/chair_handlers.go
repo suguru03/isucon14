@@ -263,7 +263,7 @@ func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
-	chaier, ok := r.Context().Value("chaier").(*Chair)
+	chair, ok := r.Context().Value("chair").(*Chair)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -276,7 +276,7 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rideRequest.ChairID != chaier.ID {
+	if rideRequest.ChairID != chair.ID {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
