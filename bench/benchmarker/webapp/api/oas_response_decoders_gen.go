@@ -457,7 +457,7 @@ func decodeChairPostRequestDepartResponse(resp *http.Response) (res ChairPostReq
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeInitializeResponse(resp *http.Response) (res *InitializeOK, _ error) {
+func decodePostInitializeResponse(resp *http.Response) (res *PostInitializeOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -473,7 +473,7 @@ func decodeInitializeResponse(resp *http.Response) (res *InitializeOK, _ error) 
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response InitializeOK
+			var response PostInitializeOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err

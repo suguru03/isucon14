@@ -270,8 +270,8 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 		Firstname:   data.FirstName,
 		Lastname:    data.LastName,
 		DateOfBirth: data.DateOfBirth,
-		CarModel:    data.ChairModel,
-		CarNo:       data.ChairNo,
+		ChairModel:  data.ChairModel,
+		ChairNo:     data.ChairNo,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterDriver, err)

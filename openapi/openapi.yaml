@@ -5,8 +5,6 @@ info:
 servers:
   - url: 'http://localhost:8080/'
     description: api
-security:
-  - bearerAuth: []
 paths:
   /initialize:
     post:
@@ -254,10 +252,10 @@ paths:
                 date_of_birth:
                   type: string
                   description: 生年月日
-                car_model:
+                chair_model:
                   type: string
                   description: 車種
-                car_no:
+                chair_no:
                   type: string
                   description: カーナンバー
               required:
@@ -265,8 +263,8 @@ paths:
                 - firstname
                 - lastname
                 - date_of_birth
-                - car_model
-                - car_no
+                - chair_model
+                - chair_no
       responses:
         '201':
           description: 椅子登録が完了した
@@ -542,17 +540,17 @@ components:
         name:
           type: string
           description: 椅子名
-        car_model:
+        chair_model:
           type: string
           description: 車種
-        car_no:
+        chair_no:
           type: string
           description: カーナンバー
       required:
         - id
         - name
-        - car_model
-        - car_no
+        - chair_model
+        - chair_no
     User:
       type: object
       title: User

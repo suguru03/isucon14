@@ -26,14 +26,14 @@ type postAppRegisterResponse struct {
 func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	req := &postAppRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	userID := ulid.Make().String()
 
 	if req.Username == "" || req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, errors.New("required fields(username, firstname, lastname, date_of_birth) are empty"))
 		return
 	}
 	accessToken := secureRandomStr(32)
@@ -42,7 +42,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -56,14 +56,14 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
-			w.WriteHeader(http.StatusUnauthorized)
+			respondError(w, http.StatusUnauthorized, errors.New("access token is required"))
 			return
 		}
 
 		user := &User{}
 		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
 			return
 		}
 
@@ -73,8 +73,8 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 }
 
 type postAppRequestsRequest struct {
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+	PickupCoordinate      *Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate *Coordinate `json:"destination_coordinate"`
 }
 
 type postAppRequestsResponse struct {
@@ -84,15 +84,14 @@ type postAppRequestsResponse struct {
 func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	req := &postAppRequestsRequest{}
 	if err := bindJSON(r, req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	user := r.Context().Value("user").(*User)
 
-	if req.PickupCoordinate.Latitude == 0 || req.PickupCoordinate.Longitude == 0 ||
-		req.DestinationCoordinate.Latitude == 0 || req.DestinationCoordinate.Longitude == 0 {
-		w.WriteHeader(http.StatusBadRequest)
+	if req.PickupCoordinate == nil || req.DestinationCoordinate == nil {
+		respondError(w, http.StatusBadRequest, errors.New("required fields(pickup_coordinate, destination_coordinate) are empty"))
 		return
 	}
 	requestID := ulid.Make().String()
@@ -102,7 +101,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -118,7 +117,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 				time.Sleep(1 * time.Second)
 				continue
 			}
-			w.WriteHeader(http.StatusInternalServerError)
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -127,7 +126,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 			chair.ID, "DISPATCHING", requestID,
 		)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 		break
@@ -166,10 +165,10 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			w.WriteHeader(http.StatusNotFound)
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
 			return
 		}
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -191,7 +190,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 			rideRequest.ChairID,
 		)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 		response.Chair = simpleChair{
@@ -213,7 +212,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 	postAppEvaluateRequest := &postAppEvaluateRequest{}
 	if err := bindJSON(r, postAppEvaluateRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -221,14 +220,14 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 	if count, err := result.RowsAffected(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	} else if count == 0 {
-		w.WriteHeader(http.StatusNotFound)
+		respondError(w, http.StatusNotFound, errors.New("request not found"))
 		return
 	}
 
@@ -245,15 +244,11 @@ type postAppInquiryRequest struct {
 }
 
 func appPostInquiry(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(*User)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	user := r.Context().Value("user").(*User)
 
 	req := &postAppInquiryRequest{}
 	if err := bindJSON(r, req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -262,7 +257,7 @@ func appPostInquiry(w http.ResponseWriter, r *http.Request) {
 		user.ID, req.Subject, req.Body,
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
 

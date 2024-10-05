@@ -896,20 +896,20 @@ func (s *Chair) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("car_model")
-		e.Str(s.CarModel)
+		e.FieldStart("chair_model")
+		e.Str(s.ChairModel)
 	}
 	{
-		e.FieldStart("car_no")
-		e.Str(s.CarNo)
+		e.FieldStart("chair_no")
+		e.Str(s.ChairNo)
 	}
 }
 
 var jsonFieldsNameOfChair = [4]string{
 	0: "id",
 	1: "name",
-	2: "car_model",
-	3: "car_no",
+	2: "chair_model",
+	3: "chair_no",
 }
 
 // Decode decodes Chair from json.
@@ -945,29 +945,29 @@ func (s *Chair) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
-		case "car_model":
+		case "chair_model":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
-				s.CarModel = string(v)
+				s.ChairModel = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"car_model\"")
+				return errors.Wrap(err, "decode field \"chair_model\"")
 			}
-		case "car_no":
+		case "chair_no":
 			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				v, err := d.Str()
-				s.CarNo = string(v)
+				s.ChairNo = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"car_no\"")
+				return errors.Wrap(err, "decode field \"chair_no\"")
 			}
 		default:
 			return d.Skip()
@@ -1631,12 +1631,12 @@ func (s *ChairPostRegisterReq) encodeFields(e *jx.Encoder) {
 		e.Str(s.DateOfBirth)
 	}
 	{
-		e.FieldStart("car_model")
-		e.Str(s.CarModel)
+		e.FieldStart("chair_model")
+		e.Str(s.ChairModel)
 	}
 	{
-		e.FieldStart("car_no")
-		e.Str(s.CarNo)
+		e.FieldStart("chair_no")
+		e.Str(s.ChairNo)
 	}
 }
 
@@ -1645,8 +1645,8 @@ var jsonFieldsNameOfChairPostRegisterReq = [6]string{
 	1: "firstname",
 	2: "lastname",
 	3: "date_of_birth",
-	4: "car_model",
-	5: "car_no",
+	4: "chair_model",
+	5: "chair_no",
 }
 
 // Decode decodes ChairPostRegisterReq from json.
@@ -1706,29 +1706,29 @@ func (s *ChairPostRegisterReq) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"date_of_birth\"")
 			}
-		case "car_model":
+		case "chair_model":
 			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				v, err := d.Str()
-				s.CarModel = string(v)
+				s.ChairModel = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"car_model\"")
+				return errors.Wrap(err, "decode field \"chair_model\"")
 			}
-		case "car_no":
+		case "chair_no":
 			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				v, err := d.Str()
-				s.CarNo = string(v)
+				s.ChairNo = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"car_no\"")
+				return errors.Wrap(err, "decode field \"chair_no\"")
 			}
 		default:
 			return d.Skip()
@@ -1895,150 +1895,6 @@ func (s *Coordinate) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Coordinate) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *InitializeOK) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *InitializeOK) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("language")
-		s.Language.Encode(e)
-	}
-}
-
-var jsonFieldsNameOfInitializeOK = [1]string{
-	0: "language",
-}
-
-// Decode decodes InitializeOK from json.
-func (s *InitializeOK) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode InitializeOK to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "language":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Language.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"language\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode InitializeOK")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfInitializeOK) {
-					name = jsonFieldsNameOfInitializeOK[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *InitializeOK) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *InitializeOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes InitializeOKLanguage as json.
-func (s InitializeOKLanguage) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes InitializeOKLanguage from json.
-func (s *InitializeOKLanguage) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode InitializeOKLanguage to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch InitializeOKLanguage(v) {
-	case InitializeOKLanguageGo:
-		*s = InitializeOKLanguageGo
-	case InitializeOKLanguagePerl:
-		*s = InitializeOKLanguagePerl
-	case InitializeOKLanguagePhp:
-		*s = InitializeOKLanguagePhp
-	case InitializeOKLanguagePython:
-		*s = InitializeOKLanguagePython
-	case InitializeOKLanguageRuby:
-		*s = InitializeOKLanguageRuby
-	case InitializeOKLanguageRust:
-		*s = InitializeOKLanguageRust
-	case InitializeOKLanguageNode:
-		*s = InitializeOKLanguageNode
-	default:
-		*s = InitializeOKLanguage(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s InitializeOKLanguage) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *InitializeOKLanguage) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2450,6 +2306,150 @@ func (s OptRequestStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptRequestStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PostInitializeOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PostInitializeOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("language")
+		s.Language.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfPostInitializeOK = [1]string{
+	0: "language",
+}
+
+// Decode decodes PostInitializeOK from json.
+func (s *PostInitializeOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PostInitializeOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "language":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Language.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"language\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PostInitializeOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPostInitializeOK) {
+					name = jsonFieldsNameOfPostInitializeOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PostInitializeOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PostInitializeOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PostInitializeOKLanguage as json.
+func (s PostInitializeOKLanguage) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes PostInitializeOKLanguage from json.
+func (s *PostInitializeOKLanguage) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PostInitializeOKLanguage to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch PostInitializeOKLanguage(v) {
+	case PostInitializeOKLanguageGo:
+		*s = PostInitializeOKLanguageGo
+	case PostInitializeOKLanguagePerl:
+		*s = PostInitializeOKLanguagePerl
+	case PostInitializeOKLanguagePhp:
+		*s = PostInitializeOKLanguagePhp
+	case PostInitializeOKLanguagePython:
+		*s = PostInitializeOKLanguagePython
+	case PostInitializeOKLanguageRuby:
+		*s = PostInitializeOKLanguageRuby
+	case PostInitializeOKLanguageRust:
+		*s = PostInitializeOKLanguageRust
+	case PostInitializeOKLanguageNode:
+		*s = PostInitializeOKLanguageNode
+	default:
+		*s = PostInitializeOKLanguage(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PostInitializeOKLanguage) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PostInitializeOKLanguage) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

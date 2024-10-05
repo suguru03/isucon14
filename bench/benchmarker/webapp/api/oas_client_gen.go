@@ -118,12 +118,12 @@ type Invoker interface {
 	//
 	// POST /chair/requests/{request_id}/depart
 	ChairPostRequestDepart(ctx context.Context, params ChairPostRequestDepartParams) (ChairPostRequestDepartRes, error)
-	// Initialize invokes initialize operation.
+	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
 	//
 	// POST /initialize
-	Initialize(ctx context.Context) (*InitializeOK, error)
+	PostInitialize(ctx context.Context) (*PostInitializeOK, error)
 }
 
 // Client implements OAS client.
@@ -973,17 +973,17 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 	return result, nil
 }
 
-// Initialize invokes initialize operation.
+// PostInitialize invokes post-initialize operation.
 //
 // サービスを初期化する.
 //
 // POST /initialize
-func (c *Client) Initialize(ctx context.Context) (*InitializeOK, error) {
-	res, err := c.sendInitialize(ctx)
+func (c *Client) PostInitialize(ctx context.Context) (*PostInitializeOK, error) {
+	res, err := c.sendPostInitialize(ctx)
 	return res, err
 }
 
-func (c *Client) sendInitialize(ctx context.Context) (res *InitializeOK, err error) {
+func (c *Client) sendPostInitialize(ctx context.Context) (res *PostInitializeOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -1001,7 +1001,7 @@ func (c *Client) sendInitialize(ctx context.Context) (res *InitializeOK, err err
 	}
 	defer resp.Body.Close()
 
-	result, err := decodeInitializeResponse(resp)
+	result, err := decodePostInitializeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

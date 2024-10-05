@@ -157,7 +157,7 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 func respondError(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
-	buf, marshalError := json.Marshal(map[string]string{"error": err.Error()})
+	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})
 	if marshalError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error":"marshaling error failed"}`))
