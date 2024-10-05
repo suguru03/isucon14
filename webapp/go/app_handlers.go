@@ -183,7 +183,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chair := &Chair{}
-	if rideRequest.ChairID != "" {
+	if rideRequest.ChairID.Valid {
 		err := db.Get(
 			chair,
 			`SELECT * FROM chairs WHERE id = ?`,
@@ -196,8 +196,8 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		response.Chair = simpleChair{
 			ID:         chair.ID,
 			Name:       chair.Firstname + " " + chair.Lastname,
-			ChairModel: chair.CarModel,
-			ChairNo:    chair.CarNo,
+			ChairModel: chair.ChairModel,
+			ChairNo:    chair.ChairNo,
 		}
 	}
 

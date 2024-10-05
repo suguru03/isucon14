@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -22,29 +23,29 @@ type Chair struct {
 	Lastname    string    `db:"lastname"`
 	DateOfBirth string    `db:"date_of_birth"`
 	AccessToken string    `db:"access_token"`
-	CarModel    string    `db:"car_model"`
-	CarNo       string    `db:"car_no"`
+	ChairModel  string    `db:"chair_model"`
+	ChairNo     string    `db:"chair_no"`
 	IsActive    bool      `db:"is_active"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
 type RideRequest struct {
-	ID                   string     `db:"id"`
-	UserID               string     `db:"user_id"`
-	ChairID              string     `db:"chair_id"`
-	Status               string     `db:"status"`
-	PickupLatitude       float64    `db:"pickup_latitude"`
-	PickupLongitude      float64    `db:"pickup_longitude"`
-	DestinationLatitude  float64    `db:"destination_latitude"`
-	DestinationLongitude float64    `db:"destination_longitude"`
-	Evaluation           *int       `db:"evaluation"`
-	RequestedAt          time.Time  `db:"requested_at"`
-	MatchedAt            *time.Time `db:"matched_at"`
-	DispatchedAt         *time.Time `db:"dispatched_at"`
-	RodeAt               *time.Time `db:"rode_at"`
-	ArrivedAt            *time.Time `db:"arrived_at"`
-	UpdatedAt            time.Time  `db:"updated_at"`
+	ID                   string         `db:"id"`
+	UserID               string         `db:"user_id"`
+	ChairID              sql.NullString `db:"chair_id"`
+	Status               string         `db:"status"`
+	PickupLatitude       float64        `db:"pickup_latitude"`
+	PickupLongitude      float64        `db:"pickup_longitude"`
+	DestinationLatitude  float64        `db:"destination_latitude"`
+	DestinationLongitude float64        `db:"destination_longitude"`
+	Evaluation           *int           `db:"evaluation"`
+	RequestedAt          time.Time      `db:"requested_at"`
+	MatchedAt            *time.Time     `db:"matched_at"`
+	DispatchedAt         *time.Time     `db:"dispatched_at"`
+	RodeAt               *time.Time     `db:"rode_at"`
+	ArrivedAt            *time.Time     `db:"arrived_at"`
+	UpdatedAt            time.Time      `db:"updated_at"`
 }
 
 type ChairLocation struct {
