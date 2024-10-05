@@ -64,7 +64,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
 		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
 		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", charitPostRequestAccept)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}

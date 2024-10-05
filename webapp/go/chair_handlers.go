@@ -202,15 +202,20 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	user := &User{}
-	err = db.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
-	if err != nil {
+	if err := tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -229,7 +234,7 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
+func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 
 	chair, ok := r.Context().Value("chair").(*Chair)
@@ -238,10 +243,15 @@ func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: トランザクションを使って排他制御を行う
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -251,8 +261,7 @@ func charitPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID)
-	if err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHED", requestID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -270,8 +279,14 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE ", requestID); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -281,8 +296,7 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID)
-	if err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -300,8 +314,14 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rideRequest := &RideRequest{}
-	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
+	tx, err := db.Beginx()
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE", requestID); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -311,8 +331,12 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "CARRYING", requestID)
-	if err != nil {
+	if _, err = tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "CARRYING", requestID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
