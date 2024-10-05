@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"sync/atomic"
 
 	"github.com/guregu/null/v5"
 )
@@ -49,6 +50,8 @@ type Chair struct {
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
+	// tickDone 行動が完了しているかどうか
+	tickDone atomic.Bool
 }
 
 type RegisteredChairData struct {
@@ -69,6 +72,9 @@ func (c *Chair) SetID(id ChairID) {
 }
 
 func (c *Chair) Tick(ctx *Context) error {
+	c.tickDone.Store(false)
+	defer func() { c.tickDone.Store(true) }()
+
 	switch {
 	// 通知処理にエラーが発生している
 	case len(c.NotificationHandleErrors) > 0:
@@ -245,6 +251,10 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 	return nil
+}
+
+func (c *Chair) TickCompleted() bool {
+	return c.tickDone.Load()
 }
 
 func (c *Chair) ChangeRequestStatus(status RequestStatus) error {

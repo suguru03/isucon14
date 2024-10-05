@@ -161,7 +161,7 @@ func (s *FastServerStub) MatchingLoop() {
 func TestWorld(t *testing.T) {
 	var (
 		completedRequestChan = make(chan *Request, 1000)
-		world                = NewWorld(completedRequestChan)
+		world                = NewWorld(1500*time.Microsecond, completedRequestChan)
 		client               = &FastServerStub{
 			t:                            t,
 			world:                        world,
