@@ -207,7 +207,9 @@ func TestWorld(t *testing.T) {
 	go client.MatchingLoop()
 
 	for range ConvertHour(24 * 3) {
-		world.Tick(ctx)
+		if err := world.Tick(ctx); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	for _, user := range world.UserDB.Iter() {

@@ -49,3 +49,10 @@ func neededTime[T constraints.Integer](d T, s T) T {
 func ConvertHour[T constraints.Integer](h T) T {
 	return h * LengthOfHour
 }
+
+func UnwrapMultiError(err error) ([]error, bool) {
+	if errors, ok := err.(interface{ Unwrap() []error }); ok {
+		return errors.Unwrap(), true
+	}
+	return nil, false
+}
