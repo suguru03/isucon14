@@ -167,43 +167,80 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY requested_at DESC LIMIT 1`, chair.ID)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					time.Sleep(100 * time.Millisecond)
-					continue
+			err := func() error {
+				found := true
+				rideRequest := &RideRequest{}
+				tx, err := db.Beginx()
+				if err != nil {
+					return err
 				}
-				respondError(w, http.StatusInternalServerError, err)
-			}
-			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
+				defer tx.Rollback()
 
-			user := &User{}
-			err = db.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+				if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						found = false
+					} else {
+						return err
+					}
+				}
+
+				if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
+					matchRequest := &RideRequest{}
+					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
+						if errors.Is(err, sql.ErrNoRows) {
+							return nil
+						}
+						return err
+					}
+
+					if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ? WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+						return err
+					}
+
+					if !found {
+						rideRequest = matchRequest
+					}
+				}
+
+				if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
+					return nil
+				}
+
+				user := &User{}
+				err = tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+				if err != nil {
+					return err
+				}
+
+				if err := tx.Commit(); err != nil {
+					return err
+				}
+
+				if err := writeSSE(w, "matched", &getChairRequestResponse{
+					RequestID: rideRequest.ID,
+					User: simpleUser{
+						ID:   user.ID,
+						Name: user.Firstname + " " + user.Lastname,
+					},
+					DestinationCoordinate: Coordinate{
+						Latitude:  rideRequest.DestinationLatitude,
+						Longitude: rideRequest.DestinationLongitude,
+					},
+					Status: rideRequest.Status,
+				}); err != nil {
+					return err
+				}
+				lastRideRequest = rideRequest
+
+				return nil
+			}()
+
 			if err != nil {
 				respondError(w, http.StatusInternalServerError, err)
 				return
 			}
 
-			if err := writeSSE(w, "matched", &getChairRequestResponse{
-				RequestID: rideRequest.ID,
-				User: simpleUser{
-					ID:   user.ID,
-					Name: user.Firstname + " " + user.Lastname,
-				},
-				DestinationCoordinate: Coordinate{
-					Latitude:  rideRequest.DestinationLatitude,
-					Longitude: rideRequest.DestinationLongitude,
-				},
-				Status: rideRequest.Status,
-			}); err != nil {
-				respondError(w, http.StatusInternalServerError, err)
-				return
-			}
-			lastRideRequest = rideRequest
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
