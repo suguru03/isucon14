@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -205,7 +204,6 @@ func getDriverRequest(w http.ResponseWriter, r *http.Request) {
 	rideRequest := &RideRequest{}
 	err := db.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID)
 	if err != nil {
-		log.Println("err", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
