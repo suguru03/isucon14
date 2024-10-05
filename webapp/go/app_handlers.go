@@ -95,78 +95,102 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	requestID := ulid.Make().String()
-	_, err := db.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude) 
-				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
-	)
+
+	tx, err := db.Beginx()
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer tx.Rollback()
 
-LOOP:
+	requestCount := 0
+	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, user.ID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if requestCount > 0 {
+		respondError(w, http.StatusConflict, errors.New("request already exists"))
+		return
+	}
+
+	if _, err := tx.Exec(
+		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude) 
+				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
+	); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	for {
-		// TODO: トランザクションを利用する
-		tx, err := db.Beginx()
+		ok, err := func() (bool, error) {
+			// TODO: トランザクションを利用する
+			tx, err := db.Beginx()
+			if err != nil {
+				return false, err
+			}
+			defer tx.Rollback()
+
+			rideRequest := &RideRequest{}
+			if err := tx.Get(
+				rideRequest,
+				`SELECT * FROM ride_requests WHERE id = ? FOR UPDATE`,
+				requestID,
+			); err != nil {
+				return false, err
+			}
+
+			chair := &Chair{}
+			if err := tx.Get(
+				chair,
+				`SELECT * FROM chairs WHERE is_active = 1 ORDER BY RAND() LIMIT 1 FOR UPDATE`,
+			); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					time.Sleep(1 * time.Second)
+					return false, nil
+				}
+				return false, err
+			}
+
+			rideRequests := []RideRequest{}
+			if err := tx.Select(
+				&rideRequests,
+				`SELECT * FROM ride_requests WHERE chair_id = ?`,
+				chair.ID,
+			); err != nil {
+				return false, err
+			}
+
+			for _, rideRequest := range rideRequests {
+				if rideRequest.Status != "COMPLETED" && rideRequest.Status != "CANCELED" {
+					return false, nil
+				}
+			}
+
+			_, err = tx.Exec(
+				`UPDATE ride_requests SET chair_id = ?, status = ? WHERE id = ?`,
+				chair.ID, "DISPATCHING", requestID,
+			)
+			if err != nil {
+				return false, err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return false, err
+			}
+			return true, nil
+		}()
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, err)
-			return
 		}
-		defer tx.Rollback()
-
-		rideRequest := &RideRequest{}
-		if err := tx.Get(
-			rideRequest,
-			`SELECT * FROM ride_requests WHERE id = ? FOR UPDATE`,
-			requestID,
-		); err != nil {
-			respondError(w, http.StatusInternalServerError, err)
+		if ok {
+			break
 		}
-
-		chair := &Chair{}
-		if err := tx.Get(
-			chair,
-			`SELECT * FROM chairs WHERE is_active = 1 ORDER BY RAND() LIMIT 1 FOR UPDATE`,
-		); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			respondError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		rideRequests := []RideRequest{}
-		if err := tx.Select(
-			&rideRequests,
-			`SELECT * FROM ride_requests WHERE chair_id = ?`,
-			chair.ID,
-		); err != nil {
-			respondError(w, http.StatusInternalServerError, err)
-		}
-
-		for _, rideRequest := range rideRequests {
-			if rideRequest.Status != "COMPLETED" && rideRequest.Status != "CANCELED" {
-				tx.Rollback()
-				continue LOOP
-			}
-		}
-
-		_, err = tx.Exec(
-			`UPDATE ride_requests SET chair_id = ?, status = ? WHERE id = ?`,
-			chair.ID, "DISPATCHING", requestID,
-		)
-		if err != nil {
-			respondError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		if err := tx.Commit(); err != nil {
-			respondError(w, http.StatusInternalServerError, err)
-			return
-		}
-		break
 	}
 
 	respondJSON(w, http.StatusAccepted, &postAppRequestsResponse{
