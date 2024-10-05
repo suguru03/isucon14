@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -59,15 +58,13 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
 		tickTimeout:          tickTimeout,
-		timeoutTicker:        time.NewTicker(1 * time.Hour),
+		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 	}
 }
 
 func (w *World) Tick(ctx *Context) error {
 	var wg sync.WaitGroup
-
-	w.timeoutTicker.Reset(w.tickTimeout)
 
 	for _, c := range w.ChairDB.Iter() {
 		// 前のTickの処理が完了していない椅子は完了するまで新しい時間はスキップする
@@ -100,8 +97,8 @@ func (w *World) Tick(ctx *Context) error {
 	case err := <-w.criticalErrorCh:
 		// クリティカルエラーが発生
 		return err
-	case <-concurrent.WaitChan(&wg):
-		// タイムアウトする前に完了
+	//case <-concurrent.WaitChan(&wg):
+	//	// タイムアウトする前に完了
 
 	case <-w.timeoutTicker.C:
 		timeoutChair := 0
