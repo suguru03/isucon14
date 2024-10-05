@@ -1,8 +1,8 @@
 package world
 
 import (
+	"errors"
 	"fmt"
-	"log"
 )
 
 type UserState int
@@ -32,8 +32,10 @@ type User struct {
 	AccessToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
-	// 通知ストリームコネクション
+	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
+	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
+	NotificationHandleErrors []error
 }
 
 type RegisteredUserData struct {
@@ -56,6 +58,13 @@ func (u *User) SetID(id UserID) {
 
 func (u *User) Tick(ctx *Context) error {
 	switch {
+	// 通知処理にエラーが発生している
+	case len(u.NotificationHandleErrors) > 0:
+		// TODO この処理に1tick使って良いか考える
+		err := errors.Join(u.NotificationHandleErrors...)
+		u.NotificationHandleErrors = u.NotificationHandleErrors[:0] // 配列クリア
+		return err
+
 	// 進行中のリクエストが存在
 	case u.Request != nil:
 		switch u.Request.UserStatus {
@@ -166,30 +175,22 @@ func (u *User) HandleNotification(eventType, eventData string) {
 	case UserNotificationEventDispatching:
 		err := u.ChangeRequestStatus(RequestStatusDispatching)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
 		}
 	case UserNotificationEventDispatched:
 		err := u.ChangeRequestStatus(RequestStatusDispatched)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
 		}
 	case UserNotificationEventCarrying:
 		err := u.ChangeRequestStatus(RequestStatusCarrying)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
 		}
 	case UserNotificationEventArrived:
 		err := u.ChangeRequestStatus(RequestStatusArrived)
 		if err != nil {
-			log.Println(err)
-			// TODO エラーハンドリング
-			return
+			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
 		}
 	}
 }
