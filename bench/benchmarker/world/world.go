@@ -5,7 +5,9 @@ import (
 	"log"
 	"math/rand/v2"
 	"sync"
+	"time"
 
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -35,9 +37,12 @@ type World struct {
 	RootRand *rand.Rand
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
+
+	tickTimeout   time.Duration
+	timeoutTicker *time.Ticker
 }
 
-func NewWorld(completedRequestChan chan *Request) *World {
+func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
 	region := &Region{
 		RegionWidth:   30,
 		RegionHeight:  30,
@@ -52,36 +57,67 @@ func NewWorld(completedRequestChan chan *Request) *World {
 		// TODO シードをどうする
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
+		tickTimeout:          tickTimeout,
+		timeoutTicker:        time.NewTicker(1 * time.Hour),
 	}
 }
 
 func (w *World) Tick(ctx *Context) {
 	var wg sync.WaitGroup
 
+	w.timeoutTicker.Reset(w.tickTimeout)
+
 	for _, c := range w.ChairDB.Iter() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := c.Tick(ctx)
-			if err != nil {
-				// TODO: エラーペナルティ
-				log.Println(err)
-			}
-		}()
+		// 前のTickの処理が完了していない椅子は完了するまで新しい時間はスキップする
+		if c.TickCompleted() {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				err := c.Tick(ctx)
+				if err != nil {
+					// TODO: エラーペナルティ
+					log.Println(err)
+				}
+			}()
+		}
 	}
 	for _, u := range w.UserDB.Iter() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := u.Tick(ctx)
-			if err != nil {
-				// TODO: エラーペナルティ
-				log.Println(err)
-			}
-		}()
+		// 前のTickの処理が完了していないユーザーは完了するまで新しい時間はスキップする
+		if u.TickCompleted() {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				err := u.Tick(ctx)
+				if err != nil {
+					// TODO: エラーペナルティ
+					log.Println(err)
+				}
+			}()
+		}
 	}
 
-	wg.Wait()
+	select {
+	case <-concurrent.WaitChan(&wg):
+		// タイムアウトする前に完了
+
+	case <-w.timeoutTicker.C:
+		timeoutChair := 0
+		timeoutUser := 0
+		for _, c := range w.ChairDB.Iter() {
+			if !c.TickCompleted() {
+				timeoutChair++
+			}
+		}
+		for _, u := range w.UserDB.Iter() {
+			if !u.TickCompleted() {
+				timeoutUser++
+			}
+		}
+		if timeoutUser > 0 || timeoutChair > 0 {
+			// タイムアウト数計算途中に完了した場合はタイムアウトしなかった扱いにする
+			log.Printf("tick timeout (time: %d, timeout users: %d, timeout chairs: %d)", w.Time, timeoutUser, timeoutChair)
+		}
+	}
 
 	w.Time++
 	w.TimeOfDay = int(w.Time % LengthOfDay)
@@ -111,14 +147,16 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
-	return w.UserDB.Create(&User{
+	u := &User{
 		ServerID:       res.ServerUserID,
 		Region:         args.Region,
 		State:          UserStateInactive,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
-	}), nil
+	}
+	u.tickDone.Store(true)
+	return w.UserDB.Create(u), nil
 }
 
 type CreateChairArgs struct {
@@ -154,7 +192,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
 	}
 
-	return w.ChairDB.Create(&Chair{
+	c := &Chair{
 		ServerID:       res.ServerUserID,
 		Region:         args.Region,
 		Current:        args.InitialCoordinate,
@@ -164,5 +202,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
-	}), nil
+	}
+	c.tickDone.Store(true)
+	return w.ChairDB.Create(c), nil
 }

@@ -16,6 +16,27 @@ const (
 
 type RequestStatus int
 
+func (r RequestStatus) String() string {
+	switch r {
+	case RequestStatusMatching:
+		return "MATCHING"
+	case RequestStatusDispatching:
+		return "DISPATCHING"
+	case RequestStatusDispatched:
+		return "DISPATCHED"
+	case RequestStatusCarrying:
+		return "CARRYING"
+	case RequestStatusArrived:
+		return "ARRIVED"
+	case RequestStatusCompleted:
+		return "COMPLETED"
+	case RequestStatusCanceled:
+		return "CANCELED"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 const (
 	RequestStatusMatching RequestStatus = iota
 	RequestStatusDispatching

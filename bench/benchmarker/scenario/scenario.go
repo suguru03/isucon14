@@ -41,7 +41,7 @@ type Scenario struct {
 func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 	requestQueue := make(chan string, 1000)
 	completedRequestChan := make(chan *world.Request, 1000)
-	w := world.NewWorld(completedRequestChan)
+	w := world.NewWorld(30 * time.Millisecond, completedRequestChan)
 	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
 		TargetBaseURL:         target,
 		DefaultClientTimeout:  5 * time.Second,

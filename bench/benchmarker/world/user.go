@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"sync/atomic"
 )
 
 type UserState int
@@ -40,6 +41,8 @@ type User struct {
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
+	// tickDone 行動が完了しているかどうか
+	tickDone atomic.Bool
 }
 
 type RegisteredUserData struct {
@@ -61,6 +64,9 @@ func (u *User) SetID(id UserID) {
 }
 
 func (u *User) Tick(ctx *Context) error {
+	u.tickDone.Store(false)
+	defer func() { u.tickDone.Store(true) }()
+
 	switch {
 	// 通知処理にエラーが発生している
 	case len(u.NotificationHandleErrors) > 0:
@@ -140,6 +146,10 @@ func (u *User) Tick(ctx *Context) error {
 		}
 	}
 	return nil
+}
+
+func (u *User) TickCompleted() bool {
+	return u.tickDone.Load()
 }
 
 func (u *User) CreateRequest(ctx *Context) error {
