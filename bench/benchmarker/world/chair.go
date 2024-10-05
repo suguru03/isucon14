@@ -252,7 +252,7 @@ func (c *Chair) ChangeRequestStatus(status RequestStatus) error {
 		return CodeError(ErrorCodeChairNotAssignedButStatusChanged)
 	}
 	if status != RequestStatusCanceled && request.DesiredStatus != status {
-		return CodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred)
+		return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, status))
 	}
 	request.ChairStatus = status
 	return nil
