@@ -11,13 +11,13 @@ import (
 )
 
 type chairClient struct {
-	ctx    context.Context // 現状 WorldClient の ctx と同じ
-	client *webapp.Client
+	sseContext context.Context
+	client     *webapp.Client
 }
 
 type userClient struct {
-	ctx    context.Context // 現状 WorldClient の ctx と同じ
-	client *webapp.Client
+	sseContext context.Context
+	client     *webapp.Client
 }
 
 type WorldClient struct {
@@ -63,7 +63,7 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 	if err != nil {
 		return err
 	}
-	_, err = chairClient.client.ChairPostCoordinate(chairClient.ctx, &api.Coordinate{
+	_, err = chairClient.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
 		Latitude:  chair.Current.X,
 		Longitude: chair.Current.Y,
 	})
@@ -79,7 +79,7 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 	if err != nil {
 		return err
 	}
-	_, err = chairClient.client.ChairPostRequestAccept(chairClient.ctx, req.ServerID)
+	_, err = chairClient.client.ChairPostRequestAccept(c.ctx, req.ServerID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
@@ -93,7 +93,7 @@ func (c *WorldClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, se
 		return err
 	}
 
-	_, err = chairClient.client.ChairPostRequestDeny(chairClient.ctx, serverRequestID)
+	_, err = chairClient.client.ChairPostRequestDeny(c.ctx, serverRequestID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
 	}
@@ -107,7 +107,7 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 		return err
 	}
 
-	_, err = chairClient.client.ChairPostRequestDepart(chairClient.ctx, req.ServerID)
+	_, err = chairClient.client.ChairPostRequestDepart(c.ctx, req.ServerID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
@@ -122,7 +122,7 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 	}
 
 	// TODO: 評価点どうする？
-	_, err = userClient.client.AppPostRequestEvaluate(userClient.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
+	_, err = userClient.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
 		Evaluation: 5,
 	})
 	if err != nil {
@@ -140,7 +140,7 @@ func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) 
 
 	pickup := req.PickupPoint
 	destination := req.DestinationPoint
-	response, err := userClient.client.AppPostRequest(userClient.ctx, &api.AppPostRequestReq{
+	response, err := userClient.client.AppPostRequest(c.ctx, &api.AppPostRequestReq{
 		PickupCoordinate: api.Coordinate{
 			Latitude:  pickup.X,
 			Longitude: pickup.Y,
@@ -166,7 +166,7 @@ func (c *WorldClient) SendActivate(ctx *world.Context, chair *world.Chair) error
 		return err
 	}
 
-	_, err = chairClient.client.ChairPostActivate(chairClient.ctx)
+	_, err = chairClient.client.ChairPostActivate(c.ctx)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
 	}
@@ -180,7 +180,7 @@ func (c *WorldClient) SendDeactivate(ctx *world.Context, chair *world.Chair) err
 		return err
 	}
 
-	_, err = chairClient.client.ChairPostDeactivate(chairClient.ctx)
+	_, err = chairClient.client.ChairPostDeactivate(c.ctx)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
 	}
@@ -194,7 +194,7 @@ func (c *WorldClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 		return nil, err
 	}
 
-	_, err = chairClient.client.ChairGetRequest(chairClient.ctx, serverRequestID)
+	_, err = chairClient.client.ChairGetRequest(c.ctx, serverRequestID)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToGetDriverRequest, err)
 	}
@@ -219,9 +219,7 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
-	newCtx, _ := context.WithCancel(c.ctx)
 	c.userClients[response.ID] = &userClient{
-		ctx:    newCtx,
 		client: client,
 	}
 
@@ -249,9 +247,7 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterDriver, err)
 	}
 
-	newCtx, _ := context.WithCancel(c.ctx)
 	c.chairClients[response.ID] = &chairClient{
-		ctx:    newCtx,
 		client: client,
 	}
 
@@ -270,7 +266,10 @@ func (c *notificationConnectionImpl) Close() {
 }
 
 func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	newCtx, cancel := context.WithCancel(c.ctx)
+	c.userClients[user.ServerID].sseContext = newCtx
 	go func() {
+		c.contestantLogger.Info("User notification stream started", zap.String("user_id", user.ServerID))
 		userClient, err := c.getUserClient(user.ServerID)
 		if err != nil {
 			return
@@ -278,13 +277,13 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 
 		for {
 			select {
-			case <-userClient.ctx.Done():
+			case <-userClient.sseContext.Done():
 				c.contestantLogger.Info("User notification stream closed", zap.String("user_id", user.ServerID))
 				return
 			default:
 			}
 
-			res, result, err := userClient.client.AppGetNotification(userClient.ctx)
+			res, result, err := userClient.client.AppGetNotification(userClient.sseContext)
 			if err != nil {
 				// TODO: 減点
 				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
@@ -310,7 +309,7 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 					// event = &world.UserNotificationEventCanceled{}
 				}
 				if event == nil {
-					c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
+					// c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
 					continue
 				}
 				receiver(event)
@@ -324,19 +323,15 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 	}()
 
 	return &notificationConnectionImpl{
-		close: func() {
-			userClient, err := c.getUserClient(user.ServerID)
-			if err != nil {
-				c.contestantLogger.Error("Failed to close user notification stream", zap.Error(err))
-				return
-			}
-			userClient.ctx.Done()
-		},
+		close: cancel,
 	}, nil
 }
 
 func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	newCtx, cancel := context.WithCancel(c.ctx)
+	c.chairClients[chair.ServerID].sseContext = newCtx
 	go func() {
+		c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
 		chairClient, err := c.getChairClient(chair.ServerID)
 		if err != nil {
 			return
@@ -344,13 +339,13 @@ func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 
 		for {
 			select {
-			case <-c.ctx.Done():
+			case <-chairClient.sseContext.Done():
 				c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
 				return
 			default:
 			}
 
-			res, result, err := chairClient.client.ChairGetNotification(chairClient.ctx)
+			res, result, err := chairClient.client.ChairGetNotification(chairClient.sseContext)
 			if err != nil {
 				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
 				return
@@ -379,7 +374,7 @@ func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 					// event = &world.ChairNotificationEventCanceled{}
 				}
 				if event == nil {
-					c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
+					// c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
 					continue
 				}
 				receiver(event)
@@ -393,13 +388,6 @@ func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 	}()
 
 	return &notificationConnectionImpl{
-		close: func() {
-			chairClient, err := c.getChairClient(chair.ServerID)
-			if err != nil {
-				c.contestantLogger.Error("Failed to close chair notification stream", zap.Error(err))
-				return
-			}
-			chairClient.ctx.Done()
-		},
+		close: cancel,
 	}, nil
 }
