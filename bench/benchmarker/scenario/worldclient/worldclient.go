@@ -63,10 +63,9 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 	if err != nil {
 		return err
 	}
-	// TODO: Lat, Lng と X, Y の対応
 	_, err = chairClient.client.ChairPostCoordinate(chairClient.ctx, &api.Coordinate{
-		Latitude:  float64(chair.Current.X),
-		Longitude: float64(chair.Current.Y),
+		Latitude:  chair.Current.X,
+		Longitude: chair.Current.Y,
 	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
@@ -80,7 +79,6 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 	if err != nil {
 		return err
 	}
-	// TODO: Lat, Lng と X, Y の対応
 	_, err = chairClient.client.ChairPostRequestAccept(chairClient.ctx, req.ServerID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
@@ -144,12 +142,12 @@ func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) 
 	destination := req.DestinationPoint
 	response, err := userClient.client.AppPostRequest(userClient.ctx, &api.AppPostRequestReq{
 		PickupCoordinate: api.Coordinate{
-			Latitude:  float64(pickup.X),
-			Longitude: float64(pickup.Y),
+			Latitude:  pickup.X,
+			Longitude: pickup.Y,
 		},
 		DestinationCoordinate: api.Coordinate{
-			Latitude:  float64(destination.X),
-			Longitude: float64(destination.Y),
+			Latitude:  destination.X,
+			Longitude: destination.Y,
 		},
 	})
 	if err != nil {

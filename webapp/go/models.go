@@ -35,10 +35,10 @@ type RideRequest struct {
 	UserID               string         `db:"user_id"`
 	ChairID              sql.NullString `db:"chair_id"`
 	Status               string         `db:"status"`
-	PickupLatitude       float64        `db:"pickup_latitude"`
-	PickupLongitude      float64        `db:"pickup_longitude"`
-	DestinationLatitude  float64        `db:"destination_latitude"`
-	DestinationLongitude float64        `db:"destination_longitude"`
+	PickupLatitude       int            `db:"pickup_latitude"`
+	PickupLongitude      int            `db:"pickup_longitude"`
+	DestinationLatitude  int            `db:"destination_latitude"`
+	DestinationLongitude int            `db:"destination_longitude"`
 	Evaluation           *int           `db:"evaluation"`
 	RequestedAt          time.Time      `db:"requested_at"`
 	MatchedAt            *time.Time     `db:"matched_at"`
@@ -50,8 +50,8 @@ type RideRequest struct {
 
 type ChairLocation struct {
 	ChairID   string    `db:"chair_id"`
-	Latitude  float64   `db:"latitude"`
-	Longitude float64   `db:"longitude"`
+	Latitude  int       `db:"latitude"`
+	Longitude int       `db:"longitude"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
 

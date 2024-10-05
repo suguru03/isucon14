@@ -614,28 +614,28 @@ func (*ChairPostRequestDepartNotFound) chairPostRequestDepartRes() {}
 // Ref: #/components/schemas/Coordinate
 type Coordinate struct {
 	// 経度.
-	Latitude float64 `json:"latitude"`
+	Latitude int `json:"latitude"`
 	// 緯度.
-	Longitude float64 `json:"longitude"`
+	Longitude int `json:"longitude"`
 }
 
 // GetLatitude returns the value of Latitude.
-func (s *Coordinate) GetLatitude() float64 {
+func (s *Coordinate) GetLatitude() int {
 	return s.Latitude
 }
 
 // GetLongitude returns the value of Longitude.
-func (s *Coordinate) GetLongitude() float64 {
+func (s *Coordinate) GetLongitude() int {
 	return s.Longitude
 }
 
 // SetLatitude sets the value of Latitude.
-func (s *Coordinate) SetLatitude(val float64) {
+func (s *Coordinate) SetLatitude(val int) {
 	s.Latitude = val
 }
 
 // SetLongitude sets the value of Longitude.
-func (s *Coordinate) SetLongitude(val float64) {
+func (s *Coordinate) SetLongitude(val int) {
 	s.Longitude = val
 }
 

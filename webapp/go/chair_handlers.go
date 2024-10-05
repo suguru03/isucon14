@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -130,15 +129,14 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// TODO
-		if math.Abs(req.Latitude-rideRequest.PickupLatitude) < 0.1 && math.Abs(req.Longitude-rideRequest.PickupLongitude) < 0.1 {
+		if req.Latitude == rideRequest.PickupLatitude && req.Longitude == rideRequest.PickupLongitude {
 			if _, err := tx.Exec("UPDATE ride_requests SET status = 'DISPATCHED' WHERE id = ? AND status = 'DISPATCHING'", rideRequest.ID); err != nil {
 				respondError(w, http.StatusInternalServerError, err)
 				return
 			}
 		}
 
-		if math.Abs(req.Latitude-rideRequest.DestinationLatitude) < 0.1 && math.Abs(req.Longitude-rideRequest.DestinationLongitude) < 0.1 {
+		if req.Latitude == rideRequest.DestinationLatitude && req.Longitude == rideRequest.DestinationLongitude {
 			if _, err := tx.Exec("UPDATE ride_requests SET status = 'ARRIVED' WHERE id = ? AND status = 'CARRYING'", rideRequest.ID); err != nil {
 				respondError(w, http.StatusInternalServerError, err)
 				return
