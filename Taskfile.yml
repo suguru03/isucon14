@@ -13,6 +13,10 @@ tasks:
     cmds:
       - docker compose -f compose-local.yml up -d
     dir: ./development
+  prepare:down:
+    cmds:
+      - docker compose -f compose-local.yml down -v
+    dir: ./development
   migrate:
     cmds:
       - mysqldef -p isucon isucon < webapp/sql/schema.sql

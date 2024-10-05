@@ -33,9 +33,11 @@ type World struct {
 	RequestDB *RequestDB
 	// RootRand ルートの乱数生成器
 	RootRand *rand.Rand
+	// CompletedRequestChan 完了したリクエストのチャンネル
+	CompletedRequestChan chan *Request
 }
 
-func NewWorld() *World {
+func NewWorld(completedRequestChan chan *Request) *World {
 	region := &Region{
 		RegionWidth:   30,
 		RegionHeight:  30,
@@ -48,7 +50,8 @@ func NewWorld() *World {
 		ChairDB:   NewGenericDB[ChairID, *Chair](),
 		RequestDB: NewRequestDB(),
 		// TODO シードをどうする
-		RootRand: random.NewLockedRand(rand.NewPCG(0, 0)),
+		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
+		CompletedRequestChan: completedRequestChan,
 	}
 }
 

@@ -160,8 +160,9 @@ func (s *FastServerStub) MatchingLoop() {
 
 func TestWorld(t *testing.T) {
 	var (
-		world  = NewWorld()
-		client = &FastServerStub{
+		completedRequestChan = make(chan *Request, 1000)
+		world                = NewWorld(completedRequestChan)
+		client               = &FastServerStub{
 			t:                            t,
 			world:                        world,
 			latency:                      1 * time.Millisecond,
@@ -177,6 +178,13 @@ func TestWorld(t *testing.T) {
 		}
 		region = world.Regions[1]
 	)
+
+	// MEMO: chan が詰まらないように
+	go func() {
+		for req := range completedRequestChan {
+			t.Log(req)
+		}
+	}()
 
 	for range 10 {
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
