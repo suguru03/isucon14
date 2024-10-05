@@ -15,7 +15,7 @@ type User struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
-type Driver struct {
+type Chair struct {
 	ID          string    `db:"id"`
 	Username    string    `db:"username"`
 	Firstname   string    `db:"firstname"`
@@ -32,7 +32,7 @@ type Driver struct {
 type RideRequest struct {
 	ID                   string     `db:"id"`
 	UserID               string     `db:"user_id"`
-	DriverID             string     `db:"driver_id"`
+	ChairID              string     `db:"chair_id"`
 	Status               string     `db:"status"`
 	PickupLatitude       float64    `db:"pickup_latitude"`
 	PickupLongitude      float64    `db:"pickup_longitude"`
@@ -47,8 +47,8 @@ type RideRequest struct {
 	UpdatedAt            time.Time  `db:"updated_at"`
 }
 
-type DriverLocation struct {
-	DriverID  string    `db:"driver_id"`
+type ChairLocation struct {
+	ChairID   string    `db:"chair_id"`
 	Latitude  float64   `db:"latitude"`
 	Longitude float64   `db:"longitude"`
 	UpdatedAt time.Time `db:"updated_at"`

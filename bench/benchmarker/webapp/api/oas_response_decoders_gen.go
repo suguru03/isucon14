@@ -14,88 +14,16 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func decodeAcceptRequestResponse(resp *http.Response) (res AcceptRequestRes, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &AcceptRequestNoContent{}, nil
-	case 404:
-		// Code 404.
-		return &AcceptRequestNotFound{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeActivateDriverResponse(resp *http.Response) (res *ActivateDriverNoContent, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &ActivateDriverNoContent{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeDeactivateDriverResponse(resp *http.Response) (res *DeactivateDriverNoContent, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &DeactivateDriverNoContent{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeDenyRequestResponse(resp *http.Response) (res DenyRequestRes, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &DenyRequestNoContent{}, nil
-	case 404:
-		// Code 404.
-		return &DenyRequestNotFound{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeDepartResponse(resp *http.Response) (res DepartRes, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &DepartNoContent{}, nil
-	case 400:
-		// Code 400.
-		return &DepartBadRequest{}, nil
-	case 404:
-		// Code 404.
-		return &DepartNotFound{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeEvaluateResponse(resp *http.Response) (res EvaluateRes, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &EvaluateNoContent{}, nil
-	case 400:
-		// Code 400.
-		return &EvaluateBadRequest{}, nil
-	case 404:
-		// Code 404.
-		return &EvaluateNotFound{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeGetAppNotificationResponse(resp *http.Response) (res *GetAppNotificationOK, _ error) {
+func decodeAppGetNotificationResponse(resp *http.Response) (res *AppGetNotificationOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
-		return &GetAppNotificationOK{}, nil
+		return &AppGetNotificationOK{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeGetAppRequestResponse(resp *http.Response) (res GetAppRequestRes, _ error) {
+func decodeAppGetRequestResponse(resp *http.Response) (res AppGetRequestRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -111,7 +39,7 @@ func decodeGetAppRequestResponse(resp *http.Response) (res GetAppRequestRes, _ e
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response GetAppRequestOK
+			var response AppGetRequestOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -143,21 +71,21 @@ func decodeGetAppRequestResponse(resp *http.Response) (res GetAppRequestRes, _ e
 		}
 	case 404:
 		// Code 404.
-		return &GetAppRequestNotFound{}, nil
+		return &AppGetRequestNotFound{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeGetDriverNotificationResponse(resp *http.Response) (res *GetDriverNotificationOK, _ error) {
+func decodeAppPostInquiryResponse(resp *http.Response) (res *AppPostInquiryNoContent, _ error) {
 	switch resp.StatusCode {
-	case 200:
-		// Code 200.
-		return &GetDriverNotificationOK{}, nil
+	case 204:
+		// Code 204.
+		return &AppPostInquiryNoContent{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeGetInquiriesResponse(resp *http.Response) (res *GetInquiriesOK, _ error) {
+func decodeAppPostRegisterResponse(resp *http.Response) (res AppPostRegisterRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -173,7 +101,107 @@ func decodeGetInquiriesResponse(resp *http.Response) (res *GetInquiriesOK, _ err
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response GetInquiriesOK
+			var response AppPostRegisterOK
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 400:
+		// Code 400.
+		return &AppPostRegisterBadRequest{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeAppPostRequestResponse(resp *http.Response) (res *AppPostRequestAccepted, _ error) {
+	switch resp.StatusCode {
+	case 202:
+		// Code 202.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response AppPostRequestAccepted
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeAppPostRequestEvaluateResponse(resp *http.Response) (res AppPostRequestEvaluateRes, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &AppPostRequestEvaluateNoContent{}, nil
+	case 400:
+		// Code 400.
+		return &AppPostRequestEvaluateBadRequest{}, nil
+	case 404:
+		// Code 404.
+		return &AppPostRequestEvaluateNotFound{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairGetInquiriesResponse(resp *http.Response) (res *ChairGetInquiriesOK, _ error) {
+	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ChairGetInquiriesOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -207,7 +235,7 @@ func decodeGetInquiriesResponse(resp *http.Response) (res *GetInquiriesOK, _ err
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeGetInquiryResponse(resp *http.Response) (res GetInquiryRes, _ error) {
+func decodeChairGetInquiryResponse(resp *http.Response) (res ChairGetInquiryRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -255,12 +283,21 @@ func decodeGetInquiryResponse(resp *http.Response) (res GetInquiryRes, _ error) 
 		}
 	case 404:
 		// Code 404.
-		return &GetInquiryNotFound{}, nil
+		return &ChairGetInquiryNotFound{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeGetRequestResponse(resp *http.Response) (res GetRequestRes, _ error) {
+func decodeChairGetNotificationResponse(resp *http.Response) (res *ChairGetNotificationOK, _ error) {
+	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		return &ChairGetNotificationOK{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairGetRequestResponse(resp *http.Response) (res ChairGetRequestRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -276,7 +313,7 @@ func decodeGetRequestResponse(resp *http.Response) (res GetRequestRes, _ error) 
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response GetRequestOK
+			var response ChairGetRequestOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -308,7 +345,114 @@ func decodeGetRequestResponse(resp *http.Response) (res GetRequestRes, _ error) 
 		}
 	case 404:
 		// Code 404.
-		return &GetRequestNotFound{}, nil
+		return &ChairGetRequestNotFound{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostActivateResponse(resp *http.Response) (res *ChairPostActivateNoContent, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostActivateNoContent{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostCoordinateResponse(resp *http.Response) (res *ChairPostCoordinateNoContent, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostCoordinateNoContent{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostDeactivateResponse(resp *http.Response) (res *ChairPostDeactivateNoContent, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostDeactivateNoContent{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostRegisterResponse(resp *http.Response) (res *ChairPostRegisterCreated, _ error) {
+	switch resp.StatusCode {
+	case 201:
+		// Code 201.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ChairPostRegisterCreated
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostRequestAcceptResponse(resp *http.Response) (res ChairPostRequestAcceptRes, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostRequestAcceptNoContent{}, nil
+	case 404:
+		// Code 404.
+		return &ChairPostRequestAcceptNotFound{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostRequestDenyResponse(resp *http.Response) (res ChairPostRequestDenyRes, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostRequestDenyNoContent{}, nil
+	case 404:
+		// Code 404.
+		return &ChairPostRequestDenyNotFound{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
+func decodeChairPostRequestDepartResponse(resp *http.Response) (res ChairPostRequestDepartRes, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &ChairPostRequestDepartNoContent{}, nil
+	case 400:
+		// Code 400.
+		return &ChairPostRequestDepartBadRequest{}, nil
+	case 404:
+		// Code 404.
+		return &ChairPostRequestDepartNotFound{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
@@ -359,150 +503,6 @@ func decodeInitializeResponse(resp *http.Response) (res *InitializeOK, _ error) 
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodePostDriverCoordinateResponse(resp *http.Response) (res *PostDriverCoordinateNoContent, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &PostDriverCoordinateNoContent{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodePostInquiryResponse(resp *http.Response) (res *PostInquiryNoContent, _ error) {
-	switch resp.StatusCode {
-	case 204:
-		// Code 204.
-		return &PostInquiryNoContent{}, nil
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodePostRequestResponse(resp *http.Response) (res *PostRequestAccepted, _ error) {
-	switch resp.StatusCode {
-	case 202:
-		// Code 202.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response PostRequestAccepted
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeRegisterDriverResponse(resp *http.Response) (res *RegisterDriverCreated, _ error) {
-	switch resp.StatusCode {
-	case 201:
-		// Code 201.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response RegisterDriverCreated
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	}
-	return res, validate.UnexpectedStatusCode(resp.StatusCode)
-}
-
-func decodeRegisterUserResponse(resp *http.Response) (res RegisterUserRes, _ error) {
-	switch resp.StatusCode {
-	case 200:
-		// Code 200.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response RegisterUserOK
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 400:
-		// Code 400.
-		return &RegisterUserBadRequest{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }

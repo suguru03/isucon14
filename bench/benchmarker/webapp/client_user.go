@@ -12,7 +12,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) Register(ctx context.Context, reqBody *api.RegisterUserReq) (*api.RegisterUserOK, error) {
+func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegisterReq) (*api.AppPostRegisterOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (c *Client) Register(ctx context.Context, reqBody *api.RegisterUserReq) (*a
 		return nil, fmt.Errorf("POST /app/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.RegisterUserOK{}
+	resBody := &api.AppPostRegisterOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -49,7 +49,7 @@ func (c *Client) Register(ctx context.Context, reqBody *api.RegisterUserReq) (*a
 	return resBody, nil
 }
 
-func (c *Client) PostRequest(ctx context.Context, reqBody *api.PostRequestReq) (*api.PostRequestAccepted, error) {
+func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequestReq) (*api.AppPostRequestAccepted, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (c *Client) PostRequest(ctx context.Context, reqBody *api.PostRequestReq) (
 		return nil, fmt.Errorf("POST /app/requests へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusAccepted, resp.StatusCode)
 	}
 
-	resBody := &api.PostRequestAccepted{}
+	resBody := &api.AppPostRequestAccepted{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -82,7 +82,7 @@ func (c *Client) PostRequest(ctx context.Context, reqBody *api.PostRequestReq) (
 	return resBody, nil
 }
 
-func (c *Client) GetRequest(ctx context.Context, requestID string) (*api.GetAppRequestOK, error) {
+func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppGetRequestOK, error) {
 	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/app/requests/%s", requestID), nil)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (c *Client) GetRequest(ctx context.Context, requestID string) (*api.GetAppR
 		return nil, fmt.Errorf("GET /app/requests/{request_id} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.GetAppRequestOK{}
+	resBody := &api.AppGetRequestOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -110,7 +110,7 @@ func (c *Client) GetRequest(ctx context.Context, requestID string) (*api.GetAppR
 	return resBody, nil
 }
 
-func (c *Client) PostEvaluate(ctx context.Context, requestID string, reqBody *api.EvaluateReq) (*api.EvaluateNoContent, error) {
+func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, reqBody *api.AppPostRequestEvaluateReq) (*api.AppPostRequestEvaluateNoContent, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -135,6 +135,6 @@ func (c *Client) PostEvaluate(ctx context.Context, requestID string, reqBody *ap
 		return nil, fmt.Errorf("POST /app/requests/{request_id}/evaluate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.EvaluateNoContent{}
+	resBody := &api.AppPostRequestEvaluateNoContent{}
 	return resBody, nil
 }

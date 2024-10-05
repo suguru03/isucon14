@@ -67,7 +67,7 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return err
 	}
 	// TODO: Lat, Lng と X, Y の対応
-	_, err = chairClient.client.PostCoordinate(chairClient.ctx, &api.Coordinate{
+	_, err = chairClient.client.ChairPostCoordinate(chairClient.ctx, &api.Coordinate{
 		Latitude:  float64(chair.Current.X),
 		Longitude: float64(chair.Current.Y),
 	})
@@ -96,7 +96,7 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 		return err
 	}
 	// TODO: Lat, Lng と X, Y の対応
-	_, err = chairClient.client.PostAccept(chairClient.ctx, req.ServerID)
+	_, err = chairClient.client.ChairPostRequestAccept(chairClient.ctx, req.ServerID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
@@ -114,7 +114,7 @@ func (c *WorldClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, se
 		return err
 	}
 
-	_, err = chairClient.client.PostDeny(chairClient.ctx, serverRequestID)
+	_, err = chairClient.client.ChairPostRequestDeny(chairClient.ctx, serverRequestID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
 	}
@@ -128,7 +128,7 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 		return err
 	}
 
-	_, err = chairClient.client.PostDepart(chairClient.ctx, req.ServerID)
+	_, err = chairClient.client.ChairPostRequestDepart(chairClient.ctx, req.ServerID)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
@@ -147,7 +147,7 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 	}
 
 	// TODO: 評価点どうする？
-	_, err = userClient.client.PostEvaluate(userClient.ctx, req.ServerID, &api.EvaluateReq{
+	_, err = userClient.client.AppPostRequestEvaluate(userClient.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
 		Evaluation: 5,
 	})
 	if err != nil {
@@ -169,7 +169,7 @@ func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) 
 
 	pickup := req.PickupPoint
 	destination := req.DestinationPoint
-	response, err := userClient.client.PostRequest(userClient.ctx, &api.PostRequestReq{
+	response, err := userClient.client.AppPostRequest(userClient.ctx, &api.AppPostRequestReq{
 		PickupCoordinate: api.Coordinate{
 			Latitude:  float64(pickup.X),
 			Longitude: float64(pickup.Y),
@@ -195,7 +195,7 @@ func (c *WorldClient) SendActivate(ctx *world.Context, chair *world.Chair) error
 		return err
 	}
 
-	_, err = chairClient.client.PostActivate(chairClient.ctx)
+	_, err = chairClient.client.ChairPostActivate(chairClient.ctx)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
 	}
@@ -209,7 +209,7 @@ func (c *WorldClient) SendDeactivate(ctx *world.Context, chair *world.Chair) err
 		return err
 	}
 
-	_, err = chairClient.client.PostDeactivate(chairClient.ctx)
+	_, err = chairClient.client.ChairPostDeactivate(chairClient.ctx)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
 	}
@@ -223,7 +223,7 @@ func (c *WorldClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 		return nil, err
 	}
 
-	_, err = chairClient.client.GetDriverRequest(chairClient.ctx, serverRequestID)
+	_, err = chairClient.client.ChairGetRequest(chairClient.ctx, serverRequestID)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToGetDriverRequest, err)
 	}
@@ -238,7 +238,7 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.Register(c.ctx, &api.RegisterUserReq{
+	response, err := client.AppPostRegister(c.ctx, &api.AppPostRegisterReq{
 		Username:    data.UserName,
 		Firstname:   data.FirstName,
 		Lastname:    data.LastName,
@@ -265,7 +265,7 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.RegisterDriver(c.ctx, &api.RegisterDriverReq{
+	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
 		Username:    data.UserName,
 		Firstname:   data.FirstName,
 		Lastname:    data.LastName,

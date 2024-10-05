@@ -42,39 +42,37 @@ func setup() http.Handler {
 	mux.Use(middleware.Recoverer)
 	mux.HandleFunc("POST /api/initialize", postInitialize)
 
-	// app
+	// app handlers
 	{
-		mux.HandleFunc("POST /app/register", postAppRegister)
+		mux.HandleFunc("POST /app/register", appPostRegister)
 
 		authedMux := mux.With(appAuthMiddleware)
-		authedMux.HandleFunc("POST /app/requests", postAppRequests)
-		authedMux.HandleFunc("GET /app/requests/{request_id}", getAppRequest)
-		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", postAppEvaluate)
-		authedMux.HandleFunc("GET /app/notification", getAppNotification)
-		authedMux.HandleFunc("POST /app/inquiry", postAppInquiry)
-
-		mux.Mount("/app", authedMux)
+		authedMux.HandleFunc("POST /app/requests", appPostRequests)
+		authedMux.HandleFunc("GET /app/requests/{request_id}", appGetRequest)
+		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
+		authedMux.HandleFunc("GET /app/notification", appGetNotification)
+		authedMux.HandleFunc("POST /app/inquiry", appPostInquiry)
 	}
 
-	// driver
+	// chair handlers
 	{
-		mux.HandleFunc("POST /driver/register", postDriverRegister)
+		mux.HandleFunc("POST /chair/register", chairPostRegister)
 
-		authedMux := mux.With(driverAuthMiddleware)
-		authedMux.HandleFunc("POST /driver/activate", postDriverActivate)
-		authedMux.HandleFunc("POST /driver/deactivate", postDriverDeactivate)
-		authedMux.HandleFunc("POST /driver/coordinate", postDriverCoordinate)
-		authedMux.HandleFunc("GET /driver/notification", getDriverNotification)
-		authedMux.HandleFunc("GET /driver/requests/{request_id}", getDriverRequest)
-		authedMux.HandleFunc("POST /driver/requests/{request_id}/accept", postDriverAccept)
-		authedMux.HandleFunc("POST /driver/requests/{request_id}/deny", postDriverDeny)
-		authedMux.HandleFunc("POST /driver/requests/{request_id}/depart", postDriverDepart)
+		authedMux := mux.With(chairAuthMiddleware)
+		authedMux.HandleFunc("POST /chair/activate", chairPostActivate)
+		authedMux.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
+		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
+		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
+		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", charitPostRequestAccept)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}
 
 	// admin
 	{
-		mux.HandleFunc("GET /admin/inquiries", getAdminInquiries)
-		mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", getAdminInquiry)
+		mux.HandleFunc("GET /admin/inquiries", adminGetInquiries)
+		mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", adminGetInquiry)
 	}
 
 	return mux
@@ -82,11 +80,11 @@ func setup() http.Handler {
 
 func postInitialize(w http.ResponseWriter, r *http.Request) {
 	tables := []string{
-		"driver_locations",
+		"chair_locations",
 		"ride_requests",
 		"inquiries",
 		"users",
-		"drivers",
+		"chairs",
 	}
 	tx, err := db.Beginx()
 	if err != nil {

@@ -13,7 +13,7 @@ type getAdminInquiriesResponse struct {
 	} `json:"inquiries"`
 }
 
-func getAdminInquiries(w http.ResponseWriter, r *http.Request) {
+func adminGetInquiries(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
 	if limitStr == "" {
 		limitStr = "20"
@@ -65,7 +65,7 @@ type getAdminInquiryResponse struct {
 	CreatedAt int64  `json:"created_at"`
 }
 
-func getAdminInquiry(w http.ResponseWriter, r *http.Request) {
+func adminGetInquiry(w http.ResponseWriter, r *http.Request) {
 	inquiryID := r.URL.Query().Get("inquiry_id")
 
 	inquiry := Inquiry{}

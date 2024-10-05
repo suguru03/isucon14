@@ -47,7 +47,7 @@ package verify
 // 	ctx := context.Background()
 // 	// ユーザーの登録
 // 	{
-// 		registerRes, err := userClient.Register(ctx)
+// 		registerRes, err := userClient.AppPostRegister(ctx)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to register user", zap.Error(err))
 // 			return err
@@ -71,7 +71,7 @@ package verify
 
 // 	// ドライバーの登録
 // 	{
-// 		registerRes, err := chairClient.RegisterDriver(ctx)
+// 		registerRes, err := chairClient.ChairPostRegister(ctx)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to register driver", zap.Error(err))
 // 			return err
@@ -89,7 +89,7 @@ package verify
 // 	// ドライバーが受信開始
 // 	go func() {
 // 		ctx := context.Background()
-// 		res, result, err := chairClient.ReceiveNotifications(ctx)
+// 		res, result, err := chairClient.ChairGetNotification(ctx)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to receive notifications", zap.Error(err))
 // 			return
@@ -106,7 +106,7 @@ package verify
 
 // 	// ドライバーが待機開始
 // 	{
-// 		_, err := chairClient.PostActivate(ctx)
+// 		_, err := chairClient.ChairPostActivate(ctx)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post activate", zap.Error(err))
 // 			return err
@@ -116,7 +116,7 @@ package verify
 // 	// ドライバーが現在位置を送信
 // 	{
 // 		cord := randomCoordinate()
-// 		_, err := chairClient.PostCoordinate(ctx, &cord)
+// 		_, err := chairClient.ChairPostCoordinate(ctx, &cord)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post coordinate", zap.Error(err))
 // 			return err
@@ -126,7 +126,7 @@ package verify
 // 	var requestID string
 // 	// 配車要求
 // 	{
-// 		req, err := userClient.PostRequest(ctx, &api.PostRequestReq{
+// 		req, err := userClient.AppPostRequest(ctx, &api.PostRequestReq{
 // 			PickupCoordinate:      pickupCoordinate,
 // 			DestinationCoordinate: destinationCoordinate,
 // 		})
@@ -139,7 +139,7 @@ package verify
 
 // 	// 配車要求の取得
 // 	{
-// 		req, err := userClient.GetRequest(ctx, requestID)
+// 		req, err := userClient.AppGetRequest(ctx, requestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to get request", zap.Error(err))
 // 			return err
@@ -153,7 +153,7 @@ package verify
 // 	// マッチングしたらaccept
 // 	{
 // 		receivedRequest := <-receivedRequestCh
-// 		_, err := chairClient.PostAccept(ctx, receivedRequest.RequestID)
+// 		_, err := chairClient.ChairPostRequestAccept(ctx, receivedRequest.RequestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post accept", zap.Error(err))
 // 			return err
@@ -162,7 +162,7 @@ package verify
 
 // 	// 配車要求の状態を確認
 // 	{
-// 		req, err := userClient.GetRequest(ctx, requestID)
+// 		req, err := userClient.AppGetRequest(ctx, requestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to get request", zap.Error(err))
 // 			return err
@@ -175,7 +175,7 @@ package verify
 
 // 	// ドライバーが乗車位置に到着
 // 	{
-// 		_, err := chairClient.PostCoordinate(ctx, &pickupCoordinate)
+// 		_, err := chairClient.ChairPostCoordinate(ctx, &pickupCoordinate)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post coordinate", zap.Error(err))
 // 			return err
@@ -184,7 +184,7 @@ package verify
 
 // 	// ユーザーが乗車した
 // 	{
-// 		_, err := chairClient.PostDepart(ctx, requestID)
+// 		_, err := chairClient.ChairPostRequestDepart(ctx, requestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post depart", zap.Error(err))
 // 			return err
@@ -193,7 +193,7 @@ package verify
 
 // 	// 配車要求の状態を確認
 // 	{
-// 		req, err := userClient.GetRequest(ctx, requestID)
+// 		req, err := userClient.AppGetRequest(ctx, requestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to get request", zap.Error(err))
 // 			return err
@@ -207,7 +207,7 @@ package verify
 
 // 	// ドライバーが目的地に到着
 // 	{
-// 		_, err := chairClient.PostCoordinate(ctx, &destinationCoordinate)
+// 		_, err := chairClient.ChairPostCoordinate(ctx, &destinationCoordinate)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to post coordinate", zap.Error(err))
 // 			return err
@@ -216,7 +216,7 @@ package verify
 
 // 	// 配車要求の状態を確認
 // 	//{
-// 	//	req, err := userClient.GetRequest(ctx, requestID)
+// 	//	req, err := userClient.AppGetRequest(ctx, requestID)
 // 	//	if err != nil {
 // 	//		a.contestantLogger.Error("Failed to get request", zap.Error(err))
 // 	//		return err
@@ -230,7 +230,7 @@ package verify
 
 // 	// ユーザーが降車・評価
 // 	{
-// 		_, err := userClient.PostEvaluate(ctx, requestID, &api.EvaluateReq{
+// 		_, err := userClient.AppPostRequestEvaluate(ctx, requestID, &api.EvaluateReq{
 // 			rand.IntN(5) + 1,
 // 		})
 // 		if err != nil {
@@ -241,7 +241,7 @@ package verify
 
 // 	// 配車要求の状態を確認
 // 	{
-// 		req, err := userClient.GetRequest(ctx, requestID)
+// 		req, err := userClient.AppGetRequest(ctx, requestID)
 // 		if err != nil {
 // 			a.contestantLogger.Error("Failed to get request", zap.Error(err))
 // 			return err
