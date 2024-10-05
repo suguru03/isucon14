@@ -123,7 +123,7 @@ func TestChair_moveToward(t *testing.T) {
 
 func TestChair_isRequestAcceptable(t *testing.T) {
 	const speed = 10
-	workTime8to16 := NewInterval(convertHour(8), convertHour(16))
+	workTime8to16 := NewInterval(ConvertHour(8), ConvertHour(16))
 
 	tests := []struct {
 		name      string
@@ -147,10 +147,10 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 				Speed:    speed,
 				WorkTime: workTime8to16,
 			},
-			timeOfDay: convertHour(10),
+			timeOfDay: ConvertHour(10),
 			req: &Request{
 				PickupPoint:      C(speed*10, 0),
-				DestinationPoint: C(speed*10, speed*convertHour(1)),
+				DestinationPoint: C(speed*10, speed*ConvertHour(1)),
 			},
 			expected: true,
 		},
@@ -162,10 +162,10 @@ func TestChair_isRequestAcceptable(t *testing.T) {
 				Speed:    speed,
 				WorkTime: workTime8to16,
 			},
-			timeOfDay: convertHour(10),
+			timeOfDay: ConvertHour(10),
 			req: &Request{
 				PickupPoint:      C(speed*10, 0),
-				DestinationPoint: C(speed*10, speed*convertHour(8)),
+				DestinationPoint: C(speed*10, speed*ConvertHour(8)),
 			},
 			expected: false,
 		},
