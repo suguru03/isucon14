@@ -1,11 +1,15 @@
 package webapp
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"net/http"
+	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -137,4 +141,49 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 
 	resBody := &api.AppPostRequestEvaluateNoContent{}
 	return resBody, nil
+}
+
+func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppGetRequestOK], func() error, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, "/app/notification", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
+	httpClient := &http.Client{
+		Transport: c.agent.HttpClient.Transport,
+		Timeout:   60 * time.Second,
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		c.contestantLogger.Warn("GET /app/notifications のリクエストが失敗しました", zap.Error(err))
+		return nil, nil, err
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	resultErr := new(error)
+	return func(yield func(ok *api.AppGetRequestOK) bool) {
+			defer resp.Body.Close()
+			for scanner.Scan() {
+				request := &api.AppGetRequestOK{}
+				line := scanner.Text()
+				if strings.HasPrefix(line, "data:") {
+
+					if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
+						resultErr = &err
+						return
+					}
+
+					if !yield(request) {
+						return
+					}
+				}
+			}
+		}, func() error {
+			return *resultErr
+		}, nil
 }
