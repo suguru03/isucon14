@@ -185,7 +185,16 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 		return CodeError(ErrorCodeUserNotRequestingButStatusChanged)
 	}
 	if status != RequestStatusCanceled && request.DesiredStatus != status {
-		return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, status))
+		switch request.UserStatus {
+		case RequestStatusMatching:
+			if request.DesiredStatus == RequestStatusDispatched {
+				// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
+				break
+			}
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.DesiredStatus, status, request.UserStatus))
+		default:
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.DesiredStatus, status, request.UserStatus))
+		}
 	}
 	request.UserStatus = status
 	return nil
