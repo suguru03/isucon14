@@ -339,6 +339,18 @@ func (c *Chair) moveToward(target Coordinate) {
 
 func (c *Chair) moveRandom() {
 	c.Current = RandomCoordinateAwayFromHereWithRand(c.Current, c.Speed, c.Rand)
+	if c.Current.X < c.Region.RegionOffsetX-c.Region.RegionWidth/2 {
+		c.Current.X = c.Region.RegionOffsetX - c.Region.RegionWidth/2
+	}
+	if c.Current.X > c.Region.RegionOffsetX+c.Region.RegionWidth/2 {
+		c.Current.X = c.Region.RegionOffsetX + c.Region.RegionWidth/2
+	}
+	if c.Current.Y < c.Region.RegionOffsetY-c.Region.RegionHeight/2 {
+		c.Current.Y = c.Region.RegionOffsetY - c.Region.RegionHeight/2
+	}
+	if c.Current.Y > c.Region.RegionOffsetY+c.Region.RegionHeight/2 {
+		c.Current.Y = c.Region.RegionOffsetY + c.Region.RegionHeight/2
+	}
 }
 
 func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
@@ -364,6 +376,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) {
 		if err != nil {
 			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
 		}
+
 	case *ChairNotificationEventCompleted:
 		err := c.ChangeRequestStatus(RequestStatusCompleted)
 		if err != nil {

@@ -37,8 +37,8 @@ type World struct {
 
 func NewWorld() *World {
 	region := &Region{
-		RegionWidth:   1000,
-		RegionHeight:  1000,
+		RegionWidth:   30,
+		RegionHeight:  30,
 		RegionOffsetX: 0,
 		RegionOffsetY: 0,
 	}

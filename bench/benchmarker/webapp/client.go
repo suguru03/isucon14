@@ -28,7 +28,8 @@ type ClientConfig struct {
 func NewClient(config ClientConfig) (*Client, error) {
 	ag, err := agent.NewAgent(
 		agent.WithBaseURL(config.TargetBaseURL),
-		agent.WithTimeout(config.DefaultClientTimeout),
+		//agent.WithTimeout(config.DefaultClientTimeout),
+		agent.WithTimeout(1000*time.Hour),
 		agent.WithNoCache(),
 		agent.WithCloneTransport(&http.Transport{
 			TLSClientConfig: &tls.Config{

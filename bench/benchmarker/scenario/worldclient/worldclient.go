@@ -2,11 +2,13 @@ package worldclient
 
 import (
 	"context"
+	"fmt"
+
+	"go.uber.org/zap"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type chairClient struct {
@@ -23,25 +25,21 @@ type WorldClient struct {
 	ctx                context.Context
 	webappClientConfig webapp.ClientConfig
 	world              *world.World
-	// TODO webapp側から通知してもらうようにする
-	userNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
-	// TODO webapp側から通知してもらうようにする
-	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
-	requestQueue                 chan string
-	chairClients                 map[string]*chairClient
-	userClients                  map[string]*userClient
+	requestQueue       chan string
+	contestantLogger   *zap.Logger
+	chairClients       map[string]*chairClient
+	userClients        map[string]*userClient
 }
 
-func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, userNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], requestQueue chan string) *WorldClient {
+func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, requestQueue chan string, contestantLogger *zap.Logger) *WorldClient {
 	return &WorldClient{
-		ctx:                          ctx,
-		world:                        w,
-		webappClientConfig:           webappClientConfig,
-		userNotificationReceiverMap:  userNotificationReceiverMap,
-		chairNotificationReceiverMap: chairNotificationReceiverMap,
-		requestQueue:                 requestQueue,
-		chairClients:                 map[string]*chairClient{},
-		userClients:                  map[string]*userClient{},
+		ctx:                ctx,
+		world:              w,
+		webappClientConfig: webappClientConfig,
+		requestQueue:       requestQueue,
+		contestantLogger:   contestantLogger,
+		chairClients:       map[string]*chairClient{},
+		userClients:        map[string]*userClient{},
 	}
 }
 
@@ -75,18 +73,6 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	// TODO: webapp側から通知してもらうようにする
-	req := chair.Request
-	if req != nil && req.DesiredStatus != req.UserStatus {
-		if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-			switch req.DesiredStatus {
-			case world.RequestStatusDispatched:
-				go f(&world.UserNotificationEventDispatched{})
-			case world.RequestStatusArrived:
-				go f(&world.UserNotificationEventArrived{})
-			}
-		}
-	}
 	return nil
 }
 
@@ -101,10 +87,6 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
 
-	// TODO: webapp側から通知してもらうようにする
-	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(&world.UserNotificationEventDispatching{})
-	}
 	return nil
 }
 
@@ -133,10 +115,6 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
 
-	// TODO webapp側から通知してもらうようにする
-	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(&world.UserNotificationEventCarrying{})
-	}
 	return nil
 }
 
@@ -154,10 +132,6 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
-	// TODO webapp側から通知してもらうようにする
-	if f, ok := c.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		go f(&world.ChairNotificationEventCompleted{})
-	}
 	return nil
 }
 
@@ -248,8 +222,9 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
+	newCtx, _ := context.WithCancel(c.ctx)
 	c.userClients[response.ID] = &userClient{
-		ctx:    c.ctx,
+		ctx:    newCtx,
 		client: client,
 	}
 
@@ -277,8 +252,9 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterDriver, err)
 	}
 
+	newCtx, _ := context.WithCancel(c.ctx)
 	c.chairClients[response.ID] = &chairClient{
-		ctx:    c.ctx,
+		ctx:    newCtx,
 		client: client,
 	}
 
@@ -297,21 +273,134 @@ func (c *notificationConnectionImpl) Close() {
 }
 
 func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	// TODO SSEに接続してwebapp側から通知してもらうようにする
-	c.userNotificationReceiverMap.Set(user.ServerID, receiver)
+	go func() {
+		userClient, err := c.getUserClient(user.ServerID)
+		if err != nil {
+			return
+		}
+
+		for {
+			select {
+			case <-userClient.ctx.Done():
+				c.contestantLogger.Info("User notification stream closed", zap.String("user_id", user.ServerID))
+				return
+			default:
+			}
+
+			res, result, err := userClient.client.AppGetNotification(userClient.ctx)
+			if err != nil {
+				// TODO: 減点
+				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
+				continue
+			}
+			for receivedRequest := range res {
+				var event world.NotificationEvent
+				// TODO: 意図しない通知の種類の減点
+				switch receivedRequest.Status {
+				case api.RequestStatusMatching:
+					// event = &world.UserNotificationEventMatching{}
+				case api.RequestStatusDispatching:
+					event = &world.UserNotificationEventDispatching{}
+				case api.RequestStatusCarrying:
+					event = &world.UserNotificationEventCarrying{}
+				case api.RequestStatusArrived:
+					event = &world.UserNotificationEventArrived{}
+				case api.RequestStatusCompleted:
+					// event = &world.UserNotificationEventCompleted{}
+				case api.RequestStatusCanceled:
+					// event = &world.UserNotificationEventCanceled{}
+				case api.RequestStatusDispatched:
+					event = &world.UserNotificationEventDispatched{}
+				}
+				if event == nil {
+					c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
+					continue
+				}
+				receiver(event)
+			}
+
+			if err := result(); err != nil {
+				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
+				continue
+			}
+		}
+	}()
+
 	return &notificationConnectionImpl{
 		close: func() {
-			c.userNotificationReceiverMap.Delete(user.ServerID)
+			userClient, err := c.getUserClient(user.ServerID)
+			if err != nil {
+				c.contestantLogger.Error("Failed to close user notification stream", zap.Error(err))
+				return
+			}
+			userClient.ctx.Done()
 		},
 	}, nil
 }
 
 func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	// TODO SSEに接続してwebapp側から通知してもらうようにする
-	c.chairNotificationReceiverMap.Set(chair.ServerID, receiver)
+	go func() {
+		chairClient, err := c.getChairClient(chair.ServerID)
+		if err != nil {
+			return
+		}
+
+		for {
+			select {
+			case <-c.ctx.Done():
+				c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
+				return
+			default:
+			}
+
+			res, result, err := chairClient.client.ChairGetNotification(chairClient.ctx)
+			if err != nil {
+				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				return
+			}
+			for receivedRequest := range res {
+				var event world.NotificationEvent
+				// TODO: 意図しない通知の種類の減点
+				switch receivedRequest.Status.Value {
+				case api.RequestStatusMatching:
+					event = &world.ChairNotificationEventMatched{
+						ServerRequestID: receivedRequest.RequestID,
+					}
+				case api.RequestStatusDispatching:
+					// event = &world.ChairNotificationEventDispatching{}
+				case api.RequestStatusCarrying:
+					// event = &world.ChairNotificationEventCarrying{}
+				case api.RequestStatusArrived:
+					// event = &world.ChairNotificationEventArrived{}
+				case api.RequestStatusCompleted:
+					event = &world.ChairNotificationEventCompleted{}
+				case api.RequestStatusCanceled:
+					// event = &world.ChairNotificationEventCanceled{}
+				case api.RequestStatusDispatched:
+					// event = &world.ChairNotificationEventDispatched{}
+				}
+				if event == nil {
+					c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
+					continue
+				}
+				receiver(event)
+			}
+
+			if err := result(); err != nil {
+				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				return
+			}
+		}
+	}()
+
 	return &notificationConnectionImpl{
 		close: func() {
-			c.chairNotificationReceiverMap.Delete(chair.ServerID)
+			chairClient, err := c.getChairClient(chair.ServerID)
+			if err != nil {
+				c.contestantLogger.Error("Failed to close chair notification stream", zap.Error(err))
+				return
+			}
+			chairClient.ctx.Done()
 		},
 	}, nil
 }

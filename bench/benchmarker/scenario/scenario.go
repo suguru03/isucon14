@@ -49,7 +49,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ClientIdleConnTimeout: 10 * time.Second,
 		InsecureSkipVerify:    true,
 		ContestantLogger:      contestantLogger,
-	}, userNotificationReceiverMap, chairNotificationReceiverMap, requestQueue)
+	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
 
 	return &Scenario{
@@ -115,7 +115,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//w.Process(ctx)
 
 	region := s.world.Regions[1]
-	for range 100 {
+	for range 1 {
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
@@ -125,7 +125,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 	}
-	for range 2 {
+	for range 1 {
 		u, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {
 			return err
@@ -134,23 +134,23 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	}
 
 	// TODO webapp側でマッチングさせる
-	go func() {
-		for id := range s.requestQueue {
-			matched := false
-			for _, chair := range s.world.ChairDB.Iter() {
-				if chair.State == world.ChairStateActive && !chair.ServerRequestID.Valid {
-					if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
-						f(&world.ChairNotificationEventMatched{ServerRequestID: id})
-					}
-					matched = true
-					break
-				}
-			}
-			if !matched {
-				s.requestQueue <- id
-			}
-		}
-	}()
+	// go func() {
+	// 	for id := range s.requestQueue {
+	// 		matched := false
+	// 		for _, chair := range s.world.ChairDB.Iter() {
+	// 			if chair.State == world.ChairStateActive && !chair.ServerRequestID.Valid {
+	// 				if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
+	// 					f(&world.ChairNotificationEventMatched{ServerRequestID: id})
+	// 				}
+	// 				matched = true
+	// 				break
+	// 			}
+	// 		}
+	// 		if !matched {
+	// 			s.requestQueue <- id
+	// 		}
+	// 	}
+	// }()
 
 	for now := range world.ConvertHour(24 * 14) {
 		s.world.Tick(s.worldCtx)
