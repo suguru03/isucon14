@@ -297,7 +297,6 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 				switch receivedRequest.Status {
 				case api.RequestStatusMatching:
 					// event = &world.UserNotificationEventMatching{}
-					c.contestantLogger.Warn("Unexpected app notification", zap.Any("request", receivedRequest))
 				case api.RequestStatusDispatching:
 					event = &world.UserNotificationEventDispatching{}
 				case api.RequestStatusCarrying:
@@ -306,14 +305,14 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 					event = &world.UserNotificationEventArrived{}
 				case api.RequestStatusCompleted:
 					// event = &world.UserNotificationEventCompleted{}
-					c.contestantLogger.Warn("Unexpected app notification", zap.Any("request", receivedRequest))
 				case api.RequestStatusCanceled:
 					// event = &world.UserNotificationEventCanceled{}
-					c.contestantLogger.Warn("Unexpected app notification", zap.Any("request", receivedRequest))
 				case api.RequestStatusDispatched:
 					event = &world.UserNotificationEventDispatched{}
-				default:
-					c.contestantLogger.Error("Unknown app request status", zap.Any("request", receivedRequest))
+				}
+				if event == nil {
+					c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
+					continue
 				}
 				receiver(event)
 			}
