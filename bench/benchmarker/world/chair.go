@@ -38,6 +38,8 @@ type Chair struct {
 	ServerRequestID null.String
 	// Request 進行中のリクエスト
 	Request *Request
+	// oldRequest Completedだが後処理されてないRequest
+	oldRequest *Request
 
 	// RegisteredData サーバーに登録されている椅子情報
 	RegisteredData RegisteredChairData
@@ -74,6 +76,18 @@ func (c *Chair) SetID(id ChairID) {
 func (c *Chair) Tick(ctx *Context) error {
 	c.tickDone.Store(false)
 	defer func() { c.tickDone.Store(true) }()
+
+	// 後処理ができていないリクエストがあれば対応する
+	if c.oldRequest != nil {
+		if c.oldRequest.ChairStatus == RequestStatusCompleted {
+			// 完了時間を記録
+			c.oldRequest.CompletedAt = ctx.world.Time
+			ctx.world.CompletedRequestChan <- c.oldRequest
+			c.oldRequest = nil
+		} else {
+			panic("想定していないステータス")
+		}
+	}
 
 	switch {
 	// 通知処理にエラーが発生している
@@ -270,8 +284,15 @@ func (c *Chair) ChangeRequestStatus(status RequestStatus) error {
 }
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
-	if c.Request != nil || c.ServerRequestID.Valid {
-		return CodeError(ErrorCodeChairAlreadyHasRequest)
+	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
+		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID && c.Request.ChairStatus == RequestStatusCompleted {
+			// リクエストを保持しているが、既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
+			// 後処理を次のTickで完了させるために退避させる
+			c.oldRequest = c.Request
+			c.Request = nil
+		} else {
+			return CodeError(ErrorCodeChairAlreadyHasRequest)
+		}
 	}
 	c.ServerRequestID = null.StringFrom(serverRequestID)
 	return nil
