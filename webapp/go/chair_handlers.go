@@ -297,7 +297,7 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, matched_at = NULL WHERE id = ?", requestID); err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, status = 'MATCHING', matched_at = NULL WHERE id = ?", requestID); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
