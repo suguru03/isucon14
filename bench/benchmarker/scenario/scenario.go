@@ -37,10 +37,12 @@ type Scenario struct {
 	step             *isucandar.BenchmarkStep
 
 	requestQueue                 chan string // あんまり考えて導入してないです
+	userNotificationReceiverMap  *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
 }
 
 func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
+	userNotificationReceiverMap := concurrent.NewSimpleMap[string, world.NotificationReceiverFunc]()
 	chairNotificationReceiverMap := concurrent.NewSimpleMap[string, world.NotificationReceiverFunc]()
 	requestQueue := make(chan string, 1000)
 	w := world.NewWorld()
@@ -50,7 +52,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ClientIdleConnTimeout: 10 * time.Second,
 		InsecureSkipVerify:    true,
 		ContestantLogger:      contestantLogger,
-	}, chairNotificationReceiverMap, requestQueue)
+	}, userNotificationReceiverMap, chairNotificationReceiverMap, requestQueue)
 	worldCtx := world.NewContext(w, worldClient)
 
 	return &Scenario{
@@ -60,6 +62,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		worldCtx:         worldCtx,
 
 		requestQueue:                 requestQueue,
+		userNotificationReceiverMap:  userNotificationReceiverMap,
 		chairNotificationReceiverMap: chairNotificationReceiverMap,
 	}
 }
@@ -138,6 +141,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		u.State = world.UserStateActive
 	}
 
+	// TODO webapp側でマッチングさせる
 	go func() {
 		for id := range s.requestQueue {
 			matched := false

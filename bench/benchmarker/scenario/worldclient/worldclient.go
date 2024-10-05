@@ -20,16 +20,19 @@ type userClient struct {
 }
 
 type WorldClient struct {
-	ctx                          context.Context
-	webappClientConfig           webapp.ClientConfig
-	world                        *world.World
+	ctx                context.Context
+	webappClientConfig webapp.ClientConfig
+	world              *world.World
+	// TODO webapp側から通知してもらうようにする
+	userNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
+	// TODO webapp側から通知してもらうようにする
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc]
 	requestQueue                 chan string
 	chairClients                 map[string]*chairClient
 	userClients                  map[string]*userClient
 }
 
-func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], requestQueue chan string) *WorldClient {
+func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, userNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], chairNotificationReceiverMap *concurrent.SimpleMap[string, world.NotificationReceiverFunc], requestQueue chan string) *WorldClient {
 	return &WorldClient{
 		ctx:                          ctx,
 		world:                        w,
@@ -71,16 +74,18 @@ func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
+	// TODO: webapp側から通知してもらうようにする
 	req := chair.Request
-	go func() {
-		if req != nil && req.DesiredStatus != req.UserStatus {
-			err := c.world.UpdateRequestUserStatus(req.User.ID, req.DesiredStatus)
-			if err != nil {
-				panic(err)
+	if req != nil && req.DesiredStatus != req.UserStatus {
+		if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+			switch req.DesiredStatus {
+			case world.RequestStatusDispatched:
+				go f(world.UserNotificationEventDispatched, "")
+			case world.RequestStatusArrived:
+				go f(world.UserNotificationEventArrived, "")
 			}
 		}
-	}()
-
+	}
 	return nil
 }
 
@@ -95,13 +100,10 @@ func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
 
-	go func() {
-		err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusDispatching)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
+	// TODO: webapp側から通知してもらうようにする
+	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		go f(world.UserNotificationEventDispatching, "")
+	}
 	return nil
 }
 
@@ -130,12 +132,10 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
 
-	go func() {
-		err = c.world.UpdateRequestUserStatus(req.User.ID, world.RequestStatusCarrying)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	// TODO webapp側から通知してもらうようにする
+	if f, ok := c.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		go f(world.UserNotificationEventCarrying, "")
+	}
 	return nil
 }
 
@@ -153,8 +153,8 @@ func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) err
 		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
+	// TODO webapp側から通知してもらうようにする
 	if f, ok := c.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		// TODO: eventData どうする？
 		go f(world.ChairNotificationEventCompleted, "")
 	}
 	return nil
@@ -182,6 +182,7 @@ func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) 
 		return nil, WrapCodeError(ErrorCodeFailedToPostRequest, err)
 	}
 
+	// TODO webapp側から通知してもらうようにする
 	c.requestQueue <- response.RequestID
 
 	return &world.SendCreateRequestResponse{ServerRequestID: response.RequestID}, nil
@@ -294,7 +295,18 @@ func (c *notificationConnectionImpl) Close() {
 	c.close()
 }
 
+func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	// TODO SSEに接続してwebapp側から通知してもらうようにする
+	c.userNotificationReceiverMap.Set(user.ServerID, receiver)
+	return &notificationConnectionImpl{
+		close: func() {
+			c.userNotificationReceiverMap.Delete(user.ServerID)
+		},
+	}, nil
+}
+
 func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	// TODO SSEに接続してwebapp側から通知してもらうようにする
 	c.chairNotificationReceiverMap.Set(chair.ServerID, receiver)
 	return &notificationConnectionImpl{
 		close: func() {

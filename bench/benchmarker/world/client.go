@@ -23,6 +23,8 @@ type Client interface {
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
 	RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error)
+	// ConnectUserNotificationStream ユーザー用の通知ストリームに接続する
+	ConnectUserNotificationStream(ctx *Context, user *User, receiver NotificationReceiverFunc) (NotificationStream, error)
 	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する
 	ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error)
 }
@@ -68,4 +70,11 @@ type NotificationStream interface {
 const (
 	ChairNotificationEventMatched   = "matched"
 	ChairNotificationEventCompleted = "completed"
+)
+
+const (
+	UserNotificationEventDispatching = "dispatching"
+	UserNotificationEventDispatched  = "dispatched"
+	UserNotificationEventCarrying    = "carrying"
+	UserNotificationEventArrived     = "arrived"
 )

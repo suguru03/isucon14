@@ -17,31 +17,31 @@ type FastServerStub struct {
 	world                        *World
 	latency                      time.Duration
 	requestQueue                 chan string
+	userNotificationReceiverMap  *concurrent.SimpleMap[string, NotificationReceiverFunc]
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, NotificationReceiverFunc]
 }
 
 func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 	time.Sleep(s.latency)
-	go func() {
-		req := chair.Request
-		if req != nil && req.DesiredStatus != req.UserStatus {
-			err := s.world.UpdateRequestUserStatus(req.User.ID, req.DesiredStatus)
-			if err != nil {
-				panic(err)
+	req := chair.Request
+	if req != nil && req.DesiredStatus != req.UserStatus {
+		if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+			switch req.DesiredStatus {
+			case RequestStatusDispatched:
+				go f(UserNotificationEventDispatched, "")
+			case RequestStatusArrived:
+				go f(UserNotificationEventArrived, "")
 			}
 		}
-	}()
+	}
 	return nil
 }
 
 func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {
 	time.Sleep(s.latency)
-	go func() {
-		err := s.world.UpdateRequestUserStatus(req.User.ID, RequestStatusDispatching)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		go f(UserNotificationEventDispatching, "")
+	}
 	return nil
 }
 
@@ -52,12 +52,9 @@ func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverReque
 
 func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
-	go func() {
-		err := s.world.UpdateRequestUserStatus(req.User.ID, RequestStatusCarrying)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		go f(UserNotificationEventCarrying, "")
+	}
 	return nil
 }
 
@@ -109,6 +106,12 @@ func (c *notificationConnectionImpl) Close() {
 	c.close()
 }
 
+func (s *FastServerStub) ConnectUserNotificationStream(ctx *Context, user *User, receiver NotificationReceiverFunc) (NotificationStream, error) {
+	time.Sleep(s.latency)
+	s.userNotificationReceiverMap.Set(user.ServerID, receiver)
+	return &notificationConnectionImpl{close: func() { s.userNotificationReceiverMap.Delete(user.ServerID) }}, nil
+}
+
 func (s *FastServerStub) ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error) {
 	time.Sleep(s.latency)
 	s.chairNotificationReceiverMap.Set(chair.ServerID, receiver)
@@ -152,6 +155,7 @@ func TestWorld(t *testing.T) {
 			world:                        world,
 			latency:                      1 * time.Millisecond,
 			requestQueue:                 make(chan string, 1000),
+			userNotificationReceiverMap:  concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 		}
 		ctx = &Context{
