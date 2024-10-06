@@ -1,8 +1,8 @@
 package world
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"slices"
 	"sync/atomic"
@@ -51,8 +51,6 @@ type Chair struct {
 	AccessToken string
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
-	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
-	NotificationHandleErrors []error
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
 
@@ -97,16 +95,13 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(c.notificationQueue) {
-		c.HandleNotification(event)
+		err := c.HandleNotification(event)
+		if err != nil {
+			return err
+		}
 	}
 
 	switch {
-	// 通知処理にエラーが発生している
-	case len(c.NotificationHandleErrors) > 0:
-		err := errors.Join(c.NotificationHandleErrors...)
-		c.NotificationHandleErrors = c.NotificationHandleErrors[:0] // 配列クリア
-		return err
-
 	// 進行中のリクエストが存在
 	case c.Request != nil:
 		switch c.Request.ChairStatus {
@@ -249,7 +244,12 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			if c.NotificationConn == nil {
 				// 先に通知コネクションを繋いでおく
-				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) { c.notificationQueue <- event })
+				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
+					if !concurrent.TrySend(c.notificationQueue, event) {
+						log.Printf("通知受け取りチャンネルが詰まってる: chair server id: %s", c.ServerID)
+						c.notificationQueue <- event
+					}
+				})
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 				}
@@ -442,12 +442,12 @@ func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
 	return true
 }
 
-func (c *Chair) HandleNotification(event NotificationEvent) {
+func (c *Chair) HandleNotification(event NotificationEvent) error {
 	switch data := event.(type) {
 	case *ChairNotificationEventMatched:
 		err := c.AssignRequest(data.ServerRequestID)
 		if err != nil {
-			c.NotificationHandleErrors = append(c.NotificationHandleErrors, err)
+			return err
 		}
 
 	case *ChairNotificationEventCompleted:
@@ -456,16 +456,15 @@ func (c *Chair) HandleNotification(event NotificationEvent) {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(c.RequestHistory) {
 				if r.ServerID == data.ServerRequestID && r.DesiredStatus == RequestStatusCompleted {
-					return
+					return nil
 				}
 			}
-			c.NotificationHandleErrors = append(c.NotificationHandleErrors, WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest)))
-			return
+			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest))
 		}
 		if request.DesiredStatus != RequestStatusCompleted {
-			c.NotificationHandleErrors = append(c.NotificationHandleErrors, WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, RequestStatusCompleted)))
-			return
+			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, RequestStatusCompleted))
 		}
 		request.ChairStatus = RequestStatusCompleted
 	}
+	return nil
 }

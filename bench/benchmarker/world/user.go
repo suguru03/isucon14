@@ -1,7 +1,6 @@
 package world
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -39,8 +38,6 @@ type User struct {
 	RequestHistory []*Request
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
-	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
-	NotificationHandleErrors []error
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
 
@@ -74,16 +71,13 @@ func (u *User) Tick(ctx *Context) error {
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(u.notificationQueue) {
-		u.HandleNotification(event)
+		err := u.HandleNotification(event)
+		if err != nil {
+			return err
+		}
 	}
 
 	switch {
-	// 通知処理にエラーが発生している
-	case len(u.NotificationHandleErrors) > 0:
-		err := errors.Join(u.NotificationHandleErrors...)
-		u.NotificationHandleErrors = u.NotificationHandleErrors[:0] // 配列クリア
-		return err
-
 	// 進行中のリクエストが存在
 	case u.Request != nil:
 		switch u.Request.UserStatus {
@@ -137,7 +131,12 @@ func (u *User) Tick(ctx *Context) error {
 	case u.Request == nil && u.State == UserStateActive:
 		if u.NotificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
-			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) { u.notificationQueue <- event })
+			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
+				if !concurrent.TrySend(u.notificationQueue, event) {
+					log.Printf("通知受け取りチャンネルが詰まってる: user server id: %s", u.ServerID)
+					u.notificationQueue <- event
+				}
+			})
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
@@ -204,32 +203,33 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 	return nil
 }
 
-func (u *User) HandleNotification(event NotificationEvent) {
+func (u *User) HandleNotification(event NotificationEvent) error {
 	switch event.(type) {
 	case *UserNotificationEventDispatching:
 		err := u.ChangeRequestStatus(RequestStatusDispatching)
 		if err != nil {
-			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
+			return err
 		}
 	case *UserNotificationEventDispatched:
 		err := u.ChangeRequestStatus(RequestStatusDispatched)
 		if err != nil {
-			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
+			return err
 		}
 	case *UserNotificationEventCarrying:
 		err := u.ChangeRequestStatus(RequestStatusCarrying)
 		if err != nil {
-			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
+			return err
 		}
 	case *UserNotificationEventArrived:
 		err := u.ChangeRequestStatus(RequestStatusArrived)
 		if err != nil {
-			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
+			return err
 		}
 	case *UserNotificationEventCanceled:
 		err := u.ChangeRequestStatus(RequestStatusCanceled)
 		if err != nil {
-			u.NotificationHandleErrors = append(u.NotificationHandleErrors, err)
+			return err
 		}
 	}
+	return nil
 }
