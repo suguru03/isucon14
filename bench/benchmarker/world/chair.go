@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/guregu/null/v5"
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type ChairState int
@@ -52,6 +53,8 @@ type Chair struct {
 	NotificationConn NotificationStream
 	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
 	NotificationHandleErrors []error
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
@@ -92,10 +95,14 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 
+	// 通知キューを順番に処理する
+	for event := range concurrent.TryIter(c.notificationQueue) {
+		c.HandleNotification(event)
+	}
+
 	switch {
 	// 通知処理にエラーが発生している
 	case len(c.NotificationHandleErrors) > 0:
-		// TODO この処理に1tick使って良いか考える
 		err := errors.Join(c.NotificationHandleErrors...)
 		c.NotificationHandleErrors = c.NotificationHandleErrors[:0] // 配列クリア
 		return err
@@ -242,7 +249,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			if c.NotificationConn == nil {
 				// 先に通知コネクションを繋いでおく
-				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, c.HandleNotification)
+				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) { c.notificationQueue <- event })
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 				}
@@ -277,13 +284,23 @@ func (c *Chair) TickCompleted() bool {
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
 	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
-		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID && c.Request.ChairStatus == RequestStatusCompleted {
-			// リクエストを保持しているが、既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
-			// 後処理を次のTickで完了させるために退避させる
-			c.oldRequest = c.Request
-			c.Request = nil
+		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID {
+			// 椅子が別のリクエストを保持している
+			switch {
+			case c.Request.DesiredStatus == RequestStatusCompleted && c.Request.UserStatus == RequestStatusCompleted && c.Request.ChairStatus == RequestStatusArrived:
+				// 椅子にCompletedイベントが来る前に、新しいアサインが降ってきているため、通知の順番が入れ替わっている
+				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s (hint: 先に椅子に前のリクエストのCompletedイベントが来てないとダメ)", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
+
+			case c.Request.ChairStatus == RequestStatusCompleted:
+				// 既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
+				// 後処理を次のTickで完了させるために退避させる
+				c.oldRequest = c.Request
+				c.Request = nil
+			default:
+				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
+			}
 		} else {
-			return CodeError(ErrorCodeChairAlreadyHasRequest)
+			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
 		}
 	}
 	c.ServerRequestID = null.StringFrom(serverRequestID)

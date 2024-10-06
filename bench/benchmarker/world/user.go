@@ -6,6 +6,8 @@ import (
 	"log"
 	"math/rand/v2"
 	"sync/atomic"
+
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type UserState int
@@ -39,6 +41,8 @@ type User struct {
 	NotificationConn NotificationStream
 	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
 	NotificationHandleErrors []error
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
@@ -68,10 +72,14 @@ func (u *User) Tick(ctx *Context) error {
 	u.tickDone.Store(false)
 	defer func() { u.tickDone.Store(true) }()
 
+	// 通知キューを順番に処理する
+	for event := range concurrent.TryIter(u.notificationQueue) {
+		u.HandleNotification(event)
+	}
+
 	switch {
 	// 通知処理にエラーが発生している
 	case len(u.NotificationHandleErrors) > 0:
-		// TODO この処理に1tick使って良いか考える
 		err := errors.Join(u.NotificationHandleErrors...)
 		u.NotificationHandleErrors = u.NotificationHandleErrors[:0] // 配列クリア
 		return err
@@ -129,7 +137,7 @@ func (u *User) Tick(ctx *Context) error {
 	case u.Request == nil && u.State == UserStateActive:
 		if u.NotificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
-			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, u.HandleNotification)
+			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) { u.notificationQueue <- event })
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
@@ -182,17 +190,13 @@ func (u *User) CreateRequest(ctx *Context) error {
 func (u *User) ChangeRequestStatus(status RequestStatus) error {
 	request := u.Request
 	if request == nil {
-		return CodeError(ErrorCodeUserNotRequestingButStatusChanged)
+		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
-	if status != RequestStatusCanceled && request.DesiredStatus != status {
-		switch request.UserStatus {
-		case RequestStatusMatching:
-			if request.DesiredStatus == RequestStatusDispatched {
-				// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
-				break
-			}
-			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.DesiredStatus, status, request.UserStatus))
-		default:
+	if status != RequestStatusCanceled && request.UserStatus != status && request.DesiredStatus != status {
+		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
+		if request.UserStatus == RequestStatusMatching && request.DesiredStatus == RequestStatusDispatched {
+			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
+		} else {
 			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.DesiredStatus, status, request.UserStatus))
 		}
 	}
