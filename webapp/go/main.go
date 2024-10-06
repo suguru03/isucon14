@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,12 +25,37 @@ func main() {
 }
 
 func setup() http.Handler {
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+	_, err := strconv.Atoi(port)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert DB port number from DB_PORT environment variable into int: %v", err))
+	}
+	user := os.Getenv("DB_USER")
+	if user == "" {
+		user = "isucon"
+	}
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" {
+		password = "isucon"
+	}
+	dbname := os.Getenv("DB_NAME")
+	if dbname == "" {
+		dbname = "isucon"
+	}
+
 	dbConfig := &mysql.Config{
-		User:      "isucon",
-		Passwd:    "isucon",
+		User:      user,
+		Passwd:    password,
 		Net:       "tcp",
-		Addr:      "localhost:3306",
-		DBName:    "isucon",
+		Addr:      net.JoinHostPort(host, port),
+		DBName:    dbname,
 		ParseTime: true,
 	}
 
