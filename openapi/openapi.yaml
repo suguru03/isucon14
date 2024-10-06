@@ -202,34 +202,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/app/requests/{request_id}/payment':
-    post:
-      tags:
-        - app
-      summary: ユーザーが支払いをする
-      operationId: app-post-request-payment
-      parameters:
-        - name: request_id
-          in: path
-          description: 配車要求ID
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 支払いに成功した
-        '400':
-          description: 椅子が目的地に到着していないなど
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: 存在しない配車要求IDだった
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /app/inquiry:
     post:
       tags:
@@ -448,6 +420,34 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: 存在しない配車要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/chair/requests/{request_id}/payment':
+    post:
+      tags:
+        - chair
+      summary: 支払いを実行する
+      operationId: chair-post-request-payment
+      parameters:
+        - name: request_id
+          in: path
+          description: 配車要求ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 支払いに成功した
+        '400':
+          description: 椅子が目的地に到着していないなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 存在しない配車要求IDだった
           content:
             application/json:
               schema:
