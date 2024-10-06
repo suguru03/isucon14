@@ -47,6 +47,7 @@ func setup() http.Handler {
 		mux.HandleFunc("POST /app/register", appPostRegister)
 
 		authedMux := mux.With(appAuthMiddleware)
+		authedMux.HandleFunc("POST /app/payment-methods", appPostPaymentMethods)
 		authedMux.HandleFunc("POST /app/requests", appPostRequests)
 		authedMux.HandleFunc("GET /app/requests/{request_id}", appGetRequest)
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
@@ -69,6 +70,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
 	}
 
 	// admin

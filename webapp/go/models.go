@@ -16,6 +16,12 @@ type User struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
+type PaymentToken struct {
+	UserID      string    `db:"user_id"`
+	Token       string    `db:"token"`
+	CreatedAt   time.Time `db:"created_at"`
+}
+
 type Chair struct {
 	ID          string    `db:"id"`
 	Username    string    `db:"username"`

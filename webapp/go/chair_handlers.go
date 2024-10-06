@@ -494,3 +494,64 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func chairPostRequestPayment(w http.ResponseWriter, r *http.Request) {
+	requestID := r.PathValue("request_id")
+
+	tx, err := db.Beginx()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	rideRequest := &RideRequest{}
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE id = ?`, requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	paymentToken := &PaymentToken{}
+	if err := tx.Get(paymentToken, `SELECT * FROM payment_tokens WHERE user_id = ?`, rideRequest.UserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusBadRequest, errors.New("payment token not registered"))
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if rideRequest.Status == "COMPLETED" {
+		respondError(w, http.StatusBadRequest, errors.New("already paid"))
+		return
+	}
+	if rideRequest.Status != "ARRIVED" {
+		respondError(w, http.StatusBadRequest, errors.New("not arrived yet"))
+		return
+	}
+
+	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
+		Token: paymentToken.Token,
+		// TODO: calculate payment amount
+		Amount: 100,
+	}
+	if err := requestPaymentGatewayPostPayment(paymentGatewayRequest); err != nil {
+		if errors.Is(err, erroredUpstream) {
+			respondError(w, http.StatusBadGateway, err)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
