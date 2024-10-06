@@ -45,13 +45,15 @@ type FastServerStub struct {
 func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 	time.Sleep(s.latency)
 	req := chair.Request
-	if req != nil && req.DesiredStatus != req.UserStatus {
-		if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-			switch req.DesiredStatus {
-			case RequestStatusDispatched:
-				s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{}}
-			case RequestStatusArrived:
-				s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{}}
+	if req != nil {
+		if req.Statuses.Desired != req.Statuses.User {
+			if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+				switch req.Statuses.Desired {
+				case RequestStatusDispatched:
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{}}
+				case RequestStatusArrived:
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{}}
+				}
 			}
 		}
 	}
@@ -60,11 +62,11 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 
 func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {
 	time.Sleep(s.latency)
-	if req.DesiredStatus == RequestStatusCanceled {
+	if req.Statuses.Desired == RequestStatusCanceled {
 		return fmt.Errorf("request has been already canceled")
 	}
-	if req.DesiredStatus != RequestStatusMatching {
-		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.DesiredStatus)
+	if req.Statuses.Desired != RequestStatusMatching {
+		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.Statuses.Desired)
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{}}
@@ -281,7 +283,7 @@ func TestWorld(t *testing.T) {
 	sales := 0
 	for _, req := range world.RequestDB.Iter() {
 		t.Log(req)
-		if req.DesiredStatus == RequestStatusCompleted {
+		if req.Statuses.Desired == RequestStatusCompleted {
 			sales += req.Fare()
 		}
 	}

@@ -83,7 +83,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 後処理ができていないリクエストがあれば対応する
 	if c.oldRequest != nil {
-		if c.oldRequest.ChairStatus == RequestStatusCompleted {
+		if c.oldRequest.Statuses.Chair == RequestStatusCompleted {
 			// 完了時間を記録
 			c.oldRequest.CompletedAt = ctx.world.Time
 			ctx.world.CompletedRequestChan <- c.oldRequest
@@ -104,7 +104,7 @@ func (c *Chair) Tick(ctx *Context) error {
 	switch {
 	// 進行中のリクエストが存在
 	case c.Request != nil:
-		switch c.Request.ChairStatus {
+		switch c.Request.Statuses.Chair {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
@@ -115,8 +115,8 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				// サーバーに要求を受理の通知が通ったので配椅子地に向かう
 				c.Request.Chair = c
-				c.Request.DesiredStatus = RequestStatusDispatching
-				c.Request.ChairStatus = RequestStatusDispatching
+				c.Request.Statuses.Desired = RequestStatusDispatching
+				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Current)
 				c.Request.MatchedAt = ctx.world.Time
 				c.RequestHistory = append(c.RequestHistory, c.Request)
@@ -136,14 +136,14 @@ func (c *Chair) Tick(ctx *Context) error {
 			c.moveToward(c.Request.PickupPoint)
 			if c.Current.Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
-				c.Request.DesiredStatus = RequestStatusDispatched
-				c.Request.ChairStatus = RequestStatusDispatched
+				c.Request.Statuses.Desired = RequestStatusDispatched
+				c.Request.Statuses.Chair = RequestStatusDispatched
 				c.Request.DispatchedAt = ctx.world.Time
 			}
 
 		case RequestStatusDispatched:
 			// 乗客を乗せて出発しようとする
-			if c.Request.UserStatus != RequestStatusDispatched {
+			if c.Request.Statuses.User != RequestStatusDispatched {
 				// ただし、ユーザーに到着通知が行っていないとユーザーは乗らない振る舞いをするので
 				// ユーザー側の状態が変わるまで待機する
 				// 一向にユーザーの状態が変わらない場合は、この椅子の行動はハングする
@@ -156,8 +156,8 @@ func (c *Chair) Tick(ctx *Context) error {
 			}
 
 			// サーバーがdepartを受理したので出発する
-			c.Request.DesiredStatus = RequestStatusCarrying
-			c.Request.ChairStatus = RequestStatusCarrying
+			c.Request.Statuses.Desired = RequestStatusCarrying
+			c.Request.Statuses.Chair = RequestStatusCarrying
 			c.Request.PickedUpAt = ctx.world.Time
 
 		case RequestStatusCarrying:
@@ -165,8 +165,8 @@ func (c *Chair) Tick(ctx *Context) error {
 			c.moveToward(c.Request.DestinationPoint)
 			if c.Current.Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
-				c.Request.DesiredStatus = RequestStatusArrived
-				c.Request.ChairStatus = RequestStatusArrived
+				c.Request.Statuses.Desired = RequestStatusArrived
+				c.Request.Statuses.Chair = RequestStatusArrived
 				c.Request.ArrivedAt = ctx.world.Time
 				break
 			}
@@ -285,19 +285,16 @@ func (c *Chair) TickCompleted() bool {
 func (c *Chair) AssignRequest(serverRequestID string) error {
 	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
 		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID {
+			request := c.Request
 			// 椅子が別のリクエストを保持している
 			switch {
-			case c.Request.DesiredStatus == RequestStatusCompleted && c.Request.UserStatus == RequestStatusCompleted && c.Request.ChairStatus == RequestStatusArrived:
-				// 椅子にCompletedイベントが来る前に、新しいアサインが降ってきているため、通知の順番が入れ替わっている
-				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s (hint: 先に椅子に前のリクエストのCompletedイベントが来てないとダメ)", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
-
-			case c.Request.ChairStatus == RequestStatusCompleted:
+			case request.Statuses.Chair == RequestStatusCompleted:
 				// 既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
 				// 後処理を次のTickで完了させるために退避させる
-				c.oldRequest = c.Request
+				c.oldRequest = request
 				c.Request = nil
 			default:
-				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
+				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, request, serverRequestID))
 			}
 		} else {
 			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
@@ -455,16 +452,16 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 		if request == nil {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(c.RequestHistory) {
-				if r.ServerID == data.ServerRequestID && r.DesiredStatus == RequestStatusCompleted {
+				if r.ServerID == data.ServerRequestID && r.Statuses.Desired == RequestStatusCompleted {
 					return nil
 				}
 			}
 			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest))
 		}
-		if request.DesiredStatus != RequestStatusCompleted {
-			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.DesiredStatus, RequestStatusCompleted))
+		if request.Statuses.Desired != RequestStatusCompleted {
+			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
 		}
-		request.ChairStatus = RequestStatusCompleted
+		request.Statuses.Chair = RequestStatusCompleted
 	}
 	return nil
 }
