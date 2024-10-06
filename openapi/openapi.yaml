@@ -86,6 +86,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /app/payment-methods:
+    post:
+      tags:
+        - app
+      summary: 決済トークンの登録
+      operationId: app-post-payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 決済トークン
+              required:
+                - token
+      responses:
+        '204':
+          description: 決済トークンの登録に成功した
   /app/requests:
     post:
       tags:
@@ -178,6 +198,34 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: 存在しない配車要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/app/requests/{request_id}/payment':
+    post:
+      tags:
+        - app
+      summary: ユーザーが支払いをする
+      operationId: app-post-request-payment
+      parameters:
+        - name: request_id
+          in: path
+          description: 配車要求ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 支払いに成功した
+        '400':
+          description: 椅子が目的地に到着していないなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 存在しない配車要求IDだった
           content:
             application/json:
               schema:

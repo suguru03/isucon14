@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  version: '1.0'
+  title: isu payment gateway
+servers:
+  - url: 'http://localhost:8081/'
+    description: api
+paths:
+  /payment:
+    post:
+      summary: 決済を行う
+      description: ''
+      operationId: post-payment
+      parameters:
+        # 現状のdraft的にはIdempotency-Keyを要求するエンドポイントでは、このヘッダーが送られてこなかったら400を返すことになっている
+        # しかし、このエンドポイントではそうではなく、通常通り処理をすることにしている
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+          description: https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/ を参照してください。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 決済トークン
+                amount:
+                  type: integer
+                  description: 決済額
+              required:
+                - token
+                - amount
+      responses:
+        '204':
+          description: 決済を完了した
+        '400':
+          description: 決済トークンが存在しない、不正な決済額など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: 同じkeyでの決済が実行中である
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: keyの有効期限が切れているなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      title: Error
+      properties:
+        message:
+          type: string
+      required:
+        - message
