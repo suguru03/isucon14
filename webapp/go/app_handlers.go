@@ -63,7 +63,11 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 		user := &User{}
 		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
 		if err != nil {
-			respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+				return
+			}
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -325,6 +329,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				respondError(w, http.StatusInternalServerError, err)
+				return
 			}
 			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
 				time.Sleep(100 * time.Millisecond)

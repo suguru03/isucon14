@@ -66,7 +66,11 @@ func chairAuthMiddleware(next http.Handler) http.Handler {
 		chair := &Chair{}
 		err := db.Get(chair, "SELECT * FROM chairs WHERE access_token = ?", accessToken)
 		if err != nil {
-			respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+			if (errors.Is(err, sql.ErrNoRows)) {
+				respondError(w, http.StatusUnauthorized, errors.New("access token is required"))
+				return
+			}
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -348,6 +352,7 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			return
 		}
 		respondError(w, http.StatusInternalServerError, err)
 		return
@@ -394,6 +399,7 @@ func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			return
 		}
 		respondError(w, http.StatusInternalServerError, err)
 		return
@@ -433,6 +439,7 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE ", requestID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			return
 		}
 		respondError(w, http.StatusInternalServerError, err)
 		return
@@ -472,6 +479,7 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE", requestID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			return
 		}
 		respondError(w, http.StatusInternalServerError, err)
 		return
