@@ -10,7 +10,39 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func (s *AppGetRequestOK) Validate() error {
+func (s *AppPostRequestEvaluateReq) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.Int{
+			MinSet:        true,
+			Min:           1,
+			MaxSet:        true,
+			Max:           5,
+			MinExclusive:  false,
+			MaxExclusive:  false,
+			MultipleOfSet: false,
+			MultipleOf:    0,
+		}).Validate(int64(s.Evaluation)); err != nil {
+			return errors.Wrap(err, "int")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "evaluation",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *AppRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -46,38 +78,6 @@ func (s *AppGetRequestOK) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "updated_at",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *AppPostRequestEvaluateReq) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := (validate.Int{
-			MinSet:        true,
-			Min:           1,
-			MaxSet:        true,
-			Max:           5,
-			MinExclusive:  false,
-			MaxExclusive:  false,
-			MultipleOfSet: false,
-			MultipleOf:    0,
-		}).Validate(int64(s.Evaluation)); err != nil {
-			return errors.Wrap(err, "int")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "evaluation",
 			Error: err,
 		})
 	}
@@ -150,7 +150,7 @@ func (s *ChairGetInquiriesOKInquiriesItem) Validate() error {
 	return nil
 }
 
-func (s *ChairGetRequestOK) Validate() error {
+func (s *ChairRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}

@@ -155,6 +155,78 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 
 func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	chair := r.Context().Value("chair").(*Chair)
+	found := true
+	rideRequest := &RideRequest{}
+	tx, err := db.Beginx()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("SELECT * FROM chairs WHERE id = ? FOR UPDATE", chair.ID); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			found = false
+		} else {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
+		matchRequest := &RideRequest{}
+		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ? WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+		return
+		}
+
+		if !found {
+			rideRequest = matchRequest
+		}
+	}
+
+	user := &User{}
+	err = tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, &getChairRequestResponse{
+		RequestID: rideRequest.ID,
+		User: simpleUser{
+			ID:   user.ID,
+			Name: user.Firstname + " " + user.Lastname,
+		},
+		DestinationCoordinate: Coordinate{
+			Latitude:  rideRequest.DestinationLatitude,
+			Longitude: rideRequest.DestinationLongitude,
+		},
+		Status: rideRequest.Status,
+	});
+}
+
+func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
+	chair := r.Context().Value("chair").(*Chair)
 
 	// Server Sent Events
 	w.Header().Set("Content-Type", "text/event-stream")

@@ -50,6 +50,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /app/requests", appPostRequests)
 		authedMux.HandleFunc("GET /app/requests/{request_id}", appGetRequest)
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
+		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /app/notification", appGetNotification)
 		authedMux.HandleFunc("POST /app/inquiry", appPostInquiry)
 	}
@@ -62,6 +63,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /chair/activate", chairPostActivate)
 		authedMux.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
 		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
+		//authedMux.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
 		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
 		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
 		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
