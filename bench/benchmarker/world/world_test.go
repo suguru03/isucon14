@@ -215,6 +215,7 @@ func (s *FastServerStub) SendEventLoop() {
 		if entry.afterFunc != nil {
 			entry.afterFunc()
 		}
+		time.Sleep(s.latency)
 	}
 }
 

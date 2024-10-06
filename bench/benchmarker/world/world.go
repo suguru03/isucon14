@@ -150,12 +150,13 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 
 	u := &User{
-		ServerID:       res.ServerUserID,
-		Region:         args.Region,
-		State:          UserStateInactive,
-		RegisteredData: registeredData,
-		AccessToken:    res.AccessToken,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:          res.ServerUserID,
+		Region:            args.Region,
+		State:             UserStateInactive,
+		RegisteredData:    registeredData,
+		AccessToken:       res.AccessToken,
+		Rand:              random.CreateChildRand(w.RootRand),
+		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	u.tickDone.Store(true)
 	return w.UserDB.Create(u), nil
@@ -195,15 +196,16 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	}
 
 	c := &Chair{
-		ServerID:       res.ServerUserID,
-		Region:         args.Region,
-		Current:        args.InitialCoordinate,
-		Speed:          2, // TODO 速度どうする
-		State:          ChairStateInactive,
-		WorkTime:       args.WorkTime,
-		RegisteredData: registeredData,
-		AccessToken:    res.AccessToken,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:          res.ServerUserID,
+		Region:            args.Region,
+		Current:           args.InitialCoordinate,
+		Speed:             2, // TODO 速度どうする
+		State:             ChairStateInactive,
+		WorkTime:          args.WorkTime,
+		RegisteredData:    registeredData,
+		AccessToken:       res.AccessToken,
+		Rand:              random.CreateChildRand(w.RootRand),
+		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	c.tickDone.Store(true)
 	return w.ChairDB.Create(c), nil

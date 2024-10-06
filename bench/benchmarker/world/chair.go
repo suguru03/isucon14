@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/guregu/null/v5"
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type ChairState int
@@ -52,6 +53,8 @@ type Chair struct {
 	NotificationConn NotificationStream
 	// NotificationHandleErrors 通知処理によって発生した未処理のエラー
 	NotificationHandleErrors []error
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
@@ -92,10 +95,14 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 
+	// 通知キューを順番に処理する
+	for event := range concurrent.TryIter(c.notificationQueue) {
+		c.HandleNotification(event)
+	}
+
 	switch {
 	// 通知処理にエラーが発生している
 	case len(c.NotificationHandleErrors) > 0:
-		// TODO この処理に1tick使って良いか考える
 		err := errors.Join(c.NotificationHandleErrors...)
 		c.NotificationHandleErrors = c.NotificationHandleErrors[:0] // 配列クリア
 		return err
@@ -242,7 +249,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			if c.NotificationConn == nil {
 				// 先に通知コネクションを繋いでおく
-				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, c.HandleNotification)
+				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) { c.notificationQueue <- event })
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 				}
