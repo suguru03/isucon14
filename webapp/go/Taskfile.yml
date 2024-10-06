@@ -2,6 +2,6 @@ version: '3'
 
 tasks:
   build:
-    - go build -o isucon .
+    - go build -o isucon{{exeExt}} .
   run:
-    - ./isucon
+    - ./isucon{{exeExt}}
