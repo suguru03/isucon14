@@ -66,8 +66,16 @@ func (u *User) SetID(id UserID) {
 }
 
 func (u *User) Tick(ctx *Context) error {
-	u.tickDone.Store(false)
-	defer func() { u.tickDone.Store(true) }()
+	if !u.tickDone.CompareAndSwap(true, false) {
+		return nil
+	}
+	defer func() {
+		swapped := u.tickDone.CompareAndSwap(false, true)
+		if !swapped {
+			// TODO: panic をやめる
+			panic("2重でUserのTickが終了した")
+		}
+	}()
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(u.notificationQueue) {
@@ -151,10 +159,6 @@ func (u *User) Tick(ctx *Context) error {
 		}
 	}
 	return nil
-}
-
-func (u *User) TickCompleted() bool {
-	return u.tickDone.Load()
 }
 
 func (u *User) CreateRequest(ctx *Context) error {
