@@ -30,7 +30,7 @@ jobs:
       - name: Setup webapp/go
         working-directory: ./development
         run: |
-          sudo docker compose -f compose-go.yml up -d --build
+          sudo docker compose -f compose-go.yml up -d --build --wait
       - name: Run bench
         working-directory: ./bench
         run: |
