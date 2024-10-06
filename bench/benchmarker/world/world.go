@@ -68,30 +68,24 @@ func (w *World) Tick(ctx *Context) error {
 	var done bool
 
 	for _, c := range w.ChairDB.Iter() {
-		// 前のTickの処理が完了していない椅子は完了するまで新しい時間はスキップする
-		if c.TickCompleted() {
-			w.wg.Add(1)
-			go func() {
-				defer w.wg.Done()
-				err := c.Tick(ctx)
-				if err != nil {
-					w.HandleTickError(ctx, err)
-				}
-			}()
-		}
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := c.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
 	}
 	for _, u := range w.UserDB.Iter() {
-		// 前のTickの処理が完了していないユーザーは完了するまで新しい時間はスキップする
-		if u.TickCompleted() {
-			w.wg.Add(1)
-			go func() {
-				defer w.wg.Done()
-				err := u.Tick(ctx)
-				if err != nil {
-					w.HandleTickError(ctx, err)
-				}
-			}()
-		}
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := u.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
 	}
 
 	go func() {

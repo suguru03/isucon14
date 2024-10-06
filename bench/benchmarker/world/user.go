@@ -66,8 +66,16 @@ func (u *User) SetID(id UserID) {
 }
 
 func (u *User) Tick(ctx *Context) error {
-	u.tickDone.Store(false)
-	defer func() { u.tickDone.Store(true) }()
+	if !u.tickDone.CompareAndSwap(true, false) {
+		return nil
+	}
+	defer func() {
+		swapped := u.tickDone.CompareAndSwap(false, true)
+		if !swapped {
+			// TODO: panic をやめる
+			panic("2重でUserのTickが終了した")
+		}
+	}()
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(u.notificationQueue) {
@@ -115,10 +123,12 @@ func (u *User) Tick(ctx *Context) error {
 			u.Request.Statuses.User = RequestStatusCompleted
 
 		case RequestStatusCompleted:
+			fmt.Println("[COMPLETED] userID:", u.ID, "requestID:", u.Request.ID, "request.User.ID", u.Request.User.ID, "UserStatus:", u.Request.Statuses.User, "ChairStatus:", u.Request.Statuses.Chair, "DesiredStatus:", u.Request.Statuses.Desired, "user.Request == nil: ", u.Request == nil)
 			// 進行中のリクエストが無い状態にする
 			u.Request = nil
 
 		case RequestStatusCanceled:
+			fmt.Println("[CANCELED] userID:", u.ID, "requestID:", u.Request.ID, "request.User.ID", u.Request.User.ID, "UserStatus:", u.Request.Statuses.User, "ChairStatus:", u.Request.Statuses.Chair, "DesiredStatus:", u.Request.Statuses.Desired, "user.Request == nil: ", u.Request == nil)
 			// サーバー側でリクエストがキャンセルされた
 			u.Request.Statuses.Desired = RequestStatusCanceled
 
@@ -153,14 +163,11 @@ func (u *User) Tick(ctx *Context) error {
 	return nil
 }
 
-func (u *User) TickCompleted() bool {
-	return u.tickDone.Load()
-}
-
 func (u *User) CreateRequest(ctx *Context) error {
 	if u.Request != nil {
 		panic("ユーザーに進行中のリクエストがあるのにも関わらず、リクエストを新規作成しようとしている")
 	}
+	fmt.Println("[CREATE REQUEST] userID:", u.ID, "userServerID:", u.ServerID, "user.Request == nil:", u.Request == nil)
 
 	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)

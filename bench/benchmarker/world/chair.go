@@ -78,8 +78,16 @@ func (c *Chair) SetID(id ChairID) {
 }
 
 func (c *Chair) Tick(ctx *Context) error {
-	c.tickDone.Store(false)
-	defer func() { c.tickDone.Store(true) }()
+	if !c.tickDone.CompareAndSwap(true, false) {
+		return nil
+	}
+	defer func() {
+		swapped := c.tickDone.CompareAndSwap(false, true)
+		if !swapped {
+			// TODO: panic をやめる
+			panic("2重でChairのTickが終了した")
+		}
+	}()
 
 	// 後処理ができていないリクエストがあれば対応する
 	if c.oldRequest != nil {
@@ -276,10 +284,6 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 	return nil
-}
-
-func (c *Chair) TickCompleted() bool {
-	return c.tickDone.Load()
 }
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
