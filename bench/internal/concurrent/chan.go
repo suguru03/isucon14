@@ -17,3 +17,13 @@ func TryIter[T any](ch <-chan T) iter.Seq[T] {
 		}
 	}
 }
+
+// TrySend ブロッキング無しのchへの送信を試みます
+func TrySend[T any](ch chan<- T, v T) bool {
+	select {
+	case ch <- v:
+		return true
+	default:
+		return false
+	}
+}

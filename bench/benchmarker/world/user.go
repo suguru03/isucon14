@@ -131,7 +131,12 @@ func (u *User) Tick(ctx *Context) error {
 	case u.Request == nil && u.State == UserStateActive:
 		if u.NotificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
-			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) { u.notificationQueue <- event })
+			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
+				if !concurrent.TrySend(u.notificationQueue, event) {
+					log.Printf("通知受け取りチャンネルが詰まってる: user server id: %s", u.ServerID)
+					u.notificationQueue <- event
+				}
+			})
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}

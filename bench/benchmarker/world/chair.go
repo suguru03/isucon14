@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"slices"
 	"sync/atomic"
@@ -243,7 +244,12 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			if c.NotificationConn == nil {
 				// 先に通知コネクションを繋いでおく
-				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) { c.notificationQueue <- event })
+				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
+					if !concurrent.TrySend(c.notificationQueue, event) {
+						log.Printf("通知受け取りチャンネルが詰まってる: chair server id: %s", c.ServerID)
+						c.notificationQueue <- event
+					}
+				})
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 				}
