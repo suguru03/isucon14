@@ -38,7 +38,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
@@ -114,8 +114,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude) 
-				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude, requested_at, updated_at) 
+				  VALUES (?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())`,
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
@@ -211,7 +211,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := db.Exec(
-		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
+		`UPDATE ride_requests SET evaluation = ?, status = ?, updated_at = isu_now() WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err)
@@ -356,7 +356,7 @@ func appPostInquiry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := db.Exec(
-		`INSERT INTO inquiries (user_id, subject, body) VALUES (?, ?, ?)`,
+		`INSERT INTO inquiries (user_id, subject, body, created_at) VALUES (?, ?, ?, isu_now())`,
 		user.ID, req.Subject, req.Body,
 	)
 	if err != nil {
