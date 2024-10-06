@@ -231,6 +231,54 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 func appGetNotification(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
 
+	rideRequest := &RideRequest{}
+	tx, err := db.Beginx()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err)
+	}
+
+	chair := &Chair{}
+	if rideRequest.ChairID.Valid {
+		if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	respondJSON(w, http.StatusOK, &getAppRequestResponse{
+		RequestID: rideRequest.ID,
+		PickupCoordinate: Coordinate{
+			Latitude:  rideRequest.PickupLatitude,
+			Longitude: rideRequest.PickupLongitude,
+		},
+		DestinationCoordinate: Coordinate{
+			Latitude:  rideRequest.DestinationLatitude,
+			Longitude: rideRequest.DestinationLongitude,
+		},
+		Status: rideRequest.Status,
+		Chair: simpleChair{
+			ID:         chair.ID,
+			Name:       chair.Firstname + " " + chair.Lastname,
+			ChairModel: chair.ChairModel,
+			ChairNo:    chair.ChairNo,
+		},
+		CreatedAt: rideRequest.RequestedAt.Unix(),
+		UpdateAt:  rideRequest.UpdatedAt.Unix(),
+	})
+}
+
+func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value("user").(*User)
+
 	// Server Sent Events
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")

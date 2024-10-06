@@ -6,101 +6,10 @@ import (
 	"github.com/go-faster/errors"
 )
 
-// AppGetNotificationOK is response for AppGetNotification operation.
-type AppGetNotificationOK struct{}
+// AppGetNotificationNoContent is response for AppGetNotification operation.
+type AppGetNotificationNoContent struct{}
 
-// AppGetRequestNotFound is response for AppGetRequest operation.
-type AppGetRequestNotFound struct{}
-
-func (*AppGetRequestNotFound) appGetRequestRes() {}
-
-type AppGetRequestOK struct {
-	// 配車要求ID.
-	RequestID string `json:"request_id"`
-	// 配車位置.
-	PickupCoordinate Coordinate `json:"pickup_coordinate"`
-	// 目的地.
-	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
-	Status                RequestStatus `json:"status"`
-	// 椅子情報.
-	Chair OptChair `json:"chair"`
-	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
-	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
-}
-
-// GetRequestID returns the value of RequestID.
-func (s *AppGetRequestOK) GetRequestID() string {
-	return s.RequestID
-}
-
-// GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *AppGetRequestOK) GetPickupCoordinate() Coordinate {
-	return s.PickupCoordinate
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *AppGetRequestOK) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetStatus returns the value of Status.
-func (s *AppGetRequestOK) GetStatus() RequestStatus {
-	return s.Status
-}
-
-// GetChair returns the value of Chair.
-func (s *AppGetRequestOK) GetChair() OptChair {
-	return s.Chair
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *AppGetRequestOK) GetCreatedAt() float64 {
-	return s.CreatedAt
-}
-
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppGetRequestOK) GetUpdatedAt() float64 {
-	return s.UpdatedAt
-}
-
-// SetRequestID sets the value of RequestID.
-func (s *AppGetRequestOK) SetRequestID(val string) {
-	s.RequestID = val
-}
-
-// SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *AppGetRequestOK) SetPickupCoordinate(val Coordinate) {
-	s.PickupCoordinate = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *AppGetRequestOK) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetStatus sets the value of Status.
-func (s *AppGetRequestOK) SetStatus(val RequestStatus) {
-	s.Status = val
-}
-
-// SetChair sets the value of Chair.
-func (s *AppGetRequestOK) SetChair(val OptChair) {
-	s.Chair = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *AppGetRequestOK) SetCreatedAt(val float64) {
-	s.CreatedAt = val
-}
-
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppGetRequestOK) SetUpdatedAt(val float64) {
-	s.UpdatedAt = val
-}
-
-func (*AppGetRequestOK) appGetRequestRes() {}
+func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
 // AppPostInquiryNoContent is response for AppPostInquiry operation.
 type AppPostInquiryNoContent struct{}
@@ -131,11 +40,6 @@ func (s *AppPostInquiryReq) SetSubject(val string) {
 func (s *AppPostInquiryReq) SetBody(val string) {
 	s.Body = val
 }
-
-// AppPostRegisterBadRequest is response for AppPostRegister operation.
-type AppPostRegisterBadRequest struct{}
-
-func (*AppPostRegisterBadRequest) appPostRegisterRes() {}
 
 type AppPostRegisterOK struct {
 	// アクセストークン.
@@ -232,8 +136,7 @@ func (s *AppPostRequestAccepted) SetRequestID(val string) {
 	s.RequestID = val
 }
 
-// AppPostRequestEvaluateBadRequest is response for AppPostRequestEvaluate operation.
-type AppPostRequestEvaluateBadRequest struct{}
+type AppPostRequestEvaluateBadRequest Error
 
 func (*AppPostRequestEvaluateBadRequest) appPostRequestEvaluateRes() {}
 
@@ -242,8 +145,7 @@ type AppPostRequestEvaluateNoContent struct{}
 
 func (*AppPostRequestEvaluateNoContent) appPostRequestEvaluateRes() {}
 
-// AppPostRequestEvaluateNotFound is response for AppPostRequestEvaluate operation.
-type AppPostRequestEvaluateNotFound struct{}
+type AppPostRequestEvaluateNotFound Error
 
 func (*AppPostRequestEvaluateNotFound) appPostRequestEvaluateRes() {}
 
@@ -288,6 +190,94 @@ func (s *AppPostRequestReq) SetPickupCoordinate(val Coordinate) {
 func (s *AppPostRequestReq) SetDestinationCoordinate(val Coordinate) {
 	s.DestinationCoordinate = val
 }
+
+// App向け配車要求情報.
+// Ref: #/components/schemas/AppRequest
+type AppRequest struct {
+	// 配車要求ID.
+	RequestID             string        `json:"request_id"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
+	Chair                 OptChair      `json:"chair"`
+	// 配車要求日時.
+	CreatedAt float64 `json:"created_at"`
+	// 配車要求更新日時.
+	UpdatedAt float64 `json:"updated_at"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AppRequest) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppRequest) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppRequest) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *AppRequest) GetStatus() RequestStatus {
+	return s.Status
+}
+
+// GetChair returns the value of Chair.
+func (s *AppRequest) GetChair() OptChair {
+	return s.Chair
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AppRequest) GetCreatedAt() float64 {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *AppRequest) GetUpdatedAt() float64 {
+	return s.UpdatedAt
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AppRequest) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppRequest) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppRequest) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AppRequest) SetStatus(val RequestStatus) {
+	s.Status = val
+}
+
+// SetChair sets the value of Chair.
+func (s *AppRequest) SetChair(val OptChair) {
+	s.Chair = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AppRequest) SetCreatedAt(val float64) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *AppRequest) SetUpdatedAt(val float64) {
+	s.UpdatedAt = val
+}
+
+func (*AppRequest) appGetNotificationRes() {}
+func (*AppRequest) appGetRequestRes()      {}
 
 // 簡易椅子情報.
 // Ref: #/components/schemas/Chair
@@ -395,70 +385,10 @@ func (s *ChairGetInquiriesOKInquiriesItem) SetCreatedAt(val float64) {
 	s.CreatedAt = val
 }
 
-// ChairGetInquiryNotFound is response for ChairGetInquiry operation.
-type ChairGetInquiryNotFound struct{}
+// ChairGetNotificationNoContent is response for ChairGetNotification operation.
+type ChairGetNotificationNoContent struct{}
 
-func (*ChairGetInquiryNotFound) chairGetInquiryRes() {}
-
-// ChairGetNotificationOK is response for ChairGetNotification operation.
-type ChairGetNotificationOK struct{}
-
-// ChairGetRequestNotFound is response for ChairGetRequest operation.
-type ChairGetRequestNotFound struct{}
-
-func (*ChairGetRequestNotFound) chairGetRequestRes() {}
-
-type ChairGetRequestOK struct {
-	// 配車要求ID.
-	RequestID string `json:"request_id"`
-	// ユーザー情報.
-	User User `json:"user"`
-	// 目的地.
-	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
-	Status                OptRequestStatus `json:"status"`
-}
-
-// GetRequestID returns the value of RequestID.
-func (s *ChairGetRequestOK) GetRequestID() string {
-	return s.RequestID
-}
-
-// GetUser returns the value of User.
-func (s *ChairGetRequestOK) GetUser() User {
-	return s.User
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *ChairGetRequestOK) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetStatus returns the value of Status.
-func (s *ChairGetRequestOK) GetStatus() OptRequestStatus {
-	return s.Status
-}
-
-// SetRequestID sets the value of RequestID.
-func (s *ChairGetRequestOK) SetRequestID(val string) {
-	s.RequestID = val
-}
-
-// SetUser sets the value of User.
-func (s *ChairGetRequestOK) SetUser(val User) {
-	s.User = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *ChairGetRequestOK) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ChairGetRequestOK) SetStatus(val OptRequestStatus) {
-	s.Status = val
-}
-
-func (*ChairGetRequestOK) chairGetRequestRes() {}
+func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
 
 // ChairPostActivateNoContent is response for ChairPostActivate operation.
 type ChairPostActivateNoContent struct{}
@@ -580,23 +510,12 @@ type ChairPostRequestAcceptNoContent struct{}
 
 func (*ChairPostRequestAcceptNoContent) chairPostRequestAcceptRes() {}
 
-// ChairPostRequestAcceptNotFound is response for ChairPostRequestAccept operation.
-type ChairPostRequestAcceptNotFound struct{}
-
-func (*ChairPostRequestAcceptNotFound) chairPostRequestAcceptRes() {}
-
 // ChairPostRequestDenyNoContent is response for ChairPostRequestDeny operation.
 type ChairPostRequestDenyNoContent struct{}
 
 func (*ChairPostRequestDenyNoContent) chairPostRequestDenyRes() {}
 
-// ChairPostRequestDenyNotFound is response for ChairPostRequestDeny operation.
-type ChairPostRequestDenyNotFound struct{}
-
-func (*ChairPostRequestDenyNotFound) chairPostRequestDenyRes() {}
-
-// ChairPostRequestDepartBadRequest is response for ChairPostRequestDepart operation.
-type ChairPostRequestDepartBadRequest struct{}
+type ChairPostRequestDepartBadRequest Error
 
 func (*ChairPostRequestDepartBadRequest) chairPostRequestDepartRes() {}
 
@@ -605,10 +524,62 @@ type ChairPostRequestDepartNoContent struct{}
 
 func (*ChairPostRequestDepartNoContent) chairPostRequestDepartRes() {}
 
-// ChairPostRequestDepartNotFound is response for ChairPostRequestDepart operation.
-type ChairPostRequestDepartNotFound struct{}
+type ChairPostRequestDepartNotFound Error
 
 func (*ChairPostRequestDepartNotFound) chairPostRequestDepartRes() {}
+
+// Chair向け配車要求情報.
+// Ref: #/components/schemas/ChairRequest
+type ChairRequest struct {
+	// 配車要求ID.
+	RequestID             string           `json:"request_id"`
+	User                  User             `json:"user"`
+	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
+	Status                OptRequestStatus `json:"status"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *ChairRequest) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetUser returns the value of User.
+func (s *ChairRequest) GetUser() User {
+	return s.User
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *ChairRequest) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *ChairRequest) GetStatus() OptRequestStatus {
+	return s.Status
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *ChairRequest) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetUser sets the value of User.
+func (s *ChairRequest) SetUser(val User) {
+	s.User = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *ChairRequest) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ChairRequest) SetStatus(val OptRequestStatus) {
+	s.Status = val
+}
+
+func (*ChairRequest) chairGetNotificationRes() {}
+func (*ChairRequest) chairGetRequestRes()      {}
 
 // 座標情報.
 // Ref: #/components/schemas/Coordinate
@@ -638,6 +609,28 @@ func (s *Coordinate) SetLatitude(val int) {
 func (s *Coordinate) SetLongitude(val int) {
 	s.Longitude = val
 }
+
+// Ref: #/components/schemas/Error
+type Error struct {
+	Message string `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *Error) GetMessage() string {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *Error) SetMessage(val string) {
+	s.Message = val
+}
+
+func (*Error) appGetRequestRes()          {}
+func (*Error) appPostRegisterRes()        {}
+func (*Error) chairGetInquiryRes()        {}
+func (*Error) chairGetRequestRes()        {}
+func (*Error) chairPostRequestAcceptRes() {}
+func (*Error) chairPostRequestDenyRes()   {}
 
 // 問い合わせ内容.
 // Ref: #/components/schemas/InquiryContent
