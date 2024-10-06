@@ -123,12 +123,10 @@ func (u *User) Tick(ctx *Context) error {
 			u.Request.Statuses.User = RequestStatusCompleted
 
 		case RequestStatusCompleted:
-			fmt.Println("[COMPLETED] userID:", u.ID, "requestID:", u.Request.ID, "request.User.ID", u.Request.User.ID, "UserStatus:", u.Request.Statuses.User, "ChairStatus:", u.Request.Statuses.Chair, "DesiredStatus:", u.Request.Statuses.Desired, "user.Request == nil: ", u.Request == nil)
 			// 進行中のリクエストが無い状態にする
 			u.Request = nil
 
 		case RequestStatusCanceled:
-			fmt.Println("[CANCELED] userID:", u.ID, "requestID:", u.Request.ID, "request.User.ID", u.Request.User.ID, "UserStatus:", u.Request.Statuses.User, "ChairStatus:", u.Request.Statuses.Chair, "DesiredStatus:", u.Request.Statuses.Desired, "user.Request == nil: ", u.Request == nil)
 			// サーバー側でリクエストがキャンセルされた
 			u.Request.Statuses.Desired = RequestStatusCanceled
 
@@ -167,7 +165,6 @@ func (u *User) CreateRequest(ctx *Context) error {
 	if u.Request != nil {
 		panic("ユーザーに進行中のリクエストがあるのにも関わらず、リクエストを新規作成しようとしている")
 	}
-	fmt.Println("[CREATE REQUEST] userID:", u.ID, "userServerID:", u.ServerID, "user.Request == nil:", u.Request == nil)
 
 	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)
