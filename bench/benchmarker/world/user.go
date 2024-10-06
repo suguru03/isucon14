@@ -80,7 +80,7 @@ func (u *User) Tick(ctx *Context) error {
 	switch {
 	// 進行中のリクエストが存在
 	case u.Request != nil:
-		switch u.Request.UserStatus {
+		switch u.Request.Statuses.User {
 		case RequestStatusMatching:
 			// マッチングされるまで待機する
 			// 一向にマッチングされない場合は、このユーザーの行動はハングする
@@ -111,8 +111,8 @@ func (u *User) Tick(ctx *Context) error {
 			}
 
 			// サーバーが評価を受理したので完了状態にする
-			u.Request.DesiredStatus = RequestStatusCompleted
-			u.Request.UserStatus = RequestStatusCompleted
+			u.Request.Statuses.Desired = RequestStatusCompleted
+			u.Request.Statuses.User = RequestStatusCompleted
 
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
@@ -120,7 +120,7 @@ func (u *User) Tick(ctx *Context) error {
 
 		case RequestStatusCanceled:
 			// サーバー側でリクエストがキャンセルされた
-			u.Request.DesiredStatus = RequestStatusCanceled
+			u.Request.Statuses.Desired = RequestStatusCanceled
 
 			// 進行中のリクエストが無い状態にする
 			u.Request = nil
@@ -171,9 +171,11 @@ func (u *User) CreateRequest(ctx *Context) error {
 		PickupPoint:      pickup,
 		DestinationPoint: dest,
 		RequestedAt:      ctx.world.Time,
-		DesiredStatus:    RequestStatusMatching,
-		ChairStatus:      RequestStatusMatching,
-		UserStatus:       RequestStatusMatching,
+		Statuses: RequestStatuses{
+			Desired: RequestStatusMatching,
+			Chair:   RequestStatusMatching,
+			User:    RequestStatusMatching,
+		},
 	}
 	res, err := ctx.client.SendCreateRequest(ctx, req)
 	if err != nil {
@@ -191,15 +193,15 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 	if request == nil {
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
-	if status != RequestStatusCanceled && request.UserStatus != status && request.DesiredStatus != status {
+	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
-		if request.UserStatus == RequestStatusMatching && request.DesiredStatus == RequestStatusDispatched {
+		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched {
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
 		} else {
-			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.DesiredStatus, status, request.UserStatus))
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		}
 	}
-	request.UserStatus = status
+	request.Statuses.User = status
 	return nil
 }
 
