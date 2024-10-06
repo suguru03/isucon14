@@ -72,6 +72,32 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+type postAppPaymentMethodsRequest struct {
+	Token string `json:"token"`
+}
+
+func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
+	req := &postAppPaymentMethodsRequest{}
+	if err := bindJSON(r, req); err != nil {
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	user := r.Context().Value("user").(*User)
+
+	_, err := db.Exec(
+		`INSERT INTO payment_tokens (user_id, token, created_at) VALUES (?, ?, isu_now())`,
+		user.ID,
+		req.Token,
+	)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type postAppRequestsRequest struct {
 	PickupCoordinate      *Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate *Coordinate `json:"destination_coordinate"`
@@ -114,7 +140,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude, requested_at, updated_at) 
+		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude, requested_at, updated_at)
 				  VALUES (?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())`,
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {

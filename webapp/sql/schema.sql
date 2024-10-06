@@ -76,6 +76,15 @@ create table users
 )
   comment = '利用者情報テーブル';
 
+create table payment_tokens
+(
+  user_id varchar(26) not null comment 'ユーザーID',
+  token varchar(255) not null comment '決済トークン',
+  created_at datetime(6) not null comment '登録日時',
+  primary key (user_id)
+)
+  comment = '決済トークンテーブル';
+
 create table inquiries
 (
   id         varchar(26) not null comment '問い合わせID',
