@@ -92,8 +92,10 @@ func (r *Request) String() string {
 		chairID = strconv.Itoa(int(r.Chair.ID))
 	}
 	return fmt.Sprintf(
-		"Request{id=%d,status=%d,user=%d,from=%s,to=%s,chair=%s,time=[%d,%d,%d,%d,%d,%d]}",
-		r.ID, r.DesiredStatus, r.User.ID, r.PickupPoint, r.DestinationPoint, chairID,
+		"Request{id=%d,status=(%v,%v,%v),user=%d,from=%s,to=%s,chair=%s,time=[%d,%d,%d,%d,%d,%d]}",
+		r.ID,
+		r.DesiredStatus, r.UserStatus, r.ChairStatus,
+		r.User.ID, r.PickupPoint, r.DestinationPoint, chairID,
 		r.RequestedAt, r.MatchedAt, r.DispatchedAt, r.PickedUpAt, r.ArrivedAt, r.CompletedAt,
 	)
 }

@@ -277,13 +277,23 @@ func (c *Chair) TickCompleted() bool {
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
 	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
-		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID && c.Request.ChairStatus == RequestStatusCompleted {
-			// リクエストを保持しているが、既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
-			// 後処理を次のTickで完了させるために退避させる
-			c.oldRequest = c.Request
-			c.Request = nil
+		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID {
+			// 椅子が別のリクエストを保持している
+			switch {
+			case c.Request.DesiredStatus == RequestStatusCompleted && c.Request.UserStatus == RequestStatusCompleted && c.Request.ChairStatus == RequestStatusArrived:
+				// 椅子にCompletedイベントが来る前に、新しいアサインが降ってきているため、通知の順番が入れ替わっている
+				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s (hint: 先に椅子に前のリクエストのCompletedイベントが来てないとダメ)", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
+
+			case c.Request.ChairStatus == RequestStatusCompleted:
+				// 既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
+				// 後処理を次のTickで完了させるために退避させる
+				c.oldRequest = c.Request
+				c.Request = nil
+			default:
+				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
+			}
 		} else {
-			return CodeError(ErrorCodeChairAlreadyHasRequest)
+			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
 		}
 	}
 	c.ServerRequestID = null.StringFrom(serverRequestID)

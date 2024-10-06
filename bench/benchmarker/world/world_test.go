@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,15 +17,29 @@ type requestEntry struct {
 	QueuedTime   time.Time
 }
 
+type eventEntry struct {
+	handler   NotificationReceiverFunc
+	event     NotificationEvent
+	afterFunc func()
+}
+
+type chairState struct {
+	ServerID        string
+	Active          bool
+	AssignedRequest *requestEntry
+	sync.RWMutex
+}
+
 type FastServerStub struct {
 	t                            *testing.T
-	world                        *World
+	chairDB                      *concurrent.SimpleMap[string, *chairState]
 	latency                      time.Duration
 	matchingTimeout              time.Duration
 	requestQueue                 chan *requestEntry
 	deniedRequests               *concurrent.SimpleMap[string, *concurrent.SimpleSet[string]]
 	userNotificationReceiverMap  *concurrent.SimpleMap[string, NotificationReceiverFunc]
 	chairNotificationReceiverMap *concurrent.SimpleMap[string, NotificationReceiverFunc]
+	eventQueue                   chan *eventEntry
 }
 
 func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
@@ -34,9 +49,9 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 		if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 			switch req.DesiredStatus {
 			case RequestStatusDispatched:
-				go f(&UserNotificationEventDispatched{})
+				s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{}}
 			case RequestStatusArrived:
-				go f(&UserNotificationEventArrived{})
+				s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{}}
 			}
 		}
 	}
@@ -52,7 +67,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Requ
 		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.DesiredStatus)
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(&UserNotificationEventDispatching{})
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{}}
 	}
 	return nil
 }
@@ -61,21 +76,37 @@ func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverReque
 	time.Sleep(s.latency)
 	list := s.deniedRequests.GetOrSetDefault(serverRequestID, concurrent.NewSimpleSet[string])
 	list.Add(chair.ServerID)
+	c, ok := s.chairDB.Get(chair.ServerID)
+	if !ok {
+		return fmt.Errorf("chair not found")
+	}
+	c.Lock()
+	s.requestQueue <- c.AssignedRequest
+	c.AssignedRequest = nil
+	c.Unlock()
 	return nil
 }
 
 func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		go f(&UserNotificationEventCarrying{})
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCarrying{}}
 	}
 	return nil
 }
 
 func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
+	c, ok := s.chairDB.Get(req.Chair.ServerID)
+	if !ok {
+		return fmt.Errorf("chair not found")
+	}
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
-		go f(&ChairNotificationEventCompleted{ServerRequestID: req.ServerID})
+		s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventCompleted{ServerRequestID: req.ServerID}, afterFunc: func() {
+			c.Lock()
+			c.AssignedRequest = nil
+			c.Unlock()
+		}}
 	}
 	return nil
 }
@@ -89,11 +120,25 @@ func (s *FastServerStub) SendCreateRequest(ctx *Context, req *Request) (*SendCre
 
 func (s *FastServerStub) SendActivate(ctx *Context, chair *Chair) error {
 	time.Sleep(s.latency)
+	c, ok := s.chairDB.Get(chair.ServerID)
+	if !ok {
+		return fmt.Errorf("chair does not exist")
+	}
+	c.Lock()
+	c.Active = true
+	c.Unlock()
 	return nil
 }
 
 func (s *FastServerStub) SendDeactivate(ctx *Context, chair *Chair) error {
 	time.Sleep(s.latency)
+	c, ok := s.chairDB.Get(chair.ServerID)
+	if !ok {
+		return fmt.Errorf("chair does not exist")
+	}
+	c.Lock()
+	c.Active = false
+	c.Unlock()
 	return nil
 }
 
@@ -109,7 +154,9 @@ func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (
 
 func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error) {
 	time.Sleep(s.latency)
-	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
+	c := &chairState{ServerID: ulid.Make().String(), Active: false}
+	s.chairDB.Set(c.ServerID, c)
+	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID}, nil
 }
 
 type notificationConnectionImpl struct {
@@ -136,20 +183,24 @@ func (s *FastServerStub) MatchingLoop() {
 	for entry := range s.requestQueue {
 		matched := false
 		denied := s.deniedRequests.GetOrSetDefault(entry.ServerID, concurrent.NewSimpleSet[string])
-		for _, chair := range s.world.ChairDB.Iter() {
-			if chair.State == ChairStateActive && !chair.ServerRequestID.Valid && !denied.Has(chair.ServerID) {
+		for _, chair := range s.chairDB.Iter() {
+			chair.Lock()
+			if chair.Active && chair.AssignedRequest == nil && !denied.Has(chair.ServerID) {
+				chair.AssignedRequest = entry
+				chair.Unlock()
 				if f, ok := s.chairNotificationReceiverMap.Get(chair.ServerID); ok {
-					f(&ChairNotificationEventMatched{ServerRequestID: entry.ServerID})
+					s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventMatched{ServerRequestID: entry.ServerID}}
 				}
 				matched = true
 				break
 			}
+			chair.Unlock()
 		}
 		if !matched {
-			if time.Now().Sub(entry.QueuedTime) > s.matchingTimeout {
+			if time.Since(entry.QueuedTime) > s.matchingTimeout {
 				// キャンセル
 				if f, ok := s.userNotificationReceiverMap.Get(entry.ServerUserID); ok {
-					f(&UserNotificationEventCanceled{})
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{}}
 				}
 			} else {
 				s.requestQueue <- entry
@@ -158,19 +209,29 @@ func (s *FastServerStub) MatchingLoop() {
 	}
 }
 
+func (s *FastServerStub) SendEventLoop() {
+	for entry := range s.eventQueue {
+		entry.handler(entry.event)
+		if entry.afterFunc != nil {
+			entry.afterFunc()
+		}
+	}
+}
+
 func TestWorld(t *testing.T) {
 	var (
 		completedRequestChan = make(chan *Request, 1000)
-		world                = NewWorld(1500*time.Microsecond, completedRequestChan)
+		world                = NewWorld(30*time.Millisecond, completedRequestChan)
 		client               = &FastServerStub{
 			t:                            t,
-			world:                        world,
+			chairDB:                      concurrent.NewSimpleMap[string, *chairState](),
 			latency:                      1 * time.Millisecond,
 			matchingTimeout:              200 * time.Millisecond,
 			requestQueue:                 make(chan *requestEntry, 1000),
 			deniedRequests:               concurrent.NewSimpleMap[string, *concurrent.SimpleSet[string]](),
 			userNotificationReceiverMap:  concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
+			eventQueue:                   make(chan *eventEntry, 1000),
 		}
 		ctx = &Context{
 			world:  world,
@@ -190,7 +251,7 @@ func TestWorld(t *testing.T) {
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
 			Region:            region,
 			InitialCoordinate: RandomCoordinateOnRegion(region),
-			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(23)),
+			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -205,8 +266,9 @@ func TestWorld(t *testing.T) {
 	}
 
 	go client.MatchingLoop()
+	go client.SendEventLoop()
 
-	for range ConvertHour(24 * 3) {
+	for range ConvertHour(1) {
 		if err := world.Tick(ctx); err != nil {
 			t.Fatal(err)
 		}
