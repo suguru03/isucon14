@@ -12,7 +12,7 @@
   shell: |
     /home/isucon/.x pip install pipenv
 
-- name: Build isupipe-python
+- name: Build isuride-python
   become: true
   become_user: isucon
   shell: |
@@ -23,12 +23,12 @@
 - name: Put systemd service
   become: true
   ansible.builtin.copy:
-    src: isupipe-python.service
+    src: isuride-python.service
     dest: /etc/systemd/system/
 
 - name: Start webapp
   become: true
   service:
-    name: isupipe-python
+    name: isuride-python
     enabled: false
     state: stopped

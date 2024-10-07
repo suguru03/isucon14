@@ -29,8 +29,8 @@
     group: "root"
     mode: "0644"
   with_items:
-    - etc/nginx/sites-enabled/isupipe.conf
-    - etc/nginx/sites-available/isupipe-php.conf
+    - etc/nginx/sites-enabled/isuride.conf
+    - etc/nginx/sites-available/isuride-php.conf
 
 - name: "roles/nginx/tasks: Deploy tls certificates"
   become: true

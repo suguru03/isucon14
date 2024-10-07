@@ -6,7 +6,7 @@
     path: /home/isucon/webapp/node
     state: directory
 
-- name: Build isupipe-node
+- name: Build isuride-node
   become: true
   become_user: isucon
   shell: |
@@ -17,12 +17,12 @@
 - name: Put systemd service
   become: true
   ansible.builtin.copy:
-    src: isupipe-node.service
+    src: isuride-node.service
     dest: /etc/systemd/system/
 
 - name: Start webapp
   become: true
   service:
-    name: isupipe-node
+    name: isuride-node
     enabled: false
     state: stopped

@@ -6,7 +6,7 @@
     path: /home/isucon/webapp/perl
     state: directory
 
-- name: Build isupipe-perl
+- name: Build isuride-perl
   become: true
   become_user: isucon
   shell: |
@@ -17,12 +17,12 @@
 - name: Put systemd service
   become: true
   ansible.builtin.copy:
-    src: isupipe-perl.service
+    src: isuride-perl.service
     dest: /etc/systemd/system/
 
 - name: Start webapp
   become: true
   service:
-    name: isupipe-perl
+    name: isuride-perl
     enabled: false
     state: stopped

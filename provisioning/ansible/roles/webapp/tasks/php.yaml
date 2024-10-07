@@ -9,12 +9,12 @@
 - name: Put php-fpn.conf
   become: true
   ansible.builtin.copy:
-    src: isupipe.php-fpm.conf
-    dest: /home/isucon/local/php/etc/isupipe.php-fpm.conf
+    src: isuride.php-fpm.conf
+    dest: /home/isucon/local/php/etc/isuride.php-fpm.conf
     owner: isucon
     group: isucon
 
-- name: Build isupipe-php
+- name: Build isuride-php
   become: true
   become_user: isucon
   shell: |
@@ -25,12 +25,12 @@
 - name: Put systemd service
   become: true
   ansible.builtin.copy:
-    src: isupipe-php.service
+    src: isuride-php.service
     dest: /etc/systemd/system/
 
 - name: Start webapp
   become: true
   service:
-    name: isupipe-php
+    name: isuride-php
     enabled: false
     state: stopped

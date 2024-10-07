@@ -6,7 +6,7 @@
     path: /home/isucon/webapp/rust
     state: directory
 
-- name: Build isupipe-rust
+- name: Build isuride-rust
   become: true
   become_user: isucon
   shell: |
@@ -17,12 +17,12 @@
 - name: Put systemd service
   become: true
   ansible.builtin.copy:
-    src: isupipe-rust.service
+    src: isuride-rust.service
     dest: /etc/systemd/system/
 
 - name: Start webapp
   become: true
   service:
-    name: isupipe-rust
+    name: isuride-rust
     enabled: false
     state: stopped

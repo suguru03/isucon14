@@ -1,5 +1,5 @@
 [Unit]
-Description=isupipe-go
+Description=isuride-go
 After=syslog.target
 After=mysql.service
 Requires=mysql.service
@@ -10,7 +10,7 @@ EnvironmentFile=/home/isucon/env.sh
 
 User=isucon
 Group=isucon
-ExecStart=/home/isucon/webapp/go/isupipe
+ExecStart=/home/isucon/webapp/go/isuride
 ExecStop=/bin/kill -s QUIT $MAINPID
 
 Restart=on-failure
