@@ -8,16 +8,14 @@ import {
 } from "react";
 
 type ModalProps = PropsWithChildren<{
-  onClose?: () => void; // モーダルが閉じられる際のコールバック
+  onClose?: () => void;
 }>;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
   ({ children, onClose }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
-    // モーダルの描画後に位置を設定し、領域外クリックを監視
     useEffect(() => {
-      // 領域外クリックでモーダルを閉じる
       const handleOutsideClick = (e: MouseEvent) => {
         if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
           handleClose();
@@ -34,35 +32,33 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
     useEffect(() => {
       setTimeout(() => {
         if (sheetRef.current) {
-          sheetRef.current.style.transform = `translateY(0)`; // 初期位置に表示
+          sheetRef.current.style.transform = `translateY(0)`;
         }
       }, 50); // アニメーション付きで描画するためのおまじない
     }, []);
 
-    // モーダルを閉じる処理（アニメーションを待つ）
     const handleClose = () => {
       if (sheetRef.current) {
         const modal = sheetRef.current;
 
+        // アニメーションを待って閉じられるようにしておく
         const handleTransitionEnd = () => {
-          onClose?.(); // アニメーションが終わってからonCloseを呼び出す
-          modal.removeEventListener("transitionend", handleTransitionEnd); // イベントリスナーの解除
+          onClose?.();
+          modal.removeEventListener("transitionend", handleTransitionEnd);
         };
 
-        modal.addEventListener("transitionend", handleTransitionEnd); // アニメーションの終了を待つ
-        modal.style.transform = `translateY(100%)`; // 画面下に隠す
+        modal.addEventListener("transitionend", handleTransitionEnd);
+        modal.style.transform = `translateY(100%)`;
       }
     };
 
-    // 外部から`handleClose`を呼び出すための関数を提供
     useImperativeHandle(ref, () => ({
       close: handleClose,
     }));
 
     return (
       <>
-        {/* オーバーレイを追加 */}
-        <div className="fixed inset-0 bg-black opacity-50 z-40"></div>
+        <div className="fixed inset-0 bg-black opacity-50 z-40"></div>{/* overlay */}
         <div
           className={
             "fixed bottom-0 left-0 right-0 h-[90vh] bg-white border-t border-l border-r border-gray-300 rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50"
