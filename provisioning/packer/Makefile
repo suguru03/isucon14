@@ -5,7 +5,7 @@ export BRANCH := $(shell git branch --contains | fgrep '*' | cut -d ' ' -f 2)
 all:
 	make echo-commit_hash
 	make app-build
-	make envcheck-build
+#	make envcheck-build 未実装
 	make init
 	make build
 

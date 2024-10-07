@@ -14,9 +14,10 @@ make
 cp -r ./dist/ ../webapp/public/
 cd ../provisioning/ansible
 
-cd ../../envcheck
-make
-cd ../provisioning/ansible
+# 未実装
+#cd ../../envcheck
+#make
+#cd ../provisioning/ansible
 
 cd ../../
 tar -zcvf webapp.tar.gz webapp
