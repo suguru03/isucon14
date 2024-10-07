@@ -3,7 +3,7 @@ info:
   version: '1.0'
   title: isu
 servers:
-  - url: 'http://localhost:8080/'
+  - url: 'http://localhost:8080'
     description: api
 paths:
   /initialize:
