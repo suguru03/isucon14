@@ -274,6 +274,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		respondError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	chair := &Chair{}
