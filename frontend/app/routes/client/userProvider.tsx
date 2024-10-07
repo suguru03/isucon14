@@ -35,9 +35,21 @@ const RequestProvider = ({
   /**
    * TODO: SSE処理
    */
-  return (
-    <requestContext.Provider value={data}>{children}</requestContext.Provider>
-  );
+
+  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+  if (data instanceof Blob) {
+    console.log("204 No Content");
+    return (
+      <requestContext.Provider value={data}>{children}</requestContext.Provider>
+    );
+  } else {
+    /**
+     * TODO: jump処理
+     */
+    return (
+      <requestContext.Provider value={data}>{children}</requestContext.Provider>
+    );
+  }
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
