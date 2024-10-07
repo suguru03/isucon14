@@ -20,7 +20,6 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
       if (sheetRef.current) {
         const modal = sheetRef.current;
 
-        // アニメーションを待って閉じられるようにしておく
         const handleTransitionEnd = () => {
           onClose?.();
           modal.removeEventListener("transitionend", handleTransitionEnd);
@@ -36,7 +35,7 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
         if (sheetRef.current) {
           sheetRef.current.style.transform = `translateY(0)`;
         }
-      }, 50); // アニメーション付きで描画するためのおまじない
+      }, 50);
     }, []);
 
     useOnClickOutside(sheetRef, handleClose);
@@ -48,7 +47,6 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
     return (
       <>
         <div className="fixed inset-0 bg-black opacity-50 z-40"></div>
-        {/* overlay */}
         <div
           className={
             "fixed bottom-0 left-0 right-0 h-[90vh] bg-white border-t border-l border-r border-gray-300 rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50"
