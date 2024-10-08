@@ -230,31 +230,15 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                name:
                   type: string
-                  description: 椅子名
-                firstname:
+                  description: 椅子の名前
+                model:
                   type: string
-                  description: 名前
-                lastname:
-                  type: string
-                  description: 名字
-                date_of_birth:
-                  type: string
-                  description: 生年月日
-                chair_model:
-                  type: string
-                  description: 車種
-                chair_no:
-                  type: string
-                  description: カーナンバー
+                  description: 椅子のモデル
               required:
-                - username
-                - firstname
-                - lastname
-                - date_of_birth
-                - chair_model
-                - chair_no
+                - name
+                - model
       responses:
         "201":
           description: 椅子登録が完了した
@@ -500,18 +484,14 @@ components:
           description: 椅子ID
         name:
           type: string
-          description: 椅子名
-        chair_model:
+          description: 椅子の名前
+        model:
           type: string
-          description: 車種
-        chair_no:
-          type: string
-          description: カーナンバー
+          description: 椅子のモデル
       required:
         - id
         - name
-        - chair_model
-        - chair_no
+        - model
     User:
       type: object
       title: User
