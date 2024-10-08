@@ -18,12 +18,13 @@ const getLoginedSearchParamURL = async(target: 'app' | 'driver') => {
     }),
     "method": "POST"
   })
-  let json;
+  let json: Record<string, string>;
   if (fetched.status === 500) {
-    json = JSON.parse(readFileSync(`./${target}LocalLogin`).toString())
+    //
+    json = JSON.parse(readFileSync(`./${target}LocalLogin`).toString()) as typeof json;
   } else {
-    json = await fetched.json()
-    writeFileSync(`./${target}LocalLogin`, JSON.stringify(json))
+    json = await fetched.json() as typeof json;
+    writeFileSync(`./${target}LocalLogin`, JSON.stringify(json));
   }
   const id:string = json["id"]
   const accessToken:string = json["access_token"]
@@ -34,10 +35,10 @@ const getLoginedSearchParamURL = async(target: 'app' | 'driver') => {
  const customConsolePlugin: Plugin = {
   name: 'custom-test-user-login',
   configureServer(server) {
-    server.httpServer?.once('listening', async() => {
-  
-    console.log(`logined client page: \x1b[32m  ${await getLoginedSearchParamURL('app')} \x1b[0m`);
-      
+    server.httpServer?.once('listening', () => {
+      (async() => {
+        console.log(`logined client page: \x1b[32m  ${await getLoginedSearchParamURL('app')} \x1b[0m`);   
+      })().catch(e => console.error(e))
     });
   }
 };
