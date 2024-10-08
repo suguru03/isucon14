@@ -372,29 +372,3 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-type postAppInquiryRequest struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-}
-
-func appPostInquiry(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(*User)
-
-	req := &postAppInquiryRequest{}
-	if err := bindJSON(r, req); err != nil {
-		respondError(w, http.StatusBadRequest, err)
-		return
-	}
-
-	_, err := db.Exec(
-		`INSERT INTO inquiries (user_id, subject, body, created_at) VALUES (?, ?, ?, isu_now())`,
-		user.ID, req.Subject, req.Body,
-	)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}

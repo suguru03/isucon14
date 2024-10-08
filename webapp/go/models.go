@@ -61,11 +61,3 @@ type ChairLocation struct {
 	Longitude int       `db:"longitude"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
-
-type Inquiry struct {
-	ID        string    `db:"id"`
-	UserID    string    `db:"user_id"`
-	Subject   string    `db:"subject"`
-	Body      string    `db:"body"`
-	CreatedAt time.Time `db:"created_at"`
-}

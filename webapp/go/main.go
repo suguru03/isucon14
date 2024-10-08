@@ -81,7 +81,6 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
 		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /app/notification", appGetNotification)
-		authedMux.HandleFunc("POST /app/inquiry", appPostInquiry)
 	}
 
 	// chair handlers
@@ -103,8 +102,6 @@ func setup() http.Handler {
 
 	// admin
 	{
-		mux.HandleFunc("GET /admin/inquiries", adminGetInquiries)
-		mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", adminGetInquiry)
 	}
 
 	return mux
@@ -114,7 +111,6 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	tables := []string{
 		"chair_locations",
 		"ride_requests",
-		"inquiries",
 		"users",
 		"chairs",
 	}

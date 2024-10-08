@@ -85,19 +85,6 @@ create table payment_tokens
 )
   comment = '決済トークンテーブル';
 
-create table inquiries
-(
-  id         varchar(26) not null comment '問い合わせID',
-  user_id    varchar(26) not null comment 'ユーザーID',
-  subject    text        not null comment '件名',
-  body       text        not null comment '本文',
-  created_at datetime(6)   not null comment '問い合わせ日時',
-  primary key (id),
-  constraint inquiries_users_id_fk
-    foreign key (user_id) references users (id)
-)
-  comment = '問い合わせテーブル';
-
 create table ride_requests
 (
   id                    varchar(26)                                                                                    not null comment '配車/乗車リクエストID',
