@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { Modal } from "~/components/primitives/modal/modal";
+import { Text } from "~/components/primitives/text/text";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -41,6 +42,11 @@ export default function Index() {
           </Link>
         </li>
       </ul>
+      <div className="my-4">
+        <Text bold size="sm" variant="danger">
+          danger small bold text
+        </Text>
+      </div>
       {/* デバッグ用のボタンでモーダルを開く */}
       <button
         className="bg-blue-500 text-white py-2 px-4 rounded"
