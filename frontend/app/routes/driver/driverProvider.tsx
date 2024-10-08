@@ -27,12 +27,16 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  let { data, error, isLoading } = useChairGetNotification({
+  const notification = useChairGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
+
+  let { data, error } = notification;
+  const isLoading = notification.isLoading;
+
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   if (data instanceof Blob) {
     data = undefined;

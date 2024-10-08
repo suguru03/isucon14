@@ -28,12 +28,15 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  let { data, error, isLoading } = useAppGetNotification({
+  const notificationResponse = useAppGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
+
+  let { data, error } = notificationResponse;
+  const isLoading = notificationResponse.isLoading;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   if (data instanceof Blob) {
