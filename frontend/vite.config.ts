@@ -27,17 +27,12 @@ export const config = {
     },
     host: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
+    strictPort: true
   },
   preview: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
     host: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
+    strictPort: true
   }
 } as const satisfies UserConfig;
 
