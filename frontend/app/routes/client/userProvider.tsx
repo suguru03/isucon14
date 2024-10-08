@@ -1,6 +1,9 @@
 import { useSearchParams } from "@remix-run/react";
 import { ReactNode, createContext, useContext } from "react";
-import { useAppGetNotification } from "~/apiClient/apiComponents";
+import {
+  useAppGetNotification,
+  AppGetNotificationError,
+} from "~/apiClient/apiComponents";
 import { AppRequest } from "~/apiClient/apiSchemas";
 
 export type AccessToken = string;
@@ -12,7 +15,11 @@ type User = {
 };
 
 const userContext = createContext<Partial<User>>({});
-const requestContext = createContext<AppRequest | undefined>(undefined);
+const requestContext = createContext<{
+  data?: AppRequest;
+  error?: AppGetNotificationError;
+  isLoading: boolean;
+}>({ isLoading: false });
 
 const RequestProvider = ({
   children,
@@ -21,35 +28,31 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  const { data, error, isLoading } = useAppGetNotification({
+  let { data, error, isLoading } = useAppGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error occurred: {JSON.stringify(error, null, 2)}</div>;
-  if (data === undefined) return <div>notifiaction is undefined</div>;
+  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+  if (data instanceof Blob) {
+    data = undefined;
+  }
+
+  if (error === null) {
+    error = undefined;
+  }
 
   /**
    * TODO: SSE処理
    */
 
-  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  if (data instanceof Blob) {
-    console.log("204 No Content");
-    return (
-      <requestContext.Provider value={data}>{children}</requestContext.Provider>
-    );
-  } else {
-    /**
-     * TODO: jump処理
-     */
-    return (
-      <requestContext.Provider value={data}>{children}</requestContext.Provider>
-    );
-  }
+  return (
+    <requestContext.Provider value={{ data, error, isLoading }}>
+      {children}
+    </requestContext.Provider>
+  );
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
