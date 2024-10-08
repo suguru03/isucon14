@@ -20,7 +20,6 @@ const getLoginedSearchParamURL = async(target: 'app' | 'driver') => {
   })
   let json: Record<string, string>;
   if (fetched.status === 500) {
-    //
     json = JSON.parse(readFileSync(`./${target}LocalLogin`).toString()) as typeof json;
   } else {
     json = await fetched.json() as typeof json;
