@@ -11,7 +11,7 @@
     "typecheck": "tsc",
     "fmtcheck": "prettier ./app --check",
     "fmt": "prettier ./app --write",
-    "codegen": "npx openapi-codegen gen isucon"
+    "codegen": "PROXY_URL=http://localhost:3000/api npx openapi-codegen gen isucon"
   },
   "dependencies": {
     "@remix-run/node": "^2.11.1",
