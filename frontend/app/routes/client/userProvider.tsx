@@ -1,10 +1,10 @@
 import { useSearchParams } from "@remix-run/react";
-import { ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext } from "react";
 import {
   useAppGetNotification,
-  AppGetNotificationError,
+  type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import { AppRequest } from "~/apiClient/apiSchemas";
+import type { AppRequest } from "~/apiClient/apiSchemas";
 
 export type AccessToken = string;
 

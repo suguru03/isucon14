@@ -1,10 +1,10 @@
 import { useSearchParams } from "@remix-run/react";
-import { ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext } from "react";
 import {
   useChairGetNotification,
-  ChairGetNotificationError,
+  type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
-import { ChairRequest } from "~/apiClient/apiSchemas";
+import type { ChairRequest } from "~/apiClient/apiSchemas";
 
 export type AccessToken = string;
 
