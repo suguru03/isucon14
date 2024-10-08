@@ -53,7 +53,7 @@ module.exports = {
           },
           typescript: {
             alwaysTryTypes: true,
-            project: "./frontend/tsconfig.json"
+            project: "./frontend/tsconfig.json",
           },
         },
       },
