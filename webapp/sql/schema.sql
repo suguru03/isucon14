@@ -32,12 +32,8 @@ DELIMITER ;
 create table chairs
 (
   id         varchar(26) not null comment '椅子ID',
-  username   varchar(30) not null comment 'ユーザー名',
-  firstname  varchar(30) not null comment '本名(名前)',
-  lastname   varchar(30) not null comment '本名(名字)',
-  date_of_birth varchar(30)      not null comment '生年月日',
-  chair_model  text        not null comment '車種',
-  chair_no     varchar(30) not null comment 'ISUナンバー',
+  name       varchar(30) not null comment '椅子の名前',
+  model      text        not null comment '椅子のモデル',
   is_active  tinyint(1)  not null comment '配椅子受付中かどうか',
   access_token varchar(255) not null comment 'アクセストークン',
   created_at datetime(6)  not null comment '登録日時',

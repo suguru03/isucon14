@@ -163,10 +163,9 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 type simpleChair struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	ChairModel string `json:"chair_model"`
-	ChairNo    string `json:"chair_no"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Model string `json:"model"`
 }
 
 type getAppRequestResponse struct {
@@ -218,10 +217,9 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response.Chair = simpleChair{
-			ID:         chair.ID,
-			Name:       chair.Firstname + " " + chair.Lastname,
-			ChairModel: chair.ChairModel,
-			ChairNo:    chair.ChairNo,
+			ID:    chair.ID,
+			Name:  chair.Name,
+			Model: chair.Model,
 		}
 	}
 
@@ -297,10 +295,9 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 		},
 		Status: rideRequest.Status,
 		Chair: simpleChair{
-			ID:         chair.ID,
-			Name:       chair.Firstname + " " + chair.Lastname,
-			ChairModel: chair.ChairModel,
-			ChairNo:    chair.ChairNo,
+			ID:    chair.ID,
+			Name:  chair.Name,
+			Model: chair.Model,
 		},
 		CreatedAt: rideRequest.RequestedAt.Unix(),
 		UpdateAt:  rideRequest.UpdatedAt.Unix(),
@@ -357,10 +354,9 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				},
 				Status: rideRequest.Status,
 				Chair: simpleChair{
-					ID:         chair.ID,
-					Name:       chair.Firstname + " " + chair.Lastname,
-					ChairModel: chair.ChairModel,
-					ChairNo:    chair.ChairNo,
+					ID:    chair.ID,
+					Name:  chair.Name,
+					Model: chair.Model,
 				},
 				CreatedAt: rideRequest.RequestedAt.Unix(),
 				UpdateAt:  rideRequest.UpdatedAt.Unix(),

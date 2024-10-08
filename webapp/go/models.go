@@ -24,13 +24,9 @@ type PaymentToken struct {
 
 type Chair struct {
 	ID          string    `db:"id"`
-	Username    string    `db:"username"`
-	Firstname   string    `db:"firstname"`
-	Lastname    string    `db:"lastname"`
-	DateOfBirth string    `db:"date_of_birth"`
+	Name        string    `db:"name"`
 	AccessToken string    `db:"access_token"`
-	ChairModel  string    `db:"chair_model"`
-	ChairNo     string    `db:"chair_no"`
+	Model       string    `db:"model"`
 	IsActive    bool      `db:"is_active"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
