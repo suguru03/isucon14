@@ -444,77 +444,6 @@ paths:
                 $ref: "#/components/schemas/ChairRequest"
         "204":
           description: 割り当てられた配車要求が存在しない場合
-  /admin/inquiries:
-    get:
-      tags:
-        - admin
-      summary: 問い合わせの一覧を取得する
-      operationId: chair-get-inquiries
-      parameters:
-        - name: limit
-          in: query
-          description: 取得件数
-          schema:
-            type: number
-        - name: cursor
-          in: query
-          description: 取得カーソル
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  inquiries:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: 問い合わせID
-                        subject:
-                          type: string
-                          description: 件名
-                        created_at:
-                          type: number
-                          description: 問い合わせ日時
-                      required:
-                        - id
-                        - subject
-                        - created_at
-                required:
-                  - inquiries
-  "/admin/inquiries/{inquiry_id}":
-    get:
-      tags:
-        - admin
-      summary: 指定したIDの問い合わせ内容を取得
-      operationId: chair-get-inquiry
-      parameters:
-        - name: inquiry_id
-          in: path
-          description: 問い合わせID
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InquiryContent"
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
 components:
   parameters:
     request_id:
@@ -597,28 +526,6 @@ components:
       required:
         - id
         - name
-    InquiryContent:
-      type: object
-      title: InquiryContent
-      description: 問い合わせ内容
-      properties:
-        id:
-          type: string
-          description: 問い合わせID
-        subject:
-          type: string
-          description: 件名
-        body:
-          type: string
-          description: 問い合わせ内容
-        created_at:
-          type: number
-          description: 問い合わせ日時
-      required:
-        - id
-        - subject
-        - body
-        - created_at
     AppRequest:
       description: App向け配車要求情報
       type: object
