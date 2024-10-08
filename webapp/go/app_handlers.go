@@ -26,14 +26,14 @@ type postAppRegisterResponse struct {
 func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	req := &postAppRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
-		respondError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	userID := ulid.Make().String()
 
 	if req.Username == "" || req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
-		respondError(w, http.StatusBadRequest, errors.New("required fields(username, firstname, lastname, date_of_birth) are empty"))
+		writeError(w, http.StatusBadRequest, errors.New("required fields(username, firstname, lastname, date_of_birth) are empty"))
 		return
 	}
 	accessToken := secureRandomStr(32)
@@ -42,11 +42,11 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, &postAppRegisterResponse{
+	writeJSON(w, http.StatusCreated, &postAppRegisterResponse{
 		AccessToken: accessToken,
 		ID:          userID,
 	})
@@ -56,7 +56,7 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if accessToken == "" {
-			respondError(w, http.StatusUnauthorized, errors.New("access token is required"))
+			writeError(w, http.StatusUnauthorized, errors.New("access token is required"))
 			return
 		}
 
@@ -64,10 +64,10 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+				writeError(w, http.StatusUnauthorized, errors.New("invalid access token"))
 				return
 			}
-			respondError(w, http.StatusInternalServerError, err)
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -83,7 +83,7 @@ type postAppPaymentMethodsRequest struct {
 func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	req := &postAppPaymentMethodsRequest{}
 	if err := bindJSON(r, req); err != nil {
-		respondError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
 		req.Token,
 	)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -114,32 +114,32 @@ type postAppRequestsResponse struct {
 func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	req := &postAppRequestsRequest{}
 	if err := bindJSON(r, req); err != nil {
-		respondError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	user := r.Context().Value("user").(*User)
 
 	if req.PickupCoordinate == nil || req.DestinationCoordinate == nil {
-		respondError(w, http.StatusBadRequest, errors.New("required fields(pickup_coordinate, destination_coordinate) are empty"))
+		writeError(w, http.StatusBadRequest, errors.New("required fields(pickup_coordinate, destination_coordinate) are empty"))
 		return
 	}
 	requestID := ulid.Make().String()
 
 	tx, err := db.Beginx()
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	defer tx.Rollback()
 
 	requestCount := 0
 	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, user.ID); err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	if requestCount > 0 {
-		respondError(w, http.StatusConflict, errors.New("request already exists"))
+		writeError(w, http.StatusConflict, errors.New("request already exists"))
 		return
 	}
 
@@ -148,16 +148,16 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 				  VALUES (?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())`,
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	respondJSON(w, http.StatusAccepted, &postAppRequestsResponse{
+	writeJSON(w, http.StatusAccepted, &postAppRequestsResponse{
 		RequestID: requestID,
 	})
 }
@@ -189,10 +189,10 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, errors.New("request not found"))
+			writeError(w, http.StatusNotFound, errors.New("request not found"))
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 			rideRequest.ChairID,
 		)
 		if err != nil {
-			respondError(w, http.StatusInternalServerError, err)
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 		response.Chair = simpleChair{
@@ -223,7 +223,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	writeJSON(w, http.StatusOK, response)
 }
 
 type postAppEvaluateRequest struct {
@@ -234,7 +234,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 	postAppEvaluateRequest := &postAppEvaluateRequest{}
 	if err := bindJSON(r, postAppEvaluateRequest); err != nil {
-		respondError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -242,14 +242,14 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		`UPDATE ride_requests SET evaluation = ?, status = ?, updated_at = isu_now() WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	if count, err := result.RowsAffected(); err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	} else if count == 0 {
-		respondError(w, http.StatusNotFound, errors.New("request not found"))
+		writeError(w, http.StatusNotFound, errors.New("request not found"))
 		return
 	}
 
@@ -262,7 +262,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 	rideRequest := &RideRequest{}
 	tx, err := db.Beginx()
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	defer tx.Rollback()
@@ -271,19 +271,19 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		respondError(w, http.StatusInternalServerError, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	chair := &Chair{}
 	if rideRequest.ChairID.Valid {
 		if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
-			respondError(w, http.StatusInternalServerError, err)
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 	}
 
-	respondJSON(w, http.StatusOK, &getAppRequestResponse{
+	writeJSON(w, http.StatusOK, &getAppRequestResponse{
 		RequestID: rideRequest.ID,
 		PickupCoordinate: Coordinate{
 			Latitude:  rideRequest.PickupLatitude,
@@ -326,7 +326,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					time.Sleep(100 * time.Millisecond)
 					continue
 				}
-				respondError(w, http.StatusInternalServerError, err)
+				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
@@ -337,7 +337,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 			chair := &Chair{}
 			if rideRequest.ChairID.Valid {
 				if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
-					respondError(w, http.StatusInternalServerError, err)
+					writeError(w, http.StatusInternalServerError, err)
 					return
 				}
 			}
@@ -361,7 +361,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				CreatedAt: rideRequest.RequestedAt.Unix(),
 				UpdateAt:  rideRequest.UpdatedAt.Unix(),
 			}); err != nil {
-				respondError(w, http.StatusInternalServerError, err)
+				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 			lastRideRequest = rideRequest
