@@ -34,10 +34,12 @@ const getLoginedSearchParamURL = async(target: 'app' | 'driver') => {
  const customConsolePlugin: Plugin = {
   name: 'custom-test-user-login',
   configureServer(server) {
+
+
     server.httpServer?.once('listening', () => {
       (async() => {
         console.log(`logined client page: \x1b[32m  ${await getLoginedSearchParamURL('app')} \x1b[0m`);   
-      })().catch(e => console.error(e))
+      })().catch(e =>console.log(`LOGIN ERROR: ${e}`))
     });
   }
 };
