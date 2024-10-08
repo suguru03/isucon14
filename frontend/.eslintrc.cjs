@@ -1,9 +1,3 @@
-/**
- * This is intended to be a basic starting point for linting in your app.
- * It relies on recommended configs out of the box for simplicity, but you can
- * and should modify this configuration to best suit your team's needs.
- */
-
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
   root: true,
@@ -20,10 +14,7 @@ module.exports = {
     es6: true,
   },
   ignorePatterns: ["!**/.server", "!**/.client", "app/apiClient/"],
-
-  // Base config
   extends: ["eslint:recommended"],
-
   overrides: [
     // React
     {
@@ -49,7 +40,6 @@ module.exports = {
         },
       },
     },
-
     // Typescript
     {
       files: ["**/*.{ts,tsx}"],
@@ -63,6 +53,7 @@ module.exports = {
           },
           typescript: {
             alwaysTryTypes: true,
+            project: "./frontend/tsconfig.json"
           },
         },
       },
@@ -78,7 +69,6 @@ module.exports = {
         tsconfigRootDir: __dirname,
       },
     },
-
     // Node
     {
       files: [".eslintrc.cjs"],

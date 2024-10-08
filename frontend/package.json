@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc",
     "fmtcheck": "prettier ./app --check",
-    "fmt": "prettier ./app --write",
+    "fmt": "prettier ./*.{cjs,ts,js} ./app --write",
     "codegen": "PROXY_URL=http://localhost:3000/api npx openapi-codegen gen isucon"
   },
   "dependencies": {
