@@ -9,7 +9,7 @@
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "preview": "vite preview",
     "typecheck": "tsc",
-    "fmtcheck": "prettier ./app --check",
+    "fmtcheck": "prettier ./*.{cjs,ts,js} ./app --check",
     "fmt": "prettier ./*.{cjs,ts,js} ./app --write",
     "codegen": "PROXY_URL=http://localhost:3000/api npx openapi-codegen gen isucon"
   },
