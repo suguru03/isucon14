@@ -1,24 +1,28 @@
 import { useState, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Link, useLocation } from "@remix-run/react";
 import { Modal } from "~/components/primitives/modal/modal";
+import { Rating } from "~/components/primitives/rating/rating";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 
 export default function Index() {
-  const modalRef = useRef<{ close: () => void }>(null); // モーダルのclose関数を参照する
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalRef = useRef<{ close: () => void }>(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false); // モーダルの開閉状態を管理
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isDebugMode = searchParams.get("debug") === "true";
 
   const handleOpenModal = () => {
-    setIsModalOpen(true); // モーダルを開く
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     if (modalRef.current) {
-      modalRef.current.close(); // 外部ボタンからモーダルを閉じる
+      modalRef.current.close();
     }
   };
 
@@ -41,28 +45,35 @@ export default function Index() {
           </Link>
         </li>
       </ul>
-      {/* デバッグ用のボタンでモーダルを開く */}
-      <button
-        className="bg-blue-500 text-white py-2 px-4 rounded"
-        onClick={handleOpenModal}
-      >
-        Open Modal
-      </button>
+      {isDebugMode && (
+        <>
+          <button
+            className="bg-blue-500 text-white py-2 px-4 rounded"
+            onClick={handleOpenModal}
+          >
+            Open Modal
+          </button>
 
-      {/* モーダルコンポーネント */}
-      {isModalOpen && (
-        <Modal ref={modalRef} onClose={onCloseModal}>
-          <div className="text-center">
-            <h2 className="text-xl font-bold">モーダルが表示されています</h2>
-            <p>ここでコンテンツを追加できます。</p>
-            <button
-              className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
-              onClick={handleCloseModal}
-            >
-              Close Modal
-            </button>
-          </div>
-        </Modal>
+          {/* モーダルコンポーネント */}
+          {isModalOpen && (
+            <Modal ref={modalRef} onClose={onCloseModal}>
+              <div className="text-center">
+                <h2 className="text-xl font-bold">
+                  モーダルが表示されています
+                </h2>
+                <p>ここでコンテンツを追加できます。</p>
+                <button
+                  className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
+                  onClick={handleCloseModal}
+                >
+                  Close Modal
+                </button>
+              </div>
+            </Modal>
+          )}
+
+          <Rating name="test" />
+        </>
       )}
     </div>
   );
