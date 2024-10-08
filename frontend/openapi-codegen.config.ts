@@ -14,14 +14,16 @@ export default defineConfig({
     to: async (context) => {
       const proxyURL = process.env.PROXY_URL;
       if (proxyURL) {
-        console.log(`proxyURL: ${proxyURL}`)
+        console.log(`proxyURL: ${proxyURL}`);
         const contextServers = context.openAPIDocument.servers;
-        context.openAPIDocument.servers = contextServers?.map(serverObject => {
-          return {
-            ...serverObject,
-            url: proxyURL
-          }
-        })
+        context.openAPIDocument.servers = contextServers?.map(
+          (serverObject) => {
+            return {
+              ...serverObject,
+              url: proxyURL,
+            };
+          },
+        );
       }
       const filenamePrefix = "API";
       const { schemasFiles } = await generateSchemaTypes(context, {

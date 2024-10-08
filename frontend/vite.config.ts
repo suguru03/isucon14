@@ -3,8 +3,8 @@ import { readFileSync, writeFileSync } from "fs";
 import { defineConfig, type UserConfig, type Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
- const DEFAULT_HOSTNAME = 'localhost';
- const DEFAULT_PORT = 3000;
+const DEFAULT_HOSTNAME = "localhost";
+const DEFAULT_PORT = 3000;
 
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`
 
@@ -59,21 +59,21 @@ export const config = {
   ],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
+      "/api": {
+        target: "http://localhost:8080",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
     host: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
-    strictPort: true
+    strictPort: true,
   },
   preview: {
     host: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
-    strictPort: true
-  }
+    strictPort: true,
+  },
 } as const satisfies UserConfig;
 
 export default defineConfig(config);
