@@ -41,6 +41,9 @@ type World struct {
 	timeoutTicker   *time.Ticker
 	wg              concurrent.WaitGroupWithCount
 	criticalErrorCh chan error
+
+	// TimeoutTickCount タイムアウトしたTickの累計数
+	TimeoutTickCount int
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
@@ -102,9 +105,7 @@ func (w *World) Tick(ctx *Context) error {
 	case <-w.timeoutTicker.C:
 		if !done {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
-			log.Printf("tick timeout (time: %d, timeout entities: %d)", w.Time, w.wg.Count())
-		} else {
-			// TODO 完了インセンティブを作る
+			w.TimeoutTickCount++
 		}
 	}
 
