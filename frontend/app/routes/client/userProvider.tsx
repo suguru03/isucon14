@@ -4,7 +4,6 @@ import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-
 import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
 import type { User } from "~/types";
 

@@ -4,11 +4,11 @@ import {
   useChairGetNotification,
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { ChairRequest } from "~/apiClient/apiSchemas";
-import { User } from "~/types";
+import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type { User } from "~/types";
 
-const driverContext = createContext<Partial<User>>({});
-const requestContext = createContext<{
+const DriverContext = createContext<Partial<User>>({});
+const RequestContext = createContext<{
   data?: ChairRequest;
   error?: ChairGetNotificationError | null;
   isLoading: boolean;
@@ -27,21 +27,26 @@ const RequestProvider = ({
       "Content-Type": "text/event-stream",
     },
   });
+  const [searchParams] = useSearchParams();
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  const fetchedData = useMemo(
-    () => (data instanceof Blob ? undefined : data),
-    [data],
-  );
+  const fetchedData = useMemo(() => {
+    if (data instanceof Blob) {
+      return undefined;
+    }
+    const status = (searchParams.get("debug_status") ??
+      undefined) as RequestStatus;
+    return { ...data, status } as ChairRequest;
+  }, [data, searchParams]);
 
   /**
    * TODO: SSE処理
    */
 
   return (
-    <requestContext.Provider value={{ data: fetchedData, error, isLoading }}>
+    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
       {children}
-    </requestContext.Provider>
+    </RequestContext.Provider>
   );
 };
 
@@ -54,7 +59,7 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <driverContext.Provider
+    <DriverContext.Provider
       value={{
         id,
         accessToken,
@@ -62,10 +67,10 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
-    </driverContext.Provider>
+    </DriverContext.Provider>
   );
 };
 
-export const useDriver = () => useContext(driverContext);
+export const useDriver = () => useContext(DriverContext);
 
-export const useRequest = () => useContext(requestContext);
+export const useRequest = () => useContext(RequestContext);
