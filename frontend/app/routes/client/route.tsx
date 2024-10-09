@@ -1,16 +1,8 @@
-import type { MetaFunction } from "@remix-run/node";
 import { NavLink, Outlet } from "@remix-run/react";
 import { FooterNavigation } from "~/components/FooterNavigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
 import { UserProvider } from "./userProvider";
-
-export const meta: MetaFunction = () => {
-  return [
-    { title: "Top | ISURIDE" },
-    { name: "description", content: "目的地まで椅子で快適に移動しましょう" },
-  ];
-};
 
 const ClientHeader = () => {
   return (
