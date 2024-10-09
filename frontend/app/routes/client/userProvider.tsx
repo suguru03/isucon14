@@ -1,13 +1,13 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext, useMemo } from "react";
 import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { AppRequest } from "~/apiClient/apiSchemas";
+import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
 
 export type AccessToken = string;
-
+export type ClientRequestStatus = RequestStatus | "IDLE";
 type User = {
   id: string;
   name: string;
@@ -16,10 +16,12 @@ type User = {
 
 const userContext = createContext<Partial<User>>({});
 const requestContext = createContext<{
-  data?: AppRequest;
+  data:
+    | (Partial<AppRequest> & { status: ClientRequestStatus })
+    | { status: ClientRequestStatus };
   error?: AppGetNotificationError;
   isLoading: boolean;
-}>({ isLoading: false });
+}>({ isLoading: false, data: { status: "IDLE" } });
 
 const RequestProvider = ({
   children,
@@ -28,6 +30,8 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
+  const [searchParams] = useSearchParams();
+
   const notificationResponse = useAppGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -35,24 +39,28 @@ const RequestProvider = ({
     },
   });
 
-  let { data, error } = notificationResponse;
-  const isLoading = notificationResponse.isLoading;
+  const { data, error, isLoading } = notificationResponse;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  if (data instanceof Blob) {
-    data = undefined;
-  }
-
-  if (error === null) {
-    error = undefined;
-  }
+  const fetchedData = useMemo(() => {
+    const status = (searchParams.get("debug_status") ??
+      data?.status ??
+      "IDLE") as ClientRequestStatus;
+    return data instanceof Blob ? { status } : { ...data, status };
+  }, [data, searchParams]);
+  const fetchedError = useMemo(
+    () => (error === null ? undefined : error),
+    [error],
+  );
 
   /**
    * TODO: SSE処理
    */
 
   return (
-    <requestContext.Provider value={{ data, error, isLoading }}>
+    <requestContext.Provider
+      value={{ data: fetchedData, error: fetchedError, isLoading }}
+    >
       {children}
     </requestContext.Provider>
   );
