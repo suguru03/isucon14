@@ -3,16 +3,13 @@ import { useRequest } from "../../contexts/user-context";
 import { Pickup } from "./requestComponent/pickup";
 import { Reception } from "./requestComponent/reception";
 import { Carry } from "./requestComponent/carry";
-import type { RequestStatusWithIdle } from "~/components/request/type";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 function DriverRequest() {
-  const {
-    data: { status },
-  } = useRequest();
-  const requestStatus: RequestStatusWithIdle = status;
+  const { data } = useRequest();
+  const requestStatus = data?.status ?? "IDLE";
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
