@@ -1,6 +1,6 @@
-import type { ClientRequestStatus } from "~/routes/client/userProvider";
+import type { RequestStatus } from "~/apiClient/apiSchemas";
 
 export type RequestProps<
-  requestStatus extends ClientRequestStatus,
+  requestStatus extends RequestStatus | "IDLE",
   extraProps = NonNullable<object>,
 > = { status: requestStatus } & extraProps;
