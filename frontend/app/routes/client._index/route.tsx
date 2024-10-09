@@ -9,11 +9,10 @@ export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 function ClientRequest() {
-  const { data, isLoading } = useRequest();
-  let requestStatus: ClientRequestStatus = data.status;
-  if (!isLoading && data?.status) {
-    requestStatus = data?.status;
-  }
+  const {
+    data: { status },
+  } = useRequest();
+  let requestStatus: ClientRequestStatus = status;
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
