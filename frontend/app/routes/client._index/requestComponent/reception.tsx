@@ -1,5 +1,5 @@
 import { Button } from "~/components/primitives/button/button";
-import type { RequestProps } from "./type";
+import type { RequestProps } from "~/components/request/type";
 import { ChairIcon } from "~/components/icon/chair";
 
 export const Reception = ({

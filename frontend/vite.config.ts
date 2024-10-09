@@ -2,20 +2,32 @@ import { vitePlugin as remix } from "@remix-run/dev";
 import { readFileSync, writeFileSync } from "fs";
 import { defineConfig, type UserConfig, type Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import {
+  AppPostRegisterRequestBody,
+  ChairPostRegisterRequestBody,
+} from "~/apiClient/apiComponents";
 
 const DEFAULT_HOSTNAME = "localhost";
 const DEFAULT_PORT = 3000;
 
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
-const getLoginedSearchParamURL = async (target: "app" | "driver") => {
+const getLoginedSearchParamURL = async (target: "app" | "chair") => {
+  let bodyJson: ChairPostRegisterRequestBody | AppPostRegisterRequestBody = {
+    username: "testIsuconUser",
+    firstname: "isucon",
+    lastname: "isucon",
+    date_of_birth: "11111111",
+  };
+  if (target === "chair") {
+    bodyJson = {
+      ...bodyJson,
+      chair_model: "isuconChair",
+      chair_no: "1111",
+    };
+  }
   const fetched = await fetch(`http://localhost:8080/${target}/register`, {
-    body: JSON.stringify({
-      username: "testIsuconUser",
-      firstname: "isucon",
-      lastname: "isucon",
-      date_of_birth: "11111111",
-    }),
+    body: JSON.stringify(bodyJson),
     method: "POST",
   });
   let json: Record<string, string>;
@@ -41,6 +53,9 @@ const customConsolePlugin: Plugin = {
       (async () => {
         console.log(
           `logined client page: \x1b[32m  ${await getLoginedSearchParamURL("app")} \x1b[0m`,
+        );
+        console.log(
+          `logined driver page: \x1b[32m  ${await getLoginedSearchParamURL("chair")} \x1b[0m`,
         );
       })().catch((e) => console.log(`LOGIN ERROR: ${e}`));
     });

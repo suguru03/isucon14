@@ -3,17 +3,16 @@ import { useRequest } from "../client/userProvider";
 import { Running } from "./requestComponent/running";
 import { Reception } from "./requestComponent/reception";
 import { Arrived } from "./requestComponent/arrived";
-import type { ClientRequestStatus } from "~/routes/client/userProvider";
+import type { RequestStatusWithIdle } from "~/components/request/type";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 function ClientRequest() {
-  const { data, isLoading } = useRequest();
-  let requestStatus: ClientRequestStatus = data.status;
-  if (!isLoading && data?.status) {
-    requestStatus = data?.status;
-  }
+  const {
+    data: { status },
+  } = useRequest();
+  const requestStatus: RequestStatusWithIdle = status;
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":

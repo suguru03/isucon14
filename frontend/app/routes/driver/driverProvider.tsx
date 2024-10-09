@@ -5,6 +5,7 @@ import {
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { ChairRequest } from "~/apiClient/apiSchemas";
+import { RequestStatusWithIdle } from "~/components/request/type";
 
 export type AccessToken = string;
 
@@ -15,10 +16,12 @@ type User = {
 };
 const driverContext = createContext<Partial<User>>({});
 const requestContext = createContext<{
-  data?: ChairRequest;
+  data:
+    | (Partial<ChairRequest> & { status: RequestStatusWithIdle })
+    | { status: RequestStatusWithIdle };
   error?: ChairGetNotificationError;
   isLoading: boolean;
-}>({ isLoading: false });
+}>({ isLoading: false, data: { status: "IDLE" } });
 
 const RequestProvider = ({
   children,
@@ -33,15 +36,17 @@ const RequestProvider = ({
       "Content-Type": "text/event-stream",
     },
   });
-
+  const [searchParams] = useSearchParams();
   const { data, error } = notification;
   const isLoading = notification.isLoading;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  const fetchedData = useMemo(
-    () => (data instanceof Blob ? undefined : data),
-    [data],
-  );
+  const fetchedData = useMemo(() => {
+    const status = (searchParams.get("debug_status") ??
+      data?.status ??
+      "IDLE") as RequestStatusWithIdle;
+    return data instanceof Blob ? { status } : { ...data, status };
+  }, [data, searchParams]);
   const fetchedError = useMemo(
     () => (error === null ? undefined : error),
     [error],
