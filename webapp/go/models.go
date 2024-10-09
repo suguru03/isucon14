@@ -24,6 +24,7 @@ type PaymentToken struct {
 
 type Chair struct {
 	ID          string    `db:"id"`
+	ProviderID  string    `db:"provider_id"`
 	Name        string    `db:"name"`
 	AccessToken string    `db:"access_token"`
 	Model       string    `db:"model"`
@@ -56,4 +57,12 @@ type ChairLocation struct {
 	Latitude  int       `db:"latitude"`
 	Longitude int       `db:"longitude"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type Provider struct {
+	ID          string    `db:"id"`
+	Name        string    `db:"name"`
+	AccessToken string    `db:"access_token"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 }

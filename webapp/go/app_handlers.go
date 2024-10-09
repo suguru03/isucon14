@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -49,30 +47,6 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, &postAppRegisterResponse{
 		AccessToken: accessToken,
 		ID:          userID,
-	})
-}
-
-func appAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if accessToken == "" {
-			writeError(w, http.StatusUnauthorized, errors.New("access token is required"))
-			return
-		}
-
-		user := &User{}
-		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				writeError(w, http.StatusUnauthorized, errors.New("invalid access token"))
-				return
-			}
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

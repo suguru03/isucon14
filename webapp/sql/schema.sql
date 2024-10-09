@@ -32,6 +32,7 @@ DELIMITER ;
 create table chairs
 (
   id         varchar(26) not null comment '椅子ID',
+  provider_id varchar(26) not null comment 'プロバイダーID',
   name       varchar(30) not null comment '椅子の名前',
   model      text        not null comment '椅子のモデル',
   is_active  tinyint(1)  not null comment '配椅子受付中かどうか',

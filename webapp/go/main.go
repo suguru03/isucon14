@@ -83,25 +83,30 @@ func setup() http.Handler {
 		authedMux.HandleFunc("GET /app/notification", appGetNotification)
 	}
 
-	// chair handlers
+	// provider handlers
 	{
-		mux.HandleFunc("POST /chair/register", chairPostRegister)
+		mux.HandleFunc("POST /provider/register", providerPostRegister)
 
-		authedMux := mux.With(chairAuthMiddleware)
-		authedMux.HandleFunc("POST /chair/activate", chairPostActivate)
-		authedMux.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
-		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
-		//authedMux.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
-		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
-		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
+		authedMux := mux.With(providerAuthMiddleware)
+		authedMux.HandleFunc("GET /provider/sales", providerGetSales)
 	}
 
-	// admin
+	// chair handlers
 	{
+		authedMux1 := mux.With(providerAuthMiddleware)
+		authedMux1.HandleFunc("POST /chair/register", chairPostRegister)
+
+		authedMux2 := mux.With(chairAuthMiddleware)
+		authedMux2.HandleFunc("POST /chair/activate", chairPostActivate)
+		authedMux2.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
+		authedMux2.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
+		//authedMux2.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
+		authedMux2.HandleFunc("GET /chair/notification", chairGetNotification)
+		authedMux2.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
 	}
 
 	return mux

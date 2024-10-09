@@ -222,7 +222,7 @@ paths:
     post:
       tags:
         - provider
-      summary: 椅子事業者が登録を行う
+      summary: 椅子プロバイダーが登録を行う
       operationId: provider-post-register
       requestBody:
         content:
@@ -232,12 +232,12 @@ paths:
               properties:
                 name:
                   type: string
-                  description: 椅子事業者名
+                  description: プロバイダー名
               required:
                 - name
       responses:
         "201":
-          description: 椅子事業者登録が完了した
+          description: 椅子プロバイダー登録が完了した
           content:
             application/json:
               schema:
@@ -248,7 +248,7 @@ paths:
                     description: アクセストークン
                   id:
                     type: string
-                    description: サービス提供者ID
+                    description: プロバイダーID
                 required:
                   - access_token
                   - id
@@ -256,7 +256,7 @@ paths:
     get:
       tags:
         - provider
-      summary: 椅子事業者が指定期間の全体・椅子ごと・モデルごとの売上情報を取得する
+      summary: 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する
       operationId: provider-get-sales
       parameters:
         - name: since
@@ -281,7 +281,7 @@ paths:
                 properties:
                   total_sales:
                     type: integer
-                    description: 事業者全体の売上
+                    description: プロバイダー全体の売上
                   chairs:
                     type: array
                     items:

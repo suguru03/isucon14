@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -23,6 +21,8 @@ type postChairRegisterResponse struct {
 }
 
 func chairPostRegister(w http.ResponseWriter, r *http.Request) {
+	provider := r.Context().Value("provider").(*Provider)
+
 	req := &postChairRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -38,8 +38,8 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO chairs (id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
-		chairID, req.Name, req.Model, false, accessToken,
+		"INSERT INTO chairs (id, provider_id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
+		chairID, provider.ID, req.Name, req.Model, false, accessToken,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -49,30 +49,6 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, &postChairRegisterResponse{
 		AccessToken: accessToken,
 		ID:          chairID,
-	})
-}
-
-func chairAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessToken := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if accessToken == "" {
-			writeError(w, http.StatusUnauthorized, errors.New("access token is required"))
-			return
-		}
-
-		chair := &Chair{}
-		err := db.Get(chair, "SELECT * FROM chairs WHERE access_token = ?", accessToken)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				writeError(w, http.StatusUnauthorized, errors.New("access token is required"))
-				return
-			}
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "chair", chair)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
