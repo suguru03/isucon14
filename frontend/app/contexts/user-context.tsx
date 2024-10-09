@@ -10,7 +10,7 @@ import type { User } from "~/types";
 const UserContext = createContext<Partial<User>>({});
 
 const RequestContext = createContext<{
-  data?: Partial<AppRequest>;
+  data?: AppRequest;
   error?: AppGetNotificationError | null;
   isLoading: boolean;
 }>({ isLoading: false });
@@ -22,23 +22,24 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  const [searchParams] = useSearchParams();
-
   const notificationResponse = useAppGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
-
   const { data, error, isLoading } = notificationResponse;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+  const [searchParams] = useSearchParams();
   const fetchedData = useMemo(() => {
-    const status =
-      searchParams.get("debug_status") ??
-      (undefined as RequestStatus | undefined);
-    return data instanceof Blob ? {} : { ...data, status };
+    if (data instanceof Blob) {
+      return undefined;
+    }
+    const status = (searchParams.get("debug_status") ?? undefined) as
+      | RequestStatus
+      | undefined;
+    return { ...data, status } as AppRequest;
   }, [data, searchParams]);
 
   /**

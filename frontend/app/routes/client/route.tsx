@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "@remix-run/react";
 import { FooterNavigation } from "~/components/FooterNavigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import { UserProvider } from "./userProvider";
+import { UserProvider } from "../../contexts/user-context";
 
 const ClientHeader = () => {
   return (
