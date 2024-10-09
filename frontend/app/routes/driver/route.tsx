@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
-import { FooterNavigation } from "~/components/FooterNavigation";
+import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { DriverProvider } from "../../contexts/driver-context";
 

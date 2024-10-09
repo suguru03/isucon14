@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "@remix-run/react";
-import { FooterNavigation } from "~/components/FooterNavigation";
+import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
 import { UserProvider } from "../../contexts/user-context";
