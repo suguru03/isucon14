@@ -105,3 +105,17 @@ create table ride_requests
     foreign key (user_id) references users (id)
 )
   comment = '配車/乗車リクエスト情報テーブル';
+
+create table providers
+(
+  id        varchar(26) not null comment 'プロバイダーID',
+  name       varchar(30) not null comment 'プロバイダー名',
+  access_token varchar(255) not null comment 'アクセストークン',
+  created_at datetime(6)   not null comment '登録日時',
+  updated_at datetime(6)   not null comment '更新日時',
+  primary key (id),
+  unique (name),
+  unique (access_token)
+)
+  comment = '椅子プロバイダー情報テーブル';
+)
