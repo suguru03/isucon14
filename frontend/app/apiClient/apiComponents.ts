@@ -9,60 +9,67 @@ import type * as Fetcher from "./apiFetcher";
 import { apiFetch } from "./apiFetcher";
 import type * as Schemas from "./apiSchemas";
 
-export type InitializeError = Fetcher.ErrorWrapper<undefined>;
+export type PostInitializeError = Fetcher.ErrorWrapper<undefined>;
 
-export type InitializeResponse = {
+export type PostInitializeResponse = {
   /**
    * 実装言語
    */
   language: "go" | "perl" | "php" | "python" | "ruby" | "rust" | "node";
 };
 
-export type InitializeVariables = ApiContext["fetcherOptions"];
+export type PostInitializeVariables = ApiContext["fetcherOptions"];
 
-export const fetchInitialize = (
-  variables: InitializeVariables,
+export const fetchPostInitialize = (
+  variables: PostInitializeVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<InitializeResponse, InitializeError, undefined, {}, {}, {}>({
+  apiFetch<PostInitializeResponse, PostInitializeError, undefined, {}, {}, {}>({
     url: "/initialize",
     method: "post",
     ...variables,
     signal,
   });
 
-export const useInitialize = (
+export const usePostInitialize = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      InitializeResponse,
-      InitializeError,
-      InitializeVariables
+      PostInitializeResponse,
+      PostInitializeError,
+      PostInitializeVariables
     >,
     "mutationFn"
   >,
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    InitializeResponse,
-    InitializeError,
-    InitializeVariables
+    PostInitializeResponse,
+    PostInitializeError,
+    PostInitializeVariables
   >({
-    mutationFn: (variables: InitializeVariables) =>
-      fetchInitialize({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: PostInitializeVariables) =>
+      fetchPostInitialize({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type RegisterUserError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostRegisterError = Fetcher.ErrorWrapper<{
+  status: 400;
+  payload: Schemas.Error;
+}>;
 
-export type RegisterUserResponse = {
+export type AppPostRegisterResponse = {
   /**
    * アクセストークン
    */
   access_token: string;
+  /**
+   * ユーザーID
+   */
+  id: string;
 };
 
-export type RegisterUserRequestBody = {
+export type AppPostRegisterRequestBody = {
   /**
    * ユーザー名
    */
@@ -79,58 +86,105 @@ export type RegisterUserRequestBody = {
    * 生年月日
    */
   date_of_birth: string;
-  [""]?: string;
 };
 
-export type RegisterUserVariables = {
-  body: RegisterUserRequestBody;
+export type AppPostRegisterVariables = {
+  body: AppPostRegisterRequestBody;
 } & ApiContext["fetcherOptions"];
 
-export const fetchRegisterUser = (
-  variables: RegisterUserVariables,
+export const fetchAppPostRegister = (
+  variables: AppPostRegisterVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    RegisterUserResponse,
-    RegisterUserError,
-    RegisterUserRequestBody,
+    AppPostRegisterResponse,
+    AppPostRegisterError,
+    AppPostRegisterRequestBody,
     {},
     {},
     {}
   >({ url: "/app/register", method: "post", ...variables, signal });
 
-export const useRegisterUser = (
+export const useAppPostRegister = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      RegisterUserResponse,
-      RegisterUserError,
-      RegisterUserVariables
+      AppPostRegisterResponse,
+      AppPostRegisterError,
+      AppPostRegisterVariables
     >,
     "mutationFn"
   >,
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    RegisterUserResponse,
-    RegisterUserError,
-    RegisterUserVariables
+    AppPostRegisterResponse,
+    AppPostRegisterError,
+    AppPostRegisterVariables
   >({
-    mutationFn: (variables: RegisterUserVariables) =>
-      fetchRegisterUser({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: AppPostRegisterVariables) =>
+      fetchAppPostRegister({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type PostRequestError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostPaymentMethodsError = Fetcher.ErrorWrapper<undefined>;
 
-export type PostRequestResponse = {
+export type AppPostPaymentMethodsRequestBody = {
+  /**
+   * 決済トークン
+   */
+  token: string;
+};
+
+export type AppPostPaymentMethodsVariables = {
+  body: AppPostPaymentMethodsRequestBody;
+} & ApiContext["fetcherOptions"];
+
+export const fetchAppPostPaymentMethods = (
+  variables: AppPostPaymentMethodsVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    undefined,
+    AppPostPaymentMethodsError,
+    AppPostPaymentMethodsRequestBody,
+    {},
+    {},
+    {}
+  >({ url: "/app/payment-methods", method: "post", ...variables, signal });
+
+export const useAppPostPaymentMethods = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      AppPostPaymentMethodsError,
+      AppPostPaymentMethodsVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    AppPostPaymentMethodsError,
+    AppPostPaymentMethodsVariables
+  >({
+    mutationFn: (variables: AppPostPaymentMethodsVariables) =>
+      fetchAppPostPaymentMethods({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type AppPostRequestError = Fetcher.ErrorWrapper<undefined>;
+
+export type AppPostRequestResponse = {
   /**
    * 配車要求ID
    */
   request_id: string;
 };
 
-export type PostRequestRequestBody = {
+export type AppPostRequestRequestBody = {
   /**
    * 配車位置
    */
@@ -141,136 +195,116 @@ export type PostRequestRequestBody = {
   destination_coordinate: Schemas.Coordinate;
 };
 
-export type PostRequestVariables = {
-  body: PostRequestRequestBody;
+export type AppPostRequestVariables = {
+  body: AppPostRequestRequestBody;
 } & ApiContext["fetcherOptions"];
 
-export const fetchPostRequest = (
-  variables: PostRequestVariables,
+export const fetchAppPostRequest = (
+  variables: AppPostRequestVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    PostRequestResponse,
-    PostRequestError,
-    PostRequestRequestBody,
+    AppPostRequestResponse,
+    AppPostRequestError,
+    AppPostRequestRequestBody,
     {},
     {},
     {}
   >({ url: "/app/requests", method: "post", ...variables, signal });
 
-export const usePostRequest = (
+export const useAppPostRequest = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      PostRequestResponse,
-      PostRequestError,
-      PostRequestVariables
+      AppPostRequestResponse,
+      AppPostRequestError,
+      AppPostRequestVariables
     >,
     "mutationFn"
   >,
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    PostRequestResponse,
-    PostRequestError,
-    PostRequestVariables
+    AppPostRequestResponse,
+    AppPostRequestError,
+    AppPostRequestVariables
   >({
-    mutationFn: (variables: PostRequestVariables) =>
-      fetchPostRequest({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: AppPostRequestVariables) =>
+      fetchAppPostRequest({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type GetAppRequestPathParams = {
+export type AppGetRequestPathParams = {
   /**
    * 配車要求ID
    */
   requestId: string;
 };
 
-export type GetAppRequestError = Fetcher.ErrorWrapper<undefined>;
+export type AppGetRequestError = Fetcher.ErrorWrapper<{
+  status: 404;
+  payload: Schemas.Error;
+}>;
 
-export type GetAppRequestResponse = {
-  /**
-   * 配車要求ID
-   */
-  request_id: string;
-  /**
-   * 配車位置
-   */
-  pickup_coordinate: Schemas.Coordinate;
-  /**
-   * 目的地
-   */
-  destination_coordinate: Schemas.Coordinate;
-  status: Schemas.RequestStatus;
-  /**
-   * ドライバー情報
-   */
-  driver?: Schemas.Driver;
-  /**
-   * 配車要求日時
-   */
-  created_at: number;
-  /**
-   * 配車要求更新日時
-   */
-  updated_at: number;
-};
-
-export type GetAppRequestVariables = {
-  pathParams: GetAppRequestPathParams;
+export type AppGetRequestVariables = {
+  pathParams: AppGetRequestPathParams;
 } & ApiContext["fetcherOptions"];
 
-export const fetchGetAppRequest = (
-  variables: GetAppRequestVariables,
+export const fetchAppGetRequest = (
+  variables: AppGetRequestVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    GetAppRequestResponse,
-    GetAppRequestError,
+    Schemas.AppRequest,
+    AppGetRequestError,
     undefined,
     {},
     {},
-    GetAppRequestPathParams
+    AppGetRequestPathParams
   >({ url: "/app/requests/{requestId}", method: "get", ...variables, signal });
 
-export const useGetAppRequest = <TData = GetAppRequestResponse,>(
-  variables: GetAppRequestVariables,
+export const useAppGetRequest = <TData = Schemas.AppRequest,>(
+  variables: AppGetRequestVariables,
   options?: Omit<
-    reactQuery.UseQueryOptions<
-      GetAppRequestResponse,
-      GetAppRequestError,
-      TData
-    >,
+    reactQuery.UseQueryOptions<Schemas.AppRequest, AppGetRequestError, TData>,
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<GetAppRequestResponse, GetAppRequestError, TData>({
+  return reactQuery.useQuery<Schemas.AppRequest, AppGetRequestError, TData>({
     queryKey: queryKeyFn({
       path: "/app/requests/{requestId}",
-      operationId: "getAppRequest",
+      operationId: "appGetRequest",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchGetAppRequest({ ...fetcherOptions, ...variables }, signal),
+      fetchAppGetRequest({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
 };
 
-export type EvaluatePathParams = {
+export type AppPostRequestEvaluatePathParams = {
   /**
    * 配車要求ID
    */
   requestId: string;
 };
 
-export type EvaluateError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostRequestEvaluateError = Fetcher.ErrorWrapper<
+  | {
+      status: 400;
+      payload: Schemas.Error;
+    }
+  | {
+      status: 404;
+      payload: Schemas.Error;
+    }
+>;
 
-export type EvaluateRequestBody = {
+export type AppPostRequestEvaluateRequestBody = {
   /**
-   * ドライバーの評価
+   * 椅子の評価
    *
    * @minimum 1
    * @maximum 5
@@ -278,22 +312,22 @@ export type EvaluateRequestBody = {
   evaluation: number;
 };
 
-export type EvaluateVariables = {
-  body: EvaluateRequestBody;
-  pathParams: EvaluatePathParams;
+export type AppPostRequestEvaluateVariables = {
+  body: AppPostRequestEvaluateRequestBody;
+  pathParams: AppPostRequestEvaluatePathParams;
 } & ApiContext["fetcherOptions"];
 
-export const fetchEvaluate = (
-  variables: EvaluateVariables,
+export const fetchAppPostRequestEvaluate = (
+  variables: AppPostRequestEvaluateVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
     undefined,
-    EvaluateError,
-    EvaluateRequestBody,
+    AppPostRequestEvaluateError,
+    AppPostRequestEvaluateRequestBody,
     {},
     {},
-    EvaluatePathParams
+    AppPostRequestEvaluatePathParams
   >({
     url: "/app/requests/{requestId}/evaluate",
     method: "post",
@@ -301,23 +335,31 @@ export const fetchEvaluate = (
     signal,
   });
 
-export const useEvaluate = (
+export const useAppPostRequestEvaluate = (
   options?: Omit<
-    reactQuery.UseMutationOptions<undefined, EvaluateError, EvaluateVariables>,
+    reactQuery.UseMutationOptions<
+      undefined,
+      AppPostRequestEvaluateError,
+      AppPostRequestEvaluateVariables
+    >,
     "mutationFn"
   >,
 ) => {
   const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<undefined, EvaluateError, EvaluateVariables>({
-    mutationFn: (variables: EvaluateVariables) =>
-      fetchEvaluate({ ...fetcherOptions, ...variables }),
+  return reactQuery.useMutation<
+    undefined,
+    AppPostRequestEvaluateError,
+    AppPostRequestEvaluateVariables
+  >({
+    mutationFn: (variables: AppPostRequestEvaluateVariables) =>
+      fetchAppPostRequestEvaluate({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type PostInquiryError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostInquiryError = Fetcher.ErrorWrapper<undefined>;
 
-export type PostInquiryRequestBody = {
+export type AppPostInquiryRequestBody = {
   /**
    * 件名
    */
@@ -328,27 +370,29 @@ export type PostInquiryRequestBody = {
   body: string;
 };
 
-export type PostInquiryVariables = {
-  body: PostInquiryRequestBody;
+export type AppPostInquiryVariables = {
+  body: AppPostInquiryRequestBody;
 } & ApiContext["fetcherOptions"];
 
-export const fetchPostInquiry = (
-  variables: PostInquiryVariables,
+export const fetchAppPostInquiry = (
+  variables: AppPostInquiryVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, PostInquiryError, PostInquiryRequestBody, {}, {}, {}>({
-    url: "/app/inquiry",
-    method: "post",
-    ...variables,
-    signal,
-  });
+  apiFetch<
+    undefined,
+    AppPostInquiryError,
+    AppPostInquiryRequestBody,
+    {},
+    {},
+    {}
+  >({ url: "/app/inquiry", method: "post", ...variables, signal });
 
-export const usePostInquiry = (
+export const useAppPostInquiry = (
   options?: Omit<
     reactQuery.UseMutationOptions<
       undefined,
-      PostInquiryError,
-      PostInquiryVariables
+      AppPostInquiryError,
+      AppPostInquiryVariables
     >,
     "mutationFn"
   >,
@@ -356,27 +400,27 @@ export const usePostInquiry = (
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
-    PostInquiryError,
-    PostInquiryVariables
+    AppPostInquiryError,
+    AppPostInquiryVariables
   >({
-    mutationFn: (variables: PostInquiryVariables) =>
-      fetchPostInquiry({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: AppPostInquiryVariables) =>
+      fetchAppPostInquiry({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type GetAppNotificationError = Fetcher.ErrorWrapper<undefined>;
+export type AppGetNotificationError = Fetcher.ErrorWrapper<undefined>;
 
-export type GetAppNotificationVariables = ApiContext["fetcherOptions"];
+export type AppGetNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
- * ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
+ * 最新の自分の配車要求を取得します。
  */
-export const fetchGetAppNotification = (
-  variables: GetAppNotificationVariables,
+export const fetchAppGetNotification = (
+  variables: AppGetNotificationVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, GetAppNotificationError, undefined, {}, {}, {}>({
+  apiFetch<Schemas.AppRequest, AppGetNotificationError, undefined, {}, {}, {}>({
     url: "/app/notification",
     method: "get",
     ...variables,
@@ -384,41 +428,53 @@ export const fetchGetAppNotification = (
   });
 
 /**
- * ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
+ * 最新の自分の配車要求を取得します。
  */
-export const useGetAppNotification = <TData = undefined,>(
-  variables: GetAppNotificationVariables,
+export const useAppGetNotification = <TData = Schemas.AppRequest,>(
+  variables: AppGetNotificationVariables,
   options?: Omit<
-    reactQuery.UseQueryOptions<undefined, GetAppNotificationError, TData>,
+    reactQuery.UseQueryOptions<
+      Schemas.AppRequest,
+      AppGetNotificationError,
+      TData
+    >,
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<undefined, GetAppNotificationError, TData>({
+  return reactQuery.useQuery<
+    Schemas.AppRequest,
+    AppGetNotificationError,
+    TData
+  >({
     queryKey: queryKeyFn({
       path: "/app/notification",
-      operationId: "getAppNotification",
+      operationId: "appGetNotification",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchGetAppNotification({ ...fetcherOptions, ...variables }, signal),
+      fetchAppGetNotification({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
 };
 
-export type RegisterDriverError = Fetcher.ErrorWrapper<undefined>;
+export type ChairPostRegisterError = Fetcher.ErrorWrapper<undefined>;
 
-export type RegisterDriverResponse = {
+export type ChairPostRegisterResponse = {
   /**
    * アクセストークン
    */
   access_token: string;
+  /**
+   * 椅子ID
+   */
+  id: string;
 };
 
-export type RegisterDriverRequestBody = {
+export type ChairPostRegisterRequestBody = {
   /**
-   * ドライバー名
+   * 椅子名
    */
   username: string;
   /**
@@ -436,75 +492,75 @@ export type RegisterDriverRequestBody = {
   /**
    * 車種
    */
-  car_model: string;
+  chair_model: string;
   /**
    * カーナンバー
    */
-  car_no: string;
+  chair_no: string;
 };
 
-export type RegisterDriverVariables = {
-  body: RegisterDriverRequestBody;
+export type ChairPostRegisterVariables = {
+  body: ChairPostRegisterRequestBody;
 } & ApiContext["fetcherOptions"];
 
-export const fetchRegisterDriver = (
-  variables: RegisterDriverVariables,
+export const fetchChairPostRegister = (
+  variables: ChairPostRegisterVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    RegisterDriverResponse,
-    RegisterDriverError,
-    RegisterDriverRequestBody,
+    ChairPostRegisterResponse,
+    ChairPostRegisterError,
+    ChairPostRegisterRequestBody,
     {},
     {},
     {}
-  >({ url: "/driver/register", method: "post", ...variables, signal });
+  >({ url: "/chair/register", method: "post", ...variables, signal });
 
-export const useRegisterDriver = (
+export const useChairPostRegister = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      RegisterDriverResponse,
-      RegisterDriverError,
-      RegisterDriverVariables
+      ChairPostRegisterResponse,
+      ChairPostRegisterError,
+      ChairPostRegisterVariables
     >,
     "mutationFn"
   >,
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    RegisterDriverResponse,
-    RegisterDriverError,
-    RegisterDriverVariables
+    ChairPostRegisterResponse,
+    ChairPostRegisterError,
+    ChairPostRegisterVariables
   >({
-    mutationFn: (variables: RegisterDriverVariables) =>
-      fetchRegisterDriver({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: ChairPostRegisterVariables) =>
+      fetchChairPostRegister({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type ActivateDriverError = Fetcher.ErrorWrapper<undefined>;
+export type ChairPostActivateError = Fetcher.ErrorWrapper<undefined>;
 
-export type ActivateDriverVariables = {
+export type ChairPostActivateVariables = {
   body?: Record<string, any>;
 } & ApiContext["fetcherOptions"];
 
-export const fetchActivateDriver = (
-  variables: ActivateDriverVariables,
+export const fetchChairPostActivate = (
+  variables: ChairPostActivateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, ActivateDriverError, Record<string, any>, {}, {}, {}>({
-    url: "/driver/activate",
+  apiFetch<undefined, ChairPostActivateError, Record<string, any>, {}, {}, {}>({
+    url: "/chair/activate",
     method: "post",
     ...variables,
     signal,
   });
 
-export const useActivateDriver = (
+export const useChairPostActivate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
       undefined,
-      ActivateDriverError,
-      ActivateDriverVariables
+      ChairPostActivateError,
+      ChairPostActivateVariables
     >,
     "mutationFn"
   >,
@@ -512,38 +568,40 @@ export const useActivateDriver = (
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
-    ActivateDriverError,
-    ActivateDriverVariables
+    ChairPostActivateError,
+    ChairPostActivateVariables
   >({
-    mutationFn: (variables: ActivateDriverVariables) =>
-      fetchActivateDriver({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: ChairPostActivateVariables) =>
+      fetchChairPostActivate({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type DeactivateDriverError = Fetcher.ErrorWrapper<undefined>;
+export type ChairPostDeactivateError = Fetcher.ErrorWrapper<undefined>;
 
-export type DeactivateDriverVariables = {
+export type ChairPostDeactivateVariables = {
   body?: Record<string, any>;
 } & ApiContext["fetcherOptions"];
 
-export const fetchDeactivateDriver = (
-  variables: DeactivateDriverVariables,
+export const fetchChairPostDeactivate = (
+  variables: ChairPostDeactivateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, DeactivateDriverError, Record<string, any>, {}, {}, {}>({
-    url: "/driver/deactivate",
-    method: "post",
-    ...variables,
-    signal,
-  });
+  apiFetch<
+    undefined,
+    ChairPostDeactivateError,
+    Record<string, any>,
+    {},
+    {},
+    {}
+  >({ url: "/chair/deactivate", method: "post", ...variables, signal });
 
-export const useDeactivateDriver = (
+export const useChairPostDeactivate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
       undefined,
-      DeactivateDriverError,
-      DeactivateDriverVariables
+      ChairPostDeactivateError,
+      ChairPostDeactivateVariables
     >,
     "mutationFn"
   >,
@@ -551,310 +609,407 @@ export const useDeactivateDriver = (
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
     undefined,
-    DeactivateDriverError,
-    DeactivateDriverVariables
+    ChairPostDeactivateError,
+    ChairPostDeactivateVariables
   >({
-    mutationFn: (variables: DeactivateDriverVariables) =>
-      fetchDeactivateDriver({ ...fetcherOptions, ...variables }),
+    mutationFn: (variables: ChairPostDeactivateVariables) =>
+      fetchChairPostDeactivate({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
 
-export type PostDriverCoordinateError = Fetcher.ErrorWrapper<undefined>;
+export type ChairPostCoordinateError = Fetcher.ErrorWrapper<undefined>;
 
-export type PostDriverCoordinateVariables = {
+export type ChairPostCoordinateVariables = {
   body: Schemas.Coordinate;
 } & ApiContext["fetcherOptions"];
 
-export const fetchPostDriverCoordinate = (
-  variables: PostDriverCoordinateVariables,
+export const fetchChairPostCoordinate = (
+  variables: ChairPostCoordinateVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<undefined, ChairPostCoordinateError, Schemas.Coordinate, {}, {}, {}>(
+    { url: "/chair/coordinate", method: "post", ...variables, signal },
+  );
+
+export const useChairPostCoordinate = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      ChairPostCoordinateError,
+      ChairPostCoordinateVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    ChairPostCoordinateError,
+    ChairPostCoordinateVariables
+  >({
+    mutationFn: (variables: ChairPostCoordinateVariables) =>
+      fetchChairPostCoordinate({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type ChairGetRequestPathParams = {
+  /**
+   * 配車要求ID
+   */
+  requestId: string;
+};
+
+export type ChairGetRequestError = Fetcher.ErrorWrapper<{
+  status: 404;
+  payload: Schemas.Error;
+}>;
+
+export type ChairGetRequestVariables = {
+  pathParams: ChairGetRequestPathParams;
+} & ApiContext["fetcherOptions"];
+
+/**
+ * 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
+ */
+export const fetchChairGetRequest = (
+  variables: ChairGetRequestVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    Schemas.ChairRequest,
+    ChairGetRequestError,
+    undefined,
+    {},
+    {},
+    ChairGetRequestPathParams
+  >({
+    url: "/chair/requests/{requestId}",
+    method: "get",
+    ...variables,
+    signal,
+  });
+
+/**
+ * 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
+ */
+export const useChairGetRequest = <TData = Schemas.ChairRequest,>(
+  variables: ChairGetRequestVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      Schemas.ChairRequest,
+      ChairGetRequestError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<Schemas.ChairRequest, ChairGetRequestError, TData>(
+    {
+      queryKey: queryKeyFn({
+        path: "/chair/requests/{requestId}",
+        operationId: "chairGetRequest",
+        variables,
+      }),
+      queryFn: ({ signal }) =>
+        fetchChairGetRequest({ ...fetcherOptions, ...variables }, signal),
+      ...options,
+      ...queryOptions,
+    },
+  );
+};
+
+export type ChairPostRequestAcceptPathParams = {
+  /**
+   * 配車要求ID
+   */
+  requestId: string;
+};
+
+export type ChairPostRequestAcceptError = Fetcher.ErrorWrapper<{
+  status: 404;
+  payload: Schemas.Error;
+}>;
+
+export type ChairPostRequestAcceptVariables = {
+  pathParams: ChairPostRequestAcceptPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchChairPostRequestAccept = (
+  variables: ChairPostRequestAcceptVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
     undefined,
-    PostDriverCoordinateError,
-    Schemas.Coordinate,
+    ChairPostRequestAcceptError,
+    undefined,
+    {},
+    {},
+    ChairPostRequestAcceptPathParams
+  >({
+    url: "/chair/requests/{requestId}/accept",
+    method: "post",
+    ...variables,
+    signal,
+  });
+
+export const useChairPostRequestAccept = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      ChairPostRequestAcceptError,
+      ChairPostRequestAcceptVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    ChairPostRequestAcceptError,
+    ChairPostRequestAcceptVariables
+  >({
+    mutationFn: (variables: ChairPostRequestAcceptVariables) =>
+      fetchChairPostRequestAccept({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type ChairPostRequestDenyPathParams = {
+  /**
+   * 配車要求ID
+   */
+  requestId: string;
+};
+
+export type ChairPostRequestDenyError = Fetcher.ErrorWrapper<{
+  status: 404;
+  payload: Schemas.Error;
+}>;
+
+export type ChairPostRequestDenyVariables = {
+  pathParams: ChairPostRequestDenyPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchChairPostRequestDeny = (
+  variables: ChairPostRequestDenyVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    undefined,
+    ChairPostRequestDenyError,
+    undefined,
+    {},
+    {},
+    ChairPostRequestDenyPathParams
+  >({
+    url: "/chair/requests/{requestId}/deny",
+    method: "post",
+    ...variables,
+    signal,
+  });
+
+export const useChairPostRequestDeny = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      ChairPostRequestDenyError,
+      ChairPostRequestDenyVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    ChairPostRequestDenyError,
+    ChairPostRequestDenyVariables
+  >({
+    mutationFn: (variables: ChairPostRequestDenyVariables) =>
+      fetchChairPostRequestDeny({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type ChairPostRequestDepartPathParams = {
+  /**
+   * 配車要求ID
+   */
+  requestId: string;
+};
+
+export type ChairPostRequestDepartError = Fetcher.ErrorWrapper<
+  | {
+      status: 400;
+      payload: Schemas.Error;
+    }
+  | {
+      status: 404;
+      payload: Schemas.Error;
+    }
+>;
+
+export type ChairPostRequestDepartVariables = {
+  pathParams: ChairPostRequestDepartPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchChairPostRequestDepart = (
+  variables: ChairPostRequestDepartVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    undefined,
+    ChairPostRequestDepartError,
+    undefined,
+    {},
+    {},
+    ChairPostRequestDepartPathParams
+  >({
+    url: "/chair/requests/{requestId}/depart",
+    method: "post",
+    ...variables,
+    signal,
+  });
+
+export const useChairPostRequestDepart = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      ChairPostRequestDepartError,
+      ChairPostRequestDepartVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    ChairPostRequestDepartError,
+    ChairPostRequestDepartVariables
+  >({
+    mutationFn: (variables: ChairPostRequestDepartVariables) =>
+      fetchChairPostRequestDepart({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type ChairPostRequestPaymentPathParams = {
+  /**
+   * 配車要求ID
+   */
+  requestId: string;
+};
+
+export type ChairPostRequestPaymentError = Fetcher.ErrorWrapper<
+  | {
+      status: 400;
+      payload: Schemas.Error;
+    }
+  | {
+      status: 404;
+      payload: Schemas.Error;
+    }
+>;
+
+export type ChairPostRequestPaymentVariables = {
+  pathParams: ChairPostRequestPaymentPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchChairPostRequestPayment = (
+  variables: ChairPostRequestPaymentVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    undefined,
+    ChairPostRequestPaymentError,
+    undefined,
+    {},
+    {},
+    ChairPostRequestPaymentPathParams
+  >({
+    url: "/chair/requests/{requestId}/payment",
+    method: "post",
+    ...variables,
+    signal,
+  });
+
+export const useChairPostRequestPayment = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      undefined,
+      ChairPostRequestPaymentError,
+      ChairPostRequestPaymentVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    undefined,
+    ChairPostRequestPaymentError,
+    ChairPostRequestPaymentVariables
+  >({
+    mutationFn: (variables: ChairPostRequestPaymentVariables) =>
+      fetchChairPostRequestPayment({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type ChairGetNotificationError = Fetcher.ErrorWrapper<undefined>;
+
+export type ChairGetNotificationVariables = ApiContext["fetcherOptions"];
+
+/**
+ * 椅子に配車要求を通知するなどで使う想定
+ */
+export const fetchChairGetNotification = (
+  variables: ChairGetNotificationVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    Schemas.ChairRequest,
+    ChairGetNotificationError,
+    undefined,
     {},
     {},
     {}
-  >({ url: "/driver/coordinate", method: "post", ...variables, signal });
+  >({ url: "/chair/notification", method: "get", ...variables, signal });
 
-export const usePostDriverCoordinate = (
+/**
+ * 椅子に配車要求を通知するなどで使う想定
+ */
+export const useChairGetNotification = <TData = Schemas.ChairRequest,>(
+  variables: ChairGetNotificationVariables,
   options?: Omit<
-    reactQuery.UseMutationOptions<
-      undefined,
-      PostDriverCoordinateError,
-      PostDriverCoordinateVariables
+    reactQuery.UseQueryOptions<
+      Schemas.ChairRequest,
+      ChairGetNotificationError,
+      TData
     >,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<
-    undefined,
-    PostDriverCoordinateError,
-    PostDriverCoordinateVariables
-  >({
-    mutationFn: (variables: PostDriverCoordinateVariables) =>
-      fetchPostDriverCoordinate({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
-export type GetRequestPathParams = {
-  /**
-   * 配車要求ID
-   */
-  requestId: string;
-};
-
-export type GetRequestError = Fetcher.ErrorWrapper<undefined>;
-
-export type GetRequestResponse = {
-  /**
-   * ユーザー情報
-   */
-  user: Schemas.User;
-  /**
-   * 目的地
-   */
-  destination_coordinate: Schemas.Coordinate;
-  status?: Schemas.RequestStatus;
-};
-
-export type GetRequestVariables = {
-  pathParams: GetRequestPathParams;
-} & ApiContext["fetcherOptions"];
-
-/**
- * ドライバー向け通知エンドポイントから通知されたidの情報を取得する想定
- */
-export const fetchGetRequest = (
-  variables: GetRequestVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    GetRequestResponse,
-    GetRequestError,
-    undefined,
-    {},
-    {},
-    GetRequestPathParams
-  >({
-    url: "/driver/requests/{requestId}",
-    method: "get",
-    ...variables,
-    signal,
-  });
-
-/**
- * ドライバー向け通知エンドポイントから通知されたidの情報を取得する想定
- */
-export const useGetRequest = <TData = GetRequestResponse,>(
-  variables: GetRequestVariables,
-  options?: Omit<
-    reactQuery.UseQueryOptions<GetRequestResponse, GetRequestError, TData>,
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<GetRequestResponse, GetRequestError, TData>({
+  return reactQuery.useQuery<
+    Schemas.ChairRequest,
+    ChairGetNotificationError,
+    TData
+  >({
     queryKey: queryKeyFn({
-      path: "/driver/requests/{requestId}",
-      operationId: "getRequest",
+      path: "/chair/notification",
+      operationId: "chairGetNotification",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchGetRequest({ ...fetcherOptions, ...variables }, signal),
+      fetchChairGetNotification({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
 };
 
-export type AcceptRequestPathParams = {
-  /**
-   * 配車要求ID
-   */
-  requestId: string;
-};
-
-export type AcceptRequestError = Fetcher.ErrorWrapper<undefined>;
-
-export type AcceptRequestVariables = {
-  pathParams: AcceptRequestPathParams;
-} & ApiContext["fetcherOptions"];
-
-export const fetchAcceptRequest = (
-  variables: AcceptRequestVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    undefined,
-    AcceptRequestError,
-    undefined,
-    {},
-    {},
-    AcceptRequestPathParams
-  >({
-    url: "/driver/requests/{requestId}/accept",
-    method: "post",
-    ...variables,
-    signal,
-  });
-
-export const useAcceptRequest = (
-  options?: Omit<
-    reactQuery.UseMutationOptions<
-      undefined,
-      AcceptRequestError,
-      AcceptRequestVariables
-    >,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<
-    undefined,
-    AcceptRequestError,
-    AcceptRequestVariables
-  >({
-    mutationFn: (variables: AcceptRequestVariables) =>
-      fetchAcceptRequest({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
-export type DenyRequestPathParams = {
-  /**
-   * 配車要求ID
-   */
-  requestId: string;
-};
-
-export type DenyRequestError = Fetcher.ErrorWrapper<undefined>;
-
-export type DenyRequestVariables = {
-  pathParams: DenyRequestPathParams;
-} & ApiContext["fetcherOptions"];
-
-export const fetchDenyRequest = (
-  variables: DenyRequestVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    undefined,
-    DenyRequestError,
-    undefined,
-    {},
-    {},
-    DenyRequestPathParams
-  >({
-    url: "/driver/requests/{requestId}/deny",
-    method: "post",
-    ...variables,
-    signal,
-  });
-
-export const useDenyRequest = (
-  options?: Omit<
-    reactQuery.UseMutationOptions<
-      undefined,
-      DenyRequestError,
-      DenyRequestVariables
-    >,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<
-    undefined,
-    DenyRequestError,
-    DenyRequestVariables
-  >({
-    mutationFn: (variables: DenyRequestVariables) =>
-      fetchDenyRequest({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
-export type DepartPathParams = {
-  /**
-   * 配車要求ID
-   */
-  requestId: string;
-};
-
-export type DepartError = Fetcher.ErrorWrapper<undefined>;
-
-export type DepartVariables = {
-  pathParams: DepartPathParams;
-} & ApiContext["fetcherOptions"];
-
-export const fetchDepart = (variables: DepartVariables, signal?: AbortSignal) =>
-  apiFetch<undefined, DepartError, undefined, {}, {}, DepartPathParams>({
-    url: "/driver/requests/{requestId}/depart",
-    method: "post",
-    ...variables,
-    signal,
-  });
-
-export const useDepart = (
-  options?: Omit<
-    reactQuery.UseMutationOptions<undefined, DepartError, DepartVariables>,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<undefined, DepartError, DepartVariables>({
-    mutationFn: (variables: DepartVariables) =>
-      fetchDepart({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
-export type GetDriverNotificationError = Fetcher.ErrorWrapper<undefined>;
-
-export type GetDriverNotificationVariables = ApiContext["fetcherOptions"];
-
-/**
- * ドライバーに配車要求を通知するなどで使う想定
- */
-export const fetchGetDriverNotification = (
-  variables: GetDriverNotificationVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<undefined, GetDriverNotificationError, undefined, {}, {}, {}>({
-    url: "/driver/notification",
-    method: "get",
-    ...variables,
-    signal,
-  });
-
-/**
- * ドライバーに配車要求を通知するなどで使う想定
- */
-export const useGetDriverNotification = <TData = undefined,>(
-  variables: GetDriverNotificationVariables,
-  options?: Omit<
-    reactQuery.UseQueryOptions<undefined, GetDriverNotificationError, TData>,
-    "queryKey" | "queryFn" | "initialData"
-  >,
-) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<undefined, GetDriverNotificationError, TData>({
-    queryKey: queryKeyFn({
-      path: "/driver/notification",
-      operationId: "getDriverNotification",
-      variables,
-    }),
-    queryFn: ({ signal }) =>
-      fetchGetDriverNotification({ ...fetcherOptions, ...variables }, signal),
-    ...options,
-    ...queryOptions,
-  });
-};
-
-export type GetInquiriesQueryParams = {
+export type ChairGetInquiriesQueryParams = {
   /**
    * 取得件数
    */
@@ -865,9 +1020,9 @@ export type GetInquiriesQueryParams = {
   cursor?: string;
 };
 
-export type GetInquiriesError = Fetcher.ErrorWrapper<undefined>;
+export type ChairGetInquiriesError = Fetcher.ErrorWrapper<undefined>;
 
-export type GetInquiriesResponse = {
+export type ChairGetInquiriesResponse = {
   inquiries: {
     /**
      * 問い合わせID
@@ -884,68 +1039,79 @@ export type GetInquiriesResponse = {
   }[];
 };
 
-export type GetInquiriesVariables = {
-  queryParams?: GetInquiriesQueryParams;
+export type ChairGetInquiriesVariables = {
+  queryParams?: ChairGetInquiriesQueryParams;
 } & ApiContext["fetcherOptions"];
 
-export const fetchGetInquiries = (
-  variables: GetInquiriesVariables,
+export const fetchChairGetInquiries = (
+  variables: ChairGetInquiriesVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    GetInquiriesResponse,
-    GetInquiriesError,
+    ChairGetInquiriesResponse,
+    ChairGetInquiriesError,
     undefined,
     {},
-    GetInquiriesQueryParams,
+    ChairGetInquiriesQueryParams,
     {}
   >({ url: "/admin/inquiries", method: "get", ...variables, signal });
 
-export const useGetInquiries = <TData = GetInquiriesResponse,>(
-  variables: GetInquiriesVariables,
+export const useChairGetInquiries = <TData = ChairGetInquiriesResponse,>(
+  variables: ChairGetInquiriesVariables,
   options?: Omit<
-    reactQuery.UseQueryOptions<GetInquiriesResponse, GetInquiriesError, TData>,
+    reactQuery.UseQueryOptions<
+      ChairGetInquiriesResponse,
+      ChairGetInquiriesError,
+      TData
+    >,
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<GetInquiriesResponse, GetInquiriesError, TData>({
+  return reactQuery.useQuery<
+    ChairGetInquiriesResponse,
+    ChairGetInquiriesError,
+    TData
+  >({
     queryKey: queryKeyFn({
       path: "/admin/inquiries",
-      operationId: "getInquiries",
+      operationId: "chairGetInquiries",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchGetInquiries({ ...fetcherOptions, ...variables }, signal),
+      fetchChairGetInquiries({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
 };
 
-export type GetInquiryPathParams = {
+export type ChairGetInquiryPathParams = {
   /**
    * 問い合わせID
    */
   inquiryId: string;
 };
 
-export type GetInquiryError = Fetcher.ErrorWrapper<undefined>;
+export type ChairGetInquiryError = Fetcher.ErrorWrapper<{
+  status: 404;
+  payload: Schemas.Error;
+}>;
 
-export type GetInquiryVariables = {
-  pathParams: GetInquiryPathParams;
+export type ChairGetInquiryVariables = {
+  pathParams: ChairGetInquiryPathParams;
 } & ApiContext["fetcherOptions"];
 
-export const fetchGetInquiry = (
-  variables: GetInquiryVariables,
+export const fetchChairGetInquiry = (
+  variables: ChairGetInquiryVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
     Schemas.InquiryContent,
-    GetInquiryError,
+    ChairGetInquiryError,
     undefined,
     {},
     {},
-    GetInquiryPathParams
+    ChairGetInquiryPathParams
   >({
     url: "/admin/inquiries/{inquiryId}",
     method: "get",
@@ -953,22 +1119,30 @@ export const fetchGetInquiry = (
     signal,
   });
 
-export const useGetInquiry = <TData = Schemas.InquiryContent,>(
-  variables: GetInquiryVariables,
+export const useChairGetInquiry = <TData = Schemas.InquiryContent,>(
+  variables: ChairGetInquiryVariables,
   options?: Omit<
-    reactQuery.UseQueryOptions<Schemas.InquiryContent, GetInquiryError, TData>,
+    reactQuery.UseQueryOptions<
+      Schemas.InquiryContent,
+      ChairGetInquiryError,
+      TData
+    >,
     "queryKey" | "queryFn" | "initialData"
   >,
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<Schemas.InquiryContent, GetInquiryError, TData>({
+  return reactQuery.useQuery<
+    Schemas.InquiryContent,
+    ChairGetInquiryError,
+    TData
+  >({
     queryKey: queryKeyFn({
       path: "/admin/inquiries/{inquiryId}",
-      operationId: "getInquiry",
+      operationId: "chairGetInquiry",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchGetInquiry({ ...fetcherOptions, ...variables }, signal),
+      fetchChairGetInquiry({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
@@ -977,31 +1151,31 @@ export const useGetInquiry = <TData = Schemas.InquiryContent,>(
 export type QueryOperation =
   | {
       path: "/app/requests/{requestId}";
-      operationId: "getAppRequest";
-      variables: GetAppRequestVariables;
+      operationId: "appGetRequest";
+      variables: AppGetRequestVariables;
     }
   | {
       path: "/app/notification";
-      operationId: "getAppNotification";
-      variables: GetAppNotificationVariables;
+      operationId: "appGetNotification";
+      variables: AppGetNotificationVariables;
     }
   | {
-      path: "/driver/requests/{requestId}";
-      operationId: "getRequest";
-      variables: GetRequestVariables;
+      path: "/chair/requests/{requestId}";
+      operationId: "chairGetRequest";
+      variables: ChairGetRequestVariables;
     }
   | {
-      path: "/driver/notification";
-      operationId: "getDriverNotification";
-      variables: GetDriverNotificationVariables;
+      path: "/chair/notification";
+      operationId: "chairGetNotification";
+      variables: ChairGetNotificationVariables;
     }
   | {
       path: "/admin/inquiries";
-      operationId: "getInquiries";
-      variables: GetInquiriesVariables;
+      operationId: "chairGetInquiries";
+      variables: ChairGetInquiriesVariables;
     }
   | {
       path: "/admin/inquiries/{inquiryId}";
-      operationId: "getInquiry";
-      variables: GetInquiryVariables;
+      operationId: "chairGetInquiry";
+      variables: ChairGetInquiryVariables;
     };
