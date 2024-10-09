@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -12,12 +13,8 @@ import (
 )
 
 type postChairRegisterRequest struct {
-	Username    string `json:"username"`
-	Firstname   string `json:"firstname"`
-	Lastname    string `json:"lastname"`
-	DateOfBirth string `json:"date_of_birth"`
-	ChairModel  string `json:"chair_model"`
-	ChairNo     string `json:"chair_no"`
+	Name  string `json:"name"`
+	Model string `json:"model"`
 }
 
 type postChairRegisterResponse struct {
@@ -34,15 +31,15 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	chairID := ulid.Make().String()
 
-	if req.Username == "" || req.Firstname == "" || req.Lastname == "" || req.DateOfBirth == "" || req.ChairModel == "" || req.ChairNo == "" {
-		writeError(w, http.StatusBadRequest, errors.New("required fields(username, firstname, lastname, date_of_birth, chair_model, chair_no) are empty"))
+	if req.Name == "" || req.Model == "" {
+		writeError(w, http.StatusBadRequest, errors.New("some of required fields(name, model) are empty"))
 		return
 	}
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO chairs (id, username, firstname, lastname, date_of_birth, chair_model, chair_no, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
-		chairID, req.Username, req.Firstname, req.Lastname, req.DateOfBirth, req.ChairModel, req.ChairNo, false, accessToken,
+		"INSERT INTO chairs (id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
+		chairID, req.Name, req.Model, false, accessToken,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -219,7 +216,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 		RequestID: rideRequest.ID,
 		User: simpleUser{
 			ID:   user.ID,
-			Name: user.Firstname + " " + user.Lastname,
+			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 		},
 		DestinationCoordinate: Coordinate{
 			Latitude:  rideRequest.DestinationLatitude,
@@ -301,7 +298,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					RequestID: rideRequest.ID,
 					User: simpleUser{
 						ID:   user.ID,
-						Name: user.Firstname + " " + user.Lastname,
+						Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 					},
 					DestinationCoordinate: Coordinate{
 						Latitude:  rideRequest.DestinationLatitude,
@@ -373,7 +370,7 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 		RequestID: rideRequest.ID,
 		User: simpleUser{
 			ID:   user.ID,
-			Name: user.Firstname + " " + user.Lastname,
+			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 		},
 		DestinationCoordinate: Coordinate{
 			Latitude:  rideRequest.DestinationLatitude,
