@@ -41,6 +41,24 @@ func (s *AppPostInquiryReq) SetBody(val string) {
 	s.Body = val
 }
 
+// AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
+type AppPostPaymentMethodsNoContent struct{}
+
+type AppPostPaymentMethodsReq struct {
+	// 決済トークン.
+	Token string `json:"token"`
+}
+
+// GetToken returns the value of Token.
+func (s *AppPostPaymentMethodsReq) GetToken() string {
+	return s.Token
+}
+
+// SetToken sets the value of Token.
+func (s *AppPostPaymentMethodsReq) SetToken(val string) {
+	s.Token = val
+}
+
 type AppPostRegisterOK struct {
 	// アクセストークン.
 	AccessToken string `json:"access_token"`
@@ -528,6 +546,19 @@ type ChairPostRequestDepartNotFound Error
 
 func (*ChairPostRequestDepartNotFound) chairPostRequestDepartRes() {}
 
+type ChairPostRequestPaymentBadRequest Error
+
+func (*ChairPostRequestPaymentBadRequest) chairPostRequestPaymentRes() {}
+
+// ChairPostRequestPaymentNoContent is response for ChairPostRequestPayment operation.
+type ChairPostRequestPaymentNoContent struct{}
+
+func (*ChairPostRequestPaymentNoContent) chairPostRequestPaymentRes() {}
+
+type ChairPostRequestPaymentNotFound Error
+
+func (*ChairPostRequestPaymentNotFound) chairPostRequestPaymentRes() {}
+
 // Chair向け配車要求情報.
 // Ref: #/components/schemas/ChairRequest
 type ChairRequest struct {
@@ -727,6 +758,52 @@ func (o OptAppPostInquiryReq) Get() (v AppPostInquiryReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAppPostInquiryReq) Or(d AppPostInquiryReq) AppPostInquiryReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
+func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {
+	return OptAppPostPaymentMethodsReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppPostPaymentMethodsReq is optional AppPostPaymentMethodsReq.
+type OptAppPostPaymentMethodsReq struct {
+	Value AppPostPaymentMethodsReq
+	Set   bool
+}
+
+// IsSet returns true if OptAppPostPaymentMethodsReq was set.
+func (o OptAppPostPaymentMethodsReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppPostPaymentMethodsReq) Reset() {
+	var v AppPostPaymentMethodsReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppPostPaymentMethodsReq) SetTo(v AppPostPaymentMethodsReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppPostPaymentMethodsReq) Get() (v AppPostPaymentMethodsReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppPostPaymentMethodsReq) Or(d AppPostPaymentMethodsReq) AppPostPaymentMethodsReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}

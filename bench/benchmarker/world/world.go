@@ -142,9 +142,10 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	u := &User{
 		ServerID:          res.ServerUserID,
 		Region:            args.Region,
-		State:             UserStateInactive,
+		State:             UserStatePaymentMethodsNotRegister,
 		RegisteredData:    registeredData,
 		AccessToken:       res.AccessToken,
+		PaymentToken:      random.GeneratePaymentToken(),
 		Rand:              random.CreateChildRand(w.RootRand),
 		notificationQueue: make(chan NotificationEvent, 100),
 	}
