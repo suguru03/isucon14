@@ -1,5 +1,5 @@
 import { Button } from "~/components/primitives/button/button";
-import type { RequestProps } from "./type";
+import type { RequestProps } from "~/components/request/type";
 
 export const Reception = ({
   status,
