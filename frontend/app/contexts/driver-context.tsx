@@ -34,6 +34,7 @@ const RequestProvider = ({
     if (data instanceof Blob) {
       return undefined;
     }
+    // TODO:
     const status = (searchParams.get("debug_status") ??
       undefined) as RequestStatus;
     return { ...data, status } as ChairRequest;
@@ -51,6 +52,7 @@ const RequestProvider = ({
 };
 
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
+  // TODO:
   const [searchParams] = useSearchParams();
   const accessToken = searchParams.get("access_token");
   const id = searchParams.get("user_id");
