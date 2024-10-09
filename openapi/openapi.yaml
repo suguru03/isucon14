@@ -218,6 +218,97 @@ paths:
                 $ref: "#/components/schemas/AppRequest"
         "204":
           description: 対象となる配車要求が存在しない場合
+  /provider/register:
+    post:
+      tags:
+        - provider
+      summary: 椅子事業者が登録を行う
+      operationId: provider-post-register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 椅子事業者名
+              required:
+                - name
+      responses:
+        "201":
+          description: 椅子事業者登録が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: アクセストークン
+                  id:
+                    type: string
+                    description: サービス提供者ID
+                required:
+                  - access_token
+                  - id
+  /provider/sales:
+    get:
+      tags:
+        - provider
+      summary: 椅子事業者が指定期間の全体・椅子ごと・モデルごとの売上情報を取得する
+      operationId: provider-get-sales
+      parameters:
+        - name: since
+          in: query
+          description: 開始日（含む）
+          required: true
+          schema:
+            type: string
+        - name: until
+          in: query
+          description: 終了日（含む）
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_sales:
+                    type: integer
+                    description: 事業者全体の売上
+                  chairs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 椅子ID
+                        name:
+                          type: string
+                          description: 椅子名
+                        sales:
+                          type: integer
+                          description: 椅子ごとの売上
+                    description: 椅子ごとの売上情報
+                  models:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                          description: 椅子モデル
+                        sales:
+                          type: integer
+                          description: モデルごとの売上
+                    description: モデルごとの売上情報
   /chair/register:
     post:
       tags:
