@@ -3,7 +3,7 @@ info:
   version: '1.0'
   title: isu
 servers:
-  - url: 'http://localhost:8080/'
+  - url: 'http://localhost:8080'
     description: api
 paths:
   /initialize:
@@ -86,6 +86,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /app/payment-methods:
+    post:
+      tags:
+        - app
+      summary: 決済トークンの登録
+      operationId: app-post-payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 決済トークン
+              required:
+                - token
+      responses:
+        '204':
+          description: 決済トークンの登録に成功した
   /app/requests:
     post:
       tags:
@@ -134,35 +154,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  request_id:
-                    type: string
-                    description: 配車要求ID
-                  pickup_coordinate:
-                    $ref: '#/components/schemas/Coordinate'
-                    description: 配車位置
-                  destination_coordinate:
-                    $ref: '#/components/schemas/Coordinate'
-                    description: 目的地
-                  status:
-                    $ref: '#/components/schemas/RequestStatus'
-                  chair:
-                    $ref: '#/components/schemas/Chair'
-                    description: 椅子情報
-                  created_at:
-                    type: number
-                    description: 配車要求日時
-                  updated_at:
-                    type: number
-                    description: 配車要求更新日時
-                required:
-                  - request_id
-                  - pickup_coordinate
-                  - destination_coordinate
-                  - status
-                  - created_at
-                  - updated_at
+                $ref: '#/components/schemas/AppRequest'
         '404':
           description: Not Found
           content:
@@ -239,11 +231,17 @@ paths:
       tags:
         - app
       summary: ユーザー向け通知エンドポイント
-      description: ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定
+      description: 最新の自分の配車要求を取得します。
       operationId: app-get-notification
       responses:
         '200':
           description: Server Sent Eventsで通知レスポンスが送信されます
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppRequest'
+        '204':
+          description: 対象となる配車要求が存在しない場合
   /chair/register:
     post:
       tags:
@@ -357,23 +355,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  request_id:
-                      type: string
-                      description: 配車要求ID
-                  user:
-                    $ref: '#/components/schemas/User'
-                    description: ユーザー情報
-                  destination_coordinate:
-                    $ref: '#/components/schemas/Coordinate'
-                    description: 目的地
-                  status:
-                    $ref: '#/components/schemas/RequestStatus'
-                required:
-                  - request_id
-                  - user
-                  - destination_coordinate
+                $ref: '#/components/schemas/ChairRequest'
         '404':
           description: 存在しない配車要求、対象の椅子にマッチングされていない配車要求を取得しようとした場合など
           content:
@@ -442,6 +424,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/chair/requests/{request_id}/payment':
+    post:
+      tags:
+        - chair
+      summary: 支払いを実行する
+      operationId: chair-post-request-payment
+      parameters:
+        - name: request_id
+          in: path
+          description: 配車要求ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 支払いに成功した
+        '400':
+          description: 椅子が目的地に到着していないなど
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 存在しない配車要求IDだった
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /chair/notification:
     get:
       tags:
@@ -451,7 +461,13 @@ paths:
       operationId: chair-get-notification
       responses:
         '200':
-          description: Server Sent Eventsで通知レスポンスが送信されます
+          description: 自分に割り当てられた最新の配車要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChairRequest'
+        '204':
+          description: 割り当てられた配車要求が存在しない場合
   /admin/inquiries:
     get:
       tags:
@@ -627,6 +643,51 @@ components:
         - subject
         - body
         - created_at
+    AppRequest:
+      description: App向け配車要求情報
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: 配車要求ID
+        pickup_coordinate:
+          $ref: '#/components/schemas/Coordinate'
+        destination_coordinate:
+          $ref: '#/components/schemas/Coordinate'
+        status:
+          $ref: '#/components/schemas/RequestStatus'
+        chair:
+          $ref: '#/components/schemas/Chair'
+        created_at:
+          type: number
+          description: 配車要求日時
+        updated_at:
+          type: number
+          description: 配車要求更新日時
+      required:
+        - request_id
+        - pickup_coordinate
+        - destination_coordinate
+        - status
+        - created_at
+        - updated_at
+    ChairRequest:
+      description: Chair向け配車要求情報
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: 配車要求ID
+        user:
+          $ref: '#/components/schemas/User'
+        destination_coordinate:
+          $ref: '#/components/schemas/Coordinate'
+        status:
+          $ref: '#/components/schemas/RequestStatus'
+      required:
+        - request_id
+        - user
+        - destination_coordinate
     Error:
       type: object
       title: Error

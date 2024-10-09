@@ -18,10 +18,10 @@ import (
 type Invoker interface {
 	// AppGetNotification invokes app-get-notification operation.
 	//
-	// ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定.
+	// 最新の自分の配車要求を取得します。.
 	//
 	// GET /app/notification
-	AppGetNotification(ctx context.Context) error
+	AppGetNotification(ctx context.Context) (AppGetNotificationRes, error)
 	// AppGetRequest invokes app-get-request operation.
 	//
 	// ユーザーが配車要求の状態を確認する.
@@ -69,7 +69,7 @@ type Invoker interface {
 	// 椅子に配車要求を通知するなどで使う想定.
 	//
 	// GET /chair/notification
-	ChairGetNotification(ctx context.Context) error
+	ChairGetNotification(ctx context.Context) (ChairGetNotificationRes, error)
 	// ChairGetRequest invokes chair-get-request operation.
 	//
 	// 椅子向け通知エンドポイントから通知されたidの情報を取得する想定.
@@ -172,15 +172,15 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 
 // AppGetNotification invokes app-get-notification operation.
 //
-// ポーリング方式にしない場合に、ユーザーのアプリに配車要求の各種状態遷移を通知するなどに使う想定.
+// 最新の自分の配車要求を取得します。.
 //
 // GET /app/notification
-func (c *Client) AppGetNotification(ctx context.Context) error {
-	_, err := c.sendAppGetNotification(ctx)
-	return err
+func (c *Client) AppGetNotification(ctx context.Context) (AppGetNotificationRes, error) {
+	res, err := c.sendAppGetNotification(ctx)
+	return res, err
 }
 
-func (c *Client) sendAppGetNotification(ctx context.Context) (res *AppGetNotificationOK, err error) {
+func (c *Client) sendAppGetNotification(ctx context.Context) (res AppGetNotificationRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -567,12 +567,12 @@ func (c *Client) sendChairGetInquiry(ctx context.Context, params ChairGetInquiry
 // 椅子に配車要求を通知するなどで使う想定.
 //
 // GET /chair/notification
-func (c *Client) ChairGetNotification(ctx context.Context) error {
-	_, err := c.sendChairGetNotification(ctx)
-	return err
+func (c *Client) ChairGetNotification(ctx context.Context) (ChairGetNotificationRes, error) {
+	res, err := c.sendChairGetNotification(ctx)
+	return res, err
 }
 
-func (c *Client) sendChairGetNotification(ctx context.Context) (res *ChairGetNotificationOK, err error) {
+func (c *Client) sendChairGetNotification(ctx context.Context) (res ChairGetNotificationRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string

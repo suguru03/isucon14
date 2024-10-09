@@ -86,7 +86,7 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequest
 	return resBody, nil
 }
 
-func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppGetRequestOK, error) {
+func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppRequest, error) {
 	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/app/requests/%s", requestID), nil)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppG
 		return nil, fmt.Errorf("GET /app/requests/{request_id} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppGetRequestOK{}
+	resBody := &api.AppRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -143,7 +143,7 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 	return resBody, nil
 }
 
-func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppGetRequestOK], func() error, error) {
+func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppRequest], func() error, error) {
 	req, err := c.agent.NewRequest(http.MethodGet, "/app/notification", nil)
 	if err != nil {
 		return nil, nil, err
@@ -164,23 +164,64 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppGetRe
 		return nil, nil, err
 	}
 
-	scanner := bufio.NewScanner(resp.Body)
 	resultErr := new(error)
-	return func(yield func(ok *api.AppGetRequestOK) bool) {
-			defer resp.Body.Close()
-			for scanner.Scan() {
-				request := &api.AppGetRequestOK{}
-				line := scanner.Text()
-				if strings.HasPrefix(line, "data:") {
+	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
+		scanner := bufio.NewScanner(resp.Body)
+		return func(yield func(ok *api.AppRequest) bool) {
+				defer resp.Body.Close()
+				for scanner.Scan() {
+					request := &api.AppRequest{}
+					line := scanner.Text()
+					if strings.HasPrefix(line, "data:") {
 
-					if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
-						resultErr = &err
+						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
+							resultErr = &err
+							return
+						}
+
+						if !yield(request) {
+							return
+						}
+					}
+				}
+			}, func() error {
+				return *resultErr
+			}, nil
+	}
+
+	request := &api.AppRequest{}
+	if resp.StatusCode == http.StatusOK {
+		decoder := json.NewDecoder(resp.Body)
+		if err := decoder.Decode(request); err != nil {
+			return nil, nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		}
+	} else if resp.StatusCode != http.StatusNoContent {
+		resp.Body.Close()
+		return nil, nil, fmt.Errorf("GET /app/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+	}
+	resp.Body.Close()
+	return func(yield func(ok *api.AppRequest) bool) {
+			if !yield(request) || ctx.Value("nested") != nil {
+				return
+			}
+
+			for {
+				// TODO: tickを拾ってくる
+				time.Sleep(90 * time.Millisecond)
+				notifications, result, err := c.AppGetNotification(context.WithValue(ctx, "nested", true))
+				if err != nil {
+					resultErr = &err
+					return
+				}
+
+				for notification := range notifications {
+					if !yield(notification) {
 						return
 					}
-
-					if !yield(request) {
-						return
-					}
+				}
+				if err := result(); err != nil {
+					resultErr = &err
+					return
 				}
 			}
 		}, func() error {

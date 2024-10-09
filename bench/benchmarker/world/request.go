@@ -60,13 +60,14 @@ type Request struct {
 	PickupPoint Coordinate
 	// DestinationPoint 目的地
 	DestinationPoint Coordinate
-	// RequestedAt リクエストを行った時間
-	RequestedAt int64
 
 	// Chair 割り当てられた椅子。割り当てられるまでnil
 	Chair *Chair
 	// StartPoint 椅子の初期位置。割り当てられるまでnil
 	StartPoint null.Value[Coordinate]
+
+	// RequestedAt リクエストを行った時間
+	RequestedAt int64
 	// MatchedAt マッチングが完了した時間。割り当てられるまで0
 	MatchedAt int64
 	// DispatchedAt 配椅子位置についた時間。割り当てられるまで0
@@ -78,12 +79,7 @@ type Request struct {
 	// CompletedAt リクエストが正常に完了した時間。割り当てられるまで0
 	CompletedAt int64
 
-	// DesiredStatus 現在の想定されるリクエストステータス
-	DesiredStatus RequestStatus
-	// ChairStatus 現在椅子が認識しているステータス
-	ChairStatus RequestStatus
-	// UserStatus 現在ユーザーが認識しているステータス
-	UserStatus RequestStatus
+	Statuses RequestStatuses
 }
 
 func (r *Request) String() string {
@@ -92,9 +88,8 @@ func (r *Request) String() string {
 		chairID = strconv.Itoa(int(r.Chair.ID))
 	}
 	return fmt.Sprintf(
-		"Request{id=%d,status=%d,user=%d,from=%s,to=%s,chair=%s,time=[%d,%d,%d,%d,%d,%d]}",
-		r.ID, r.DesiredStatus, r.User.ID, r.PickupPoint, r.DestinationPoint, chairID,
-		r.RequestedAt, r.MatchedAt, r.DispatchedAt, r.PickedUpAt, r.ArrivedAt, r.CompletedAt,
+		"Request{id=%d,status=%s,user=%d,from=%s,to=%s,chair=%s,time=%s}",
+		r.ID, r.Statuses.String(), r.User.ID, r.PickupPoint, r.DestinationPoint, chairID, r.timelineString(),
 	)
 }
 
@@ -154,6 +149,16 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	return result
 }
 
+func (r *Request) timelineString() string {
+	baseTime := r.RequestedAt
+	matchTime := max(0, r.MatchedAt-r.RequestedAt)
+	dispatchTime := max(0, r.DispatchedAt-r.RequestedAt)
+	pickedUpTime := max(0, r.PickedUpAt-r.RequestedAt)
+	arrivedTime := max(0, r.ArrivedAt-r.RequestedAt)
+	completedTime := max(0, r.CompletedAt-r.RequestedAt)
+	return fmt.Sprintf("[0(base=%d),%d,%d,%d,%d,%d]", baseTime, matchTime, dispatchTime, pickedUpTime, arrivedTime, completedTime)
+}
+
 type Evaluation struct {
 	Matching bool
 	Dispatch bool
@@ -180,4 +185,22 @@ func (e Evaluation) Score() int {
 		result++
 	}
 	return result
+}
+
+type RequestStatuses struct {
+	// Desired 現在の想定されるリクエストステータス
+	Desired RequestStatus
+	// Chair 現在椅子が認識しているステータス
+	Chair RequestStatus
+	// User 現在ユーザーが認識しているステータス
+	User RequestStatus
+}
+
+func (s *RequestStatuses) String() string {
+	d, c, u := s.Get()
+	return fmt.Sprintf("(%v,%v,%v)", d, c, u)
+}
+
+func (s *RequestStatuses) Get() (desired, chair, user RequestStatus) {
+	return s.Desired, s.Chair, s.User
 }

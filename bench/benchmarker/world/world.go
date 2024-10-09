@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
-	"sync"
 	"time"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
@@ -40,6 +39,7 @@ type World struct {
 
 	tickTimeout     time.Duration
 	timeoutTicker   *time.Ticker
+	wg              concurrent.WaitGroupWithCount
 	criticalErrorCh chan error
 }
 
@@ -59,66 +59,52 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
 		tickTimeout:          tickTimeout,
-		timeoutTicker:        time.NewTicker(1 * time.Hour),
+		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 	}
 }
 
 func (w *World) Tick(ctx *Context) error {
-	var wg sync.WaitGroup
-
-	w.timeoutTicker.Reset(w.tickTimeout)
+	var done bool
 
 	for _, c := range w.ChairDB.Iter() {
-		// 前のTickの処理が完了していない椅子は完了するまで新しい時間はスキップする
-		if c.TickCompleted() {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				err := c.Tick(ctx)
-				if err != nil {
-					w.HandleTickError(ctx, err)
-				}
-			}()
-		}
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := c.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
 	}
 	for _, u := range w.UserDB.Iter() {
-		// 前のTickの処理が完了していないユーザーは完了するまで新しい時間はスキップする
-		if u.TickCompleted() {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				err := u.Tick(ctx)
-				if err != nil {
-					w.HandleTickError(ctx, err)
-				}
-			}()
-		}
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := u.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
 	}
 
-	select {
-	case err := <-w.criticalErrorCh:
-		// クリティカルエラーが発生
-		return err
-	case <-concurrent.WaitChan(&wg):
-		// タイムアウトする前に完了
+	go func() {
+		w.wg.Wait()
+		done = true
+	}()
 
+	select {
+	// クリティカルエラーが発生
+	case err := <-w.criticalErrorCh:
+		return err
+
+	// タイムアウト
 	case <-w.timeoutTicker.C:
-		timeoutChair := 0
-		timeoutUser := 0
-		for _, c := range w.ChairDB.Iter() {
-			if !c.TickCompleted() {
-				timeoutChair++
-			}
-		}
-		for _, u := range w.UserDB.Iter() {
-			if !u.TickCompleted() {
-				timeoutUser++
-			}
-		}
-		if timeoutUser > 0 || timeoutChair > 0 {
-			// タイムアウト数計算途中に完了した場合はタイムアウトしなかった扱いにする
-			log.Printf("tick timeout (time: %d, timeout users: %d, timeout chairs: %d)", w.Time, timeoutUser, timeoutChair)
+		if !done {
+			// タイムアウトまでにエンティティの行動が全て完了しなかった
+			log.Printf("tick timeout (time: %d, timeout entities: %d)", w.Time, w.wg.Count())
+		} else {
+			// TODO 完了インセンティブを作る
 		}
 	}
 
@@ -153,12 +139,13 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 
 	u := &User{
-		ServerID:       res.ServerUserID,
-		Region:         args.Region,
-		State:          UserStateInactive,
-		RegisteredData: registeredData,
-		AccessToken:    res.AccessToken,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:          res.ServerUserID,
+		Region:            args.Region,
+		State:             UserStateInactive,
+		RegisteredData:    registeredData,
+		AccessToken:       res.AccessToken,
+		Rand:              random.CreateChildRand(w.RootRand),
+		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	u.tickDone.Store(true)
 	return w.UserDB.Create(u), nil
@@ -198,15 +185,16 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	}
 
 	c := &Chair{
-		ServerID:       res.ServerUserID,
-		Region:         args.Region,
-		Current:        args.InitialCoordinate,
-		Speed:          2, // TODO 速度どうする
-		State:          ChairStateInactive,
-		WorkTime:       args.WorkTime,
-		RegisteredData: registeredData,
-		AccessToken:    res.AccessToken,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:          res.ServerUserID,
+		Region:            args.Region,
+		Current:           args.InitialCoordinate,
+		Speed:             2, // TODO 速度どうする
+		State:             ChairStateInactive,
+		WorkTime:          args.WorkTime,
+		RegisteredData:    registeredData,
+		AccessToken:       res.AccessToken,
+		Rand:              random.CreateChildRand(w.RootRand),
+		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	c.tickDone.Store(true)
 	return w.ChairDB.Create(c), nil

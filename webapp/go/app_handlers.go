@@ -38,7 +38,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
@@ -63,13 +63,43 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 		user := &User{}
 		err := db.Get(user, "SELECT * FROM users WHERE access_token = ?", accessToken)
 		if err != nil {
-			respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(w, http.StatusUnauthorized, errors.New("invalid access token"))
+				return
+			}
+			respondError(w, http.StatusInternalServerError, err)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), "user", user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type postAppPaymentMethodsRequest struct {
+	Token string `json:"token"`
+}
+
+func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
+	req := &postAppPaymentMethodsRequest{}
+	if err := bindJSON(r, req); err != nil {
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	user := r.Context().Value("user").(*User)
+
+	_, err := db.Exec(
+		`INSERT INTO payment_tokens (user_id, token, created_at) VALUES (?, ?, isu_now())`,
+		user.ID,
+		req.Token,
+	)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type postAppRequestsRequest struct {
@@ -114,8 +144,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude) 
-				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude, requested_at, updated_at)
+				  VALUES (?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())`,
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {
 		respondError(w, http.StatusInternalServerError, err)
@@ -211,7 +241,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := db.Exec(
-		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
+		`UPDATE ride_requests SET evaluation = ?, status = ?, updated_at = isu_now() WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err)
@@ -229,6 +259,55 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 }
 
 func appGetNotification(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value("user").(*User)
+
+	rideRequest := &RideRequest{}
+	tx, err := db.Beginx()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	chair := &Chair{}
+	if rideRequest.ChairID.Valid {
+		if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+			respondError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	respondJSON(w, http.StatusOK, &getAppRequestResponse{
+		RequestID: rideRequest.ID,
+		PickupCoordinate: Coordinate{
+			Latitude:  rideRequest.PickupLatitude,
+			Longitude: rideRequest.PickupLongitude,
+		},
+		DestinationCoordinate: Coordinate{
+			Latitude:  rideRequest.DestinationLatitude,
+			Longitude: rideRequest.DestinationLongitude,
+		},
+		Status: rideRequest.Status,
+		Chair: simpleChair{
+			ID:         chair.ID,
+			Name:       chair.Firstname + " " + chair.Lastname,
+			ChairModel: chair.ChairModel,
+			ChairNo:    chair.ChairNo,
+		},
+		CreatedAt: rideRequest.RequestedAt.Unix(),
+		UpdateAt:  rideRequest.UpdatedAt.Unix(),
+	})
+}
+
+func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
 
 	// Server Sent Events
@@ -251,6 +330,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				respondError(w, http.StatusInternalServerError, err)
+				return
 			}
 			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
 				time.Sleep(100 * time.Millisecond)
@@ -308,7 +388,7 @@ func appPostInquiry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := db.Exec(
-		`INSERT INTO inquiries (user_id, subject, body) VALUES (?, ?, ?)`,
+		`INSERT INTO inquiries (user_id, subject, body, created_at) VALUES (?, ?, ?, isu_now())`,
 		user.ID, req.Subject, req.Body,
 	)
 	if err != nil {

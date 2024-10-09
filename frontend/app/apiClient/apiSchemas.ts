@@ -20,43 +20,43 @@ export type Coordinate = {
 /**
  * 配車要求ステータス
  *
- * matching: サービス上でマッチング処理を行なっていてドライバーが確定していない
- * dispatching: ドライバーが確定し、乗車位置に向かっている
- * dispatched: ドライバーが乗車位置に到着して、ユーザーの乗車を待機している
- * carrying: ユーザーが乗車し、ドライバーが目的地に向かっている
- * arrived: 目的地に到着した
- * completed: ユーザーの決済・ドライバー評価が完了した
- * canceled: 何らかの理由により途中でキャンセルされた(一定時間待ったがドライバーを割り当てられなかった場合などを想定)
+ * MATCHING: サービス上でマッチング処理を行なっていて椅子が確定していない
+ * DISPATCHING: 椅子が確定し、乗車位置に向かっている
+ * DISPATCHED: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
+ * CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
+ * ARRIVED: 目的地に到着した
+ * COMPLETED: ユーザーの決済・椅子評価が完了した
+ * CANCELED: 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定)
  */
 export type RequestStatus =
-  | "matching"
-  | "dispatching"
-  | "carrying"
-  | "arrived"
-  | "completed"
-  | "canceled"
-  | "dispatched";
+  | "MATCHING"
+  | "DISPATCHING"
+  | "DISPATCHED"
+  | "CARRYING"
+  | "ARRIVED"
+  | "COMPLETED"
+  | "CANCELED";
 
 /**
- * 簡易ドライバー情報
+ * 簡易椅子情報
  */
-export type Driver = {
+export type Chair = {
   /**
-   * ドライバーID
+   * 椅子ID
    */
   id: string;
   /**
-   * ドライバー名
+   * 椅子名
    */
   name: string;
   /**
    * 車種
    */
-  car_model: string;
+  chair_model: string;
   /**
    * カーナンバー
    */
-  car_no: string;
+  chair_no: string;
 };
 
 /**
@@ -93,4 +93,43 @@ export type InquiryContent = {
    * 問い合わせ日時
    */
   created_at: number;
+};
+
+/**
+ * App向け配車要求情報
+ */
+export type AppRequest = {
+  /**
+   * 配車要求ID
+   */
+  request_id: string;
+  pickup_coordinate: Coordinate;
+  destination_coordinate: Coordinate;
+  status: RequestStatus;
+  chair?: Chair;
+  /**
+   * 配車要求日時
+   */
+  created_at: number;
+  /**
+   * 配車要求更新日時
+   */
+  updated_at: number;
+};
+
+/**
+ * Chair向け配車要求情報
+ */
+export type ChairRequest = {
+  /**
+   * 配車要求ID
+   */
+  request_id: string;
+  user: User;
+  destination_coordinate: Coordinate;
+  status?: RequestStatus;
+};
+
+export type Error = {
+  message: string;
 };
