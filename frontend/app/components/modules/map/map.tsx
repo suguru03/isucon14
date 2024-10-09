@@ -8,7 +8,7 @@ import {
   TouchEventHandler,
 } from "react";
 
-const size = 2000;
+const size = 5000;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
   const grad = ctx.createLinearGradient(0, 0, size, 0);
