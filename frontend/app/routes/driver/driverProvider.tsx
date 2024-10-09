@@ -1,5 +1,5 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext, useMemo } from "react";
 import {
   useChairGetNotification,
   type ChairGetNotificationError,
@@ -38,20 +38,23 @@ const RequestProvider = ({
   const isLoading = notification.isLoading;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  if (data instanceof Blob) {
-    data = undefined;
-  }
-
-  if (error === null) {
-    error = undefined;
-  }
+  const fetchedData = useMemo(
+    () => (data instanceof Blob ? undefined : data),
+    [data],
+  );
+  const fetchedError = useMemo(
+    () => (error === null ? undefined : error),
+    [error],
+  );
 
   /**
    * TODO: SSE処理
    */
 
   return (
-    <requestContext.Provider value={{ data, error, isLoading }}>
+    <requestContext.Provider
+      value={{ data: fetchedData, error: fetchedError, isLoading }}
+    >
       {children}
     </requestContext.Provider>
   );
