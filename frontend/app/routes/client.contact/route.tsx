@@ -2,7 +2,10 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "お問い合わせ | ISURIDE" },
+    { name: "description", content: "お問い合わせ" },
+  ];
 };
 
 export default function Index() {

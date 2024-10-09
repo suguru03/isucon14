@@ -2,10 +2,13 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { Avatar } from "~/components/primitives/avatar/avatar";
 import { ButtonLink } from "~/components/primitives/button/button";
-import { useUser } from "../client/userProvider";
+import { useUser } from "../../contexts/user-context";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "お客様情報 | ISURIDE" },
+    { name: "description", content: "お客様情報" },
+  ];
 };
 
 export default function Index() {

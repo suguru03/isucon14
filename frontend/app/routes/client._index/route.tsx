@@ -1,18 +1,20 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useRequest } from "../client/userProvider";
+import { useRequest } from "../../contexts/user-context";
 import { Running } from "./requestComponent/running";
 import { Reception } from "./requestComponent/reception";
 import { Arrived } from "./requestComponent/arrived";
-import type { RequestStatusWithIdle } from "~/components/request/type";
+import type { FC } from "react";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "Top | ISURIDE" },
+    { name: "description", content: "目的地まで椅子で快適に移動しましょう" },
+  ];
 };
-function ClientRequest() {
-  const {
-    data: { status },
-  } = useRequest();
-  const requestStatus: RequestStatusWithIdle = status;
+
+const ClientRequest: FC = () => {
+  const { data } = useRequest();
+  const requestStatus = data?.status ?? "IDLE";
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
@@ -26,7 +28,7 @@ function ClientRequest() {
     default:
       return <div>unexpectedStatus: {requestStatus}</div>;
   }
-}
+};
 
 export default function ClientRequestWrapper() {
   return (
