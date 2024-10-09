@@ -131,11 +131,10 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}
 	for range 1 {
-		u, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
+		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {
 			return err
 		}
-		u.State = world.UserStateActive
 	}
 
 	lastLogTime := time.Now()

@@ -161,6 +161,11 @@ func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest)
 	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID}, nil
 }
 
+func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {
+	time.Sleep(s.latency)
+	return nil
+}
+
 type notificationConnectionImpl struct {
 	close func()
 }
@@ -261,11 +266,10 @@ func TestWorld(t *testing.T) {
 		}
 	}
 	for range 20 {
-		u, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
 		if err != nil {
 			t.Fatal(err)
 		}
-		u.State = UserStateActive
 	}
 
 	go client.MatchingLoop()
