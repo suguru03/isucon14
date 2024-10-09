@@ -4,10 +4,9 @@ import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
-
+import type { AppRequest } from "~/apiClient/apiSchemas";
+import type { RequestStatusWithIdle } from "~/components/request/type";
 export type AccessToken = string;
-export type ClientRequestStatus = RequestStatus | "IDLE";
 type User = {
   id: string;
   name: string;
@@ -17,8 +16,8 @@ type User = {
 const userContext = createContext<Partial<User>>({});
 const requestContext = createContext<{
   data:
-    | (Partial<AppRequest> & { status: ClientRequestStatus })
-    | { status: ClientRequestStatus };
+    | (Partial<AppRequest> & { status: RequestStatusWithIdle })
+    | { status: RequestStatusWithIdle };
   error?: AppGetNotificationError;
   isLoading: boolean;
 }>({ isLoading: false, data: { status: "IDLE" } });
@@ -45,7 +44,7 @@ const RequestProvider = ({
   const fetchedData = useMemo(() => {
     const status = (searchParams.get("debug_status") ??
       data?.status ??
-      "IDLE") as ClientRequestStatus;
+      "IDLE") as RequestStatusWithIdle;
     return data instanceof Blob ? { status } : { ...data, status };
   }, [data, searchParams]);
   const fetchedError = useMemo(
