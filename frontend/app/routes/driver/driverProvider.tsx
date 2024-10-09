@@ -34,7 +34,7 @@ const RequestProvider = ({
     },
   });
 
-  let { data, error } = notification;
+  const { data, error } = notification;
   const isLoading = notification.isLoading;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる

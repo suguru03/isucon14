@@ -1,9 +1,7 @@
 import { Button } from "~/components/primitives/button/button";
-import type { RequestComponentProps } from "./type";
+import type { RequestProps } from "./type";
 
-export const Reception: RequestComponentProps<
-  "IDLE" | "MATCHING" | "DISPATCHING"
-> = ({ status }) => {
+export const Reception = ({ status }: RequestProps< "IDLE" | "MATCHING" | "DISPATCHING">) => {
   return (
     <>
       {status === "IDLE" ? (

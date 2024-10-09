@@ -23,7 +23,7 @@ function ClientRequest() {
     case "CARRYING":
       return <Running status={requestStatus} />;
     case "ARRIVED":
-      return <Arrived status={requestStatus} />;
+      return <Arrived />;
     default:
       return <div>unexpectedStatus: {requestStatus}</div>;
   }
