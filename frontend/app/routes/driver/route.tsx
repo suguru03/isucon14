@@ -5,7 +5,10 @@ import { CircleIcon } from "~/components/icon/circle";
 import { DriverProvider } from "./driverProvider";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "椅子 | ISURIDE" },
+    { name: "description", content: "isucon14" },
+  ];
 };
 
 export default function DriverLayout() {

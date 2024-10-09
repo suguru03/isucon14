@@ -5,18 +5,12 @@ import {
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { ChairRequest } from "~/apiClient/apiSchemas";
+import { User } from "~/types";
 
-export type AccessToken = string;
-
-type User = {
-  id: string;
-  name: string;
-  accessToken: AccessToken;
-};
 const driverContext = createContext<Partial<User>>({});
 const requestContext = createContext<{
   data?: ChairRequest;
-  error?: ChairGetNotificationError;
+  error?: ChairGetNotificationError | null;
   isLoading: boolean;
 }>({ isLoading: false });
 
@@ -27,24 +21,17 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  const notification = useChairGetNotification({
+  const { data, error, isLoading } = useChairGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
 
-  const { data, error } = notification;
-  const isLoading = notification.isLoading;
-
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   const fetchedData = useMemo(
     () => (data instanceof Blob ? undefined : data),
     [data],
-  );
-  const fetchedError = useMemo(
-    () => (error === null ? undefined : error),
-    [error],
   );
 
   /**
@@ -52,9 +39,7 @@ const RequestProvider = ({
    */
 
   return (
-    <requestContext.Provider
-      value={{ data: fetchedData, error: fetchedError, isLoading }}
-    >
+    <requestContext.Provider value={{ data: fetchedData, error, isLoading }}>
       {children}
     </requestContext.Provider>
   );
@@ -62,10 +47,9 @@ const RequestProvider = ({
 
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? undefined;
-  const id = searchParams.get("user_id") ?? undefined;
-
-  if (accessToken === undefined || id === undefined) {
+  const accessToken = searchParams.get("access_token");
+  const id = searchParams.get("user_id");
+  if (accessToken === null || id === null) {
     return <div>must set access_token and user_id</div>;
   }
 
@@ -83,4 +67,5 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useDriver = () => useContext(driverContext);
+
 export const useRequest = () => useContext(requestContext);

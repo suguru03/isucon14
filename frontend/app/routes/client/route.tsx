@@ -6,7 +6,10 @@ import { Avatar } from "~/components/primitives/avatar/avatar";
 import { UserProvider } from "./userProvider";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "Top | ISURIDE" },
+    { name: "description", content: "目的地まで椅子で快適に移動しましょう" },
+  ];
 };
 
 const ClientHeader = () => {
