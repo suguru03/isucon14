@@ -17,10 +17,6 @@ type AppPostRequestEvaluateRes interface {
 	appPostRequestEvaluateRes()
 }
 
-type ChairGetInquiryRes interface {
-	chairGetInquiryRes()
-}
-
 type ChairGetNotificationRes interface {
 	chairGetNotificationRes()
 }
