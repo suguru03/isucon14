@@ -453,6 +453,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(c.RequestHistory) {
 				if r.ServerID == data.ServerRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.Chair = RequestStatusCompleted
 					return nil
 				}
 			}
