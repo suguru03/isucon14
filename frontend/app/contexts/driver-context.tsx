@@ -41,6 +41,21 @@ const RequestProvider = ({
       fetchedData = {};
     }
 
+    if (searchParams.get("debug_status")) {
+      fetchedData = {
+        request_id: "__DUMMY_REQUEST_ID__",
+        user: {
+          id: "1234",
+          name: "ゆーざー",
+        },
+        destination_coordinate: {
+          latitude: 34.12345678,
+          longitude: 120.447162,
+        },
+        ...fetchedData,
+      };
+    }
+
     // TODO:
     return { ...fetchedData, status } as ChairRequest;
   }, [data, searchParams]);
