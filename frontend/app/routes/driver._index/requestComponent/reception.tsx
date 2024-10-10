@@ -1,11 +1,33 @@
+import { useEffect, useState } from "react";
+import {
+  useChairPostActivate,
+  useChairPostDeactivate,
+} from "~/apiClient/apiComponents";
 import { Button } from "~/components/primitives/button/button";
 import type { RequestProps } from "~/components/request/type";
-import { useState } from "react";
-
-export const ConfirmReception = () => {};
+import { useDriver } from "~/contexts/driver-context";
 
 export const Reception = ({ status }: RequestProps<"IDLE" | "MATCHING">) => {
+  const driver = useDriver();
+  const { mutate: postChairActivate } = useChairPostActivate();
+  const { mutate: postChairDeactivate } = useChairPostDeactivate();
+
   const [isReception, setReception] = useState<boolean>(false);
+  useEffect(() => {
+    if (isReception) {
+      postChairActivate({
+        headers: {
+          Authorization: `Bearer ${driver.accessToken}`,
+        },
+      });
+    } else {
+      postChairDeactivate({
+        headers: {
+          Authorization: `Bearer ${driver.accessToken}`,
+        },
+      });
+    }
+  }, [isReception]); //eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === "MATCHING") {
     /**
