@@ -1,5 +1,5 @@
 import { vitePlugin as remix } from "@remix-run/dev";
-import { readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
@@ -14,57 +14,59 @@ const DEFAULT_PORT = 3000;
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
 const getLoginedSearchParamURL = async (target: "app" | "chair") => {
-  let response: Response
-  if (target === "app") {
-    response = await fetch(
-      "http://localhost:8080/app/register",
-      {
-        body: JSON.stringify({
-          username: "testIsuconUser",
-          firstname: "isucon",
-          lastname: "isucon",
-          date_of_birth: "11111111",
-        } satisfies AppPostRegisterRequestBody),
-        method: "POST",
-      },
-    );
-  } else {
-    // POST /provider/register => POST /chair/register
-    response = await fetch(
-      "http://localhost:8080/provider/register",
-      {
-        body: JSON.stringify({
-          name: "isuconProvider"
-        } satisfies ProviderPostRegisterRequestBody),
-        method: "POST",
-      },
-    );
-    const json = (await response.json()) as Record<string, string>;
-    response = await fetch(
-      "http://localhost:8080/chair/register",
-      {
-        headers: {
-          Authorization: `Bearer ${json["access_token"]}`
-        },
-        body: JSON.stringify({
-          name: "isuconChair001",
-          model: "isuconChair",
-        } satisfies ChairPostRegisterRequestBody),
-        method: "POST",
-      },
-    )
-  }
+  let json: Record<string, string>
 
-  let json: Record<string, string>;
-  if (response.status === 500) {
+  if (existsSync(`./${target}LocalLogin`)) {
     json = JSON.parse(
       readFileSync(`./${target}LocalLogin`).toString(),
     ) as typeof json;
   } else {
-    json = (await response.json()) as typeof json;
+    if (target === "app") {
+      const response = await fetch(
+        "http://localhost:8080/app/register",
+        {
+          body: JSON.stringify({
+            username: "testIsuconUser",
+            firstname: "isucon",
+            lastname: "isucon",
+            date_of_birth: "11111111",
+          } satisfies AppPostRegisterRequestBody),
+          method: "POST",
+        },
+      );
+      json = await response.json() as typeof json;
+    } else {
+      // POST /provider/register => POST /chair/register
+      const providerResponse = await fetch(
+        "http://localhost:8080/provider/register",
+        {
+          body: JSON.stringify({
+            name: "isuconProvider"
+          } satisfies ProviderPostRegisterRequestBody),
+          method: "POST",
+        },
+      );
+      const providerJSON = (await providerResponse.json()) as Record<string, string>;
+      const response = await fetch(
+        "http://localhost:8080/chair/register",
+        {
+          headers: {
+            Authorization: `Bearer ${providerJSON["access_token"]}`
+          },
+          body: JSON.stringify({
+            name: "isuconChair001",
+            model: "isuconChair",
+          } satisfies ChairPostRegisterRequestBody),
+          method: "POST",
+        },
+      );
+      json = (await response.json()) as typeof json;
+    }
+
     writeFileSync(`./${target}LocalLogin`, JSON.stringify(json));
     console.log("writeFileSync!", json);
   }
+
   const id: string = json["id"];
   const accessToken: string = json["access_token"];
   const path = target === "app" ? "client" : "driver";
