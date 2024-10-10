@@ -135,7 +135,7 @@ type Invoker interface {
 	// サービスを初期化する.
 	//
 	// POST /initialize
-	PostInitialize(ctx context.Context) (*PostInitializeOK, error)
+	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
 }
 
 // Client implements OAS client.
@@ -1084,12 +1084,12 @@ func (c *Client) sendChairPostRequestPayment(ctx context.Context, params ChairPo
 // サービスを初期化する.
 //
 // POST /initialize
-func (c *Client) PostInitialize(ctx context.Context) (*PostInitializeOK, error) {
-	res, err := c.sendPostInitialize(ctx)
+func (c *Client) PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error) {
+	res, err := c.sendPostInitialize(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendPostInitialize(ctx context.Context) (res *PostInitializeOK, err error) {
+func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitializeReq) (res *PostInitializeOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -1099,6 +1099,9 @@ func (c *Client) sendPostInitialize(ctx context.Context) (res *PostInitializeOK,
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostInitializeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)

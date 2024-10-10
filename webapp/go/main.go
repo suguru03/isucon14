@@ -110,7 +110,17 @@ func setup() http.Handler {
 	return mux
 }
 
+type postInitializeRequest struct {
+	PaymentServer string `json:"payment_server"`
+}
+
 func postInitialize(w http.ResponseWriter, r *http.Request) {
+	req := &postInitializeRequest{}
+	if err := bindJSON(r, req); err != nil {
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+
 	tables := []string{
 		"chair_locations",
 		"ride_requests",
@@ -138,6 +148,7 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	paymentURL = req.PaymentServer
 
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write([]byte(`{"language":"golang"}`))

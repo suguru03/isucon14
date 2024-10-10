@@ -13,6 +13,17 @@ paths:
       summary: サービスを初期化する
       description: ''
       operationId: post-initialize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_server:
+                  type: string
+                  description: 決済サーバーアドレス
+              required:
+                - payment_server
       responses:
         '200':
           description: サービスの初期化が完了した

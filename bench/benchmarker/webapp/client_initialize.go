@@ -1,12 +1,14 @@
 package webapp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"go.uber.org/zap"
 )
 
@@ -14,8 +16,13 @@ type PostInitializeResponse struct {
 	Language string `json:"language"`
 }
 
-func (c *Client) PostInitialize(ctx context.Context) (*PostInitializeResponse, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/initialize", nil)
+func (c *Client) PostInitialize(ctx context.Context, reqBody *api.PostInitializeReq) (*PostInitializeResponse, error) {
+	reqBodyBuf, err := reqBody.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/initialize", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
