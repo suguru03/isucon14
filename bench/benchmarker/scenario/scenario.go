@@ -144,7 +144,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			Provider:          provider,
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
-			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(23)),
+			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
 		})
 		if err != nil {
 			return err
