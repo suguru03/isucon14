@@ -139,7 +139,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 		provider = _provider
 	}
-	for range 1 {
+	for range 10 {
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 			Provider:          provider,
 			Region:            region,
@@ -150,7 +150,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 	}
-	for range 1 {
+	for range 10 {
 		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {
 			return err
