@@ -7,19 +7,20 @@ import {
   MouseEventHandler,
   TouchEventHandler,
 } from "react";
+import { twMerge } from "tailwind-merge";
 
 const size = 5000;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
   const grad = ctx.createLinearGradient(0, 0, size, 0);
   grad.addColorStop(0, "#f2f2f2");
-  grad.addColorStop(1, "#e4e4e4");
+  grad.addColorStop(1, "#e8e8e8");
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
 
   ctx.strokeStyle = "#dddddd";
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 12;
   ctx.beginPath();
 
   for (let v = 50; v < size; v += 50) {
@@ -60,7 +61,6 @@ export const Map: FC = () => {
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
-      console.log(entries[0].contentRect);
       setOuterRect(entries[0].contentRect);
     });
     if (outerRef.current) {
@@ -145,12 +145,20 @@ export const Map: FC = () => {
   }, [isDrag, movingStartPagePos, movingStartPos, outerRect]);
 
   return (
-    <div className="w-full h-full relative overflow-hidden" ref={outerRef}>
+    <div
+      className={twMerge(
+        "w-full h-full relative overflow-hidden",
+        isDrag && "cursor-grab",
+      )}
+      ref={outerRef}
+    >
       <canvas
         width={size}
         height={size}
         className="absolute"
-        style={{ top: y, left: x }}
+        style={{
+          transform: `translate(${x}px, ${y}px)`,
+        }}
         ref={canvasRef}
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
