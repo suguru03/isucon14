@@ -28,41 +28,43 @@ export default function ClientRegister() {
   return (
     <>
       <Form
-        className="mx-auto p-6 bg-white rounded-lg shadow-md space-y-4 flex flex-col"
+        className="w-full h-full p-4 bg-white rounded-lg shadow-md flex flex-col gap-4"
         method="POST"
       >
-        <label htmlFor="username">Username:</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <label htmlFor="firstname">Firstname:</label>
-        <input
-          type="text"
-          id="firstname"
-          name="firstname"
-          className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <label htmlFor="lastname">Lastname:</label>
-        <input
-          type="text"
-          id="lastname"
-          name="lastname"
-          className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <label htmlFor="date_of_birth">dateOfBirth:</label>
-        <input
-          type="text"
-          id="date_of_birth"
-          name="date_of_birth"
-          className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
+        <div>
+          <label htmlFor="username">Username:</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <label htmlFor="firstname">Firstname:</label>
+          <input
+            type="text"
+            id="firstname"
+            name="firstname"
+            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <label htmlFor="lastname">Lastname:</label>
+          <input
+            type="text"
+            id="lastname"
+            name="lastname"
+            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <label htmlFor="date_of_birth">dateOfBirth:</label>
+          <input
+            type="text"
+            id="date_of_birth"
+            name="date_of_birth"
+            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
         <button type="submit">登録</button>
       </Form>
     </>
