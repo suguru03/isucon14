@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { redirect, ClientActionFunctionArgs , Form } from "@remix-run/react";
+import { redirect, ClientActionFunctionArgs, Form } from "@remix-run/react";
 import { fetchAppPostRegister } from "~/apiClient/apiComponents";
 
 export const meta: MetaFunction = () => {
