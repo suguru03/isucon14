@@ -215,8 +215,10 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 	}
 	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
-		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched {
+		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
+		} else if request.Statuses.User == RequestStatusDispatched && request.Statuses.Desired == RequestStatusArrived && status == RequestStatusCarrying {
+			// もう到着しているが、ユーザー側の通知が遅延していて、DISPATCHED状態からまだCARRYINGに遷移してないときは、CARRYINGを許容する
 		} else {
 			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		}
