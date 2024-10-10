@@ -1,4 +1,4 @@
-import { redirect, useSearchParams } from "@remix-run/react";
+import { useSearchParams } from "@remix-run/react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import {
   useAppGetNotification,
@@ -10,10 +10,10 @@ import type { User } from "~/types";
 const UserContext = createContext<Partial<User>>({});
 
 const RequestContext = createContext<{
-  data: AppRequest | {status?: RequestStatus};
+  data: AppRequest | { status?: RequestStatus };
   error?: AppGetNotificationError | null;
   isLoading: boolean;
-}>({ isLoading: false , data: {status: undefined}});
+}>({ isLoading: false, data: { status: undefined } });
 
 const RequestProvider = ({
   children,
@@ -33,8 +33,8 @@ const RequestProvider = ({
   const [searchParams] = useSearchParams();
   const responseData = useMemo(() => {
     const status = (searchParams.get("debug_status") ?? undefined) as
-    | RequestStatus
-    | undefined;
+      | RequestStatus
+      | undefined;
 
     let fetchedData: Partial<AppRequest> = data ?? {};
     if (data instanceof Blob) {
@@ -65,29 +65,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const user: Partial<User> = useMemo(() => {
     if (accessTokenParameter !== null && userIdParameter !== null) {
       requestIdleCallback(() => {
-        sessionStorage.setItem("access_token", accessTokenParameter)
-        sessionStorage.setItem("user_id", userIdParameter)
-      })
+        sessionStorage.setItem("user_access_token", accessTokenParameter);
+        sessionStorage.setItem("user_id", userIdParameter);
+      });
       return {
         accessToken: accessTokenParameter,
         id: userIdParameter,
-        name: "ISUCON太郎"
-      }
+        name: "ISUCON太郎",
+      };
     }
-    const accessToken = sessionStorage.getItem("access_token") ?? undefined;
+    const accessToken =
+      sessionStorage.getItem("user_access_token") ?? undefined;
     const id = sessionStorage.getItem("user_id") ?? undefined;
-    return  {
+    return {
       accessToken,
       id,
-      name: "ISUCON太郎"
-    }
-  }, [accessTokenParameter, userIdParameter])
+      name: "ISUCON太郎",
+    };
+  }, [accessTokenParameter, userIdParameter]);
 
   return (
-    <UserContext.Provider
-      value={user}
-    >
-      <RequestProvider accessToken={user.accessToken ?? ""}>{children}</RequestProvider>
+    <UserContext.Provider value={user}>
+      <RequestProvider accessToken={user.accessToken ?? ""}>
+        {children}
+      </RequestProvider>
     </UserContext.Provider>
   );
 };
