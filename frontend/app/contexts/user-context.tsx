@@ -29,13 +29,13 @@ const RequestProvider = ({
     },
   });
   const { data, error, isLoading } = notificationResponse;
-
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   const [searchParams] = useSearchParams();
   const fetchedData = useMemo(() => {
     if (data instanceof Blob) {
       return undefined;
     }
+
     // TODO:
     const status = (searchParams.get("debug_status") ?? undefined) as
       | RequestStatus
@@ -57,12 +57,10 @@ const RequestProvider = ({
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? undefined;
-  const id = searchParams.get("user_id") ?? undefined;
+  const accessToken = searchParams.get("access_token") ?? "";
+  const id = searchParams.get("user_id") ?? "";
 
-  if (accessToken === undefined || id === undefined) {
-    return <div>must set access_token and user_id</div>;
-  }
+
 
   return (
     <UserContext.Provider
