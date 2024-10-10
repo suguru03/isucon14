@@ -21,9 +21,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       chair_no: String(formData.get("chair_no")) ?? "",
     },
   });
-  return redirect(
-    `/driver?access_token=${data.access_token}&user_id=${data.id}`,
-  );
+  return redirect(`/driver?access_token=${data.access_token}&id=${data.id}`);
 };
 
 export default function DriverRegister() {
