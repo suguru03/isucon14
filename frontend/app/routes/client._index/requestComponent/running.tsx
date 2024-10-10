@@ -1,4 +1,4 @@
-import type { RequestProps } from "./type";
+import type { RequestProps } from "~/components/request/type";
 
 export const Running = ({
   status,

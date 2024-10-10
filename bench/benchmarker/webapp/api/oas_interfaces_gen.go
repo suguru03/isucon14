@@ -40,3 +40,7 @@ type ChairPostRequestDenyRes interface {
 type ChairPostRequestDepartRes interface {
 	chairPostRequestDepartRes()
 }
+
+type ChairPostRequestPaymentRes interface {
+	chairPostRequestPaymentRes()
+}

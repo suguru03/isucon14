@@ -1,12 +1,34 @@
-import { ButtonLink } from "~/components/primitives/button/button";
+import type { MetaFunction } from "@remix-run/node";
+import { useRequest } from "../../contexts/user-context";
+import { Pickup } from "./requestComponent/pickup";
+import { Reception } from "./requestComponent/reception";
+import { Carry } from "./requestComponent/carry";
 
-export default function Index() {
+export const meta: MetaFunction = () => {
+  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+};
+function DriverRequest() {
+  const { data } = useRequest();
+  const requestStatus = data?.status ?? "IDLE";
+  switch (requestStatus) {
+    case "IDLE":
+    case "MATCHING":
+      return <Reception status={requestStatus} />;
+    case "DISPATCHING":
+    case "DISPATCHED":
+      return <Pickup status={requestStatus} />;
+    case "CARRYING":
+    case "ARRIVED":
+      return <Carry status={requestStatus} />;
+    default:
+      return <div>unexpectedStatus: {requestStatus}</div>;
+  }
+}
+
+export default function DriverRequestWrapper() {
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 text-center content-center bg-blue-200">Map</div>
-      <div className="px-4 py-16 flex justify-center border-t">
-        <ButtonLink to="#">受付開始</ButtonLink>
-      </div>
+      <DriverRequest />
     </div>
   );
 }

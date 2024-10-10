@@ -23,6 +23,8 @@ type Client interface {
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
 	RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error)
+	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
+	RegisterPaymentMethods(ctx *Context, user *User) error
 	// ConnectUserNotificationStream ユーザー用の通知ストリームに接続する
 	ConnectUserNotificationStream(ctx *Context, user *User, receiver NotificationReceiverFunc) (NotificationStream, error)
 	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する

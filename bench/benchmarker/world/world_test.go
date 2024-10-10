@@ -76,7 +76,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Requ
 
 func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error {
 	time.Sleep(s.latency)
-	list := s.deniedRequests.GetOrSetDefault(serverRequestID, concurrent.NewSimpleSet[string])
+	list, _ := s.deniedRequests.GetOrSetDefault(serverRequestID, concurrent.NewSimpleSet[string])
 	list.Add(chair.ServerID)
 	c, ok := s.chairDB.Get(chair.ServerID)
 	if !ok {
@@ -161,6 +161,11 @@ func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest)
 	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID}, nil
 }
 
+func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {
+	time.Sleep(s.latency)
+	return nil
+}
+
 type notificationConnectionImpl struct {
 	close func()
 }
@@ -184,7 +189,7 @@ func (s *FastServerStub) ConnectChairNotificationStream(ctx *Context, chair *Cha
 func (s *FastServerStub) MatchingLoop() {
 	for entry := range s.requestQueue {
 		matched := false
-		denied := s.deniedRequests.GetOrSetDefault(entry.ServerID, concurrent.NewSimpleSet[string])
+		denied, _ := s.deniedRequests.GetOrSetDefault(entry.ServerID, concurrent.NewSimpleSet[string])
 		for _, chair := range s.chairDB.Iter() {
 			chair.Lock()
 			if chair.Active && chair.AssignedRequest == nil && !denied.Has(chair.ServerID) {
@@ -261,11 +266,10 @@ func TestWorld(t *testing.T) {
 		}
 	}
 	for range 20 {
-		u, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
 		if err != nil {
 			t.Fatal(err)
 		}
-		u.State = UserStateActive
 	}
 
 	go client.MatchingLoop()

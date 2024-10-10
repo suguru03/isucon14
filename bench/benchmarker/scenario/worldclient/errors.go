@@ -36,6 +36,8 @@ const (
 	ErrorCodeFailedToRegisterDriver
 	// ErrorCodeFailedToPostRequest リクエスト送信に失敗したエラー
 	ErrorCodeFailedToPostRequest
+	// ErrorCodeFailedToPostPaymentMethods ユーザー支払い情報登録に失敗したエラー
+	ErrorCodeFailedToPostPaymentMethods
 )
 
 type codeError struct {
