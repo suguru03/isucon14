@@ -1,4 +1,5 @@
 import { PropsWithChildren, useRef } from "react";
+import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 
@@ -24,13 +25,11 @@ export const ReceptionMapModal = ({
 
   return (
     <Modal ref={modalRef} onClose={onCloseModal}>
-      <div className="flex flex-col items-center space-y-12 mt-4">
-        <div className="w-full h-[60vh] bg-blue-200 flex items-center justify-center">
-          Map
+      <div className="flex flex-col items-center space-y-12 mt-4 h-full">
+        <div className="flex-grow w-full max-h-[75%]">
+          <Map />
         </div>
-        <div className="w-full block">
-          <Button onClick={handleCloseModal}>{children}</Button>
-        </div>
+        <Button onClick={handleCloseModal}>{children}</Button>
       </div>
     </Modal>
   );
