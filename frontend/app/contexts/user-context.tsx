@@ -1,16 +1,22 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type {
+  AppRequest,
+  Coordinate,
+  RequestStatus,
+} from "~/apiClient/apiSchemas";
 import type { User } from "~/types";
 
 const UserContext = createContext<Partial<User>>({});
 
 const RequestContext = createContext<{
-  data: AppRequest | { status?: RequestStatus };
+  data:
+    | AppRequest
+    | { status?: RequestStatus; destination_coordinate?: Coordinate };
   error?: AppGetNotificationError | null;
   isLoading: boolean;
 }>({ isLoading: false, data: { status: undefined } });
@@ -35,6 +41,13 @@ const RequestProvider = ({
     const status = (searchParams.get("debug_status") ?? undefined) as
       | RequestStatus
       | undefined;
+    const destination_coordinate = ((): Coordinate | undefined => {
+      // expected format: 123,456
+      const v = searchParams.get("debug_destination_coordinate") ?? "";
+      const m = v.match(/(\d+),(\d+)/);
+      if (!m) return;
+      return { latitude: Number(m[1]), longitude: Number(m[2]) };
+    })();
 
     let fetchedData: Partial<AppRequest> = data ?? {};
     if (data instanceof Blob) {
@@ -42,7 +55,7 @@ const RequestProvider = ({
     }
 
     // TODO:
-    return { ...fetchedData, status } as AppRequest;
+    return { ...fetchedData, status, destination_coordinate } as AppRequest;
   }, [data, searchParams]);
 
   /**
