@@ -13,6 +13,7 @@ type UserState int
 
 const (
 	UserStateInactive UserState = iota
+	UserStatePaymentMethodsNotRegister
 	UserStateActive
 )
 
@@ -34,6 +35,8 @@ type User struct {
 	RegisteredData RegisteredUserData
 	// AccessToken サーバーアクセストークン
 	AccessToken string
+	// PaymentToken 支払いトークン
+	PaymentToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
 	// NotificationConn 通知ストリームコネクション
@@ -86,6 +89,17 @@ func (u *User) Tick(ctx *Context) error {
 	}
 
 	switch {
+	// 支払いトークンが未登録
+	case u.State == UserStatePaymentMethodsNotRegister:
+		// トークン登録を試みる
+		err := ctx.client.RegisterPaymentMethods(ctx, u)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
+		}
+
+		// 成功したのでアクティブ状態にする
+		u.State = UserStateActive
+
 	// 進行中のリクエストが存在
 	case u.Request != nil:
 		switch u.Request.Statuses.User {
@@ -110,17 +124,19 @@ func (u *User) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusArrived:
-			// 送迎の評価を行う
-			// TODO 評価を送る
-			log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
-			err := ctx.client.SendEvaluation(ctx, u.Request)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToEvaluate, err)
-			}
+			// 送迎の評価及び支払いがまだの場合は行う
+			if !u.Request.Evaluated {
+				// TODO 評価を送る
+				log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
+				err := ctx.client.SendEvaluation(ctx, u.Request)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
 
-			// サーバーが評価を受理したので完了状態にする
-			u.Request.Statuses.Desired = RequestStatusCompleted
-			u.Request.Statuses.User = RequestStatusCompleted
+				// サーバーが評価を受理したので完了状態になるのを待機する
+				u.Request.Statuses.Desired = RequestStatusCompleted
+				u.Request.Evaluated = true
+			}
 
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
@@ -228,6 +244,11 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 		}
 	case *UserNotificationEventArrived:
 		err := u.ChangeRequestStatus(RequestStatusArrived)
+		if err != nil {
+			return err
+		}
+	case *UserNotificationEventCompleted:
+		err := u.ChangeRequestStatus(RequestStatusCompleted)
 		if err != nil {
 			return err
 		}

@@ -34,6 +34,12 @@ type Invoker interface {
 	//
 	// POST /app/inquiry
 	AppPostInquiry(ctx context.Context, request OptAppPostInquiryReq) error
+	// AppPostPaymentMethods invokes app-post-payment-methods operation.
+	//
+	// 決済トークンの登録.
+	//
+	// POST /app/payment-methods
+	AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error
 	// AppPostRegister invokes app-post-register operation.
 	//
 	// ユーザーが会員登録を行う.
@@ -118,12 +124,18 @@ type Invoker interface {
 	//
 	// POST /chair/requests/{request_id}/depart
 	ChairPostRequestDepart(ctx context.Context, params ChairPostRequestDepartParams) (ChairPostRequestDepartRes, error)
+	// ChairPostRequestPayment invokes chair-post-request-payment operation.
+	//
+	// 支払いを実行する.
+	//
+	// POST /chair/requests/{request_id}/payment
+	ChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (ChairPostRequestPaymentRes, error)
 	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
 	//
 	// POST /initialize
-	PostInitialize(ctx context.Context) (*PostInitializeOK, error)
+	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
 }
 
 // Client implements OAS client.
@@ -292,6 +304,45 @@ func (c *Client) sendAppPostInquiry(ctx context.Context, request OptAppPostInqui
 	defer resp.Body.Close()
 
 	result, err := decodeAppPostInquiryResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// AppPostPaymentMethods invokes app-post-payment-methods operation.
+//
+// 決済トークンの登録.
+//
+// POST /app/payment-methods
+func (c *Client) AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error {
+	_, err := c.sendAppPostPaymentMethods(ctx, request)
+	return err
+}
+
+func (c *Client) sendAppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (res *AppPostPaymentMethodsNoContent, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/payment-methods"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAppPostPaymentMethodsRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppPostPaymentMethodsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -973,17 +1024,72 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 	return result, nil
 }
 
+// ChairPostRequestPayment invokes chair-post-request-payment operation.
+//
+// 支払いを実行する.
+//
+// POST /chair/requests/{request_id}/payment
+func (c *Client) ChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (ChairPostRequestPaymentRes, error) {
+	res, err := c.sendChairPostRequestPayment(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (res ChairPostRequestPaymentRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/chair/requests/"
+	{
+		// Encode "request_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "request_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.RequestID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/payment"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeChairPostRequestPaymentResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // PostInitialize invokes post-initialize operation.
 //
 // サービスを初期化する.
 //
 // POST /initialize
-func (c *Client) PostInitialize(ctx context.Context) (*PostInitializeOK, error) {
-	res, err := c.sendPostInitialize(ctx)
+func (c *Client) PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error) {
+	res, err := c.sendPostInitialize(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendPostInitialize(ctx context.Context) (res *PostInitializeOK, err error) {
+func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitializeReq) (res *PostInitializeOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -993,6 +1099,9 @@ func (c *Client) sendPostInitialize(ctx context.Context) (res *PostInitializeOK,
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostInitializeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)

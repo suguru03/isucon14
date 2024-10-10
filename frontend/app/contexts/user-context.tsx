@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { redirect, useSearchParams } from "@remix-run/react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import {
   useAppGetNotification,
@@ -57,10 +57,11 @@ const RequestProvider = ({
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? "";
-  const id = searchParams.get("user_id") ?? "";
-
-
+  const accessToken = searchParams.get("access_token") ?? undefined;
+  const id = searchParams.get("user_id") ?? undefined;
+  if (accessToken === undefined || id === undefined) {
+    return redirect("/client/register")
+  }
 
   return (
     <UserContext.Provider

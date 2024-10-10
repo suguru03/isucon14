@@ -228,3 +228,32 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 			return *resultErr
 		}, nil
 }
+
+func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPostPaymentMethodsReq) (*api.AppPostPaymentMethodsNoContent, error) {
+	reqBodyBuf, err := reqBody.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.agent.NewRequest(http.MethodPost, "/app/payment-methods", bytes.NewReader(reqBodyBuf))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
+	resp, err := c.agent.Do(ctx, req)
+	if err != nil {
+		c.contestantLogger.Warn("POST /app/payment-methods のリクエストが失敗しました", zap.Error(err))
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		return nil, fmt.Errorf("POST /app/payment-methods へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+	}
+
+	resBody := &api.AppPostPaymentMethodsNoContent{}
+	return resBody, nil
+}

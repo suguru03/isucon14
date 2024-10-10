@@ -103,6 +103,9 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	if !ok {
 		return fmt.Errorf("chair not found")
 	}
+	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{}}
+	}
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventCompleted{ServerRequestID: req.ServerID}, afterFunc: func() {
 			c.Lock()
@@ -159,6 +162,11 @@ func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest)
 	c := &chairState{ServerID: ulid.Make().String(), Active: false}
 	s.chairDB.Set(c.ServerID, c)
 	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID}, nil
+}
+
+func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {
+	time.Sleep(s.latency)
+	return nil
 }
 
 type notificationConnectionImpl struct {
@@ -261,11 +269,10 @@ func TestWorld(t *testing.T) {
 		}
 	}
 	for range 20 {
-		u, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
 		if err != nil {
 			t.Fatal(err)
 		}
-		u.State = UserStateActive
 	}
 
 	go client.MatchingLoop()

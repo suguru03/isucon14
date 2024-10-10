@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   return (
-    <section className="font-sans p-8">
+    <main className="font-sans p-8">
       <h1 className="text-3xl font-bold">ISURIDE</h1>
       <ul className="mt-4 list-disc ps-8">
         <li>
@@ -27,6 +27,6 @@ export default function Index() {
           </Link>
         </li>
       </ul>
-    </section>
+    </main>
   );
 }
