@@ -86,7 +86,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 	}
 
 	// TODO: 決済サーバーアドレス
-	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: "http://127.0.0.1:12345"})
+	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: "http://localhost:12345"})
 	if err != nil {
 		return err
 	}
@@ -131,8 +131,17 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	}()
 
 	region := s.world.Regions[1]
+	var provider *world.Provider
+	for range 1 {
+		_provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{})
+		if err != nil {
+			return err
+		}
+		provider = _provider
+	}
 	for range 1 {
 		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
+			Provider:          provider,
 			Region:            region,
 			InitialCoordinate: world.RandomCoordinateOnRegion(region),
 			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(23)),

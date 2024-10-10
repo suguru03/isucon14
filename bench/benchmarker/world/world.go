@@ -1,7 +1,6 @@
 package world
 
 import (
-	"fmt"
 	"log"
 	"math/rand/v2"
 	"time"
@@ -28,6 +27,8 @@ type World struct {
 	Regions map[int]*Region
 	// UserDB 全ユーザーDB
 	UserDB *GenericDB[UserID, *User]
+	// ProviderDB 全プロバイダーDB
+	ProviderDB *GenericDB[ProviderID, *Provider]
 	// ChairDB 全椅子DB
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
@@ -58,6 +59,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 	return &World{
 		Regions:   map[int]*Region{1: region},
 		UserDB:    NewGenericDB[UserID, *User](),
+		ProviderDB: NewGenericDB[ProviderID, *Provider](),
 		ChairDB:   NewGenericDB[ChairID, *Chair](),
 		RequestDB: NewRequestDB(),
 		PaymentDB: NewPaymentDB(),
@@ -73,21 +75,31 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 func (w *World) Tick(ctx *Context) error {
 	var done bool
 
-	for _, c := range w.ChairDB.Iter() {
-		w.wg.Add(1)
-		go func() {
-			defer w.wg.Done()
-			err := c.Tick(ctx)
-			if err != nil {
-				w.HandleTickError(ctx, err)
-			}
-		}()
-	}
 	for _, u := range w.UserDB.Iter() {
 		w.wg.Add(1)
 		go func() {
 			defer w.wg.Done()
 			err := u.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
+	}
+	for _, p := range w.ProviderDB.Iter() {
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := p.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
+	}
+	for _, c := range w.ChairDB.Iter() {
+		w.wg.Add(1)
+		go func() {
+			defer w.wg.Done()
+			err := c.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
 			}
@@ -157,7 +169,34 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	return w.UserDB.Create(u), nil
 }
 
+type CreateProviderArgs struct {}
+
+// CreateProvider 仮想世界に椅子のプロバイダーを作成する
+func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provider, error) {
+	registeredData := RegisteredProviderData{
+		Name: random.GenerateProviderName(),
+	}
+
+	res, err := ctx.client.RegisterProvider(ctx, &RegisterProviderRequest{
+		Name: registeredData.Name,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
+	}
+
+	p := &Provider{
+		ServerID:          res.ServerProviderID,
+		RegisteredData:    registeredData,
+		AccessToken:       res.AccessToken,
+		Rand:              random.CreateChildRand(w.RootRand),
+	}
+	p.tickDone.Store(true)
+	return w.ProviderDB.Create(p), nil
+}
+
 type CreateChairArgs struct {
+	// Provider 椅子のプロバイダー
+	Provider *Provider
 	// Region 椅子を配置する地域
 	Region *Region
 	// InitialCoordinate 椅子の初期位置
@@ -169,22 +208,14 @@ type CreateChairArgs struct {
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
-		UserName:    random.GenerateUserName(),
-		FirstName:   random.GenerateFirstName(),
-		LastName:    random.GenerateLastName(),
-		DateOfBirth: random.GenerateDateOfBirth(),
-		// TODO model, noの扱い
-		ChairModel: "ISU_X",
-		ChairNo:    fmt.Sprintf("%d", rand.Uint32()),
+		Name:    random.GenerateChairName(),
+		// TODO modelの扱い
+		Model: random.GenerateChairModel(),
 	}
 
-	res, err := ctx.client.RegisterChair(ctx, &RegisterChairRequest{
-		UserName:    registeredData.UserName,
-		FirstName:   registeredData.FirstName,
-		LastName:    registeredData.LastName,
-		DateOfBirth: registeredData.DateOfBirth,
-		ChairModel:  registeredData.ChairModel,
-		ChairNo:     registeredData.ChairNo,
+	res, err := ctx.client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
+		Name:    registeredData.Name,
+		Model:  registeredData.Model,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)

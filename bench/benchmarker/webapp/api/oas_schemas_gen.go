@@ -11,36 +11,6 @@ type AppGetNotificationNoContent struct{}
 
 func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
-// AppPostInquiryNoContent is response for AppPostInquiry operation.
-type AppPostInquiryNoContent struct{}
-
-type AppPostInquiryReq struct {
-	// 件名.
-	Subject string `json:"subject"`
-	// 問い合わせ内容.
-	Body string `json:"body"`
-}
-
-// GetSubject returns the value of Subject.
-func (s *AppPostInquiryReq) GetSubject() string {
-	return s.Subject
-}
-
-// GetBody returns the value of Body.
-func (s *AppPostInquiryReq) GetBody() string {
-	return s.Body
-}
-
-// SetSubject sets the value of Subject.
-func (s *AppPostInquiryReq) SetSubject(val string) {
-	s.Subject = val
-}
-
-// SetBody sets the value of Body.
-func (s *AppPostInquiryReq) SetBody(val string) {
-	s.Body = val
-}
-
 // AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
 type AppPostPaymentMethodsNoContent struct{}
 
@@ -302,12 +272,10 @@ func (*AppRequest) appGetRequestRes()      {}
 type Chair struct {
 	// 椅子ID.
 	ID string `json:"id"`
-	// 椅子名.
+	// 椅子の名前.
 	Name string `json:"name"`
-	// 車種.
-	ChairModel string `json:"chair_model"`
-	// カーナンバー.
-	ChairNo string `json:"chair_no"`
+	// 椅子のモデル.
+	Model string `json:"model"`
 }
 
 // GetID returns the value of ID.
@@ -320,14 +288,9 @@ func (s *Chair) GetName() string {
 	return s.Name
 }
 
-// GetChairModel returns the value of ChairModel.
-func (s *Chair) GetChairModel() string {
-	return s.ChairModel
-}
-
-// GetChairNo returns the value of ChairNo.
-func (s *Chair) GetChairNo() string {
-	return s.ChairNo
+// GetModel returns the value of Model.
+func (s *Chair) GetModel() string {
+	return s.Model
 }
 
 // SetID sets the value of ID.
@@ -340,67 +303,9 @@ func (s *Chair) SetName(val string) {
 	s.Name = val
 }
 
-// SetChairModel sets the value of ChairModel.
-func (s *Chair) SetChairModel(val string) {
-	s.ChairModel = val
-}
-
-// SetChairNo sets the value of ChairNo.
-func (s *Chair) SetChairNo(val string) {
-	s.ChairNo = val
-}
-
-type ChairGetInquiriesOK struct {
-	Inquiries []ChairGetInquiriesOKInquiriesItem `json:"inquiries"`
-}
-
-// GetInquiries returns the value of Inquiries.
-func (s *ChairGetInquiriesOK) GetInquiries() []ChairGetInquiriesOKInquiriesItem {
-	return s.Inquiries
-}
-
-// SetInquiries sets the value of Inquiries.
-func (s *ChairGetInquiriesOK) SetInquiries(val []ChairGetInquiriesOKInquiriesItem) {
-	s.Inquiries = val
-}
-
-type ChairGetInquiriesOKInquiriesItem struct {
-	// 問い合わせID.
-	ID string `json:"id"`
-	// 件名.
-	Subject string `json:"subject"`
-	// 問い合わせ日時.
-	CreatedAt float64 `json:"created_at"`
-}
-
-// GetID returns the value of ID.
-func (s *ChairGetInquiriesOKInquiriesItem) GetID() string {
-	return s.ID
-}
-
-// GetSubject returns the value of Subject.
-func (s *ChairGetInquiriesOKInquiriesItem) GetSubject() string {
-	return s.Subject
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *ChairGetInquiriesOKInquiriesItem) GetCreatedAt() float64 {
-	return s.CreatedAt
-}
-
-// SetID sets the value of ID.
-func (s *ChairGetInquiriesOKInquiriesItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetSubject sets the value of Subject.
-func (s *ChairGetInquiriesOKInquiriesItem) SetSubject(val string) {
-	s.Subject = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *ChairGetInquiriesOKInquiriesItem) SetCreatedAt(val float64) {
-	s.CreatedAt = val
+// SetModel sets the value of Model.
+func (s *Chair) SetModel(val string) {
+	s.Model = val
 }
 
 // ChairGetNotificationNoContent is response for ChairGetNotification operation.
@@ -449,78 +354,30 @@ func (s *ChairPostRegisterCreated) SetID(val string) {
 }
 
 type ChairPostRegisterReq struct {
-	// 椅子名.
-	Username string `json:"username"`
-	// 名前.
-	Firstname string `json:"firstname"`
-	// 名字.
-	Lastname string `json:"lastname"`
-	// 生年月日.
-	DateOfBirth string `json:"date_of_birth"`
-	// 車種.
-	ChairModel string `json:"chair_model"`
-	// カーナンバー.
-	ChairNo string `json:"chair_no"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
 }
 
-// GetUsername returns the value of Username.
-func (s *ChairPostRegisterReq) GetUsername() string {
-	return s.Username
+// GetName returns the value of Name.
+func (s *ChairPostRegisterReq) GetName() string {
+	return s.Name
 }
 
-// GetFirstname returns the value of Firstname.
-func (s *ChairPostRegisterReq) GetFirstname() string {
-	return s.Firstname
+// GetModel returns the value of Model.
+func (s *ChairPostRegisterReq) GetModel() string {
+	return s.Model
 }
 
-// GetLastname returns the value of Lastname.
-func (s *ChairPostRegisterReq) GetLastname() string {
-	return s.Lastname
+// SetName sets the value of Name.
+func (s *ChairPostRegisterReq) SetName(val string) {
+	s.Name = val
 }
 
-// GetDateOfBirth returns the value of DateOfBirth.
-func (s *ChairPostRegisterReq) GetDateOfBirth() string {
-	return s.DateOfBirth
-}
-
-// GetChairModel returns the value of ChairModel.
-func (s *ChairPostRegisterReq) GetChairModel() string {
-	return s.ChairModel
-}
-
-// GetChairNo returns the value of ChairNo.
-func (s *ChairPostRegisterReq) GetChairNo() string {
-	return s.ChairNo
-}
-
-// SetUsername sets the value of Username.
-func (s *ChairPostRegisterReq) SetUsername(val string) {
-	s.Username = val
-}
-
-// SetFirstname sets the value of Firstname.
-func (s *ChairPostRegisterReq) SetFirstname(val string) {
-	s.Firstname = val
-}
-
-// SetLastname sets the value of Lastname.
-func (s *ChairPostRegisterReq) SetLastname(val string) {
-	s.Lastname = val
-}
-
-// SetDateOfBirth sets the value of DateOfBirth.
-func (s *ChairPostRegisterReq) SetDateOfBirth(val string) {
-	s.DateOfBirth = val
-}
-
-// SetChairModel sets the value of ChairModel.
-func (s *ChairPostRegisterReq) SetChairModel(val string) {
-	s.ChairModel = val
-}
-
-// SetChairNo sets the value of ChairNo.
-func (s *ChairPostRegisterReq) SetChairNo(val string) {
-	s.ChairNo = val
+// SetModel sets the value of Model.
+func (s *ChairPostRegisterReq) SetModel(val string) {
+	s.Model = val
 }
 
 // ChairPostRequestAcceptNoContent is response for ChairPostRequestAccept operation.
@@ -658,111 +515,9 @@ func (s *Error) SetMessage(val string) {
 
 func (*Error) appGetRequestRes()          {}
 func (*Error) appPostRegisterRes()        {}
-func (*Error) chairGetInquiryRes()        {}
 func (*Error) chairGetRequestRes()        {}
 func (*Error) chairPostRequestAcceptRes() {}
 func (*Error) chairPostRequestDenyRes()   {}
-
-// 問い合わせ内容.
-// Ref: #/components/schemas/InquiryContent
-type InquiryContent struct {
-	// 問い合わせID.
-	ID string `json:"id"`
-	// 件名.
-	Subject string `json:"subject"`
-	// 問い合わせ内容.
-	Body string `json:"body"`
-	// 問い合わせ日時.
-	CreatedAt float64 `json:"created_at"`
-}
-
-// GetID returns the value of ID.
-func (s *InquiryContent) GetID() string {
-	return s.ID
-}
-
-// GetSubject returns the value of Subject.
-func (s *InquiryContent) GetSubject() string {
-	return s.Subject
-}
-
-// GetBody returns the value of Body.
-func (s *InquiryContent) GetBody() string {
-	return s.Body
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *InquiryContent) GetCreatedAt() float64 {
-	return s.CreatedAt
-}
-
-// SetID sets the value of ID.
-func (s *InquiryContent) SetID(val string) {
-	s.ID = val
-}
-
-// SetSubject sets the value of Subject.
-func (s *InquiryContent) SetSubject(val string) {
-	s.Subject = val
-}
-
-// SetBody sets the value of Body.
-func (s *InquiryContent) SetBody(val string) {
-	s.Body = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *InquiryContent) SetCreatedAt(val float64) {
-	s.CreatedAt = val
-}
-
-func (*InquiryContent) chairGetInquiryRes() {}
-
-// NewOptAppPostInquiryReq returns new OptAppPostInquiryReq with value set to v.
-func NewOptAppPostInquiryReq(v AppPostInquiryReq) OptAppPostInquiryReq {
-	return OptAppPostInquiryReq{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAppPostInquiryReq is optional AppPostInquiryReq.
-type OptAppPostInquiryReq struct {
-	Value AppPostInquiryReq
-	Set   bool
-}
-
-// IsSet returns true if OptAppPostInquiryReq was set.
-func (o OptAppPostInquiryReq) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptAppPostInquiryReq) Reset() {
-	var v AppPostInquiryReq
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAppPostInquiryReq) SetTo(v AppPostInquiryReq) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAppPostInquiryReq) Get() (v AppPostInquiryReq, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAppPostInquiryReq) Or(d AppPostInquiryReq) AppPostInquiryReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
 
 // NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
 func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {
@@ -1086,38 +841,38 @@ func (o OptCoordinate) Or(d Coordinate) Coordinate {
 	return d
 }
 
-// NewOptFloat64 returns new OptFloat64 with value set to v.
-func NewOptFloat64(v float64) OptFloat64 {
-	return OptFloat64{
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptFloat64 is optional float64.
-type OptFloat64 struct {
-	Value float64
+// OptInt is optional int.
+type OptInt struct {
+	Value int
 	Set   bool
 }
 
-// IsSet returns true if OptFloat64 was set.
-func (o OptFloat64) IsSet() bool { return o.Set }
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptFloat64) Reset() {
-	var v float64
+func (o *OptInt) Reset() {
+	var v int
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptFloat64) SetTo(v float64) {
+func (o *OptInt) SetTo(v int) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptFloat64) Get() (v float64, ok bool) {
+func (o OptInt) Get() (v int, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1125,7 +880,7 @@ func (o OptFloat64) Get() (v float64, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptFloat64) Or(d float64) float64 {
+func (o OptInt) Or(d int) int {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1172,6 +927,52 @@ func (o OptPostInitializeReq) Get() (v PostInitializeReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostInitializeReq) Or(d PostInitializeReq) PostInitializeReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptProviderPostRegisterReq returns new OptProviderPostRegisterReq with value set to v.
+func NewOptProviderPostRegisterReq(v ProviderPostRegisterReq) OptProviderPostRegisterReq {
+	return OptProviderPostRegisterReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProviderPostRegisterReq is optional ProviderPostRegisterReq.
+type OptProviderPostRegisterReq struct {
+	Value ProviderPostRegisterReq
+	Set   bool
+}
+
+// IsSet returns true if OptProviderPostRegisterReq was set.
+func (o OptProviderPostRegisterReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProviderPostRegisterReq) Reset() {
+	var v ProviderPostRegisterReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProviderPostRegisterReq) SetTo(v ProviderPostRegisterReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProviderPostRegisterReq) Get() (v ProviderPostRegisterReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProviderPostRegisterReq) Or(d ProviderPostRegisterReq) ProviderPostRegisterReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1375,6 +1176,153 @@ func (s *PostInitializeReq) GetPaymentServer() string {
 // SetPaymentServer sets the value of PaymentServer.
 func (s *PostInitializeReq) SetPaymentServer(val string) {
 	s.PaymentServer = val
+}
+
+type ProviderGetSalesOK struct {
+	// プロバイダー全体の売上.
+	TotalSales OptInt `json:"total_sales"`
+	// 椅子ごとの売上情報.
+	Chairs []ProviderGetSalesOKChairsItem `json:"chairs"`
+	// モデルごとの売上情報.
+	Models []ProviderGetSalesOKModelsItem `json:"models"`
+}
+
+// GetTotalSales returns the value of TotalSales.
+func (s *ProviderGetSalesOK) GetTotalSales() OptInt {
+	return s.TotalSales
+}
+
+// GetChairs returns the value of Chairs.
+func (s *ProviderGetSalesOK) GetChairs() []ProviderGetSalesOKChairsItem {
+	return s.Chairs
+}
+
+// GetModels returns the value of Models.
+func (s *ProviderGetSalesOK) GetModels() []ProviderGetSalesOKModelsItem {
+	return s.Models
+}
+
+// SetTotalSales sets the value of TotalSales.
+func (s *ProviderGetSalesOK) SetTotalSales(val OptInt) {
+	s.TotalSales = val
+}
+
+// SetChairs sets the value of Chairs.
+func (s *ProviderGetSalesOK) SetChairs(val []ProviderGetSalesOKChairsItem) {
+	s.Chairs = val
+}
+
+// SetModels sets the value of Models.
+func (s *ProviderGetSalesOK) SetModels(val []ProviderGetSalesOKModelsItem) {
+	s.Models = val
+}
+
+type ProviderGetSalesOKChairsItem struct {
+	// 椅子ID.
+	ID OptString `json:"id"`
+	// 椅子名.
+	Name OptString `json:"name"`
+	// 椅子ごとの売上.
+	Sales OptInt `json:"sales"`
+}
+
+// GetID returns the value of ID.
+func (s *ProviderGetSalesOKChairsItem) GetID() OptString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *ProviderGetSalesOKChairsItem) GetName() OptString {
+	return s.Name
+}
+
+// GetSales returns the value of Sales.
+func (s *ProviderGetSalesOKChairsItem) GetSales() OptInt {
+	return s.Sales
+}
+
+// SetID sets the value of ID.
+func (s *ProviderGetSalesOKChairsItem) SetID(val OptString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *ProviderGetSalesOKChairsItem) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSales sets the value of Sales.
+func (s *ProviderGetSalesOKChairsItem) SetSales(val OptInt) {
+	s.Sales = val
+}
+
+type ProviderGetSalesOKModelsItem struct {
+	// 椅子モデル.
+	Model OptString `json:"model"`
+	// モデルごとの売上.
+	Sales OptInt `json:"sales"`
+}
+
+// GetModel returns the value of Model.
+func (s *ProviderGetSalesOKModelsItem) GetModel() OptString {
+	return s.Model
+}
+
+// GetSales returns the value of Sales.
+func (s *ProviderGetSalesOKModelsItem) GetSales() OptInt {
+	return s.Sales
+}
+
+// SetModel sets the value of Model.
+func (s *ProviderGetSalesOKModelsItem) SetModel(val OptString) {
+	s.Model = val
+}
+
+// SetSales sets the value of Sales.
+func (s *ProviderGetSalesOKModelsItem) SetSales(val OptInt) {
+	s.Sales = val
+}
+
+type ProviderPostRegisterCreated struct {
+	// アクセストークン.
+	AccessToken string `json:"access_token"`
+	// プロバイダーID.
+	ID string `json:"id"`
+}
+
+// GetAccessToken returns the value of AccessToken.
+func (s *ProviderPostRegisterCreated) GetAccessToken() string {
+	return s.AccessToken
+}
+
+// GetID returns the value of ID.
+func (s *ProviderPostRegisterCreated) GetID() string {
+	return s.ID
+}
+
+// SetAccessToken sets the value of AccessToken.
+func (s *ProviderPostRegisterCreated) SetAccessToken(val string) {
+	s.AccessToken = val
+}
+
+// SetID sets the value of ID.
+func (s *ProviderPostRegisterCreated) SetID(val string) {
+	s.ID = val
+}
+
+type ProviderPostRegisterReq struct {
+	// プロバイダー名.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *ProviderPostRegisterReq) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *ProviderPostRegisterReq) SetName(val string) {
+	s.Name = val
 }
 
 // 配車要求ステータス

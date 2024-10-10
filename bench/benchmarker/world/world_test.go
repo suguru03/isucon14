@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"iter"
 	"sync"
 	"testing"
 	"time"
@@ -157,7 +158,12 @@ func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (
 	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
 }
 
-func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error) {
+func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error) {
+	time.Sleep(s.latency)
+	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: ulid.Make().String()}, nil
+}
+
+func (s *FastServerStub) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
 	time.Sleep(s.latency)
 	c := &chairState{ServerID: ulid.Make().String(), Active: false}
 	s.chairDB.Set(c.ServerID, c)
@@ -258,8 +264,20 @@ func TestWorld(t *testing.T) {
 		}
 	}()
 
+	for range 5 {
+		_, err := world.CreateProvider(ctx, &CreateProviderArgs{})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	next, _ := iter.Pull2(world.ProviderDB.Iter())
 	for range 10 {
+		_, provider, ok := next()
+		if !ok {
+			next, _ = iter.Pull2(world.ProviderDB.Iter())
+		}
 		_, err := world.CreateChair(ctx, &CreateChairArgs{
+			Provider: provider,
 			Region:            region,
 			InitialCoordinate: RandomCoordinateOnRegion(region),
 			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),

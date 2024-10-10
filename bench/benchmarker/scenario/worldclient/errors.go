@@ -8,10 +8,12 @@ import (
 type ErrorCode int
 
 const (
-	// ErrorCodeNotFoundChairClient ChairClientが見つからないエラー
-	ErrorCodeNotFoundChairClient ErrorCode = iota + 10000
 	// ErrorCodeNotFoundUserClient UserClientが見つからないエラー
-	ErrorCodeNotFoundUserClient
+	ErrorCodeNotFoundUserClient ErrorCode = iota + 10000
+	// ErrorCodeNotFoundProviderClient ProviderClientが見つからないエラー
+	ErrorCodeNotFoundProviderClient
+	// ErrorCodeNotFoundChairClient ChairClientが見つからないエラー
+	ErrorCodeNotFoundChairClient 
 	// ErrorCodeFailedToPostCoordinate 座標送信に失敗したエラー
 	ErrorCodeFailedToPostCoordinate
 	// ErrorCodeFailedToPostAccept リクエスト受諾に失敗したエラー
@@ -26,14 +28,16 @@ const (
 	ErrorCodeFailedToPostActivate
 	// ErrorCodeFailedToPostDeactivate 配車受付の停止に失敗したエラー
 	ErrorCodeFailedToPostDeactivate
-	// ErrorCodeFailedToGetDriverRequest 運転手のリクエスト取得に失敗したエラー
-	ErrorCodeFailedToGetDriverRequest
+	// ErrorCodeFailedToGetChairRequest 椅子のリクエスト取得に失敗したエラー
+	ErrorCodeFailedToGetChairRequest
 	// ErrorCodeFailedToCreateWebappClient WebappClientの作成に失敗したエラー
 	ErrorCodeFailedToCreateWebappClient
 	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗したエラー
 	ErrorCodeFailedToRegisterUser
-	// ErrorCodeFailedToRegisterDriver 運転手登録に失敗したエラー
-	ErrorCodeFailedToRegisterDriver
+	// ErrorCodeFailedToRegisterProvider プロバイダー登録に失敗したエラー
+	ErrorCodeFailedToRegisterProvider
+	// ErrorCodeFailedToRegisterChair 椅子の登録に失敗したエラー
+	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToPostRequest リクエスト送信に失敗したエラー
 	ErrorCodeFailedToPostRequest
 	// ErrorCodeFailedToPostPaymentMethods ユーザー支払い情報登録に失敗したエラー

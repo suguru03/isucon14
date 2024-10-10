@@ -35,6 +35,8 @@ func requestPaymentGatewayPostPayment(param *paymentGatewayPostPaymentRequest) e
 	}
 	defer res.Body.Close()
 
+	fmt.Printf("&+v", res)
+
 	if res.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("unexpected status code (%d): %w", res.StatusCode, erroredUpstream)
 	}

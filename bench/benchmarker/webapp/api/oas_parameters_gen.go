@@ -14,20 +14,6 @@ type AppPostRequestEvaluateParams struct {
 	RequestID string
 }
 
-// ChairGetInquiriesParams is parameters of chair-get-inquiries operation.
-type ChairGetInquiriesParams struct {
-	// 取得件数.
-	Limit OptFloat64
-	// 取得カーソル.
-	Cursor OptString
-}
-
-// ChairGetInquiryParams is parameters of chair-get-inquiry operation.
-type ChairGetInquiryParams struct {
-	// 問い合わせID.
-	InquiryID string
-}
-
 // ChairGetRequestParams is parameters of chair-get-request operation.
 type ChairGetRequestParams struct {
 	// 配車要求ID.
@@ -56,4 +42,12 @@ type ChairPostRequestDepartParams struct {
 type ChairPostRequestPaymentParams struct {
 	// 配車要求ID.
 	RequestID string
+}
+
+// ProviderGetSalesParams is parameters of provider-get-sales operation.
+type ProviderGetSalesParams struct {
+	// 開始日（含む）.
+	Since string
+	// 終了日（含む）.
+	Until string
 }

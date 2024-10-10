@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  version: '1.0'
-  title: isu
+  version: "1.0"
+  title: ISURIDE API Specification
 servers:
-  - url: 'http://localhost:8080'
+  - url: "http://localhost:8080"
     description: api
 paths:
   /initialize:
@@ -11,7 +11,7 @@ paths:
       tags:
         - system
       summary: サービスを初期化する
-      description: ''
+      description: ""
       operationId: post-initialize
       requestBody:
         content:
@@ -25,7 +25,7 @@ paths:
               required:
                 - payment_server
       responses:
-        '200':
+        "200":
           description: サービスの初期化が完了した
           content:
             application/json:
@@ -75,7 +75,7 @@ paths:
                 - lastname
                 - date_of_birth
       responses:
-        '200':
+        "200":
           description: ユーザー登録が完了した
           content:
             application/json:
@@ -91,12 +91,12 @@ paths:
                 required:
                   - access_token
                   - id
-        '400':
+        "400":
           description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /app/payment-methods:
     post:
       tags:
@@ -115,7 +115,7 @@ paths:
               required:
                 - token
       responses:
-        '204':
+        "204":
           description: 決済トークンの登録に成功した
   /app/requests:
     post:
@@ -130,16 +130,16 @@ paths:
               type: object
               properties:
                 pickup_coordinate:
-                  $ref: '#/components/schemas/Coordinate'
+                  $ref: "#/components/schemas/Coordinate"
                   description: 配車位置
                 destination_coordinate:
-                  $ref: '#/components/schemas/Coordinate'
+                  $ref: "#/components/schemas/Coordinate"
                   description: 目的地
               required:
                 - pickup_coordinate
                 - destination_coordinate
       responses:
-        '202':
+        "202":
           description: 配車要求を受け付けた
           content:
             application/json:
@@ -151,28 +151,28 @@ paths:
                     description: 配車要求ID
                 required:
                   - request_id
-  '/app/requests/{request_id}':
+  "/app/requests/{request_id}":
     get:
       tags:
         - app
       summary: ユーザーが配車要求の状態を確認する
       operationId: app-get-request
       parameters:
-        - $ref: '#/components/parameters/request_id'
+        - $ref: "#/components/parameters/request_id"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppRequest'
-        '404':
+                $ref: "#/components/schemas/AppRequest"
+        "404":
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/app/requests/{request_id}/evaluate':
+                $ref: "#/components/schemas/Error"
+  "/app/requests/{request_id}/evaluate":
     post:
       tags:
         - app
@@ -199,44 +199,20 @@ paths:
               required:
                 - evaluation
       responses:
-        '204':
+        "204":
           description: ユーザーが椅子を評価した
-        '400':
+        "400":
           description: 椅子が目的地に到着していない、ユーザーが乗車していない、すでに到着しているなど
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: 存在しない配車要求
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /app/inquiry:
-    post:
-      tags:
-        - app
-      summary: ユーザーが問い合わせを送信する
-      operationId: app-post-inquiry
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                subject:
-                  type: string
-                  description: 件名
-                body:
-                  type: string
-                  description: 問い合わせ内容
-              required:
-                - subject
-                - body
-      responses:
-        '204':
-          description: 問い合わせ内容が送信できた
+                $ref: "#/components/schemas/Error"
   /app/notification:
     get:
       tags:
@@ -245,14 +221,105 @@ paths:
       description: 最新の自分の配車要求を取得します。
       operationId: app-get-notification
       responses:
-        '200':
+        "200":
           description: Server Sent Eventsで通知レスポンスが送信されます
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppRequest'
-        '204':
+                $ref: "#/components/schemas/AppRequest"
+        "204":
           description: 対象となる配車要求が存在しない場合
+  /provider/register:
+    post:
+      tags:
+        - provider
+      summary: 椅子プロバイダーが登録を行う
+      operationId: provider-post-register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: プロバイダー名
+              required:
+                - name
+      responses:
+        "201":
+          description: 椅子プロバイダー登録が完了した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: アクセストークン
+                  id:
+                    type: string
+                    description: プロバイダーID
+                required:
+                  - access_token
+                  - id
+  /provider/sales:
+    get:
+      tags:
+        - provider
+      summary: 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する
+      operationId: provider-get-sales
+      parameters:
+        - name: since
+          in: query
+          description: 開始日（含む）
+          required: true
+          schema:
+            type: string
+        - name: until
+          in: query
+          description: 終了日（含む）
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_sales:
+                    type: integer
+                    description: プロバイダー全体の売上
+                  chairs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 椅子ID
+                        name:
+                          type: string
+                          description: 椅子名
+                        sales:
+                          type: integer
+                          description: 椅子ごとの売上
+                    description: 椅子ごとの売上情報
+                  models:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                          description: 椅子モデル
+                        sales:
+                          type: integer
+                          description: モデルごとの売上
+                    description: モデルごとの売上情報
   /chair/register:
     post:
       tags:
@@ -265,33 +332,17 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                name:
                   type: string
-                  description: 椅子名
-                firstname:
+                  description: 椅子の名前
+                model:
                   type: string
-                  description: 名前
-                lastname:
-                  type: string
-                  description: 名字
-                date_of_birth:
-                  type: string
-                  description: 生年月日
-                chair_model:
-                  type: string
-                  description: 車種
-                chair_no:
-                  type: string
-                  description: カーナンバー
+                  description: 椅子のモデル
               required:
-                - username
-                - firstname
-                - lastname
-                - date_of_birth
-                - chair_model
-                - chair_no
+                - name
+                - model
       responses:
-        '201':
+        "201":
           description: 椅子登録が完了した
           content:
             application/json:
@@ -312,7 +363,7 @@ paths:
       tags:
         - chair
       summary: 椅子が配車受付を開始する
-      description: ''
+      description: ""
       operationId: chair-post-activate
       requestBody:
         content:
@@ -320,14 +371,14 @@ paths:
             schema:
               type: object
       responses:
-        '204':
+        "204":
           description: サービスが椅子が配車受付を開始したことを了解した
   /chair/deactivate:
     post:
       tags:
         - chair
       summary: 椅子が配車受付を停止する
-      description: ''
+      description: ""
       operationId: chair-post-deactivate
       requestBody:
         content:
@@ -335,7 +386,7 @@ paths:
             schema:
               type: object
       responses:
-        '204':
+        "204":
           description: サービスが椅子が配車受付を停止したことを了解した
   /chair/coordinate:
     post:
@@ -347,11 +398,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Coordinate'
+              $ref: "#/components/schemas/Coordinate"
       responses:
-        '204':
+        "204":
           description: サービスが椅子の座標を認識した
-  '/chair/requests/{request_id}':
+  "/chair/requests/{request_id}":
     get:
       tags:
         - chair
@@ -359,55 +410,55 @@ paths:
       description: 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
       operationId: chair-get-request
       parameters:
-        - $ref: '#/components/parameters/request_id'
+        - $ref: "#/components/parameters/request_id"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChairRequest'
-        '404':
+                $ref: "#/components/schemas/ChairRequest"
+        "404":
           description: 存在しない配車要求、対象の椅子にマッチングされていない配車要求を取得しようとした場合など
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/chair/requests/{request_id}/accept':
+                $ref: "#/components/schemas/Error"
+  "/chair/requests/{request_id}/accept":
     post:
       tags:
         - chair
       summary: 椅子が配車要求を受理する
       operationId: chair-post-request-accept
       parameters:
-        - $ref: '#/components/parameters/request_id'
+        - $ref: "#/components/parameters/request_id"
       responses:
-        '204':
+        "204":
           description: No Content
-        '404':
+        "404":
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/chair/requests/{request_id}/deny':
+                $ref: "#/components/schemas/Error"
+  "/chair/requests/{request_id}/deny":
     post:
       tags:
         - chair
       summary: 椅子が配車要求を拒否する
       operationId: chair-post-request-deny
       parameters:
-        - $ref: '#/components/parameters/request_id'
+        - $ref: "#/components/parameters/request_id"
       responses:
-        '204':
+        "204":
           description: No Content
-        '404':
+        "404":
           description: Not Found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/chair/requests/{request_id}/depart':
+                $ref: "#/components/schemas/Error"
+  "/chair/requests/{request_id}/depart":
     post:
       tags:
         - chair
@@ -421,21 +472,21 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: 椅子が出発した
-        '400':
+        "400":
           description: 椅子が乗車位置の座標に居ない、既に出発しているなど
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: 存在しない配車要求
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/chair/requests/{request_id}/payment':
+                $ref: "#/components/schemas/Error"
+  "/chair/requests/{request_id}/payment":
     post:
       tags:
         - chair
@@ -449,20 +500,20 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: 支払いに成功した
-        '400':
+        "400":
           description: 椅子が目的地に到着していないなど
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: 存在しない配車要求IDだった
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /chair/notification:
     get:
       tags:
@@ -471,85 +522,14 @@ paths:
       description: 椅子に配車要求を通知するなどで使う想定
       operationId: chair-get-notification
       responses:
-        '200':
+        "200":
           description: 自分に割り当てられた最新の配車要求
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChairRequest'
-        '204':
+                $ref: "#/components/schemas/ChairRequest"
+        "204":
           description: 割り当てられた配車要求が存在しない場合
-  /admin/inquiries:
-    get:
-      tags:
-        - admin
-      summary: 問い合わせの一覧を取得する
-      operationId: chair-get-inquiries
-      parameters:
-        - name: limit
-          in: query
-          description: 取得件数
-          schema:
-            type: number
-        - name: cursor
-          in: query
-          description: 取得カーソル
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  inquiries:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: 問い合わせID
-                        subject:
-                          type: string
-                          description: 件名
-                        created_at:
-                          type: number
-                          description: 問い合わせ日時
-                      required:
-                        - id
-                        - subject
-                        - created_at
-                required:
-                  - inquiries
-  '/admin/inquiries/{inquiry_id}':
-    get:
-      tags:
-        - admin
-      summary: 指定したIDの問い合わせ内容を取得
-      operationId: chair-get-inquiry
-      parameters:
-        - name: inquiry_id
-          in: path
-          description: 問い合わせID
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InquiryContent'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 components:
   parameters:
     request_id:
@@ -606,18 +586,14 @@ components:
           description: 椅子ID
         name:
           type: string
-          description: 椅子名
-        chair_model:
+          description: 椅子の名前
+        model:
           type: string
-          description: 車種
-        chair_no:
-          type: string
-          description: カーナンバー
+          description: 椅子のモデル
       required:
         - id
         - name
-        - chair_model
-        - chair_no
+        - model
     User:
       type: object
       title: User
@@ -632,28 +608,6 @@ components:
       required:
         - id
         - name
-    InquiryContent:
-      type: object
-      title: InquiryContent
-      description: 問い合わせ内容
-      properties:
-        id:
-          type: string
-          description: 問い合わせID
-        subject:
-          type: string
-          description: 件名
-        body:
-          type: string
-          description: 問い合わせ内容
-        created_at:
-          type: number
-          description: 問い合わせ日時
-      required:
-        - id
-        - subject
-        - body
-        - created_at
     AppRequest:
       description: App向け配車要求情報
       type: object
@@ -662,13 +616,13 @@ components:
           type: string
           description: 配車要求ID
         pickup_coordinate:
-          $ref: '#/components/schemas/Coordinate'
+          $ref: "#/components/schemas/Coordinate"
         destination_coordinate:
-          $ref: '#/components/schemas/Coordinate'
+          $ref: "#/components/schemas/Coordinate"
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
         chair:
-          $ref: '#/components/schemas/Chair'
+          $ref: "#/components/schemas/Chair"
         created_at:
           type: number
           description: 配車要求日時
@@ -690,11 +644,11 @@ components:
           type: string
           description: 配車要求ID
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         destination_coordinate:
-          $ref: '#/components/schemas/Coordinate'
+          $ref: "#/components/schemas/Coordinate"
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
       required:
         - request_id
         - user

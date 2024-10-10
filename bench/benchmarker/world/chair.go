@@ -61,12 +61,8 @@ type Chair struct {
 }
 
 type RegisteredChairData struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
-	ChairModel  string
-	ChairNo     string
+	Name   string
+	Model  string
 }
 
 func (c *Chair) String() string {
