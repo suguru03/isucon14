@@ -46,6 +46,8 @@
     - etc/nginx/tls/_.u.isucon.dev.key
     - etc/nginx/tls/_.t.isucon.dev.crt
     - etc/nginx/tls/_.t.isucon.dev.key
+    - etc/nginx/tls/_.self.t.isucon.dev.crt
+    - etc/nginx/tls/_.self.t.isucon.dev.key
 
 - name: "roles/nginx/tasks: Delete old config"
   become: true
