@@ -20,7 +20,7 @@ export const Reception = ({ status }: RequestProps<"IDLE" | "MATCHING">) => {
         Authorization: `Bearer ${driver.accessToken}`,
       },
     });
-  }, []);
+  }, [driver, postChairActivate]);
   const onClickDeactivate = useCallback(() => {
     setReception(false);
     postChairDeactivate({
@@ -28,7 +28,7 @@ export const Reception = ({ status }: RequestProps<"IDLE" | "MATCHING">) => {
         Authorization: `Bearer ${driver.accessToken}`,
       },
     });
-  }, []);
+  }, [driver, postChairDeactivate]);
 
   if (status === "MATCHING") {
     /**

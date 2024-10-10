@@ -5,7 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import {
   AppPostRegisterRequestBody,
   ChairPostRegisterRequestBody,
-  ProviderPostRegisterRequestBody
+  ProviderPostRegisterRequestBody,
 } from "~/apiClient/apiComponents";
 
 const DEFAULT_HOSTNAME = "localhost";
@@ -13,55 +13,52 @@ const DEFAULT_PORT = 3000;
 
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
-type APIResponse = Record<string, string>
+type APIResponse = Record<string, string>;
 
 const getLoggedInURLForClient = async () => {
   const generateURL = (r: APIResponse) => {
     const id: string = r["id"];
     const accessToken: string = r["access_token"];
     return `${DEFAULT_URL}/client?access_token=${accessToken}&user_id=${id}`;
-  }
+  };
 
   if (existsSync(`./client.login-cache.json`)) {
     return generateURL(
       JSON.parse(
         readFileSync(`./client.login-cache.json`).toString(),
-      ) as APIResponse
+      ) as APIResponse,
     );
   }
 
-  const response = await fetch(
-    "http://localhost:8080/app/register",
-    {
-      body: JSON.stringify({
-        username: "testIsuconUser",
-        firstname: "isucon",
-        lastname: "isucon",
-        date_of_birth: "11111111",
-      } satisfies AppPostRegisterRequestBody),
-      method: "POST",
-    },
-  );
-  const json = await response.json() as APIResponse;
+  const response = await fetch("http://localhost:8080/app/register", {
+    body: JSON.stringify({
+      username: "testIsuconUser",
+      firstname: "isucon",
+      lastname: "isucon",
+      date_of_birth: "11111111",
+    } satisfies AppPostRegisterRequestBody),
+    method: "POST",
+  });
+  const json = (await response.json()) as APIResponse;
 
   writeFileSync(`./client.login-cache.json`, JSON.stringify(json));
   console.log("writeFileSync!", json);
   return generateURL(json);
-}
+};
 
 const getLoggedInURLForDriver = async () => {
   const generateURL = (r: APIResponse) => {
     const id: string = r["id"];
     const accessToken: string = r["access_token"];
     return `${DEFAULT_URL}/driver?access_token=${accessToken}&id=${id}`;
-  }
+  };
 
   if (existsSync(`./driver.login-cache.json`)) {
     return generateURL(
       JSON.parse(
         readFileSync(`./driver.login-cache.json`).toString(),
-      ) as APIResponse
-    )
+      ) as APIResponse,
+    );
   }
 
   // POST /provider/register => POST /chair/register
@@ -69,31 +66,31 @@ const getLoggedInURLForDriver = async () => {
     "http://localhost:8080/provider/register",
     {
       body: JSON.stringify({
-        name: "isuconProvider"
+        name: "isuconProvider",
       } satisfies ProviderPostRegisterRequestBody),
       method: "POST",
     },
   );
-  const providerJSON = (await providerResponse.json()) as Record<string, string>;
-  const response = await fetch(
-    "http://localhost:8080/chair/register",
-    {
-      headers: {
-        Authorization: `Bearer ${providerJSON["access_token"]}`
-      },
-      body: JSON.stringify({
-        name: "isuconChair001",
-        model: "isuconChair",
-      } satisfies ChairPostRegisterRequestBody),
-      method: "POST",
+  const providerJSON = (await providerResponse.json()) as Record<
+    string,
+    string
+  >;
+  const response = await fetch("http://localhost:8080/chair/register", {
+    headers: {
+      Authorization: `Bearer ${providerJSON["access_token"]}`,
     },
-  );
+    body: JSON.stringify({
+      name: "isuconChair001",
+      model: "isuconChair",
+    } satisfies ChairPostRegisterRequestBody),
+    method: "POST",
+  });
   const json = (await response.json()) as APIResponse;
 
   writeFileSync(`./driver.login-cache.json`, JSON.stringify(json));
   console.log("writeFileSync!", json);
   return generateURL(json);
-}
+};
 
 const customConsolePlugin: Plugin = {
   name: "custom-test-user-login",
