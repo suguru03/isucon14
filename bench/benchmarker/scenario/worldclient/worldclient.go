@@ -369,7 +369,7 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 				case api.RequestStatusARRIVED:
 					event = &world.UserNotificationEventArrived{}
 				case api.RequestStatusCOMPLETED:
-					// event = &world.UserNotificationEventCompleted{}
+					event = &world.UserNotificationEventCompleted{}
 				case api.RequestStatusCANCELED:
 					// event = &world.UserNotificationEventCanceled{}
 				}

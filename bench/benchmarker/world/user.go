@@ -124,17 +124,19 @@ func (u *User) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusArrived:
-			// 送迎の評価を行う
-			// TODO 評価を送る
-			log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
-			err := ctx.client.SendEvaluation(ctx, u.Request)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToEvaluate, err)
-			}
+			// 送迎の評価及び支払いがまだの場合は行う
+			if !u.Request.Evaluated {
+				// TODO 評価を送る
+				log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
+				err := ctx.client.SendEvaluation(ctx, u.Request)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
 
-			// サーバーが評価を受理したので完了状態にする
-			u.Request.Statuses.Desired = RequestStatusCompleted
-			u.Request.Statuses.User = RequestStatusCompleted
+				// サーバーが評価を受理したので完了状態になるのを待機する
+				u.Request.Statuses.Desired = RequestStatusCompleted
+				u.Request.Evaluated = true
+			}
 
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
@@ -242,6 +244,11 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 		}
 	case *UserNotificationEventArrived:
 		err := u.ChangeRequestStatus(RequestStatusArrived)
+		if err != nil {
+			return err
+		}
+	case *UserNotificationEventCompleted:
+		err := u.ChangeRequestStatus(RequestStatusCompleted)
 		if err != nil {
 			return err
 		}

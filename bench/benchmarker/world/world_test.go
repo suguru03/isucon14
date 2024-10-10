@@ -104,6 +104,9 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	if !ok {
 		return fmt.Errorf("chair not found")
 	}
+	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{}}
+	}
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventCompleted{ServerRequestID: req.ServerID}, afterFunc: func() {
 			c.Lock()

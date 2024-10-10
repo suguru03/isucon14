@@ -2,10 +2,13 @@ package scenario
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/score"
+	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
+	"github.com/isucon/isucon14/bench/payment"
 	"go.uber.org/zap"
 
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
@@ -32,6 +35,7 @@ type Scenario struct {
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
+	paymentServer    *payment.Server
 	step             *isucandar.BenchmarkStep
 
 	requestQueue         chan string // あんまり考えて導入してないです
@@ -50,12 +54,18 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
+	paymentServer := payment.NewServer(w.PaymentDB, 300*time.Millisecond, 5)
+	// TODO: サーバーハンドリング
+	go func() {
+		http.ListenAndServe(":12345", paymentServer)
+	}()
 
 	return &Scenario{
 		target:           target,
 		contestantLogger: contestantLogger,
 		world:            w,
 		worldCtx:         worldCtx,
+		paymentServer:    paymentServer,
 
 		requestQueue:         requestQueue,
 		completedRequestChan: completedRequestChan,
@@ -75,7 +85,8 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	_, err = client.PostInitialize(ctx)
+	// TODO: 決済サーバーアドレス
+	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: "http://localhost:12345"})
 	if err != nil {
 		return err
 	}

@@ -212,7 +212,29 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := db.Exec(
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	rideRequest := &RideRequest{}
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE id = ?`, requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, errors.New("request not found"))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if rideRequest.Status != "ARRIVED" {
+		writeError(w, http.StatusBadRequest, errors.New("not arrived yet"))
+		return
+	}
+
+	result, err := tx.Exec(
 		`UPDATE ride_requests SET evaluation = ?, status = ?, updated_at = isu_now() WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
@@ -224,6 +246,35 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if count == 0 {
 		writeError(w, http.StatusNotFound, errors.New("request not found"))
+		return
+	}
+
+	paymentToken := &PaymentToken{}
+	if err := tx.Get(paymentToken, `SELECT * FROM payment_tokens WHERE user_id = ?`, rideRequest.UserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusBadRequest, errors.New("payment token not registered"))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
+		Token: paymentToken.Token,
+		// TODO: calculate payment amount
+		Amount: 100,
+	}
+	if err := requestPaymentGatewayPostPayment(paymentGatewayRequest); err != nil {
+		if errors.Is(err, erroredUpstream) {
+			writeError(w, http.StatusBadGateway, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 

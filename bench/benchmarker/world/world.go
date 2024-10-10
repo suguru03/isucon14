@@ -33,6 +33,8 @@ type World struct {
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
 	RequestDB *RequestDB
+	// PaymentDB 支払い結果DB
+	PaymentDB *PaymentDB
 	// RootRand ルートの乱数生成器
 	RootRand *rand.Rand
 	// CompletedRequestChan 完了したリクエストのチャンネル
@@ -60,6 +62,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		ProviderDB: NewGenericDB[ProviderID, *Provider](),
 		ChairDB:   NewGenericDB[ChairID, *Chair](),
 		RequestDB: NewRequestDB(),
+		PaymentDB: NewPaymentDB(),
 		// TODO シードをどうする
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
@@ -162,6 +165,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	u.tickDone.Store(true)
+	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	return w.UserDB.Create(u), nil
 }
 

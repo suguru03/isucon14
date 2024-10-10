@@ -1,4 +1,5 @@
 import { NavLink } from "@remix-run/react";
+import type { FC } from "react";
 import type { IconType } from "~/components/icon/type";
 
 type NavigationMenuType = {
@@ -7,11 +8,9 @@ type NavigationMenuType = {
   icon: IconType;
 };
 
-export const FooterNavigation = ({
-  navigationMenus,
-}: {
+export const FooterNavigation: FC<{
   navigationMenus: [NavigationMenuType, NavigationMenuType];
-}) => {
+}> = ({ navigationMenus }) => {
   return (
     <nav className="sticky bottom-0 z-10 border-t border-secondary-border bg-white">
       <ul className="grid grid-cols-2">

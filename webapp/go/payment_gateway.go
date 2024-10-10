@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const paymentURL = "https://payment.example.com"
+var paymentURL = "http://localhost:12345"
 
 var erroredUpstream = errors.New("errored upstream")
 
@@ -34,6 +34,8 @@ func requestPaymentGatewayPostPayment(param *paymentGatewayPostPaymentRequest) e
 		return err
 	}
 	defer res.Body.Close()
+
+	fmt.Printf("&+v", res)
 
 	if res.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("unexpected status code (%d): %w", res.StatusCode, erroredUpstream)

@@ -1,8 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import { ButtonLink } from "~/components/primitives/button/button";
 import { useUser } from "../../contexts/user-context";
+import { Header } from "~/components/primitives/header/header";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,21 +14,16 @@ export default function Index() {
   const { name } = useUser();
 
   return (
-    <div className="font-sans p-4 flex flex-col h-full">
-      <Link to="/client" className="text-blue-600 hover:underline self-start">
-        戻る
-      </Link>
-      <div className="flex items-center my-4">
+    <>
+      <Header backTo={"/client"} />
+      <section className="flex items-center my-4 mx-4">
         <Avatar />
-        <h1 className="text-3xl ms-4">{name}</h1>
-      </div>
-      <div className="flex-1">
+        <h1 className="text-2xl ms-4">{name}</h1>
+      </section>
+      <section className="flex-1 mx-4">
         <h2>支払い情報</h2>
         <p>aaaaaa</p>
-      </div>
-      <div className="flex justify-center mb-4">
-        <ButtonLink to="/client/contact">お問い合わせ</ButtonLink>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

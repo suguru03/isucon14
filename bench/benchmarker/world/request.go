@@ -79,6 +79,9 @@ type Request struct {
 	// CompletedAt リクエストが正常に完了した時間。割り当てられるまで0
 	CompletedAt int64
 
+	// Evaluated リクエストの評価が完了しているかどうか
+	Evaluated bool
+
 	Statuses RequestStatuses
 }
 
