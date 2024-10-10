@@ -4,6 +4,7 @@ import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
   AppPostRegisterRequestBody,
+  ChairPostRegisterRequestBody,
   ProviderPostRegisterRequestBody
 } from "~/apiClient/apiComponents";
 
@@ -28,6 +29,7 @@ const getLoginedSearchParamURL = async (target: "app" | "chair") => {
       },
     );
   } else {
+    // POST /provider/register => POST /chair/register
     response = await fetch(
       "http://localhost:8080/provider/register",
       {
@@ -37,6 +39,20 @@ const getLoginedSearchParamURL = async (target: "app" | "chair") => {
         method: "POST",
       },
     );
+    const json = (await response.json()) as Record<string, string>;
+    response = await fetch(
+      "http://localhost:8080/chair/register",
+      {
+        headers: {
+          Authorization: `Bearer ${json["access_token"]}`
+        },
+        body: JSON.stringify({
+          name: "isuconChair001",
+          model: "isuconChair",
+        } satisfies ChairPostRegisterRequestBody),
+        method: "POST",
+      },
+    )
   }
 
   let json: Record<string, string>;
