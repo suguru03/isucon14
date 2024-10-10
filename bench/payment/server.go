@@ -19,11 +19,11 @@ type Server struct {
 	done        chan struct{}
 }
 
-func NewServer(verifier Verifier, processTime time.Duration) *Server {
+func NewServer(verifier Verifier, processTime time.Duration, queueSize int) *Server {
 	s := &Server{
 		mux:         http.NewServeMux(),
 		knownKeys:   concurrent.NewSimpleMap[string, *Payment](),
-		queue:       make(chan *Payment, 3),
+		queue:       make(chan *Payment, queueSize),
 		verifier:    verifier,
 		processTime: processTime,
 	}
@@ -44,7 +44,7 @@ func (s *Server) processPaymentLoop() {
 	for p := range s.queue {
 		time.Sleep(s.processTime)
 		p.Status = s.verifier.Verify(p)
-		close(p.ProcessChan)
+		close(p.processChan)
 	}
 	close(s.done)
 }
