@@ -1,5 +1,5 @@
-import { Button } from "~/components/primitives/button/button";
 import { useRef } from "react";
+import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 
 type ReceptionMapModalProps = {
@@ -21,11 +21,11 @@ export const ReceptionMapModal = ({ onClose }: ReceptionMapModalProps) => {
 
   return (
     <Modal ref={modalRef} onClose={onCloseModal}>
-      <div className="flex flex-col items-center space-y-8 mt-8">
+      <div className="flex flex-col items-center space-y-12 mt-4">
         <div className="w-full h-[60vh] bg-blue-200 flex items-center justify-center">
           Map
         </div>
-        <div className="px-4 w-full">
+        <div className="w-full block">
           <Button onClick={handleCloseModal}>この場所に移動する</Button>
         </div>
       </div>
