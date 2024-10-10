@@ -1,10 +1,10 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { readFileSync, writeFileSync } from "fs";
-import { defineConfig, type UserConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
   AppPostRegisterRequestBody,
-  ChairPostRegisterRequestBody,
+  ProviderPostRegisterRequestBody
 } from "~/apiClient/apiComponents";
 
 const DEFAULT_HOSTNAME = "localhost";
@@ -13,30 +13,39 @@ const DEFAULT_PORT = 3000;
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
 const getLoginedSearchParamURL = async (target: "app" | "chair") => {
-  let bodyJson: ChairPostRegisterRequestBody | AppPostRegisterRequestBody = {
-    username: "testIsuconUser",
-    firstname: "isucon",
-    lastname: "isucon",
-    date_of_birth: "11111111",
-  };
-  if (target === "chair") {
-    bodyJson = {
-      ...bodyJson,
-      chair_model: "isuconChair",
-      chair_no: "1111",
-    };
+  let response: Response
+  if (target === "app") {
+    response = await fetch(
+      "http://localhost:8080/app/register",
+      {
+        body: JSON.stringify({
+          username: "testIsuconUser",
+          firstname: "isucon",
+          lastname: "isucon",
+          date_of_birth: "11111111",
+        } satisfies AppPostRegisterRequestBody),
+        method: "POST",
+      },
+    );
+  } else {
+    response = await fetch(
+      "http://localhost:8080/provider/register",
+      {
+        body: JSON.stringify({
+          name: "isuconProvider"
+        } satisfies ProviderPostRegisterRequestBody),
+        method: "POST",
+      },
+    );
   }
-  const fetched = await fetch(`http://localhost:8080/${target}/register`, {
-    body: JSON.stringify(bodyJson),
-    method: "POST",
-  });
+
   let json: Record<string, string>;
-  if (fetched.status === 500) {
+  if (response.status === 500) {
     json = JSON.parse(
       readFileSync(`./${target}LocalLogin`).toString(),
     ) as typeof json;
   } else {
-    json = (await fetched.json()) as typeof json;
+    json = (await response.json()) as typeof json;
     writeFileSync(`./${target}LocalLogin`, JSON.stringify(json));
     console.log("writeFileSync!", json);
   }
