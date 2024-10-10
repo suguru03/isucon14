@@ -8,9 +8,10 @@
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "preview": "vite preview",
+    "start": "pnpm run build && pnpm run preview",
     "typecheck": "tsc",
-    "fmtcheck": "prettier ./app --check",
-    "fmt": "prettier ./app --write",
+    "fmtcheck": "prettier ./*.{cjs,ts,js} ./app --check",
+    "fmt": "prettier ./*.{cjs,ts,js} ./app --write",
     "codegen": "PROXY_URL=http://localhost:3000/api npx openapi-codegen gen isucon"
   },
   "dependencies": {

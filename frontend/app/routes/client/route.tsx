@@ -1,13 +1,8 @@
-import type { MetaFunction } from "@remix-run/node";
 import { NavLink, Outlet } from "@remix-run/react";
-import { FooterNavigation } from "~/components/FooterNavigation";
+import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { CircleIcon } from "~/components/icon/circle";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import { UserProvider } from "./userProvider";
-
-export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
-};
+import { UserProvider } from "../../contexts/user-context";
 
 const ClientHeader = () => {
   return (

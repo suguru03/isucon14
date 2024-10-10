@@ -9,7 +9,6 @@ import "./tailwind.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // QueryClientのインスタンスを作成
   const queryClient = new QueryClient();
 
   return (
@@ -36,5 +35,5 @@ export default function App() {
 }
 
 export function HydrateFallback() {
-  return <p>Loading...</p>;
+  return <></>;
 }

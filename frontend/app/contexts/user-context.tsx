@@ -1,23 +1,17 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext, useMemo } from "react";
 import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { AppRequest } from "~/apiClient/apiSchemas";
+import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type { User } from "~/types";
 
-export type AccessToken = string;
+const UserContext = createContext<Partial<User>>({});
 
-type User = {
-  id: string;
-  name: string;
-  accessToken: AccessToken;
-};
-
-const userContext = createContext<Partial<User>>({});
-const requestContext = createContext<{
+const RequestContext = createContext<{
   data?: AppRequest;
-  error?: AppGetNotificationError;
+  error?: AppGetNotificationError | null;
   isLoading: boolean;
 }>({ isLoading: false });
 
@@ -34,31 +28,34 @@ const RequestProvider = ({
       "Content-Type": "text/event-stream",
     },
   });
-
-  let { data, error } = notificationResponse;
-  const isLoading = notificationResponse.isLoading;
+  const { data, error, isLoading } = notificationResponse;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  if (data instanceof Blob) {
-    data = undefined;
-  }
-
-  if (error === null) {
-    error = undefined;
-  }
+  const [searchParams] = useSearchParams();
+  const fetchedData = useMemo(() => {
+    if (data instanceof Blob) {
+      return undefined;
+    }
+    // TODO:
+    const status = (searchParams.get("debug_status") ?? undefined) as
+      | RequestStatus
+      | undefined;
+    return { ...data, status } as AppRequest;
+  }, [data, searchParams]);
 
   /**
    * TODO: SSE処理
    */
 
   return (
-    <requestContext.Provider value={{ data, error, isLoading }}>
+    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
       {children}
-    </requestContext.Provider>
+    </RequestContext.Provider>
   );
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  // TODO:
   const [searchParams] = useSearchParams();
   const accessToken = searchParams.get("access_token") ?? undefined;
   const id = searchParams.get("user_id") ?? undefined;
@@ -68,7 +65,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <userContext.Provider
+    <UserContext.Provider
       value={{
         id,
         accessToken,
@@ -76,9 +73,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
-    </userContext.Provider>
+    </UserContext.Provider>
   );
 };
 
-export const useUser = () => useContext(userContext);
-export const useRequest = () => useContext(requestContext);
+export const useUser = () => useContext(UserContext);
+
+export const useRequest = () => useContext(RequestContext);

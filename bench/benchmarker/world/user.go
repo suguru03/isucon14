@@ -13,6 +13,7 @@ type UserState int
 
 const (
 	UserStateInactive UserState = iota
+	UserStatePaymentMethodsNotRegister
 	UserStateActive
 )
 
@@ -34,6 +35,8 @@ type User struct {
 	RegisteredData RegisteredUserData
 	// AccessToken サーバーアクセストークン
 	AccessToken string
+	// PaymentToken 支払いトークン
+	PaymentToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
 	// NotificationConn 通知ストリームコネクション
@@ -86,6 +89,17 @@ func (u *User) Tick(ctx *Context) error {
 	}
 
 	switch {
+	// 支払いトークンが未登録
+	case u.State == UserStatePaymentMethodsNotRegister:
+		// トークン登録を試みる
+		err := ctx.client.RegisterPaymentMethods(ctx, u)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
+		}
+
+		// 成功したのでアクティブ状態にする
+		u.State = UserStateActive
+
 	// 進行中のリクエストが存在
 	case u.Request != nil:
 		switch u.Request.Statuses.User {
