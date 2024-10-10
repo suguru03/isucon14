@@ -10,10 +10,10 @@ import type { User } from "~/types";
 const UserContext = createContext<Partial<User>>({});
 
 const RequestContext = createContext<{
-  data: AppRequest | { status?: RequestStatus };
+  data?: AppRequest;
   error?: AppGetNotificationError | null;
   isLoading: boolean;
-}>({ isLoading: false, data: { status: undefined } });
+}>({ isLoading: false });
 
 const RequestProvider = ({
   children,

@@ -10,10 +10,10 @@ import type { User as Chair } from "~/types";
 const DriverContext = createContext<Partial<Chair>>({});
 
 const RequestContext = createContext<{
-  data: ChairRequest | { status?: RequestStatus };
+  data?: ChairRequest;
   error?: ChairGetNotificationError | null;
   isLoading: boolean;
-}>({ isLoading: false, data: { status: undefined } });
+}>({ isLoading: false });
 
 const RequestProvider = ({
   children,
