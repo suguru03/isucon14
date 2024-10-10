@@ -1,12 +1,15 @@
-import { useRef } from "react";
+import { PropsWithChildren, useRef } from "react";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 
-type ReceptionMapModalProps = {
+type ReceptionMapModalProps = PropsWithChildren<{
   onClose?: () => void;
-};
+}>;
 
-export const ReceptionMapModal = ({ onClose }: ReceptionMapModalProps) => {
+export const ReceptionMapModal = ({
+  children,
+  onClose,
+}: ReceptionMapModalProps) => {
   const modalRef = useRef<{ close: () => void }>(null);
 
   const handleCloseModal = () => {
@@ -26,7 +29,7 @@ export const ReceptionMapModal = ({ onClose }: ReceptionMapModalProps) => {
           Map
         </div>
         <div className="w-full block">
-          <Button onClick={handleCloseModal}>この場所に移動する</Button>
+          <Button onClick={handleCloseModal}>{children}</Button>
         </div>
       </div>
     </Modal>
