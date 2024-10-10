@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const paymentURL = "https://payment.example.com"
+var paymentURL = "http://localhost:12345"
 
 var erroredUpstream = errors.New("errored upstream")
 

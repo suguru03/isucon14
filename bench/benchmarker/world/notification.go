@@ -36,6 +36,10 @@ type UserNotificationEventArrived struct {
 	unimplementedNotificationEvent
 }
 
+type UserNotificationEventCompleted struct {
+	unimplementedNotificationEvent
+}
+
 type UserNotificationEventCanceled struct {
 	unimplementedNotificationEvent
 }

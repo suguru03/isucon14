@@ -24,7 +24,7 @@ func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
 	idk := r.Header.Get(IdempotencyKeyHeader)
 	if len(idk) > 0 {
 		p, newPayment = s.knownKeys.GetOrSetDefault(idk, func() *Payment { return NewPayment(idk) })
-		if !newPayment && p.Locked.Load() {
+		if !newPayment && p.locked.Load() {
 			writeJSON(w, http.StatusConflict, map[string]string{"message": "既に処理中です"})
 			return
 		}
@@ -53,8 +53,8 @@ func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
 	// 決済処理
 	// キューに入れて完了を待つ(ブロッキング)
 	s.queue <- p
-	<-p.ProcessChan
-	p.Locked.Store(false)
+	<-p.processChan
+	p.locked.Store(false)
 
 	select {
 	case <-r.Context().Done():

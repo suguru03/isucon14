@@ -5,6 +5,7 @@ import {
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import { ErrorMessage } from "~/components/primitives/error-message/error-message";
 import type { User } from "~/types";
 
 const DriverContext = createContext<Partial<User>>({});
@@ -57,7 +58,7 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const accessToken = searchParams.get("access_token");
   const id = searchParams.get("user_id");
   if (accessToken === null || id === null) {
-    return <div>must set access_token and user_id</div>;
+    return <ErrorMessage>must set access_token and user_id</ErrorMessage>;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChairIcon } from "~/components/icon/chair";
+import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import type { RequestProps } from "~/components/request/type";
 import { ReceptionMapModal } from "./receptionMapModal";
@@ -24,7 +25,7 @@ export const Reception = ({
   return (
     <>
       {status === "IDLE" ? (
-        <div className="h-full text-center content-center bg-blue-200">Map</div>
+        <Map />
       ) : (
         <div className="flex flex-col items-center my-8 gap-4">
           <ChairIcon className="size-[48px]" />
