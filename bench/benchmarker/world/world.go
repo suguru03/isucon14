@@ -42,7 +42,6 @@ type World struct {
 
 	tickTimeout     time.Duration
 	timeoutTicker   *time.Ticker
-	wg              concurrent.WaitGroupWithCount
 	criticalErrorCh chan error
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
@@ -74,21 +73,12 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 
 func (w *World) Tick(ctx *Context) error {
 	var done bool
+	var wg concurrent.WaitGroupWithCount
 
-	for _, u := range w.UserDB.Iter() {
-		w.wg.Add(1)
-		go func() {
-			defer w.wg.Done()
-			err := u.Tick(ctx)
-			if err != nil {
-				w.HandleTickError(ctx, err)
-			}
-		}()
-	}
 	for _, p := range w.ProviderDB.Iter() {
-		w.wg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer w.wg.Done()
+			defer wg.Done()
 			err := p.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
@@ -96,10 +86,20 @@ func (w *World) Tick(ctx *Context) error {
 		}()
 	}
 	for _, c := range w.ChairDB.Iter() {
-		w.wg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer w.wg.Done()
+			defer wg.Done()
 			err := c.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
+	}
+	for _, u := range w.UserDB.Iter() {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := u.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
 			}
@@ -107,7 +107,7 @@ func (w *World) Tick(ctx *Context) error {
 	}
 
 	go func() {
-		w.wg.Wait()
+		wg.Wait()
 		done = true
 	}()
 
