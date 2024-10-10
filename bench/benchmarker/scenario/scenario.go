@@ -157,7 +157,6 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}
 
-	lastLogTime := time.Now()
 	for now := range world.ConvertHour(24 * 14) {
 		err := s.world.Tick(s.worldCtx)
 		if err != nil {
@@ -165,9 +164,12 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 
-		if now%world.ConvertHour(1) == 0 {
-			s.contestantLogger.Info("tick", zap.Duration("since", time.Since(lastLogTime)), zap.Int("time", now/world.ConvertHour(1)))
-			lastLogTime = time.Now()
+		if now%world.LengthOfHour == 0 {
+			s.contestantLogger.Info("tick",
+				zap.Int64("ticks", s.world.Time),
+				zap.Int("timeouts", s.world.TimeoutTickCount),
+				zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
+			)
 		}
 	}
 
