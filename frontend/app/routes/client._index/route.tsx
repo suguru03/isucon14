@@ -18,14 +18,28 @@ export const meta: MetaFunction = () => {
 const ClientRequest: FC = () => {
   const { data } = useRequest();
   const requestStatus = data?.status ?? "IDLE";
+  const destinationCoordinate = data?.destination_coordinate;
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
     case "DISPATCHING":
       return <Reception status={requestStatus} />;
     case "DISPATCHED":
+      return (
+        <Running
+          status={requestStatus}
+          message="車両が到着しました"
+          destinationCoordinate={destinationCoordinate}
+        />
+      );
     case "CARRYING":
-      return <Running status={requestStatus} />;
+      return (
+        <Running
+          status={requestStatus}
+          message="快適なドライビングをお楽しみください"
+          destinationCoordinate={destinationCoordinate}
+        />
+      );
     case "ARRIVED":
       return <Arrived />;
     default:
