@@ -361,15 +361,25 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 				case api.RequestStatusMATCHING:
 					// event = &world.UserNotificationEventMatching{}
 				case api.RequestStatusDISPATCHING:
-					event = &world.UserNotificationEventDispatching{}
+					event = &world.UserNotificationEventDispatching{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusDISPATCHED:
-					event = &world.UserNotificationEventDispatched{}
+					event = &world.UserNotificationEventDispatched{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCARRYING:
-					event = &world.UserNotificationEventCarrying{}
+					event = &world.UserNotificationEventCarrying{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusARRIVED:
-					event = &world.UserNotificationEventArrived{}
+					event = &world.UserNotificationEventArrived{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCOMPLETED:
-					event = &world.UserNotificationEventCompleted{}
+					event = &world.UserNotificationEventCompleted{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCANCELED:
 					// event = &world.UserNotificationEventCanceled{}
 				}

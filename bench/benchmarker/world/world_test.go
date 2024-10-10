@@ -51,9 +51,9 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 			if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 				switch req.Statuses.Desired {
 				case RequestStatusDispatched:
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{ServerRequestID: req.ServerID}}
 				case RequestStatusArrived:
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{ServerRequestID: req.ServerID}}
 				}
 			}
 		}
@@ -70,7 +70,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Requ
 		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.Statuses.Desired)
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{}}
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{ServerRequestID: req.ServerID}}
 	}
 	return nil
 }
@@ -93,7 +93,7 @@ func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverReque
 func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCarrying{}}
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCarrying{ServerRequestID: req.ServerID}}
 	}
 	return nil
 }
@@ -105,7 +105,7 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 		return fmt.Errorf("chair not found")
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{}}
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{ServerRequestID: req.ServerID}}
 	}
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventCompleted{ServerRequestID: req.ServerID}, afterFunc: func() {
@@ -216,7 +216,7 @@ func (s *FastServerStub) MatchingLoop() {
 			if time.Since(entry.QueuedTime) > s.matchingTimeout {
 				// キャンセル
 				if f, ok := s.userNotificationReceiverMap.Get(entry.ServerUserID); ok {
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{ServerRequestID: entry.ServerID}}
 				}
 			} else {
 				s.requestQueue <- entry
