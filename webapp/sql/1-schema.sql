@@ -1,33 +1,4 @@
-
-CREATE DATABASE IF NOT EXISTS isucon DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
-CREATE USER 'isucon'@'%' IDENTIFIED BY 'isucon';
-GRANT ALL ON isucon.* TO 'isucon'@'%';
-
 USE isucon;
-
-DELIMITER //
-CREATE FUNCTION ISU_NOW() RETURNS DATETIME(6)
-  READS SQL DATA
-BEGIN
-  DECLARE base_time DATETIME(6);
-  DECLARE time_elapsed_microseconds BIGINT;
-  DECLARE accelerated_time BIGINT;
-
-  -- 今日の0時を基準にする（マイクロ秒精度）
-  SET base_time = CURDATE() + INTERVAL 0 MICROSECOND;
-
-  -- 経過時間をマイクロ秒単位で計算する（現在時刻 - 今日の0時）
-  SET time_elapsed_microseconds = TIMESTAMPDIFF(MICROSECOND, base_time, NOW(6));
-
-  -- 2000倍に加速させる
-  SET accelerated_time = time_elapsed_microseconds * 2000;
-
-  -- 0時から加速した時間を加える（マイクロ秒単位）
-  RETURN base_time + INTERVAL accelerated_time MICROSECOND;
-END //
-DELIMITER ;
-
 
 create table chairs
 (
@@ -45,7 +16,7 @@ create table chairs
 
 create table chair_locations
 (
-  id         varchar(26)         not null,
+  id         varchar(26) not null,
   chair_id   varchar(26) not null comment '椅子ID',
   latitude   integer    not null comment '経度',
   longitude  integer    not null comment '緯度',
@@ -119,4 +90,3 @@ create table providers
   unique (access_token)
 )
   comment = '椅子プロバイダー情報テーブル';
-)

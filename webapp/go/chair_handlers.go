@@ -38,7 +38,7 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO chairs (id, provider_id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
+		"INSERT INTO chairs (id, provider_id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
 		chairID, provider.ID, req.Name, req.Model, false, accessToken,
 	)
 	if err != nil {

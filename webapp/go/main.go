@@ -121,7 +121,7 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	defer tx.Rollback()
@@ -130,18 +130,17 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	for _, table := range tables {
 		_, err := tx.Exec("TRUNCATE TABLE " + table)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 	}
 	tx.MustExec("SET FOREIGN_KEY_CHECKS = 1")
 	if err := tx.Commit(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
-	w.Write([]byte(`{"language":"golang"}`))
+	writeJSON(w, http.StatusOK, map[string]string{"language": "go"})
 }
 
 type Coordinate struct {
@@ -196,6 +195,8 @@ func writeError(w http.ResponseWriter, statusCode int, err error) {
 		return
 	}
 	w.Write(buf)
+
+	fmt.Fprintln(os.Stderr, err)
 }
 
 func secureRandomStr(b int) string {

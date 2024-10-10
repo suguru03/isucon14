@@ -1,7 +1,7 @@
-version: '3'
+version: "3"
 
 includes:
-  go: 
+  go:
     taskfile: webapp/go/Taskfile.yml
     dir: webapp/go
 
@@ -9,19 +9,19 @@ tasks:
   init:
     cmds:
       - go install github.com/sqldef/sqldef/cmd/mysqldef@latest
-  prepare:
+  up:
     cmds:
       - docker compose -f compose-local.yml up -d
     dir: ./development
-  prepare:down:
+  down:
     cmds:
       - docker compose -f compose-local.yml down -v
     dir: ./development
   migrate:
     cmds:
-      - mysqldef -p isucon isucon < webapp/sql/schema.sql
+      - sed /^USE\ isucon\;/d < webapp/sql/1-schema.sql | mysqldef -p isucon isucon
     sources:
-      - webapp/sql/schema.sql
+      - webapp/sql/1-schema.sql
     deps:
       - prepare
   backend:
