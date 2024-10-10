@@ -3,11 +3,11 @@ import {
   useChairPostActivate,
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
+import { ChairRequest } from "~/apiClient/apiSchemas";
 import { Button } from "~/components/primitives/button/button";
-import type { RequestProps } from "~/components/request/type";
 import { useDriver } from "~/contexts/driver-context";
 
-export const Reception = ({ status }: RequestProps<"IDLE" | "MATCHING">) => {
+export const Reception = ({ data }: { data?: ChairRequest }) => {
   const driver = useDriver();
   const [isReception, setReception] = useState<boolean>(false);
   const { mutate: postChairActivate } = useChairPostActivate();
