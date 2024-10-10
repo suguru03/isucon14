@@ -53,7 +53,7 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
           ref={sheetRef}
           style={{ willChange: "transform", transform: "translateY(100%)" }}
         >
-          <div className="p-4">{children}</div>
+          {children}
         </div>
       </>
     );
