@@ -1,12 +1,12 @@
 import type { MetaFunction } from "@remix-run/node";
+import { NavLink } from "@remix-run/react";
 import type { FC } from "react";
+import { Avatar } from "~/components/primitives/avatar/avatar";
+import { Header } from "~/components/primitives/header/header";
 import { useRequest } from "../../contexts/user-context";
 import { Arrived } from "./requestComponent/arrived";
 import { Reception } from "./requestComponent/reception";
 import { Running } from "./requestComponent/running";
-import { NavLink } from "@remix-run/react";
-import { Avatar } from "~/components/primitives/avatar/avatar";
-import { Header } from "~/components/primitives/header/header";
 
 export const meta: MetaFunction = () => {
   return [

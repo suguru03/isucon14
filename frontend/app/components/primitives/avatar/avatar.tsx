@@ -5,13 +5,13 @@ import { UserIcon } from "~/components/icon/user";
 type Size = "sm" | "md" | "lg";
 
 type AvatarProps = ComponentProps<"div"> & {
-  size?: "sm";
+  size?: Size;
 };
 
-const getSizeClass = (size: Size = "md") => {
+const getSizeClass = (size: Size) => {
   switch (size) {
     case "sm":
-      return "size-8";
+      return "size-10";
     case "md":
       return "size-16";
     case "lg":
@@ -19,7 +19,11 @@ const getSizeClass = (size: Size = "md") => {
   }
 };
 
-export const Avatar: FC<AvatarProps> = ({ size, className, ...props }) => {
+export const Avatar: FC<AvatarProps> = ({
+  size = "md",
+  className,
+  ...props
+}) => {
   return (
     <div
       className={twMerge(
