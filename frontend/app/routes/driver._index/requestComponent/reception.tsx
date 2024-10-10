@@ -6,6 +6,7 @@ import {
 import { ChairRequest } from "~/apiClient/apiSchemas";
 import { Button } from "~/components/primitives/button/button";
 import { useDriver } from "~/contexts/driver-context";
+import { MatchingModal } from "./matching";
 
 export const Reception = ({ data }: { data?: ChairRequest }) => {
   const driver = useDriver();
@@ -30,14 +31,9 @@ export const Reception = ({ data }: { data?: ChairRequest }) => {
     });
   }, [driver, postChairDeactivate]);
 
-  if (status === "MATCHING") {
-    /**
-     * TODO: 配車を受付するモーダル
-     */
-  }
-
   return (
     <>
+      {data?.status === "MATCHING" ? <MatchingModal data={data} /> : null}
       <div className="h-full text-center content-center bg-blue-200">Map</div>
       <div className="px-4 py-16 block justify-center border-t">
         {isReception ? (
