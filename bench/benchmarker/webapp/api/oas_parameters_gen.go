@@ -51,3 +51,9 @@ type ChairPostRequestDepartParams struct {
 	// 配車要求ID.
 	RequestID string
 }
+
+// ChairPostRequestPaymentParams is parameters of chair-post-request-payment operation.
+type ChairPostRequestPaymentParams struct {
+	// 配車要求ID.
+	RequestID string
+}

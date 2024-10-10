@@ -1,6 +1,7 @@
-import { Button } from "~/components/primitives/button/button";
-import type { RequestProps } from "./type";
 import { useState } from "react";
+import { ChairIcon } from "~/components/icon/chair";
+import { Button } from "~/components/primitives/button/button";
+import type { RequestProps } from "~/components/request/type";
 import { ReceptionMapModal } from "./receptionMapModal";
 
 export const Reception = ({
@@ -21,7 +22,10 @@ export const Reception = ({
       {status === "IDLE" ? (
         <div className="h-full text-center content-center bg-blue-200">Map</div>
       ) : (
-        <div>配車しています</div>
+        <div className="flex flex-col items-center my-8 gap-4">
+          <ChairIcon className="size-[48px]" />
+          <p>配車しています</p>
+        </div>
       )}
       <div className="px-4 py-16 block justify-center border-t">
         <Button onClick={handleOpenModal}>from</Button>

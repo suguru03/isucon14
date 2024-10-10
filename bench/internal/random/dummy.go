@@ -18,7 +18,8 @@ func init() {
 	_ = gimei.NewName()
 }
 
-func GenerateLastName() string    { return gimei.NewName().Last.Kanji() }
-func GenerateFirstName() string   { return gimei.NewName().First.Kanji() }
-func GenerateUserName() string    { return gofakeit.Username() }
-func GenerateDateOfBirth() string { return gofakeit.DateRange(dateStart, dateEnd).Format("2006-01-02") }
+func GenerateLastName() string     { return gimei.NewName().Last.Kanji() }
+func GenerateFirstName() string    { return gimei.NewName().First.Kanji() }
+func GenerateUserName() string     { return gofakeit.Username() }
+func GenerateDateOfBirth() string  { return gofakeit.DateRange(dateStart, dateEnd).Format("2006-01-02") }
+func GeneratePaymentToken() string { return gofakeit.LetterN(100) }

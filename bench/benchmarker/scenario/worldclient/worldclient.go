@@ -257,6 +257,19 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChai
 	}, nil
 }
 
+func (c *WorldClient) RegisterPaymentMethods(ctx *world.Context, user *world.User) error {
+	userClient, err := c.getUserClient(user.ServerID)
+	if err != nil {
+		return err
+	}
+
+	_, err = userClient.client.AppPostPaymentMethods(c.ctx, &api.AppPostPaymentMethodsReq{Token: user.PaymentToken})
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostPaymentMethods, err)
+	}
+	return nil
+}
+
 type notificationConnectionImpl struct {
 	close func()
 }

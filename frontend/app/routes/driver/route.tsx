@@ -1,11 +1,14 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
-import { FooterNavigation } from "~/components/FooterNavigation";
+import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { CircleIcon } from "~/components/icon/circle";
-import { DriverProvider } from "./driverProvider";
+import { DriverProvider } from "../../contexts/driver-context";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "椅子 | ISURIDE" },
+    { name: "description", content: "isucon14" },
+  ];
 };
 
 export default function DriverLayout() {

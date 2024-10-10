@@ -5,23 +5,15 @@ import {
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type { User } from "~/types";
 
-export type AccessToken = string;
-export type ClientRequestStatus = RequestStatus | "IDLE";
-type User = {
-  id: string;
-  name: string;
-  accessToken: AccessToken;
-};
+const UserContext = createContext<Partial<User>>({});
 
-const userContext = createContext<Partial<User>>({});
-const requestContext = createContext<{
-  data:
-    | (Partial<AppRequest> & { status: ClientRequestStatus })
-    | { status: ClientRequestStatus };
-  error?: AppGetNotificationError;
+const RequestContext = createContext<{
+  data?: AppRequest;
+  error?: AppGetNotificationError | null;
   isLoading: boolean;
-}>({ isLoading: false, data: { status: "IDLE" } });
+}>({ isLoading: false });
 
 const RequestProvider = ({
   children,
@@ -30,43 +22,40 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  const [searchParams] = useSearchParams();
-
   const notificationResponse = useAppGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
-
   const { data, error, isLoading } = notificationResponse;
 
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+  const [searchParams] = useSearchParams();
   const fetchedData = useMemo(() => {
-    const status = (searchParams.get("debug_status") ??
-      data?.status ??
-      "IDLE") as ClientRequestStatus;
-    return data instanceof Blob ? { status } : { ...data, status };
+    if (data instanceof Blob) {
+      return undefined;
+    }
+    // TODO:
+    const status = (searchParams.get("debug_status") ?? undefined) as
+      | RequestStatus
+      | undefined;
+    return { ...data, status } as AppRequest;
   }, [data, searchParams]);
-  const fetchedError = useMemo(
-    () => (error === null ? undefined : error),
-    [error],
-  );
 
   /**
    * TODO: SSE処理
    */
 
   return (
-    <requestContext.Provider
-      value={{ data: fetchedData, error: fetchedError, isLoading }}
-    >
+    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
       {children}
-    </requestContext.Provider>
+    </RequestContext.Provider>
   );
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  // TODO:
   const [searchParams] = useSearchParams();
   const accessToken = searchParams.get("access_token") ?? undefined;
   const id = searchParams.get("user_id") ?? undefined;
@@ -76,7 +65,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <userContext.Provider
+    <UserContext.Provider
       value={{
         id,
         accessToken,
@@ -84,9 +73,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
-    </userContext.Provider>
+    </UserContext.Provider>
   );
 };
 
-export const useUser = () => useContext(userContext);
-export const useRequest = () => useContext(requestContext);
+export const useUser = () => useContext(UserContext);
+
+export const useRequest = () => useContext(RequestContext);
