@@ -153,6 +153,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		notificationQueue: make(chan NotificationEvent, 100),
 	}
 	u.tickDone.Store(true)
+	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	return w.UserDB.Create(u), nil
 }
 
