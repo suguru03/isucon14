@@ -11,5 +11,5 @@
     - mysql
     - powerdns
     - nginx
-    # - envcheck # 未実装
+    - envcheck
     - webapp
