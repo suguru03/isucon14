@@ -145,7 +145,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		AccessToken:       res.AccessToken,
 		PaymentToken:      random.GeneratePaymentToken(),
 		Rand:              random.CreateChildRand(w.RootRand),
-		notificationQueue: make(chan NotificationEvent, 100),
+		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
@@ -213,8 +213,8 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		WorkTime:          args.WorkTime,
 		RegisteredData:    registeredData,
 		AccessToken:       res.AccessToken,
-		Rand:              random.CreateChildRand(w.RootRand),
-		notificationQueue: make(chan NotificationEvent, 100),
+		Rand:              random.CreateChildRand(args.Provider.Rand),
+		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	c.tickDone.Store(true)
 	return w.ChairDB.Create(c), nil
