@@ -1132,6 +1132,52 @@ func (o OptFloat64) Or(d float64) float64 {
 	return d
 }
 
+// NewOptPostInitializeReq returns new OptPostInitializeReq with value set to v.
+func NewOptPostInitializeReq(v PostInitializeReq) OptPostInitializeReq {
+	return OptPostInitializeReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPostInitializeReq is optional PostInitializeReq.
+type OptPostInitializeReq struct {
+	Value PostInitializeReq
+	Set   bool
+}
+
+// IsSet returns true if OptPostInitializeReq was set.
+func (o OptPostInitializeReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPostInitializeReq) Reset() {
+	var v PostInitializeReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPostInitializeReq) SetTo(v PostInitializeReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPostInitializeReq) Get() (v PostInitializeReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPostInitializeReq) Or(d PostInitializeReq) PostInitializeReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptRequestStatus returns new OptRequestStatus with value set to v.
 func NewOptRequestStatus(v RequestStatus) OptRequestStatus {
 	return OptRequestStatus{
@@ -1314,6 +1360,21 @@ func (s *PostInitializeOKLanguage) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type PostInitializeReq struct {
+	// 決済サーバーアドレス.
+	PaymentServer string `json:"payment_server"`
+}
+
+// GetPaymentServer returns the value of PaymentServer.
+func (s *PostInitializeReq) GetPaymentServer() string {
+	return s.PaymentServer
+}
+
+// SetPaymentServer sets the value of PaymentServer.
+func (s *PostInitializeReq) SetPaymentServer(val string) {
+	s.PaymentServer = val
 }
 
 // 配車要求ステータス

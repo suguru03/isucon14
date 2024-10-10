@@ -45,7 +45,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
 		mockCtrl := gomock.NewController(t)
 		verifier := NewMockVerifier(mockCtrl)
-		server := NewServer(verifier, 1*time.Millisecond)
+		server := NewServer(verifier, 1*time.Millisecond, 1)
 		httpServer := httptest.NewServer(server)
 		t.Cleanup(httpServer.Close)
 		e := httpexpect.Default(t, httpServer.URL)
@@ -229,7 +229,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 				Amount:         1000,
 				Status:         StatusInitial,
 			}
-			p.Locked.Store(true)
+			p.locked.Store(true)
 
 			server.knownKeys.Set(idk, p)
 			e.POST("/payment").
