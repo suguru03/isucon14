@@ -3,9 +3,9 @@ package world
 import (
 	"log"
 	"math/rand/v2"
+	"sync/atomic"
 	"time"
 
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -40,9 +40,10 @@ type World struct {
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout     time.Duration
-	timeoutTicker   *time.Ticker
-	criticalErrorCh chan error
+	tickTimeout      time.Duration
+	timeoutTicker    *time.Ticker
+	criticalErrorCh  chan error
+	waitingTickCount atomic.Int32
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -56,12 +57,12 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		RegionOffsetY: 0,
 	}
 	return &World{
-		Regions:   map[int]*Region{1: region},
-		UserDB:    NewGenericDB[UserID, *User](),
+		Regions:    map[int]*Region{1: region},
+		UserDB:     NewGenericDB[UserID, *User](),
 		ProviderDB: NewGenericDB[ProviderID, *Provider](),
-		ChairDB:   NewGenericDB[ChairID, *Chair](),
-		RequestDB: NewRequestDB(),
-		PaymentDB: NewPaymentDB(),
+		ChairDB:    NewGenericDB[ChairID, *Chair](),
+		RequestDB:  NewRequestDB(),
+		PaymentDB:  NewPaymentDB(),
 		// TODO シードをどうする
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
@@ -72,23 +73,10 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 }
 
 func (w *World) Tick(ctx *Context) error {
-	var done bool
-	var wg concurrent.WaitGroupWithCount
-
-	for _, p := range w.ProviderDB.Iter() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := p.Tick(ctx)
-			if err != nil {
-				w.HandleTickError(ctx, err)
-			}
-		}()
-	}
 	for _, c := range w.ChairDB.Iter() {
-		wg.Add(1)
+		w.waitingTickCount.Add(1)
 		go func() {
-			defer wg.Done()
+			defer w.waitingTickCount.Add(-1)
 			err := c.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
@@ -96,20 +84,15 @@ func (w *World) Tick(ctx *Context) error {
 		}()
 	}
 	for _, u := range w.UserDB.Iter() {
-		wg.Add(1)
+		w.waitingTickCount.Add(1)
 		go func() {
-			defer wg.Done()
+			defer w.waitingTickCount.Add(-1)
 			err := u.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
 			}
 		}()
 	}
-
-	go func() {
-		wg.Wait()
-		done = true
-	}()
 
 	select {
 	// クリティカルエラーが発生
@@ -118,7 +101,7 @@ func (w *World) Tick(ctx *Context) error {
 
 	// タイムアウト
 	case <-w.timeoutTicker.C:
-		if !done {
+		if w.waitingTickCount.Load() > 0 {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
 			w.TimeoutTickCount++
 		}
@@ -169,7 +152,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	return w.UserDB.Create(u), nil
 }
 
-type CreateProviderArgs struct {}
+type CreateProviderArgs struct{}
 
 // CreateProvider 仮想世界に椅子のプロバイダーを作成する
 func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provider, error) {
@@ -185,10 +168,10 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	}
 
 	p := &Provider{
-		ServerID:          res.ServerProviderID,
-		RegisteredData:    registeredData,
-		AccessToken:       res.AccessToken,
-		Rand:              random.CreateChildRand(w.RootRand),
+		ServerID:       res.ServerProviderID,
+		RegisteredData: registeredData,
+		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
 	}
 	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
@@ -208,14 +191,14 @@ type CreateChairArgs struct {
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
-		Name:    random.GenerateChairName(),
+		Name: random.GenerateChairName(),
 		// TODO modelの扱い
 		Model: random.GenerateChairModel(),
 	}
 
 	res, err := ctx.client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
-		Name:    registeredData.Name,
-		Model:  registeredData.Model,
+		Name:  registeredData.Name,
+		Model: registeredData.Model,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)

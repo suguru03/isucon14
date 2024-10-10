@@ -26,7 +26,7 @@ type Provider struct {
 }
 
 type RegisteredProviderData struct {
-	Name   string
+	Name string
 }
 
 func (c *Provider) String() string {
@@ -35,8 +35,4 @@ func (c *Provider) String() string {
 
 func (c *Provider) SetID(id ProviderID) {
 	c.ID = id
-}
-
-func (c *Provider) Tick(ctx *Context) error {
-	return nil
 }
