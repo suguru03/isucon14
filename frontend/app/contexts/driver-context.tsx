@@ -1,5 +1,5 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   useChairGetNotification,
   type ChairGetNotificationError,
