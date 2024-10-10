@@ -1,9 +1,12 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useRequest } from "../../contexts/user-context";
-import { Running } from "./requestComponent/running";
-import { Reception } from "./requestComponent/reception";
-import { Arrived } from "./requestComponent/arrived";
 import type { FC } from "react";
+import { useRequest } from "../../contexts/user-context";
+import { Arrived } from "./requestComponent/arrived";
+import { Reception } from "./requestComponent/reception";
+import { Running } from "./requestComponent/running";
+import { NavLink } from "@remix-run/react";
+import { Avatar } from "~/components/primitives/avatar/avatar";
+import { Header } from "~/components/primitives/header/header";
 
 export const meta: MetaFunction = () => {
   return [
@@ -32,8 +35,13 @@ const ClientRequest: FC = () => {
 
 export default function ClientRequestWrapper() {
   return (
-    <div className="h-full flex flex-col">
+    <>
+      <Header className="absolute top-0 z-10">
+        <NavLink to="/client/account">
+          <Avatar size="sm" />
+        </NavLink>
+      </Header>
       <ClientRequest />
-    </div>
+    </>
   );
 }

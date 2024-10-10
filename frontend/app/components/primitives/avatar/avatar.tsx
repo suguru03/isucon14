@@ -1,11 +1,12 @@
-import { FC } from "react";
+import type { ComponentProps, FC } from "react";
+import { twMerge } from "tailwind-merge";
 import { UserIcon } from "~/components/icon/user";
 
 type Size = "sm" | "md" | "lg";
 
-interface AvatarProps {
-  size?: Size;
-}
+type AvatarProps = ComponentProps<"div"> & {
+  size?: "sm";
+};
 
 const getSizeClass = (size: Size = "md") => {
   switch (size) {
@@ -18,10 +19,15 @@ const getSizeClass = (size: Size = "md") => {
   }
 };
 
-export const Avatar: FC<AvatarProps> = ({ size }) => {
+export const Avatar: FC<AvatarProps> = ({ size, className, ...props }) => {
   return (
     <div
-      className={`border rounded-full bg-gray-400 flex items-center justify-center ${getSizeClass(size)}`}
+      className={twMerge(
+        "border rounded-full bg-gray-400 flex items-center justify-center",
+        getSizeClass(size),
+        className,
+      )}
+      {...props}
     >
       <UserIcon />
     </div>

@@ -5,6 +5,7 @@ import {
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import { ErrorMessage } from "~/components/primitives/error-message/error-message";
 import type { User } from "~/types";
 
 const UserContext = createContext<Partial<User>>({});
@@ -59,9 +60,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
   const accessToken = searchParams.get("access_token") ?? undefined;
   const id = searchParams.get("user_id") ?? undefined;
-
   if (accessToken === undefined || id === undefined) {
-    return <div>must set access_token and user_id</div>;
+    return <ErrorMessage>must set access_token and user_id</ErrorMessage>;
   }
 
   return (
