@@ -10,10 +10,10 @@ import type { User } from "~/types";
 const UserContext = createContext<Partial<User>>({});
 
 const RequestContext = createContext<{
-  data?: AppRequest;
+  data: AppRequest | {status?: RequestStatus};
   error?: AppGetNotificationError | null;
   isLoading: boolean;
-}>({ isLoading: false });
+}>({ isLoading: false , data: {status: undefined}});
 
 const RequestProvider = ({
   children,
@@ -31,16 +31,18 @@ const RequestProvider = ({
   const { data, error, isLoading } = notificationResponse;
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   const [searchParams] = useSearchParams();
-  const fetchedData = useMemo(() => {
+  const responseData = useMemo(() => {
+    const status = (searchParams.get("debug_status") ?? undefined) as
+    | RequestStatus
+    | undefined;
+
+    let fetchedData: Partial<AppRequest> = data ?? {};
     if (data instanceof Blob) {
-      return undefined;
+      fetchedData = {};
     }
 
     // TODO:
-    const status = (searchParams.get("debug_status") ?? undefined) as
-      | RequestStatus
-      | undefined;
-    return { ...data, status } as AppRequest;
+    return { ...fetchedData, status } as AppRequest;
   }, [data, searchParams]);
 
   /**
@@ -48,7 +50,7 @@ const RequestProvider = ({
    */
 
   return (
-    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
+    <RequestContext.Provider value={{ data: responseData, error, isLoading }}>
       {children}
     </RequestContext.Provider>
   );
@@ -57,21 +59,35 @@ const RequestProvider = ({
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? undefined;
-  const id = searchParams.get("user_id") ?? undefined;
-  if (accessToken === undefined || id === undefined) {
-    return redirect("/client/register")
-  }
+  const accessTokenParameter = searchParams.get("access_token");
+  const userIdParameter = searchParams.get("id");
+
+  const user: Partial<User> = useMemo(() => {
+    if (accessTokenParameter !== null && userIdParameter !== null) {
+      requestIdleCallback(() => {
+        sessionStorage.setItem("access_token", accessTokenParameter)
+        sessionStorage.setItem("user_id", userIdParameter)
+      })
+      return {
+        accessToken: accessTokenParameter,
+        id: userIdParameter,
+        name: "ISUCON太郎"
+      }
+    }
+    const accessToken = sessionStorage.getItem("access_token") ?? undefined;
+    const id = sessionStorage.getItem("user_id") ?? undefined;
+    return  {
+      accessToken,
+      id,
+      name: "ISUCON太郎"
+    }
+  }, [accessTokenParameter, userIdParameter])
 
   return (
     <UserContext.Provider
-      value={{
-        id,
-        accessToken,
-        name: "ISUCON太郎",
-      }}
+      value={user}
     >
-      <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
+      <RequestProvider accessToken={user.accessToken ?? ""}>{children}</RequestProvider>
     </UserContext.Provider>
   );
 };
