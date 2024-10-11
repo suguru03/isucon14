@@ -9,7 +9,7 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
-import { PinIcon } from "~/components/icon/pin";
+import { ToIcon } from "~/components/icon/to";
 
 const GridDistance = 50;
 const Size = GridDistance * 100;
@@ -54,7 +54,7 @@ const SelectorLayer: FC<{ pinSize?: number }> = ({ pinSize = 80 }) => {
         <rect x="50%" y="0" width={2} height={"100%"} />
         <rect x="0" y="50%" width={"100%"} height={2} />
       </svg>
-      <PinIcon
+      <ToIcon
         className="absolute mt-[-8px]"
         color={colors.black}
         width={pinSize}

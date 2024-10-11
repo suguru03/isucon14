@@ -1,4 +1,4 @@
-import { IconType } from "./type";
+import type { IconType } from "~/types";
 
 export const ToIcon: IconType = function (props) {
   return (
