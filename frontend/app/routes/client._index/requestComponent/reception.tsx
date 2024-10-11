@@ -71,6 +71,7 @@ export const Reception = ({
               variant="primary"
               className="w-full mt-6 font-bold"
               onClick={() => {}}
+              disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
             >
               ISURIDE
             </Button>
@@ -84,14 +85,14 @@ export const Reception = ({
           </Text>
           <LocationButton
             label="from"
-            // className="w-full"
+            className="w-full"
             onClick={() => handleOpenModal("from")}
           />
           <Text size="xl">↓</Text>
           <LocationButton
             label="to"
             location={{ latitude: 123, longitude: 456 }}
-            // className="w-full"
+            className="w-full"
             onClick={() => handleOpenModal("to")}
           />
           <Button variant="danger" className="w-full mt-6" onClick={() => {}}>
@@ -109,10 +110,7 @@ export const Reception = ({
             <p className="font-bold mb-4 text-base">
               {action === "from" ? "現在地" : "目的地"}を選択してください
             </p>
-            <Button
-              onClick={handleCloseModal}
-              disabled={Boolean(currentLocation) && Boolean(destLocation)}
-            >
+            <Button onClick={handleCloseModal}>
               {action === "from"
                 ? "この場所から移動する"
                 : "この場所に移動する"}
