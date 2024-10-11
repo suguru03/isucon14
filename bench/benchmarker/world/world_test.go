@@ -152,6 +152,11 @@ func (s *FastServerStub) GetRequestByChair(ctx *Context, chair *Chair, serverReq
 	return &GetRequestByChairResponse{}, nil
 }
 
+func (s *FastServerStub) GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error) {
+	time.Sleep(s.latency)
+	return &GetProviderSalesResponse{}, nil
+}
+
 func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {
 	time.Sleep(s.latency)
 	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil

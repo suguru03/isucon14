@@ -46,11 +46,6 @@ func providerPostRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type getProviderSalesRequest struct {
-	Since string `json:"since"` // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-	Until string `json:"until"` // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-}
-
 type getProviderSalesResponse struct {
 	TotalSales int          `json:"total_sales"`
 	Chairs     []ChairSales `json:"chairs"`
@@ -68,14 +63,9 @@ type ModelSales struct {
 	Sales int    `json:"sales"`
 }
 
+// TODO: ちゃんと実装する
 func providerGetSales(w http.ResponseWriter, r *http.Request) {
 	provider := r.Context().Value("provider").(*Provider)
-
-	req := &getProviderSalesRequest{}
-	if err := bindJSON(r, req); err != nil {
-		writeError(w, http.StatusBadRequest, err)
-		return
-	}
 
 	chairs := []Chair{}
 	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
@@ -91,6 +81,7 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
+		// TODO: Since, Untilの実装
 		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED'", chair.ID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
