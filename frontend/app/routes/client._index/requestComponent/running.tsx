@@ -24,11 +24,11 @@ export const Running = ({
           ? "車両が到着しました"
           : "快適なドライビングをお楽しみください"}
       </Text>
-      <LocationButton type="from" location="here" className="w-80" />
+      <LocationButton label="from" className="w-80" />
       <Text size="xl">↓</Text>
       <LocationButton
-        type="to"
-        location={destinationCoordinate ?? "here"}
+        label="to"
+        location={destinationCoordinate}
         className="w-80"
       />
     </div>

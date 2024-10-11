@@ -37,10 +37,6 @@ export const Reception = ({
     setSelectLocation(coordinate);
   };
 
-  console.log("selectLocation", selectLocation);
-  console.log("currentLocation", currentLocation);
-  console.log("destLocation", destLocation);
-
   const handleOpenModal = (action: Action) => {
     setIsModalOpen(true);
     setAction(action);
