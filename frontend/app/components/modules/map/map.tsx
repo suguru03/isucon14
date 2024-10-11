@@ -4,6 +4,7 @@ import {
   TouchEventHandler,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -132,31 +133,50 @@ type MapProps = {
   selectable?: boolean;
   from?: Coordinate;
   to?: Coordinate;
+  initialCoordinate?: Coordinate;
 };
 
-export const Map: FC<MapProps> = ({ selectable, onMove, from, to }) => {
+export const Map: FC<MapProps> = ({
+  selectable,
+  onMove,
+  from,
+  to,
+  initialCoordinate,
+}) => {
   const onMoveRef = useRef(onMove);
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrag, setIsDrag] = useState(false);
-  const [{ x, y }, setPos] = useState({
-    x: -MapSize / 4,
-    y: -MapSize / 4,
-  });
+  const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
   const [movingStartPagePos, setMovingStartPagePos] = useState({
     x: 0,
     y: 0,
   });
-  const [outerRect, setOuterRect] = useState<DOMRect | undefined>(() =>
-    outerRef.current?.getBoundingClientRect(),
-  );
+  const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
 
-  useEffect(() => {
-    if (outerRect)
-      onMoveRef?.current?.(posToCoordinate(centerPosFrom({ x, y }, outerRect)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outerRect]);
+  useLayoutEffect(() => {
+    if (!outerRef.current) {
+      return;
+    }
+    const rect = outerRef.current.getBoundingClientRect();
+    if (initialCoordinate) {
+      const pos = coordinateToPos(initialCoordinate);
+      const initalPos = {
+        x: pos.x + rect.width / 2,
+        y: pos.y + rect.height / 2,
+      };
+      setPos(initalPos);
+      onMoveRef?.current?.(posToCoordinate(centerPosFrom(initalPos, rect)));
+      return;
+    }
+    const mapCenterPos = {
+      x: -MapSize / 2,
+      y: -MapSize / 2,
+    };
+    setPos(mapCenterPos);
+    onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
+  }, [initialCoordinate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
