@@ -106,8 +106,8 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   >(() => {
     const debugStatus =
       (searchParams.get("debug_status") as RequestStatus) ?? undefined;
-    const candidateAppRequest = {...clientChairPayloadWithStatus};
-    if (debugStatus !== undefined ) {
+    const candidateAppRequest = { ...clientChairPayloadWithStatus };
+    if (debugStatus !== undefined) {
       candidateAppRequest.status = debugStatus;
       candidateAppRequest.payload = { ...candidateAppRequest.payload };
       candidateAppRequest.payload.request_id = "__DUMMY_REQUEST_ID__";

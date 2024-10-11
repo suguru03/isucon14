@@ -142,8 +142,8 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       if (!m) return;
       return { latitude: Number(m[1]), longitude: Number(m[2]) };
     })();
-    const candidateAppRequest = {...clientAppPayloadWithStatus};
-    if (debugStatus !== undefined ) {
+    const candidateAppRequest = { ...clientAppPayloadWithStatus };
+    if (debugStatus !== undefined) {
       candidateAppRequest.status = debugStatus;
     }
     if (
