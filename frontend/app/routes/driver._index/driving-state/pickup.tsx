@@ -1,22 +1,14 @@
-import { useCallback } from "react";
+import { FC, useCallback } from "react";
 import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
 import { CarGreenIcon } from "~/components/icon/car-green";
 import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
-import type { RequestProps } from "~/components/request/type";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
-import type { ClientChairRequest } from "~/types";
 
-export const Pickup = ({
-  status,
-  payload,
-}: RequestProps<
-  "DISPATCHING" | "DISPATCHED" | "CARRYING",
-  { payload: ClientChairRequest["payload"] }
->) => {
-  const { auth } = useClientChairRequestContext();
+export const Pickup: FC = () => {
+  const { auth, payload, status } = useClientChairRequestContext();
 
   const handleDeparture = useCallback(async () => {
     await fetchChairPostRequestDepart({

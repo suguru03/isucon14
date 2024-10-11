@@ -2,7 +2,7 @@ import { ToIcon } from "~/components/icon/to";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
 
-export const Arrive = ({ onComplete }: { onComplete: () => void }) => {
+export const Arrived = ({ onComplete }: { onComplete: () => void }) => {
   const handleCompleteClick = () => {
     onComplete();
   };

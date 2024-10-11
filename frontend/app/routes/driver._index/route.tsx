@@ -5,14 +5,14 @@ import {
   useChairPostActivate,
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
+import { useEmulator } from "~/components/hooks/emulate";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
-import { useEmulator } from "~/components/hooks/emulate";
-import { Arrive } from "./modal-views/arrive";
-import { Matching } from "./modal-views/matching";
-import { Pickup } from "./modal-views/pickup";
+import { Arrived } from "./driving-state/arrived";
+import { Matching } from "./driving-state/matching";
+import { Pickup } from "./driving-state/pickup";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -24,7 +24,6 @@ export default function DriverRequestWrapper() {
   const driver = useClientChairRequestContext();
   const { mutate: postChairActivate } = useChairPostActivate();
   const { mutate: postChairDeactivate } = useChairPostDeactivate();
-  const requestStatus = data?.status;
   const modalRef = useRef<{ close: () => void }>(null);
   useEmulator();
   const handleComplete = useCallback(() => {
@@ -60,22 +59,18 @@ export default function DriverRequestWrapper() {
         <Button onClick={() => onClickActivate()}>受付開始</Button>
         <Button onClick={() => onClickDeactivate()}>受付終了</Button>
       </div>
-      {requestStatus && (
-        <Modal ref={modalRef} disableCloseOnBackdrop onClose={onCloseModal}>
-          {requestStatus === "MATCHING" && (
+      {data?.status && (
+        <Modal ref={modalRef} onClose={onCloseModal}>
+          {data.status === "MATCHING" && (
             <Matching
               name={data?.payload?.user?.name}
               request_id={data?.payload?.request_id}
             />
           )}
-          {requestStatus === "DISPATCHING" ||
-            requestStatus === "DISPATCHED" ||
-            (requestStatus === "CARRYING" && (
-              <Pickup status={requestStatus} payload={data.payload} />
-            ))}
-          {requestStatus === "ARRIVED" && (
-            <Arrive onComplete={handleComplete} />
-          )}
+          {(data.status === "DISPATCHING" ||
+            data.status === "DISPATCHED" ||
+            data.status === "CARRYING") && <Pickup />}
+          {data.status === "ARRIVED" && <Arrived onComplete={handleComplete} />}
         </Modal>
       )}
     </>
