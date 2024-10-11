@@ -97,7 +97,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
       polling();
       return () => {
         clearTimeout(timeoutId);
-      }
+      };
     }
   }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
