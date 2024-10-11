@@ -1,12 +1,17 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useNavigate } from "@remix-run/react";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
+import {
+  useChairPostActivate,
+  useChairPostDeactivate,
+} from "~/apiClient/apiComponents";
 import { Map } from "~/components/modules/map/map";
+import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
 import { Arrive } from "./requestComponent/arrive";
+import { Matching } from "./requestComponent/matching";
 import { Pickup } from "./requestComponent/pickup";
-import { Reception } from "./requestComponent/reception";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -14,40 +19,64 @@ export const meta: MetaFunction = () => {
 
 export default function DriverRequestWrapper() {
   const data = useClientChairRequestContext();
-  const requestStatus = data?.status ?? "IDLE";
-
+  const navigate = useNavigate();
+  const driver = useClientChairRequestContext();
+  const { mutate: postChairActivate } = useChairPostActivate();
+  const { mutate: postChairDeactivate } = useChairPostDeactivate();
+  const requestStatus = data?.status;
   const modalRef = useRef<{ close: () => void }>(null);
 
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (modalRef.current) {
       modalRef.current.close();
     }
-  };
+  }, []);
 
-  const navigate = useNavigate();
-
-  const onCloseModal = () => {
+  const onCloseModal = useCallback(() => {
     navigate("/driver", { replace: true });
-  };
+  }, [navigate]);
+
+  const onClickActivate = useCallback(() => {
+    postChairActivate({
+      headers: {
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
+      },
+    });
+  }, [driver, postChairActivate]);
+
+  const onClickDeactivate = useCallback(() => {
+    postChairDeactivate({
+      headers: {
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
+      },
+    });
+  }, [driver, postChairDeactivate]);
 
   return (
     <>
       <Map />
-      {requestStatus !== "IDLE" ? (
+      <div className="px-4 py-16 flex justify-center border-t gap-6">
+        <Button onClick={() => onClickActivate()}>受付開始</Button>
+        <Button onClick={() => onClickDeactivate()}>受付終了</Button>
+      </div>
+      {requestStatus && (
         <Modal ref={modalRef} disableCloseOnBackdrop onClose={onCloseModal}>
-          {requestStatus === "MATCHING" ? (
-            <Reception status={requestStatus} payload={data.payload} />
-          ) : requestStatus === "DISPATCHING" ||
+          {requestStatus === "MATCHING" && (
+            <Matching
+              name={data?.payload?.user?.name}
+              request_id={data?.payload?.request_id}
+            />
+          )}
+          {requestStatus === "DISPATCHING" ||
             requestStatus === "DISPATCHED" ||
-            requestStatus === "CARRYING" ? (
-            <Pickup status={requestStatus} payload={data.payload} />
-          ) : requestStatus === "ARRIVED" ? (
+            (requestStatus === "CARRYING" && (
+              <Pickup status={requestStatus} payload={data.payload} />
+            ))}
+          {requestStatus === "ARRIVED" && (
             <Arrive onComplete={handleComplete} />
-          ) : (
-            <div>unexpectedStatus: {requestStatus}</div>
           )}
         </Modal>
-      ) : null}
+      )}
     </>
   );
 }
