@@ -14,7 +14,6 @@ make
 cp -r ./build/client/ ../webapp/public/
 cd ../provisioning/ansible
 
-# 未実装
 cd ../../envcheck/isucon-env-checker
 task build-linux-amd64
 cd ../../provisioning/ansible
