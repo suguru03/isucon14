@@ -1,6 +1,6 @@
 import { NavLink } from "@remix-run/react";
 import type { FC } from "react";
-import type { IconType } from "~/components/icon/type";
+import type { IconType } from "~/types";
 
 type NavigationMenuType = {
   link: `/${string}`;
