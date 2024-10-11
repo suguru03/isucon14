@@ -5,7 +5,7 @@ import {
 } from "~/apiClient/apiComponents";
 
 import { Button } from "~/components/primitives/button/button";
-import { useDriver } from "~/contexts/driver-context";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
 import { MatchingModal } from "./matching";
 import type { RequestProps } from "~/components/request/type";
 import { ClientChairRequest } from "~/types";
@@ -17,7 +17,7 @@ export const Reception = ({
   "MATCHING" | "IDLE",
   { payload: ClientChairRequest["payload"] }
 >) => {
-  const driver = useDriver();
+  const driver = useClientChairRequestContext();
   const [isReception, setReception] = useState<boolean>(false);
   const { mutate: postChairActivate } = useChairPostActivate();
   const { mutate: postChairDeactivate } = useChairPostDeactivate();

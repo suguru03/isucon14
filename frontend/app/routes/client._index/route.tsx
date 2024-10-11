@@ -3,7 +3,7 @@ import { NavLink } from "@remix-run/react";
 import type { FC } from "react";
 import { Avatar } from "~/components/primitives/avatar/avatar";
 import { Header } from "~/components/primitives/header/header";
-import { useUser } from "../../contexts/user-context";
+import { useClientAppRequestContext } from "../../contexts/user-context";
 import { Arrived } from "./requestComponent/arrived";
 import { Reception } from "./requestComponent/reception";
 import { Running } from "./requestComponent/running";
@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
 };
 
 const ClientRequest: FC = () => {
-  const data = useUser();
+  const data = useClientAppRequestContext();
   const requestStatus = data?.status ?? "IDLE";
   const destinationCoordinate = data?.payload?.coordinate?.destination;
   switch (requestStatus) {

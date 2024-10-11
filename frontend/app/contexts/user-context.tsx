@@ -14,7 +14,7 @@ import { apiBaseURL } from "~/apiClient/APIBaseURL";
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
-    useState<Omit<ClientAppRequest, "auth">>();
+    useState<Omit<ClientAppRequest, "auth" | "user">>();
   const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
     if (isSSE) {
@@ -111,7 +111,10 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       ...candidateAppRequest,
       auth: {
         accessToken,
-        userId: id,
+      },
+      user: {
+        id,
+        name: "ISUCON太郎",
       },
     };
   }, [clientAppPayloadWithStatus, searchParams, accessToken, id]);
@@ -119,7 +122,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   return responseClientAppRequest;
 };
 
-const UserContext = createContext<Partial<ClientAppRequest>>({});
+const ClientAppRequestContext = createContext<Partial<ClientAppRequest>>({});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
@@ -137,7 +140,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return {
         accessToken: accessTokenParameter,
         id: userIdParameter,
-        name: "ISUCON太郎",
       };
     }
     const accessToken =
@@ -152,10 +154,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const request = useClientAppRequest(accessToken ?? "", id ?? "");
 
   return (
-    <UserContext.Provider value={{ ...request }}>
+    <ClientAppRequestContext.Provider value={{ ...request }}>
       {children}
-    </UserContext.Provider>
+    </ClientAppRequestContext.Provider>
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useClientAppRequestContext = () =>
+  useContext(ClientAppRequestContext);

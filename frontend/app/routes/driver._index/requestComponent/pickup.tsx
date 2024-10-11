@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
-import { useDriver } from "~/contexts/driver-context";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
 import type { RequestProps } from "~/components/request/type";
 import type { ClientChairRequest } from "~/types";
 
@@ -13,7 +13,7 @@ export const Pickup = ({
   "DISPATCHING" | "DISPATCHED",
   { payload: ClientChairRequest["payload"] }
 >) => {
-  const { auth } = useDriver();
+  const { auth } = useClientChairRequestContext();
 
   const handleDeparture = useCallback(async () => {
     await fetchChairPostRequestDepart({

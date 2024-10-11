@@ -16,7 +16,7 @@ import type { ClientChairRequest } from "~/types";
 export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
-    useState<Omit<ClientChairRequest, "auth">>();
+    useState<Omit<ClientChairRequest, "auth" | "chair">>();
   const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
     if (isSSE) {
@@ -113,7 +113,10 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         ...candidateAppRequest,
         auth: {
           accessToken,
-          userId: id,
+        },
+        user: {
+          id,
+          name: "ISUCON椅子",
         },
       };
     }
@@ -122,7 +125,9 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   return responseClientAppRequest;
 };
 
-const DriverContext = createContext<Partial<ClientChairRequest>>({});
+const ClientChairRequestContext = createContext<Partial<ClientChairRequest>>(
+  {},
+);
 
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
@@ -154,10 +159,11 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const request = useClientChairRequest(accessToken ?? "", id ?? "");
 
   return (
-    <DriverContext.Provider value={{ ...request }}>
+    <ClientChairRequestContext.Provider value={{ ...request }}>
       {children}
-    </DriverContext.Provider>
+    </ClientChairRequestContext.Provider>
   );
 };
 
-export const useDriver = () => useContext(DriverContext);
+export const useClientChairRequestContext = () =>
+  useContext(ClientChairRequestContext);

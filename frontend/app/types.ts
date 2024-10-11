@@ -14,7 +14,10 @@ export type ClientAppRequest = {
   }>;
   auth: {
     accessToken: AccessToken;
-    userId?: string;
+  };
+  user?: {
+    id?: string;
+    name?: string;
   };
 };
 
@@ -31,5 +34,9 @@ export type ClientChairRequest = {
   auth: {
     accessToken: AccessToken;
     userId?: string;
+  };
+  chair?: {
+    id: string;
+    name: string;
   };
 };

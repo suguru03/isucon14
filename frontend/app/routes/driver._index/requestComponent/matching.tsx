@@ -8,7 +8,7 @@ import { ChairIcon } from "~/components/icon/chair";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
-import { useDriver } from "~/contexts/driver-context";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
 
 export const MatchingModal = ({
   name,
@@ -17,7 +17,7 @@ export const MatchingModal = ({
   name?: string;
   request_id?: string;
 }) => {
-  const { auth } = useDriver();
+  const { auth } = useClientChairRequestContext();
   const modalRef = useRef<{ close: () => void }>(null);
   const handleCloseModal = () => {
     if (modalRef.current) {
