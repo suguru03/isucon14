@@ -233,6 +233,15 @@ func (u *User) CreateRequest(ctx *Context) error {
 func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string) error {
 	request := u.Request
 	if request == nil {
+		if status == RequestStatusCompleted {
+			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			for _, r := range slices.Backward(u.RequestHistory) {
+				if r.ServerID == serverRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.User = RequestStatusCompleted
+					return nil
+				}
+			}
+		}
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
 	request.Statuses.RLock()
