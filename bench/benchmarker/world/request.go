@@ -170,7 +170,7 @@ type Evaluation struct {
 }
 
 func (e Evaluation) String() string {
-	return fmt.Sprintf("score: %d (matching: %v, dispath: %v, pickup: %v, drive: %v)", e.Score(), e.Matching, e.Dispatch, e.Pickup, e.Drive)
+	return fmt.Sprintf("score: %d (matching:%v, dispath:%v, pickup:%v, drive:%v)", e.Score(), e.Matching, e.Dispatch, e.Pickup, e.Drive)
 }
 
 func (e Evaluation) Score() int {

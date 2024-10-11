@@ -125,39 +125,38 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	go func() {
 		for req := range s.completedRequestChan {
-			s.contestantLogger.Info("request completed", zap.Any("request", req))
+			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
 			step.AddScore(score.ScoreTag("completed_request"))
 		}
 	}()
 
-	region := s.world.Regions[1]
-	var provider *world.Provider
-	for range 1 {
-		_provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{})
-		if err != nil {
-			return err
-		}
-		provider = _provider
-	}
-	for range 10 {
-		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
-			Provider:          provider,
-			Region:            region,
-			InitialCoordinate: world.RandomCoordinateOnRegion(region),
-			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(23)),
+	for i := range 5 {
+		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
+			Region: s.world.Regions[i%len(s.world.Regions)],
 		})
 		if err != nil {
 			return err
 		}
+
+		for range 10 {
+			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
+				Provider:          provider,
+				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
+				WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
-	for range 10 {
-		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
+
+	for i := range 10 {
+		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: s.world.Regions[i%len(s.world.Regions)]})
 		if err != nil {
 			return err
 		}
 	}
 
-	lastLogTime := time.Now()
 	for now := range world.ConvertHour(24 * 14) {
 		err := s.world.Tick(s.worldCtx)
 		if err != nil {
@@ -165,9 +164,12 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 
-		if now%world.ConvertHour(1) == 0 {
-			s.contestantLogger.Info("tick", zap.Duration("since", time.Since(lastLogTime)), zap.Int("time", now/world.ConvertHour(1)))
-			lastLogTime = time.Now()
+		if now%world.LengthOfHour == 0 {
+			s.contestantLogger.Info("tick",
+				zap.Int64("ticks", s.world.Time),
+				zap.Int("timeouts", s.world.TimeoutTickCount),
+				zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
+			)
 		}
 	}
 

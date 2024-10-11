@@ -128,7 +128,6 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				// TODO 評価を送る
-				log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
 				err := ctx.client.SendEvaluation(ctx, u.Request)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
@@ -220,6 +219,8 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
 		} else if request.Statuses.User == RequestStatusDispatched && request.Statuses.Desired == RequestStatusArrived && status == RequestStatusCarrying {
 			// もう到着しているが、ユーザー側の通知が遅延していて、DISPATCHED状態からまだCARRYINGに遷移してないときは、CARRYINGを許容する
+		} else if request.Statuses.Desired == RequestStatusDispatched && request.Statuses.User == RequestStatusDispatched && status == RequestStatusCarrying {
+			// FIXME: 出発リクエストを送った後、ベンチマーカーのDesiredステータスの変更を行う前に通知が届いてしまうことがある
 		} else if status == RequestStatusCompleted {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(u.RequestHistory) {
