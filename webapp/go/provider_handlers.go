@@ -121,12 +121,17 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
+const (
+	initialFare     = 500
+	farePerDistance = 100
+)
+
 func calculateSales(requests []RideRequest) int {
 	sale := 0
 	for _, req := range requests {
-		latDiff := req.DestinationLatitude - req.PickupLatitude
-		lonDiff := req.DestinationLongitude - req.PickupLongitude
-		sale += latDiff*latDiff + lonDiff*lonDiff
+		latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
+		lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
+		sale += initialFare + farePerDistance*(latDiff+lonDiff)
 	}
 	return sale
 }
