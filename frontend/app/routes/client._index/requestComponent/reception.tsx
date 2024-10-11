@@ -29,12 +29,31 @@ export const Reception = ({
       {status === "IDLE" ? (
         <>
           <Map />
-          <div className="h-full flex flex-col items-center justify-center my-8 gap-4">
-            <Button onClick={() => {}}>配車</Button>
+          <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
+            <LocationButton
+              type="from"
+              position="here"
+              className="w-full"
+              onClick={() => handleOpenModal("from")}
+            />
+            <Text size="xl">↓</Text>
+            <LocationButton
+              type="to"
+              position={{ latitude: 123, longitude: 456 }}
+              className="w-full"
+              onClick={() => handleOpenModal("to")}
+            />
+            <Button
+              variant="primary"
+              className="w-full mt-6 font-bold"
+              onClick={() => {}}
+            >
+              ISURIDE
+            </Button>
           </div>
         </>
       ) : (
-        <div className="w-full h-full px-8 flex flex-col items-center justify-center my-8">
+        <div className="w-full h-full px-8 flex flex-col items-center justify-center">
           <CarRedIcon className="size-[76px] mb-4" />
           <Text size="xl" className="mb-6">
             配車しています
