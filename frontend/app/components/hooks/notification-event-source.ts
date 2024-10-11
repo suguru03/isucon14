@@ -27,18 +27,21 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
       if (typeof event.data === "string") {
         const eventData = JSON.parse(event.data) as InferRequest<T>;
         setRequest((preRequest) => {
-          if (eventData.status !== preRequest?.status || eventData.request_id !== preRequest?.request_id) {
-            return eventData
+          if (
+            eventData.status !== preRequest?.status ||
+            eventData.request_id !== preRequest?.request_id
+          ) {
+            return eventData;
           } else {
-            return preRequest
+            return preRequest;
           }
         });
       }
       return () => {
-        eventSource.close()
+        eventSource.close();
       };
     };
-  }, [target, accessToken, setRequest]); 
+  }, [target, accessToken, setRequest]);
 
   return { request };
 };

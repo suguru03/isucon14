@@ -5,7 +5,6 @@ import {
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
-import { useNotificationEventSource } from "~/components/hooks/notification-event-source";
 import type { User as Chair } from "~/types";
 
 const DriverContext = createContext<Partial<Chair>>({});
