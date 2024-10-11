@@ -165,5 +165,12 @@ LOOP:
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	for i, region := range s.world.Regions {
+		s.contestantLogger.Info("final region result",
+			zap.Int("region", i),
+			zap.Int("users", region.UsersDB.Len()),
+			zap.Int("score", region.UserSatisfactionScore()),
+		)
+	}
 	return nil
 }

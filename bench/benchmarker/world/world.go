@@ -2,6 +2,7 @@ package world
 
 import (
 	"log"
+	"math"
 	"math/rand/v2"
 	"sync/atomic"
 	"time"
@@ -42,8 +43,10 @@ type World struct {
 
 	tickTimeout      time.Duration
 	timeoutTicker    *time.Ticker
+	prevTimeout      bool
 	criticalErrorCh  chan error
 	waitingTickCount atomic.Int32
+	userIncrease     float64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -66,10 +69,28 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
+		userIncrease:         5,
 	}
 }
 
 func (w *World) Tick(ctx *Context) error {
+	if !w.prevTimeout {
+		// 前回タイムアウトしなかったら地域毎に増加させる
+		for _, region := range w.Regions {
+			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
+			for range increase {
+				w.waitingTickCount.Add(1)
+				go func() {
+					defer w.waitingTickCount.Add(-1)
+					_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
+					if err != nil {
+						w.HandleTickError(ctx, err)
+					}
+				}()
+			}
+		}
+	}
+
 	for _, c := range w.ChairDB.Iter() {
 		w.waitingTickCount.Add(1)
 		go func() {
@@ -101,6 +122,9 @@ func (w *World) Tick(ctx *Context) error {
 		if w.waitingTickCount.Load() > 0 {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
 			w.TimeoutTickCount++
+			w.prevTimeout = true
+		} else {
+			w.prevTimeout = false
 		}
 	}
 
