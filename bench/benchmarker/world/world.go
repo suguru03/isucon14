@@ -42,12 +42,13 @@ type World struct {
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout      time.Duration
-	timeoutTicker    *time.Ticker
-	prevTimeout      bool
-	criticalErrorCh  chan error
-	waitingTickCount atomic.Int32
-	userIncrease     float64
+	tickTimeout        time.Duration
+	timeoutTicker      *time.Ticker
+	prevTimeout        bool
+	criticalErrorCh    chan error
+	waitingTickCount   atomic.Int32
+	userIncrease       float64
+	chairIncreaseSales int64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -71,6 +72,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 		userIncrease:         5,
+		chairIncreaseSales:   10000,
 	}
 }
 
@@ -88,6 +90,25 @@ func (w *World) Tick(ctx *Context) error {
 						w.HandleTickError(ctx, err)
 					}
 				}()
+			}
+		}
+		// 前回タイムアウトしなかったらプロバイダ毎に増加させる
+		for _, p := range w.ProviderDB.Iter() {
+			increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10
+			if increase > 0 {
+				for range increase {
+					w.waitingTickCount.Add(1)
+					go func() {
+						defer w.waitingTickCount.Add(-1)
+						_, err := w.CreateChair(ctx, &CreateChairArgs{
+							Provider:          p,
+							InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+						})
+						if err != nil {
+							w.HandleTickError(ctx, err)
+						}
+					}()
+				}
 			}
 		}
 	}

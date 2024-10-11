@@ -108,7 +108,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		for range initialChairsNumPerProvider {
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Provider:          provider,
-				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
+				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(provider.Region, provider.Rand),
 				WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
 			})
 			if err != nil {
