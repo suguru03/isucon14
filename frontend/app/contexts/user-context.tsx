@@ -87,7 +87,7 @@ const RequestSSEProvider = ({
       return { latitude: Number(m[1]), longitude: Number(m[2]) };
     })();
 
-    let fetchedData: Partial<AppRequest> = request ?? {};
+    const fetchedData: Partial<AppRequest> = request ?? {};
     // TODO:
     return { ...fetchedData, status, destination_coordinate } as AppRequest;
   }, [request, searchParams]);

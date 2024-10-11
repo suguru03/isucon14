@@ -11,8 +11,12 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
   accessToken: string,
 ) => {
   const [request, setRequest] = useState<InferRequest<T>>();
-  const [onCloseFunction, setOncloseFunction] = useState<() => void>();
+  const [onCloseFunction, setOncloseFunction] = useState<() => void>(() => {});
   useEffect(() => {
+    onCloseFunction()
+    /**
+     * WebAPI標準のものはAuthヘッダーを利用できないため
+     */
     const eventSource = new EventSourcePolyfill(
       `${apiBaseURL}/${target}/notification`,
       {
@@ -27,16 +31,18 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
       if (event.data === "") {
         return;
       }
-      const eventData = JSON.parse(event.data) as InferRequest<T>;
-      if (
-        eventData.status !== request?.status ||
-        eventData.request_id !== request?.request_id
-      ) {
-        setRequest(eventData);
-        return;
+      if (typeof event.data === "string") {
+        const eventData = JSON.parse(event.data) as InferRequest<T>;
+        if (
+          eventData.status !== request?.status ||
+          eventData.request_id !== request?.request_id
+        ) {
+          setRequest(eventData);
+        }
       }
+      return;
     };
-  }, []);
+  }, [target, accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { request, onCloseFunction };
 };

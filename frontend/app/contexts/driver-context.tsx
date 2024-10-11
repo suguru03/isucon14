@@ -73,7 +73,7 @@ const RequestSSEProvider = ({
       | RequestStatus
       | undefined;
 
-    let fetchedData: Partial<ChairRequest> = request ?? {};
+    const fetchedData: Partial<ChairRequest> = request ?? {};
     // TODO:
     return { ...fetchedData, status } as ChairRequest;
   }, [request, searchParams]);
