@@ -79,7 +79,9 @@ const RequestSSEProvider = ({
   }, [request, searchParams]);
 
   return (
-    <RequestContext.Provider value={{ data: responseData, error: null, isLoading: false }}>
+    <RequestContext.Provider
+      value={{ data: responseData, error: null, isLoading: false }}
+    >
       {children}
     </RequestContext.Provider>
   );

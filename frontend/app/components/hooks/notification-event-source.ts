@@ -13,7 +13,7 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
   const [request, setRequest] = useState<InferRequest<T>>();
   const [onCloseFunction, setOncloseFunction] = useState<() => void>(() => {});
   useEffect(() => {
-    onCloseFunction()
+    onCloseFunction();
     /**
      * WebAPI標準のものはAuthヘッダーを利用できないため
      */
