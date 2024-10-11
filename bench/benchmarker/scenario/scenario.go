@@ -130,10 +130,9 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}()
 
-	region := s.world.Regions[1]
-	for range 5 {
+	for i := range 5 {
 		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
-			Region: region,
+			Region: s.world.Regions[i%len(s.world.Regions)],
 		})
 		if err != nil {
 			return err
@@ -151,8 +150,8 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}
 
-	for range 10 {
-		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
+	for i := range 10 {
+		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: s.world.Regions[i%len(s.world.Regions)]})
 		if err != nil {
 			return err
 		}

@@ -24,7 +24,7 @@ type World struct {
 	// TimeOfDay 仮想世界の1日の時刻
 	TimeOfDay int
 	// Regions 地域
-	Regions map[int]*Region
+	Regions []*Region
 	// UserDB 全ユーザーDB
 	UserDB *GenericDB[UserID, *User]
 	// ProviderDB 全プロバイダーDB
@@ -50,14 +50,21 @@ type World struct {
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
-	region := &Region{
-		RegionWidth:   100,
-		RegionHeight:  100,
-		RegionOffsetX: 0,
-		RegionOffsetY: 0,
-	}
 	return &World{
-		Regions:    map[int]*Region{1: region},
+		Regions: []*Region{
+			{
+				RegionWidth:   100,
+				RegionHeight:  100,
+				RegionOffsetX: 0,
+				RegionOffsetY: 0,
+			},
+			{
+				RegionWidth:   100,
+				RegionHeight:  100,
+				RegionOffsetX: 300,
+				RegionOffsetY: 300,
+			},
+		},
 		UserDB:     NewGenericDB[UserID, *User](),
 		ProviderDB: NewGenericDB[ProviderID, *Provider](),
 		ChairDB:    NewGenericDB[ChairID, *Chair](),

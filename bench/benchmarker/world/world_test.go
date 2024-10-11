@@ -253,7 +253,6 @@ func TestWorld(t *testing.T) {
 			world:  world,
 			client: client,
 		}
-		region = world.Regions[1]
 	)
 
 	// MEMO: chan が詰まらないように
@@ -263,9 +262,9 @@ func TestWorld(t *testing.T) {
 		}
 	}()
 
-	for range 5 {
+	for i := range 5 {
 		provider, err := world.CreateProvider(ctx, &CreateProviderArgs{
-			Region: region,
+			Region: world.Regions[i%len(world.Regions)],
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -283,8 +282,8 @@ func TestWorld(t *testing.T) {
 		}
 	}
 
-	for range 20 {
-		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+	for i := range 20 {
+		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: world.Regions[i%len(world.Regions)]})
 		if err != nil {
 			t.Fatal(err)
 		}
