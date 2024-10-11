@@ -131,25 +131,26 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	}()
 
 	region := s.world.Regions[1]
-	var provider *world.Provider
-	for range 1 {
-		_provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{})
-		if err != nil {
-			return err
-		}
-		provider = _provider
-	}
-	for range 10 {
-		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
-			Provider:          provider,
-			Region:            region,
-			InitialCoordinate: world.RandomCoordinateOnRegion(region),
-			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
+	for range 5 {
+		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
+			Region: region,
 		})
 		if err != nil {
 			return err
 		}
+
+		for range 10 {
+			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
+				Provider:          provider,
+				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
+				WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
+
 	for range 10 {
 		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
 		if err != nil {

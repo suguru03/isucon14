@@ -51,8 +51,8 @@ type World struct {
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
 	region := &Region{
-		RegionWidth:   30,
-		RegionHeight:  30,
+		RegionWidth:   100,
+		RegionHeight:  100,
 		RegionOffsetX: 0,
 		RegionOffsetY: 0,
 	}
@@ -152,7 +152,10 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	return w.UserDB.Create(u), nil
 }
 
-type CreateProviderArgs struct{}
+type CreateProviderArgs struct {
+	// Region 椅子を配置する地域
+	Region *Region
+}
 
 // CreateProvider 仮想世界に椅子のプロバイダーを作成する
 func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provider, error) {
@@ -169,6 +172,7 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 
 	p := &Provider{
 		ServerID:       res.ServerProviderID,
+		Region:         args.Region,
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
@@ -180,8 +184,6 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 type CreateChairArgs struct {
 	// Provider 椅子のプロバイダー
 	Provider *Provider
-	// Region 椅子を配置する地域
-	Region *Region
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
 	// WorkTime 稼働時間
@@ -206,7 +208,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 
 	c := &Chair{
 		ServerID:          res.ServerUserID,
-		Region:            args.Region,
+		Region:            args.Provider.Region,
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,

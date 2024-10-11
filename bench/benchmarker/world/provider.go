@@ -13,6 +13,8 @@ type Provider struct {
 	ID ProviderID
 	// ServerID サーバー上でのプロバイダーID
 	ServerID string
+	// Region 椅子を配置する地域
+	Region *Region
 
 	// RegisteredData サーバーに登録されているプロバイダー情報
 	RegisteredData RegisteredProviderData

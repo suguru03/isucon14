@@ -2,7 +2,6 @@ package world
 
 import (
 	"fmt"
-	"iter"
 	"sync"
 	"testing"
 	"time"
@@ -265,27 +264,25 @@ func TestWorld(t *testing.T) {
 	}()
 
 	for range 5 {
-		_, err := world.CreateProvider(ctx, &CreateProviderArgs{})
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	next, _ := iter.Pull2(world.ProviderDB.Iter())
-	for range 10 {
-		_, provider, ok := next()
-		if !ok {
-			next, _ = iter.Pull2(world.ProviderDB.Iter())
-		}
-		_, err := world.CreateChair(ctx, &CreateChairArgs{
-			Provider: provider,
-			Region:            region,
-			InitialCoordinate: RandomCoordinateOnRegion(region),
-			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
+		provider, err := world.CreateProvider(ctx, &CreateProviderArgs{
+			Region: region,
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		for range 10 {
+			_, err := world.CreateChair(ctx, &CreateChairArgs{
+				Provider:          provider,
+				InitialCoordinate: RandomCoordinateOnRegion(provider.Region),
+				WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
+
 	for range 20 {
 		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
 		if err != nil {
