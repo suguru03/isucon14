@@ -246,3 +246,7 @@ func (w *World) HandleTickError(ctx *Context, err error) {
 		log.Println(err)
 	}
 }
+
+func (w *World) RestTicker() {
+	w.timeoutTicker.Reset(w.tickTimeout)
+}
