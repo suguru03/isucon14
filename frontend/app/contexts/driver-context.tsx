@@ -40,13 +40,13 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
     useState<Omit<ClientChairRequest, "auth">>();
   const isSSE = false;
-  if (isSSE) {
-    useEffect(() => {
+  useEffect(() => {
+    if (isSSE) {
       /**
        * WebAPI標準のものはAuthヘッダーを利用できないため
        */
       const eventSource = new EventSourcePolyfill(
-        `${apiBaseURL}/app/notification`,
+        `${apiBaseURL}/chair/notification`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -67,7 +67,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
                 payload: {
                   request_id: eventData.request_id,
                   coordinate: {
-                    pickup: eventData.destination_coordinate,
+                    pickup: eventData.destination_coordinate, // TODO: set pickup
                     destination: eventData.destination_coordinate,
                   },
                   user: eventData.user,
@@ -82,9 +82,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
           eventSource.close();
         };
       };
-    }, [accessToken, setClientChairPayloadWithStatus]);
-  } else {
-    useEffect(() => {
+    } else {
       const abortController = new AbortController();
       (async () => {
         const appRequest = await fetchChairGetNotification(
@@ -100,18 +98,17 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
           payload: {
             request_id: appRequest.request_id,
             coordinate: {
-              pickup: appRequest.destination_coordinate,
+              pickup: appRequest.destination_coordinate, // TODO: set pickup
               destination: appRequest.destination_coordinate,
             },
             user: appRequest.user,
           },
         });
-      })();
-      return () => {
-        abortController.abort();
-      };
-    }, []);
-  }
+      })().catch((e) => {
+        console.error(`ERROR: ${e}`);
+      });
+    }
+  }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
   const responseClientAppRequest = useMemo<
     ClientChairRequest | undefined
@@ -143,7 +140,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         userId: id,
       },
     };
-  }, [clientChairPayloadWithStatus]);
+  }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
   return responseClientAppRequest;
 };

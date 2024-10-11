@@ -34,8 +34,8 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
     useState<Omit<ClientAppRequest, "auth">>();
   const isSSE = false;
-  if (isSSE) {
-    useEffect(() => {
+  useEffect(() => {
+    if (isSSE) {
       /**
        * WebAPI標準のものはAuthヘッダーを利用できないため
        */
@@ -76,9 +76,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           eventSource.close();
         };
       };
-    }, [accessToken, setClientAppPayloadWithStatus]);
-  } else {
-    useEffect(() => {
+    } else {
       const abortController = new AbortController();
       (async () => {
         const appRequest = await fetchAppGetNotification(
@@ -100,12 +98,11 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             chair: appRequest.chair,
           },
         });
-      })();
-      return () => {
-        abortController.abort();
-      };
-    }, []);
-  }
+      })().catch((e) => {
+        console.error(`ERROR: ${e}`);
+      });
+    }
+  }, [accessToken, setClientAppPayloadWithStatus, isSSE]);
 
   const responseClientAppRequest = useMemo<ClientAppRequest | undefined>(() => {
     const debugStatus =
@@ -135,7 +132,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         userId: id,
       },
     };
-  }, [clientAppPayloadWithStatus]);
+  }, [clientAppPayloadWithStatus, searchParams, accessToken, id]);
 
   return responseClientAppRequest;
 };
