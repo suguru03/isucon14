@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Avatar } from "~/components/primitives/avatar/avatar";
-import { useUser } from "../../contexts/user-context";
+import { useClientAppRequestContext } from "../../contexts/user-context";
 import { Header } from "~/components/primitives/header/header";
 
 export const meta: MetaFunction = () => {
@@ -11,8 +11,8 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { name } = useUser();
-
+  const user = useClientAppRequestContext();
+  const name = user.user?.name;
   return (
     <>
       <Header backTo={"/client"} />

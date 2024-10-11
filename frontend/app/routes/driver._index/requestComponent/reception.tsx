@@ -3,13 +3,21 @@ import {
   useChairPostActivate,
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
-import { ChairRequest } from "~/apiClient/apiSchemas";
-import { Button } from "~/components/primitives/button/button";
-import { useDriver } from "~/contexts/driver-context";
-import { MatchingModal } from "./matching";
 
-export const Reception = ({ data }: { data?: ChairRequest }) => {
-  const driver = useDriver();
+import { Button } from "~/components/primitives/button/button";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { MatchingModal } from "./matching";
+import type { RequestProps } from "~/components/request/type";
+import { ClientChairRequest } from "~/types";
+
+export const Reception = ({
+  status,
+  payload,
+}: RequestProps<
+  "MATCHING" | "IDLE",
+  { payload: ClientChairRequest["payload"] }
+>) => {
+  const driver = useClientChairRequestContext();
   const [isReception, setReception] = useState<boolean>(false);
   const { mutate: postChairActivate } = useChairPostActivate();
   const { mutate: postChairDeactivate } = useChairPostDeactivate();
@@ -18,7 +26,7 @@ export const Reception = ({ data }: { data?: ChairRequest }) => {
     setReception(true);
     postChairActivate({
       headers: {
-        Authorization: `Bearer ${driver.accessToken}`,
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
       },
     });
   }, [driver, postChairActivate]);
@@ -26,14 +34,19 @@ export const Reception = ({ data }: { data?: ChairRequest }) => {
     setReception(false);
     postChairDeactivate({
       headers: {
-        Authorization: `Bearer ${driver.accessToken}`,
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
       },
     });
   }, [driver, postChairDeactivate]);
 
   return (
     <>
-      {data?.status === "MATCHING" ? <MatchingModal data={data} /> : null}
+      {status === "MATCHING" ? (
+        <MatchingModal
+          name={payload?.user?.name}
+          request_id={payload?.request_id}
+        />
+      ) : null}
       <div className="h-full text-center content-center bg-blue-200">Map</div>
       <div className="px-4 py-16 block justify-center border-t">
         {isReception ? (
