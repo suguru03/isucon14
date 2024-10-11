@@ -4,7 +4,7 @@ import {
   useChairPostRequestAccept,
   useChairPostRequestDeny,
 } from "~/apiClient/apiComponents";
-import { ChairIcon } from "~/components/icon/chair";
+import { CarRedIcon } from "~/components/icon/car-red";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
@@ -54,7 +54,7 @@ export const MatchingModal = ({
     <Modal ref={modalRef} onClose={onCloseModal}>
       <div className="h-full text-center content-center">
         <div className="flex flex-col items-center my-8 gap-8">
-          <ChairIcon className="size-[48px]" />
+          <CarRedIcon className="size-[76px] mb-4" />
 
           <Text>
             <span className="font-bold mx-1">{name}</span>

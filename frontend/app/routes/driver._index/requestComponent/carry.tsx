@@ -1,3 +1,4 @@
+import { Map } from "~/components/modules/map/map";
 import type { RequestProps } from "~/components/request/type";
 
 export const Carry = ({ status }: RequestProps<"CARRYING" | "ARRIVED">) => {
@@ -9,7 +10,7 @@ export const Carry = ({ status }: RequestProps<"CARRYING" | "ARRIVED">) => {
 
   return (
     <>
-      <div className="h-full text-center content-center bg-blue-200">Map</div>
+      <Map />
       <div className="px-4 py-16 block justify-center border-t">
         <p>xxさんからの配車依頼</p>
         <p>{"from -> to"}</p>

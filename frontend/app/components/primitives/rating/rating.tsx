@@ -1,13 +1,18 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 
 type RatingProps = {
   name: string;
   starSize?: number;
+  rating: number;
+  setRating: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export const Rating: FC<RatingProps> = ({ name, starSize = 40 }) => {
-  const [rating, setRating] = useState(0);
-
+export const Rating: FC<RatingProps> = ({
+  name,
+  starSize = 40,
+  rating,
+  setRating,
+}) => {
   return (
     <div className="flex flex-row gap-1">
       {Array.from({ length: 5 }).map((_, index) => {
