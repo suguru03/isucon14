@@ -27,8 +27,8 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       Authorization: `Bearer ${provider.access_token}`,
     },
     body: {
-      name: String(formData.get("chair_name")) ?? "",
-      model: String(formData.get("chair_model")) ?? "",
+      model: String(formData.get("model")) ?? "",
+      name: String(formData.get("name")) ?? "",
     },
   });
   return redirect(`/driver?access_token=${chair.access_token}&id=${chair.id}`);

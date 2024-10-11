@@ -19,7 +19,7 @@ const getLoggedInURLForClient = async () => {
   const generateURL = (r: APIResponse) => {
     const id: string = r["id"];
     const accessToken: string = r["access_token"];
-    return `${DEFAULT_URL}/client?access_token=${accessToken}&user_id=${id}`;
+    return `${DEFAULT_URL}/client?access_token=${accessToken}&id=${id}`;
   };
 
   if (existsSync(`./client.login-cache.json`)) {

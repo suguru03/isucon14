@@ -1,75 +1,133 @@
 import { useSearchParams } from "@remix-run/react";
-import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
-  useChairGetNotification,
-  type ChairGetNotificationError,
-} from "~/apiClient/apiComponents";
+  type ReactNode,
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
-import type { User as Chair } from "~/types";
+import { EventSourcePolyfill } from "event-source-polyfill";
+import { apiBaseURL } from "~/apiClient/APIBaseURL";
+import { fetchChairGetNotification } from "~/apiClient/apiComponents";
+import type { ClientChairRequest } from "~/types";
 
-const DriverContext = createContext<Partial<Chair>>({});
-
-const RequestContext = createContext<{
-  data?: ChairRequest;
-  error?: ChairGetNotificationError | null;
-  isLoading: boolean;
-}>({ isLoading: false });
-
-const RequestProvider = ({
-  children,
-  accessToken,
-}: {
-  children: ReactNode;
-  accessToken: string;
-}) => {
-  const notificationResponse = useChairGetNotification({
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "text/event-stream",
-    },
-  });
-  const { data, error, isLoading } = notificationResponse;
-  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
-  const responseData = useMemo(() => {
-    const status = (searchParams.get("debug_status") ?? undefined) as
-      | RequestStatus
-      | undefined;
-
-    let fetchedData: Partial<ChairRequest> = data ?? {};
-    if (data instanceof Blob) {
-      fetchedData = {};
+  const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
+    useState<Omit<ClientChairRequest, "auth" | "chair">>();
+  const isSSE = localStorage.getItem("isSSE") === "true";
+  useEffect(() => {
+    if (isSSE) {
+      /**
+       * WebAPI標準のものはAuthヘッダーを利用できないため
+       */
+      const eventSource = new EventSourcePolyfill(
+        `${apiBaseURL}/chair/notification`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      eventSource.onmessage = (event) => {
+        if (typeof event.data === "string") {
+          const eventData = JSON.parse(event.data) as ChairRequest;
+          setClientChairPayloadWithStatus((preRequest) => {
+            if (
+              preRequest === undefined ||
+              eventData.status !== preRequest.status ||
+              eventData.request_id !== preRequest.payload?.request_id
+            ) {
+              return {
+                status: eventData.status,
+                payload: {
+                  request_id: eventData.request_id,
+                  coordinate: {
+                    pickup: eventData.destination_coordinate, // TODO: set pickup
+                    destination: eventData.destination_coordinate,
+                  },
+                  user: eventData.user,
+                },
+              };
+            } else {
+              return preRequest;
+            }
+          });
+        }
+        return () => {
+          eventSource.close();
+        };
+      };
+    } else {
+      const abortController = new AbortController();
+      (async () => {
+        const appRequest = await fetchChairGetNotification(
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+          abortController.signal,
+        );
+        setClientChairPayloadWithStatus({
+          status: appRequest.status,
+          payload: {
+            request_id: appRequest.request_id,
+            coordinate: {
+              pickup: appRequest.destination_coordinate, // TODO: set pickup
+              destination: appRequest.destination_coordinate,
+            },
+            user: appRequest.user,
+          },
+        });
+      })().catch((e) => {
+        console.error(`ERROR: ${e}`);
+      });
     }
+  }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
-    if (searchParams.get("debug_status")) {
-      fetchedData = {
-        request_id: "__DUMMY_REQUEST_ID__",
+  const responseClientAppRequest = useMemo<
+    ClientChairRequest | undefined
+  >(() => {
+    const debugStatus =
+      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
+    const candidateAppRequest = clientChairPayloadWithStatus;
+    if (debugStatus !== undefined && candidateAppRequest) {
+      candidateAppRequest.status = debugStatus;
+      candidateAppRequest.payload = { ...candidateAppRequest.payload };
+      candidateAppRequest.payload.request_id = "__DUMMY_REQUEST_ID__";
+      (candidateAppRequest.payload.user = {
+        id: "1234",
+        name: "ゆーざー",
+      }),
+        (candidateAppRequest.payload.coordinate = {
+          ...candidateAppRequest.payload.coordinate,
+        });
+      candidateAppRequest.payload.coordinate.destination = {
+        latitude: 34.12345678,
+        longitude: 120.447162,
+      };
+      return {
+        ...candidateAppRequest,
+        auth: {
+          accessToken,
+        },
         user: {
-          id: "1234",
-          name: "ゆーざー",
+          id,
+          name: "ISUCON椅子",
         },
-        destination_coordinate: {
-          latitude: 34.12345678,
-          longitude: 120.447162,
-        },
-        ...fetchedData,
       };
     }
+  }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
-    // TODO:
-    return { ...fetchedData, status } as ChairRequest;
-  }, [data, searchParams]);
-
-  /**
-   * TODO: SSE処理
-   */
-
-  return (
-    <RequestContext.Provider value={{ data: responseData, error, isLoading }}>
-      {children}
-    </RequestContext.Provider>
-  );
+  return responseClientAppRequest;
 };
+
+const ClientChairRequestContext = createContext<Partial<ClientChairRequest>>(
+  {},
+);
 
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
@@ -77,11 +135,11 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const accessTokenParameter = searchParams.get("access_token");
   const chairIdParameter = searchParams.get("id");
 
-  const chair: Partial<Chair> = useMemo(() => {
+  const { accessToken, id } = useMemo(() => {
     if (accessTokenParameter !== null && chairIdParameter !== null) {
       requestIdleCallback(() => {
-        sessionStorage.setItem("chair_access_token", accessTokenParameter);
-        sessionStorage.setItem("chair_id", chairIdParameter);
+        sessionStorage.setItem("user_access_token", accessTokenParameter);
+        sessionStorage.setItem("user_id", chairIdParameter);
       });
       return {
         accessToken: accessTokenParameter,
@@ -90,24 +148,22 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
       };
     }
     const accessToken =
-      sessionStorage.getItem("chair_access_token") ?? undefined;
-    const id = sessionStorage.getItem("chair_id") ?? undefined;
+      sessionStorage.getItem("user_access_token") ?? undefined;
+    const id = sessionStorage.getItem("user_id") ?? undefined;
     return {
       accessToken,
       id,
-      name: "ISUCON太郎",
     };
   }, [accessTokenParameter, chairIdParameter]);
 
+  const request = useClientChairRequest(accessToken ?? "", id ?? "");
+
   return (
-    <DriverContext.Provider value={chair}>
-      <RequestProvider accessToken={chair.accessToken ?? ""}>
-        {children}
-      </RequestProvider>
-    </DriverContext.Provider>
+    <ClientChairRequestContext.Provider value={{ ...request }}>
+      {children}
+    </ClientChairRequestContext.Provider>
   );
 };
 
-export const useDriver = () => useContext(DriverContext);
-
-export const useRequest = () => useContext(RequestContext);
+export const useClientChairRequestContext = () =>
+  useContext(ClientChairRequestContext);
