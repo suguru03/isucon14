@@ -46,11 +46,6 @@ func providerPostRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type getProviderSalesRequest struct {
-	Since string `json:"since"` // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-	Until string `json:"until"` // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-}
-
 type getProviderSalesResponse struct {
 	TotalSales int          `json:"total_sales"`
 	Chairs     []ChairSales `json:"chairs"`
@@ -68,14 +63,9 @@ type ModelSales struct {
 	Sales int    `json:"sales"`
 }
 
+// TODO: ちゃんと実装する
 func providerGetSales(w http.ResponseWriter, r *http.Request) {
 	provider := r.Context().Value("provider").(*Provider)
-
-	req := &getProviderSalesRequest{}
-	if err := bindJSON(r, req); err != nil {
-		writeError(w, http.StatusBadRequest, err)
-		return
-	}
 
 	chairs := []Chair{}
 	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
@@ -91,6 +81,7 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
+		// TODO: Since, Untilの実装
 		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED'", chair.ID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
@@ -121,12 +112,17 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
+const (
+	initialFare     = 500
+	farePerDistance = 100
+)
+
 func calculateSales(requests []RideRequest) int {
 	sale := 0
 	for _, req := range requests {
-		latDiff := req.DestinationLatitude - req.PickupLatitude
-		lonDiff := req.DestinationLongitude - req.PickupLongitude
-		sale += latDiff*latDiff + lonDiff*lonDiff
+		latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
+		lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
+		sale += initialFare + farePerDistance*(latDiff+lonDiff)
 	}
 	return sale
 }

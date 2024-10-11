@@ -12,11 +12,12 @@ import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 type ModalProps = PropsWithChildren<
   ComponentProps<"div"> & {
     onClose?: () => void;
+    disableCloseOnBackdrop?: boolean;
   }
 >;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
-  ({ children, onClose, className, ...props }, ref) => {
+  ({ children, onClose, disableCloseOnBackdrop, className, ...props }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
     const handleClose = () => {
@@ -42,7 +43,12 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
       return () => clearTimeout(timer);
     }, []);
 
-    useOnClickOutside(sheetRef, handleClose);
+    useOnClickOutside(sheetRef, () => {
+      if (disableCloseOnBackdrop) {
+        return;
+      }
+      handleClose();
+    });
 
     useImperativeHandle(ref, () => ({
       close: handleClose,

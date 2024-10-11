@@ -19,6 +19,8 @@ type Client interface {
 	SendDeactivate(ctx *Context, chair *Chair) error
 	// GetRequestByChair サーバーからリクエストの詳細を取得する(椅子側)
 	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
+	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
+	GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error)
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterProvider サーバーにプロバイダーを登録する
@@ -38,6 +40,8 @@ type SendCreateRequestResponse struct {
 }
 
 type GetRequestByChairResponse struct{}
+
+type GetProviderSalesResponse struct{}
 
 type RegisterUserRequest struct {
 	UserName    string

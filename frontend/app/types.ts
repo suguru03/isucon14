@@ -1,5 +1,12 @@
-import { Chair, User, Coordinate, RequestStatus } from "./apiClient/apiSchemas";
 import { RequestId } from "./apiClient/apiParameters";
+import type { Dispatch, SetStateAction } from "react";
+import {
+  Coordinate as ApiCoodinate,
+  Chair,
+  RequestStatus,
+  User,
+} from "./apiClient/apiSchemas";
+
 export type AccessToken = string;
 
 export type ClientAppRequest = {
@@ -36,7 +43,18 @@ export type ClientChairRequest = {
     userId?: string;
   };
   chair?: {
-    id: string;
+    id?: string;
     name: string;
+    currentCoordinate: {
+      setter: Dispatch<SetStateAction<Coordinate | undefined>>;
+      location?: Coordinate;
+    };
   };
 };
+
+export type Pos = {
+  x: number;
+  y: number;
+};
+
+export type Coordinate = ApiCoodinate;

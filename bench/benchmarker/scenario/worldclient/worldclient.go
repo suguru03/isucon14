@@ -219,6 +219,21 @@ func (c *WorldClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 	return &world.GetRequestByChairResponse{}, nil
 }
 
+func (c *WorldClient) GetProviderSales(ctx *world.Context, provider *world.Provider) (*world.GetProviderSalesResponse, error) {
+	providerClient, err := c.getProviderClient(provider.ServerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: ちゃんと実装する
+	_, err = providerClient.client.ProviderGetSales(c.ctx, &api.ProviderGetSalesParams{})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
+	}
+
+	return &world.GetProviderSalesResponse{}, nil
+}
+
 func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserRequest) (*world.RegisterUserResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {

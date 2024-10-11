@@ -1,36 +1,39 @@
 import {
   FC,
-  useEffect,
-  useCallback,
-  useRef,
-  useState,
   MouseEventHandler,
   TouchEventHandler,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { twMerge } from "tailwind-merge";
+import colors from "tailwindcss/colors";
+import { ToIcon } from "~/components/icon/to";
+import type { Coordinate, Pos } from "~/types";
 
-const size = 5000;
+const GridDistance = 50;
+const MapSize = GridDistance * 100;
+const PinSize = 40;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
-  const grad = ctx.createLinearGradient(0, 0, size, 0);
-  grad.addColorStop(0, "#f2f2f2");
-  grad.addColorStop(1, "#e8e8e8");
+  ctx.fillStyle = colors.gray[100];
+  ctx.fillRect(0, 0, MapSize, MapSize);
 
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.strokeStyle = "#dddddd";
-  ctx.lineWidth = 12;
+  ctx.strokeStyle = colors.gray[200];
+  ctx.lineWidth = 10;
   ctx.beginPath();
 
-  for (let v = 50; v < size; v += 50) {
+  for (let v = GridDistance; v < MapSize; v += GridDistance) {
     ctx.moveTo(v, 0);
-    ctx.lineTo(v, size);
+    ctx.lineTo(v, MapSize);
   }
 
-  for (let h = 50; h < size; h += 50) {
+  for (let h = GridDistance; h < MapSize; h += GridDistance) {
     ctx.moveTo(0, h);
-    ctx.lineTo(size, h);
+    ctx.lineTo(MapSize, h);
   }
 
   ctx.stroke();
@@ -40,17 +43,140 @@ const minmax = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 };
 
-export const Map: FC = () => {
+const coordinateToPos = (coordinate: Coordinate): Pos => {
+  return {
+    x: -coordinate.latitude,
+    y: -coordinate.longitude,
+  };
+};
+
+const posToCoordinate = (pos: Pos): Coordinate => {
+  return {
+    latitude: Math.ceil(-pos.x),
+    longitude: Math.ceil(-pos.y),
+  };
+};
+
+const centerPosFrom = (pos: Pos, outerRect: DOMRect): Pos => {
+  return {
+    x: pos.x - outerRect.width / 2,
+    y: pos.y - outerRect.height / 2,
+  };
+};
+
+const SelectorLayer: FC<{
+  pinSize?: number;
+  pos?: Pos;
+}> = ({ pinSize = 80, pos }) => {
+  const loc = useMemo(() => pos && posToCoordinate(pos), [pos]);
+  return (
+    <div className="flex items-center justify-center w-full h-full">
+      <svg
+        className="absolute top-0 left-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+        opacity={0.1}
+      >
+        <rect x="50%" y="0" width={2} height={"100%"} />
+        <rect x="0" y="50%" width={"100%"} height={2} />
+      </svg>
+      <ToIcon
+        className="absolute mt-[-8px] opacity-60"
+        color={colors.black}
+        width={pinSize}
+        height={pinSize}
+        style={{
+          transform: `translateY(-${pinSize / 2}px)`,
+        }}
+      />
+      {loc && (
+        <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
+          <span>{`${loc.latitude}, ${loc.longitude}`}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
+  const fromPos = useMemo(() => from && coordinateToPos(from), [from]);
+  const toPos = useMemo(() => to && coordinateToPos(to), [to]);
+  return (
+    <div className="flex w-full h-full absolute top-0 left-0">
+      {fromPos && (
+        <ToIcon
+          className="absolute top-0 left-0"
+          color={colors.black}
+          width={PinSize}
+          height={PinSize}
+          style={{
+            transform: `translate(${-fromPos.x - PinSize / 2}px, ${-fromPos.y - PinSize}px)`,
+          }}
+        />
+      )}
+      {toPos && (
+        <ToIcon
+          className="absolute"
+          color={colors.red[500]}
+          width={PinSize}
+          height={PinSize}
+          style={{
+            transform: `translate(${-toPos.x - PinSize / 2}px, ${-toPos.y - PinSize}px)`,
+          }}
+        ></ToIcon>
+      )}
+    </div>
+  );
+};
+
+type MapProps = {
+  onMove?: (coordinate: Coordinate) => void;
+  selectable?: boolean;
+  from?: Coordinate;
+  to?: Coordinate;
+  initialCoordinate?: Coordinate;
+};
+
+export const Map: FC<MapProps> = ({
+  selectable,
+  onMove,
+  from,
+  to,
+  initialCoordinate,
+}) => {
+  const onMoveRef = useRef(onMove);
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrag, setIsDrag] = useState(false);
-  const [{ x, y }, setPos] = useState({ x: -size / 4, y: -size / 4 });
+  const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
   const [movingStartPagePos, setMovingStartPagePos] = useState({
     x: 0,
     y: 0,
   });
-  const [outerRect, setOuterRect] = useState<DOMRect | null>(null);
+  const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    if (!outerRef.current) {
+      return;
+    }
+    const rect = outerRef.current.getBoundingClientRect();
+    if (initialCoordinate) {
+      const pos = coordinateToPos(initialCoordinate);
+      const initalPos = {
+        x: pos.x + rect.width / 2,
+        y: pos.y + rect.height / 2,
+      };
+      setPos(initalPos);
+      onMoveRef?.current?.(posToCoordinate(centerPosFrom(initalPos, rect)));
+      return;
+    }
+    const mapCenterPos = {
+      x: -MapSize / 2,
+      y: -MapSize / 2,
+    };
+    setPos(mapCenterPos);
+    onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
+  }, [initialCoordinate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,7 +197,7 @@ export const Map: FC = () => {
     };
   }, []);
 
-  const onMouseDown: MouseEventHandler<HTMLCanvasElement> = useCallback(
+  const onMouseDown: MouseEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       setIsDrag(true);
       setMovingStartPagePos({ x: e.pageX, y: e.pageY });
@@ -80,7 +206,7 @@ export const Map: FC = () => {
     [x, y],
   );
 
-  const onTouchStart: TouchEventHandler<HTMLCanvasElement> = useCallback(
+  const onTouchStart: TouchEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       setIsDrag(true);
       setMovingStartPagePos({
@@ -106,33 +232,28 @@ export const Map: FC = () => {
   }, []);
 
   useEffect(() => {
+    const setFixedPos = (pageX: number, pageY: number) => {
+      if (!outerRect) return;
+      const posX = minmax(
+        movingStartPos.x - (movingStartPagePos.x - pageX),
+        -MapSize + outerRect.width,
+        0,
+      );
+      const posY = minmax(
+        movingStartPos.y - (movingStartPagePos.y - pageY),
+        -MapSize + outerRect.height,
+        0,
+      );
+      setPos({ x: posX, y: posY });
+      onMoveRef?.current?.(
+        posToCoordinate(centerPosFrom({ x: posX, y: posY }, outerRect)),
+      );
+    };
     const onMouseMove = (e: MouseEvent) => {
-      setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.pageX),
-          -size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.pageY),
-          -size + (outerRect?.height ?? 0),
-          0,
-        ),
-      });
+      setFixedPos(e.pageX, e.pageY);
     };
     const onTouchMove = (e: TouchEvent) => {
-      setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.touches[0].pageX),
-          -size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.touches[0].pageY),
-          -size + (outerRect?.height ?? 0),
-          0,
-        ),
-      });
+      setFixedPos(e.touches[0].pageX, e.touches[0].pageY);
     };
     if (isDrag) {
       window.addEventListener("mousemove", onMouseMove, { passive: true });
@@ -142,7 +263,7 @@ export const Map: FC = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [isDrag, movingStartPagePos, movingStartPos, outerRect]);
+  }, [isDrag, movingStartPagePos, movingStartPos, onMove, outerRect]);
 
   return (
     <div
@@ -151,18 +272,25 @@ export const Map: FC = () => {
         isDrag && "cursor-grab",
       )}
       ref={outerRef}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
+      role="button"
+      tabIndex={0}
     >
-      <canvas
-        width={size}
-        height={size}
-        className="absolute"
+      <div
+        className="absolute top-0 left-0"
         style={{
           transform: `translate(${x}px, ${y}px)`,
+          width: MapSize,
+          height: MapSize,
         }}
-        ref={canvasRef}
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
-      />
+      >
+        <canvas width={MapSize} height={MapSize} ref={canvasRef} />
+        <PinLayer from={from} to={to} />
+      </div>
+      {selectable && outerRect && (
+        <SelectorLayer pos={centerPosFrom({ x, y }, outerRect)} />
+      )}
     </div>
   );
 };

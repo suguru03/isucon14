@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/isucon/isucandar"
@@ -15,8 +16,10 @@ import (
 )
 
 var (
-	// ベンチマークターゲット
-	target string
+	// ベンチマークターゲット(URL)
+	targetURL string
+	// ベンチマークターゲット(ip:port)
+	targetAddr string
 	// 負荷走行秒数
 	loadTimeoutSeconds int64
 )
@@ -36,7 +39,8 @@ var runCmd = &cobra.Command{
 
 		// supervisorで起動された場合は、targetを上書きする
 		if benchrun.GetTargetAddress() != "" {
-			target = benchrun.GetTargetAddress()
+			targetURL = "https://trial.isucon14.net"
+			targetAddr = fmt.Sprintf("%s:%d", benchrun.GetTargetAddress(), 443)
 		}
 
 		var reporter benchrun.Reporter
@@ -49,13 +53,14 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		meter, err := metrics.NewMeter(cmd.Context())
+		meter, exporter, err := metrics.NewMeter(cmd.Context())
 		if err != nil {
 			l.Error("Failed to create meter", zap.Error(err))
 			return err
 		}
+		defer exporter.Shutdown(context.Background())
 
-		s := scenario.NewScenario(target, contestantLogger, reporter, meter)
+		s := scenario.NewScenario(targetURL, targetAddr, contestantLogger, reporter, meter)
 
 		b, err := isucandar.NewBenchmark(
 			isucandar.WithoutPanicRecover(),
@@ -86,7 +91,8 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	runCmd.Flags().StringVar(&target, "target", "http://localhost:8080", "benchmark target")
+	runCmd.Flags().StringVar(&targetURL, "target", "http://localhost:8080", "benchmark target url")
+	runCmd.Flags().StringVar(&targetAddr, "addr", "", "benchmark target ip:port")
 	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds")
 	rootCmd.AddCommand(runCmd)
 }

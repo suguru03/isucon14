@@ -48,6 +48,8 @@ const (
 	ErrorCodeRequestCanceledByServer
 	// ErrorCodeFailedToRegisterPaymentMethods ユーザーの支払い情報の登録に失敗した
 	ErrorCodeFailedToRegisterPaymentMethods
+	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗した
+	ErrorCodeFailedToGetProviderSales
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
