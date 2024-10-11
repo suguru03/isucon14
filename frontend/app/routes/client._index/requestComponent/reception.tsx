@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ChairIcon } from "~/components/icon/chair";
+import { CarRedIcon } from "~/components/icon/car-red";
+import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
+import { Text } from "~/components/primitives/text/text";
 import type { RequestProps } from "~/components/request/type";
 import { ReceptionMapModal } from "./receptionMapModal";
 
@@ -25,22 +27,38 @@ export const Reception = ({
   return (
     <>
       {status === "IDLE" ? (
-        <Map />
+        <>
+          <Map />
+          <div className="h-full flex flex-col items-center justify-center my-8 gap-4">
+            <Button onClick={() => {}}>配車</Button>
+          </div>
+        </>
       ) : (
-        <div className="flex flex-col items-center my-8 gap-4">
-          <ChairIcon className="size-[48px]" />
-          <p>配車しています</p>
+        <div className="w-full h-full px-8 flex flex-col items-center justify-center my-8">
+          <CarRedIcon className="size-[76px] mb-4" />
+          <Text size="xl" className="mb-6">
+            配車しています
+          </Text>
+          <LocationButton
+            type="from"
+            position="here"
+            className="w-full"
+            onClick={() => handleOpenModal("from")}
+          />
+          <Text size="xl" className="self-center">
+            ↓
+          </Text>
+          <LocationButton
+            type="to"
+            position={{ latitude: 123, longitude: 456 }}
+            className="w-full"
+            onClick={() => handleOpenModal("to")}
+          />
+          <Button variant="danger" className="w-full mt-6" onClick={() => {}}>
+            配車をキャンセルする
+          </Button>
         </div>
       )}
-      <div className="px-4 py-16 block justify-center border-t">
-        <Button onClick={() => handleOpenModal("from")}>from</Button>
-        <Button onClick={() => handleOpenModal("to")}>to</Button>
-        {status === "IDLE" ? (
-          <Button onClick={() => {}}>配車</Button>
-        ) : (
-          <Button onClick={() => {}}>配車をキャンセルする</Button>
-        )}
-      </div>
 
       {isModalOpen && (
         <ReceptionMapModal onClose={onCloseModal}>

@@ -17,7 +17,7 @@ export const FooterNavigation: FC<{
         {navigationMenus.map((menu, index) => (
           <li
             key={index}
-            className="flex justify-center border-b-4 has-[.active]:border-black"
+            className="flex justify-center border-b-4 border-transparent has-[.active]:border-black"
           >
             <NavLink
               to={menu.link}
