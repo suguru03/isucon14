@@ -4,33 +4,35 @@ import {
   TouchEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
-import { Coordinate } from "~/apiClient/apiSchemas";
 import { ToIcon } from "~/components/icon/to";
+import type { Coordinate, Pos } from "~/types";
 
 const GridDistance = 50;
-const Size = GridDistance * 100;
+const MapSize = GridDistance * 100;
+const PinSize = 40;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
   ctx.fillStyle = colors.gray[100];
-  ctx.fillRect(0, 0, Size, Size);
+  ctx.fillRect(0, 0, MapSize, MapSize);
 
   ctx.strokeStyle = colors.gray[200];
   ctx.lineWidth = 10;
   ctx.beginPath();
 
-  for (let v = GridDistance; v < Size; v += GridDistance) {
+  for (let v = GridDistance; v < MapSize; v += GridDistance) {
     ctx.moveTo(v, 0);
-    ctx.lineTo(v, Size);
+    ctx.lineTo(v, MapSize);
   }
 
-  for (let h = GridDistance; h < Size; h += GridDistance) {
+  for (let h = GridDistance; h < MapSize; h += GridDistance) {
     ctx.moveTo(0, h);
-    ctx.lineTo(Size, h);
+    ctx.lineTo(MapSize, h);
   }
 
   ctx.stroke();
@@ -40,10 +42,32 @@ const minmax = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 };
 
+const coordinateToPos = (coordinate: Coordinate): Pos => {
+  return {
+    x: -coordinate.latitude,
+    y: -coordinate.longitude,
+  };
+};
+
+const posToCoordinate = (pos: Pos): Coordinate => {
+  return {
+    latitude: Math.ceil(-pos.x),
+    longitude: Math.ceil(-pos.y),
+  };
+};
+
+const centerPosFrom = (pos: Pos, outerRect: DOMRect): Pos => {
+  return {
+    x: pos.x - outerRect.width / 2,
+    y: pos.y - outerRect.height / 2,
+  };
+};
+
 const SelectorLayer: FC<{
   pinSize?: number;
-  pos?: { x: number; y: number };
+  pos?: Pos;
 }> = ({ pinSize = 80, pos }) => {
+  const loc = useMemo(() => pos && posToCoordinate(pos), [pos]);
   return (
     <div className="flex items-center justify-center w-full h-full">
       <svg
@@ -55,7 +79,7 @@ const SelectorLayer: FC<{
         <rect x="0" y="50%" width={"100%"} height={2} />
       </svg>
       <ToIcon
-        className="absolute mt-[-8px]"
+        className="absolute mt-[-8px] opacity-60"
         color={colors.black}
         width={pinSize}
         height={pinSize}
@@ -63,10 +87,41 @@ const SelectorLayer: FC<{
           transform: `translateY(-${pinSize / 2}px)`,
         }}
       />
-      {pos && (
+      {loc && (
         <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
-          <span>{`${Math.ceil(pos.x)}, ${Math.ceil(pos.y)}`}</span>
+          <span>{`${loc.latitude}, ${loc.longitude}`}</span>
         </div>
+      )}
+    </div>
+  );
+};
+
+const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
+  const fromPos = useMemo(() => from && coordinateToPos(from), [from]);
+  const toPos = useMemo(() => to && coordinateToPos(to), [to]);
+  return (
+    <div className="flex w-full h-full absolute top-0 left-0">
+      {fromPos && (
+        <ToIcon
+          className="absolute top-0 left-0"
+          color={colors.black}
+          width={PinSize}
+          height={PinSize}
+          style={{
+            transform: `translate(${-fromPos.x - PinSize / 2}px, ${-fromPos.y - PinSize}px)`,
+          }}
+        />
+      )}
+      {toPos && (
+        <ToIcon
+          className="absolute"
+          color={colors.red[500]}
+          width={PinSize}
+          height={PinSize}
+          style={{
+            transform: `translate(${-toPos.x - PinSize / 2}px, ${-toPos.y - PinSize}px)`,
+          }}
+        ></ToIcon>
       )}
     </div>
   );
@@ -75,24 +130,33 @@ const SelectorLayer: FC<{
 type MapProps = {
   onMove?: (coordinate: Coordinate) => void;
   selectable?: boolean;
+  from?: Coordinate;
+  to?: Coordinate;
 };
 
-export const Map: FC<MapProps> = ({ selectable, onMove }) => {
+export const Map: FC<MapProps> = ({ selectable, onMove, from, to }) => {
+  const onMoveRef = useRef(onMove);
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrag, setIsDrag] = useState(false);
-  const [{ x, y }, setPos] = useState(() => {
-    const initialX = -Size / 4;
-    const initialY = -Size / 4;
-    onMove?.({ latitude: -initialX, longitude: -initialY });
-    return { x: initialX, y: initialY };
+  const [{ x, y }, setPos] = useState({
+    x: -MapSize / 4,
+    y: -MapSize / 4,
   });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
   const [movingStartPagePos, setMovingStartPagePos] = useState({
     x: 0,
     y: 0,
   });
-  const [outerRect, setOuterRect] = useState<DOMRect | null>(null);
+  const [outerRect, setOuterRect] = useState<DOMRect | undefined>(() =>
+    outerRef.current?.getBoundingClientRect(),
+  );
+
+  useEffect(() => {
+    if (outerRect)
+      onMoveRef?.current?.(posToCoordinate(centerPosFrom({ x, y }, outerRect)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outerRect]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -149,21 +213,21 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
 
   useEffect(() => {
     const setFixedPos = (pageX: number, pageY: number) => {
+      if (!outerRect) return;
       const posX = minmax(
         movingStartPos.x - (movingStartPagePos.x - pageX),
-        -Size + (outerRect?.width ?? 0),
+        -MapSize + outerRect.width,
         0,
       );
       const posY = minmax(
         movingStartPos.y - (movingStartPagePos.y - pageY),
-        -Size + (outerRect?.height ?? 0),
+        -MapSize + outerRect.height,
         0,
       );
-      setPos({
-        x: posX,
-        y: posY,
-      });
-      onMove?.({ latitude: -Math.ceil(posX), longitude: -Math.ceil(posY) });
+      setPos({ x: posX, y: posY });
+      onMoveRef?.current?.(
+        posToCoordinate(centerPosFrom({ x: posX, y: posY }, outerRect)),
+      );
     };
     const onMouseMove = (e: MouseEvent) => {
       setFixedPos(e.pageX, e.pageY);
@@ -193,16 +257,20 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
       role="button"
       tabIndex={0}
     >
-      <canvas
-        width={Size}
-        height={Size}
+      <div
         className="absolute top-0 left-0"
         style={{
           transform: `translate(${x}px, ${y}px)`,
+          width: MapSize,
+          height: MapSize,
         }}
-        ref={canvasRef}
-      />
-      {selectable && <SelectorLayer pos={{ x: -x, y: -y }} />}
+      >
+        <canvas width={MapSize} height={MapSize} ref={canvasRef} />
+        <PinLayer from={from} to={to} />
+      </div>
+      {selectable && outerRect && (
+        <SelectorLayer pos={centerPosFrom({ x, y }, outerRect)} />
+      )}
     </div>
   );
 };
