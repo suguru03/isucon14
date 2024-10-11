@@ -9,7 +9,7 @@ export const Rating: FC<RatingProps> = ({ name, starSize = 40 }) => {
   const [rating, setRating] = useState(0);
 
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-row gap-1">
       {Array.from({ length: 5 }).map((_, index) => {
         const starValue = index + 1;
         return (
@@ -30,8 +30,8 @@ export const Rating: FC<RatingProps> = ({ name, starSize = 40 }) => {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              fill={starValue <= rating ? "currentColor" : "none"}
-              stroke={starValue <= rating ? "currentColor" : "gray"}
+              fill={starValue <= rating ? "currentColor" : "#d9d9d9"}
+              stroke={starValue <= rating ? "currentColor" : "#d9d9d9"}
               className={`cursor-pointer ${rating >= index + 1 ? "text-yellow-400" : "text-gray-300"}`}
               width={starSize}
               height={starSize}
