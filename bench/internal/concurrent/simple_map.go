@@ -2,6 +2,7 @@ package concurrent
 
 import (
 	"iter"
+	"slices"
 	"sync"
 )
 
@@ -64,4 +65,20 @@ func (s *SimpleMap[K, V]) Iter() iter.Seq2[K, V] {
 			}
 		}
 	}
+}
+
+func (s *SimpleMap[K, V]) Values() iter.Seq[V] {
+	return func(yield func(V) bool) {
+		s.lock.RLock()
+		defer s.lock.RUnlock()
+		for _, v := range s.m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func (s *SimpleMap[K, V]) ToSlice() []V {
+	return slices.Collect(s.Values())
 }

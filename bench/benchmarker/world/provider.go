@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"sync/atomic"
+
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type ProviderID int
@@ -15,6 +17,10 @@ type Provider struct {
 	ServerID string
 	// Region 椅子を配置する地域
 	Region *Region
+	// ChairDB 管理している椅子
+	ChairDB *concurrent.SimpleMap[ChairID, *Chair]
+	// TotalSales 管理している椅子による売上の合計
+	TotalSales atomic.Int64
 
 	// RegisteredData サーバーに登録されているプロバイダー情報
 	RegisteredData RegisteredProviderData
@@ -23,8 +29,6 @@ type Provider struct {
 
 	// Rand 専用の乱数
 	Rand *rand.Rand
-	// tickDone 行動が完了しているかどうか
-	tickDone atomic.Bool
 }
 
 type RegisteredProviderData struct {

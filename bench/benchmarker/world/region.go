@@ -14,8 +14,8 @@ type Region struct {
 	RegionHeight  int
 	// UsersDB 地域内のユーザー
 	UsersDB *concurrent.SimpleMap[UserID, *User]
-	// TotalLastEvaluation 地域内のユーザーの最終リクエストの評価の合計値
-	TotalLastEvaluation atomic.Int32
+	// TotalEvaluation 地域内のユーザーのリクエストの平均評価の合計値
+	TotalEvaluation atomic.Int32
 }
 
 func NewRegion(offsetX, offsetY, width, height int) *Region {
@@ -53,7 +53,7 @@ func (r *Region) RangeY() (bottom, top int) {
 // UserSatisfactionScore 地域内のユーザーの満足度
 func (r *Region) UserSatisfactionScore() int {
 	// TODO: 検討
-	// 地域内の全ユーザーの最終評価の平均値を地域のユーザー満足度にしている
+	// 地域内の全ユーザーの平均評価の平均値を地域のユーザー満足度にしている
 	// (ユーザーの評価の初期値は0)
-	return int(math.Round(float64(r.TotalLastEvaluation.Load()) / float64(r.UsersDB.Len())))
+	return int(math.Round(float64(r.TotalEvaluation.Load()) / float64(r.UsersDB.Len())))
 }

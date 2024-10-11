@@ -9,6 +9,7 @@ import (
 	"github.com/isucon/isucandar/score"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/payment"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
@@ -54,7 +55,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
-	paymentServer := payment.NewServer(w.PaymentDB, 300*time.Millisecond, 5)
+	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 5)
 	// TODO: サーバーハンドリング
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
@@ -108,7 +109,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		for range initialChairsNumPerProvider {
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Provider:          provider,
-				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
+				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(provider.Region, provider.Rand),
 				WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
 			})
 			if err != nil {
@@ -169,7 +170,15 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 		s.contestantLogger.Info("final region result",
 			zap.Int("region", i),
 			zap.Int("users", region.UsersDB.Len()),
+			zap.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
 			zap.Int("score", region.UserSatisfactionScore()),
+		)
+	}
+	for id, provider := range s.world.ProviderDB.Iter() {
+		s.contestantLogger.Info("final provider result",
+			zap.Int("id", int(id)),
+			zap.Int("chairs", provider.ChairDB.Len()),
+			zap.Int64("total_sales", provider.TotalSales.Load()),
 		)
 	}
 	return nil

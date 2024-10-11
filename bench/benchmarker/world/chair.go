@@ -27,6 +27,8 @@ type Chair struct {
 	ServerID string
 	// Region 椅子がいる地域
 	Region *Region
+	// Provider 椅子を所有している事業者
+	Provider *Provider
 	// Current 現在地
 	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離
@@ -61,8 +63,8 @@ type Chair struct {
 }
 
 type RegisteredChairData struct {
-	Name   string
-	Model  string
+	Name  string
+	Model string
 }
 
 func (c *Chair) String() string {
@@ -181,9 +183,6 @@ func (c *Chair) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusCompleted:
-			// 完了時間を記録
-			c.Request.CompletedAt = ctx.world.Time
-			ctx.world.CompletedRequestChan <- c.Request
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.ServerRequestID = null.String{}

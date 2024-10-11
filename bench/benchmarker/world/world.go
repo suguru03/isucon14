@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -41,12 +42,13 @@ type World struct {
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout      time.Duration
-	timeoutTicker    *time.Ticker
-	prevTimeout      bool
-	criticalErrorCh  chan error
-	waitingTickCount atomic.Int32
-	userIncrease     float64
+	tickTimeout        time.Duration
+	timeoutTicker      *time.Ticker
+	prevTimeout        bool
+	criticalErrorCh    chan error
+	waitingTickCount   atomic.Int32
+	userIncrease       float64
+	chairIncreaseSales int64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -70,6 +72,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 		userIncrease:         5,
+		chairIncreaseSales:   10000,
 	}
 }
 
@@ -87,6 +90,25 @@ func (w *World) Tick(ctx *Context) error {
 						w.HandleTickError(ctx, err)
 					}
 				}()
+			}
+		}
+		// 前回タイムアウトしなかったらプロバイダ毎に増加させる
+		for _, p := range w.ProviderDB.Iter() {
+			increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10
+			if increase > 0 {
+				for range increase {
+					w.waitingTickCount.Add(1)
+					go func() {
+						defer w.waitingTickCount.Add(-1)
+						_, err := w.CreateChair(ctx, &CreateChairArgs{
+							Provider:          p,
+							InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+						})
+						if err != nil {
+							w.HandleTickError(ctx, err)
+						}
+					}()
+				}
 			}
 		}
 	}
@@ -171,7 +193,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
-	args.Region.UsersDB.Set(result.ID, u)
+	result.Region.UsersDB.Set(result.ID, u)
 	return result, nil
 }
 
@@ -196,11 +218,11 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	p := &Provider{
 		ServerID:       res.ServerProviderID,
 		Region:         args.Region,
+		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
-	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
 }
 
@@ -232,6 +254,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	c := &Chair{
 		ServerID:          res.ServerUserID,
 		Region:            args.Provider.Region,
+		Provider:          args.Provider,
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
@@ -242,7 +265,9 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	c.tickDone.Store(true)
-	return w.ChairDB.Create(c), nil
+	result := w.ChairDB.Create(c)
+	result.Provider.ChairDB.Set(result.ID, c)
+	return result, nil
 }
 
 func (w *World) HandleTickError(ctx *Context, err error) {
