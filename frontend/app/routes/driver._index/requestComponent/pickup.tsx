@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useChairPostRequestDepart } from "~/apiClient/apiComponents";
+import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
 import { ChairRequest } from "~/apiClient/apiSchemas";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
@@ -7,10 +7,9 @@ import { useDriver } from "~/contexts/driver-context";
 
 export const Pickup = ({ data }: { data?: ChairRequest }) => {
   const driver = useDriver();
-  const { mutate: postChairRequestDepart } = useChairPostRequestDepart();
 
-  const handleDeparture = useCallback(() => {
-    postChairRequestDepart({
+  const handleDeparture = useCallback(async () => {
+    await fetchChairPostRequestDepart({
       headers: {
         Authorization: `Bearer ${driver.accessToken}`,
       },
@@ -18,7 +17,7 @@ export const Pickup = ({ data }: { data?: ChairRequest }) => {
         requestId: data?.request_id ?? "",
       },
     });
-  }, [data, driver, postChairRequestDepart]);
+  }, [data, driver]);
 
   return (
     <>
@@ -37,7 +36,7 @@ export const Pickup = ({ data }: { data?: ChairRequest }) => {
         )}
         <p>{"from -> to"}</p>
         {data?.status === "DISPATCHED" ? (
-          <Button onClick={() => handleDeparture()}>出発</Button>
+          <Button onClick={() => void handleDeparture()}>出発</Button>
         ) : null}
       </div>
     </>
