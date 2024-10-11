@@ -45,6 +45,10 @@ var runCmd = &cobra.Command{
 			targetAddr = fmt.Sprintf("%s:%d", benchrun.GetTargetAddress(), 443)
 		}
 
+		if benchrun.GetPublicIP() != "" {
+			paymentURL = fmt.Sprintf("https://%s:%d", benchrun.GetPublicIP(), 12345)
+		}
+
 		var reporter benchrun.Reporter
 		if fd, err := benchrun.GetReportFD(); err != nil {
 			reporter = &benchrun.NullReporter{}
