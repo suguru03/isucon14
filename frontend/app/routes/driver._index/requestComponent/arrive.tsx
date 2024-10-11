@@ -4,9 +4,8 @@ import { ToIcon } from "~/components/icon/to";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
-import type { RequestProps } from "~/components/request/type";
 
-export const Arrive = ({}: RequestProps<"ARRIVED">) => {
+export const Arrive = () => {
   const modalRef = useRef<{ close: () => void }>(null);
 
   const handleCloseModal = () => {
