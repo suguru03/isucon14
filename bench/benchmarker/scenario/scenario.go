@@ -14,6 +14,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchrun/gen/isuxportal/resources"
 	"github.com/isucon/isucon14/bench/payment"
 	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 )
@@ -62,6 +63,81 @@ func NewScenario(target string, contestantLogger *zap.Logger, reporter benchrun.
 	// TODO: サーバーハンドリング
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
+	}()
+
+	usersAttributeSets := map[world.UserState]attribute.Set{
+		world.UserStateInactive:                  attribute.NewSet(attribute.Int("state", int(world.UserStateInactive))),
+		world.UserStateActive:                    attribute.NewSet(attribute.Int("state", int(world.UserStateActive))),
+		world.UserStatePaymentMethodsNotRegister: attribute.NewSet(attribute.Int("state", int(world.UserStatePaymentMethodsNotRegister))),
+	}
+	requestsAttributeSets := map[world.RequestStatus]attribute.Set{
+		world.RequestStatusMatching:    attribute.NewSet(attribute.Int("status", int(world.RequestStatusMatching))),
+		world.RequestStatusDispatching: attribute.NewSet(attribute.Int("status", int(world.RequestStatusDispatching))),
+		world.RequestStatusDispatched:  attribute.NewSet(attribute.Int("status", int(world.RequestStatusDispatched))),
+		world.RequestStatusCarrying:    attribute.NewSet(attribute.Int("status", int(world.RequestStatusCarrying))),
+		world.RequestStatusArrived:     attribute.NewSet(attribute.Int("status", int(world.RequestStatusArrived))),
+		world.RequestStatusCompleted:   attribute.NewSet(attribute.Int("status", int(world.RequestStatusCompleted))),
+		world.RequestStatusCanceled:    attribute.NewSet(attribute.Int("status", int(world.RequestStatusCanceled))),
+	}
+
+	lo.Must1(meter.Int64ObservableCounter("world.time", metric.WithDescription("Time"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(w.Time)
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableCounter("world.timeout", metric.WithDescription("Timeout"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(w.TimeoutTickCount))
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableGauge("world.users.num", metric.WithDescription("Number of users"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		for _, r := range w.Regions {
+			counts := lo.CountValuesBy(r.UsersDB.ToSlice(), func(u *world.User) world.UserState { return u.State })
+			for state, set := range usersAttributeSets {
+				o.Observe(int64(counts[state]), metric.WithAttributeSet(set), metric.WithAttributes(attribute.String("region", r.Name)))
+			}
+		}
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableGauge("world.chairs.num", metric.WithDescription("Number of chairs"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		for _, p := range w.ProviderDB.Iter() {
+			chairs := p.ChairDB.ToSlice()
+			insideRegion := lo.CountBy(chairs, func(c *world.Chair) bool { return c.Current.Within(p.Region) })
+			o.Observe(int64(insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", true)))
+			o.Observe(int64(len(chairs)-insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", false)))
+		}
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableCounter("world.providers.num", metric.WithDescription("Number of providers"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(w.ProviderDB.Size()))
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableCounter("world.providers.sales", metric.WithDescription("Sales of provider"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		for _, p := range w.ProviderDB.Iter() {
+			o.Observe(p.TotalSales.Load(), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name)))
+		}
+		return nil
+	})))
+	lo.Must1(meter.Int64ObservableGauge("world.requests.num", metric.WithDescription("Number of requests"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		counts := lo.CountValuesBy(w.RequestDB.ToSlice(), func(r *world.Request) world.RequestStatus { return r.Statuses.Desired })
+		for status, set := range requestsAttributeSets {
+			o.Observe(int64(counts[status]), metric.WithAttributeSet(set))
+		}
+		return nil
+	})))
+	requestsRecorder := lo.Must1(meter.Int64Counter("world.requests.evaluations", metric.WithDescription("Counter of request's evaluations"), metric.WithUnit("1")))
+	matchingLatency := lo.Must1(meter.Int64Histogram("world.request.matching_latency", metric.WithDescription("Histogram of matching latency"), metric.WithUnit("1")))
+	dispatchingLatency := lo.Must1(meter.Int64Histogram("world.request.dispatching_latency", metric.WithDescription("Histogram of dispatching latency"), metric.WithUnit("1")))
+	carryingLatency := lo.Must1(meter.Int64Histogram("world.request.carrying_latency", metric.WithDescription("Histogram of carrying latency"), metric.WithUnit("1")))
+
+	go func() {
+		for req := range completedRequestChan {
+			eval := req.CalculateEvaluation()
+			intervals := req.Intervals()
+			contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", eval))
+			requestsRecorder.Add(context.Background(), 1, metric.WithAttributes(attribute.Int("score", eval.Score()), attribute.Bool("matching", eval.Matching), attribute.Bool("dispatch", eval.Dispatch), attribute.Bool("pickup", eval.Pickup), attribute.Bool("drive", eval.Drive)))
+			matchingLatency.Record(context.Background(), intervals[0])
+			dispatchingLatency.Record(context.Background(), intervals[1])
+			carryingLatency.Record(context.Background(), intervals[2])
+		}
 	}()
 
 	return &Scenario{
@@ -143,36 +219,11 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		}
 	}()
 
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				if err := sendResult(s, false, false); err != nil {
-					// TODO: エラーをadmin側に出力する
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-			}
-		}
-	}()
-
 	return nil
 }
 
 // Load はシナリオのメイン処理を行う
 func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
-	if err := s.setupMeter(); err != nil {
-		return err
-	}
-
-	go func() {
-		for req := range s.completedRequestChan {
-			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
-			step.AddScore("completed_request")
-		}
-	}()
-
 	s.world.RestTicker()
 LOOP:
 	for {
@@ -221,38 +272,6 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 		)
 	}
 	return sendResult(s, true, true)
-}
-
-func (s *Scenario) setupMeter() error {
-	if _, err := s.meter.Int64ObservableCounter("world.time", metric.WithDescription("Time"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		o.Observe(int64(s.world.Time))
-		return nil
-	})); err != nil {
-		return err
-	}
-
-	if _, err := s.meter.Int64ObservableCounter("world.users", metric.WithDescription("Number of users"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		o.Observe(int64(s.world.UserDB.Size()))
-		return nil
-	})); err != nil {
-		return err
-	}
-
-	if _, err := s.meter.Int64ObservableCounter("world.providers", metric.WithDescription("Number of providers"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		o.Observe(int64(s.world.ProviderDB.Size()))
-		return nil
-	})); err != nil {
-		return err
-	}
-
-	if _, err := s.meter.Int64ObservableCounter("world.chairs", metric.WithDescription("Number of chairs"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		o.Observe(int64(s.world.ChairDB.Size()))
-		return nil
-	})); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func sendResult(s *Scenario, finished bool, passed bool) error {

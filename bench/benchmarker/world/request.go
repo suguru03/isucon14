@@ -151,6 +151,14 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	return result
 }
 
+func (r *Request) Intervals() [3]int64 {
+	return [3]int64{
+		max(0, r.MatchedAt-r.RequestedAt),
+		max(0, r.DispatchedAt-r.MatchedAt),
+		max(0, r.ArrivedAt-r.DispatchedAt),
+	}
+}
+
 func (r *Request) timelineString() string {
 	baseTime := r.RequestedAt
 	matchTime := max(0, r.MatchedAt-r.RequestedAt)
