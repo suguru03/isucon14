@@ -16,7 +16,7 @@ function DriverRequest() {
       return <Reception data={data} />;
     case "DISPATCHING":
     case "DISPATCHED":
-      return <Pickup status={requestStatus} />;
+      return <Pickup data={data} />;
     case "CARRYING":
     case "ARRIVED":
       return <Carry status={requestStatus} />;
