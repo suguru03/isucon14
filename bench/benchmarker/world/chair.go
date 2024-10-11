@@ -114,8 +114,12 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
+				c.Request.Statuses.Lock()
+
 				err := ctx.client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
+					c.Request.Statuses.Unlock()
+
 					return WrapCodeError(ErrorCodeFailedToAcceptRequest, err)
 				}
 
@@ -125,6 +129,9 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Current)
 				c.Request.MatchedAt = ctx.world.Time
+
+				c.Request.Statuses.Unlock()
+
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 			} else {
 				err := ctx.client.SendDenyRequest(ctx, c, c.Request.ServerID)

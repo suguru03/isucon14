@@ -238,6 +238,8 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 	if request == nil {
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
+	request.Statuses.RLock()
+	defer request.Statuses.RUnlock()
 	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
 		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {
