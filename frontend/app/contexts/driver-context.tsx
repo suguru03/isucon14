@@ -66,30 +66,38 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         };
       };
     } else {
+      let timeoutId: number = 0;
       const abortController = new AbortController();
-      (async () => {
-        const appRequest = await fetchChairGetNotification(
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
+      const polling = () => {
+        (async () => {
+          const appRequest = await fetchChairGetNotification(
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
             },
-          },
-          abortController.signal,
-        );
-        setClientChairPayloadWithStatus({
-          status: appRequest.status,
-          payload: {
-            request_id: appRequest.request_id,
-            coordinate: {
-              pickup: appRequest.destination_coordinate, // TODO: set pickup
-              destination: appRequest.destination_coordinate,
+            abortController.signal,
+          );
+          setClientChairPayloadWithStatus({
+            status: appRequest.status,
+            payload: {
+              request_id: appRequest.request_id,
+              coordinate: {
+                pickup: appRequest.destination_coordinate, // TODO: set pickup
+                destination: appRequest.destination_coordinate,
+              },
+              user: appRequest.user,
             },
-            user: appRequest.user,
-          },
+          });
+        })().catch((e) => {
+          console.error(`ERROR: ${e}`);
         });
-      })().catch((e) => {
-        console.error(`ERROR: ${e}`);
-      });
+        timeoutId = window.setTimeout(polling, 3000);
+      };
+      polling();
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
