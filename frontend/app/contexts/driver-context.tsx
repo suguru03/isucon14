@@ -127,7 +127,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
             location: coordinate,
           },
         },
-      } satisfies ClientChairRequest;
+      };
     }
   }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
