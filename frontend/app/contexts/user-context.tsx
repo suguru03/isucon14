@@ -73,7 +73,6 @@ const RequestSSEProvider = ({
 }) => {
   const { request } = useNotificationEventSource("app", accessToken);
 
-  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   const [searchParams] = useSearchParams();
   const responseData = useMemo(() => {
     const status = (searchParams.get("debug_status") ?? undefined) as
