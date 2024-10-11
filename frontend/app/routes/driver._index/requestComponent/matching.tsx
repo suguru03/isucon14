@@ -1,4 +1,3 @@
-import { useNavigate } from "@remix-run/react";
 import { useCallback, useRef } from "react";
 import {
   useChairPostRequestAccept,
@@ -23,11 +22,6 @@ export const Matching = ({
     if (modalRef.current) {
       modalRef.current.close();
     }
-  };
-
-  const navigate = useNavigate();
-  const onCloseModal = () => {
-    navigate("/driver", { replace: true });
   };
 
   const { mutate: postChairRequestAccept } = useChairPostRequestAccept();
