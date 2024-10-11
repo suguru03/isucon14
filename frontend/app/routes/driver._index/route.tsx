@@ -9,9 +9,9 @@ import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
-import { Arrive } from "./requestComponent/arrive";
-import { Matching } from "./requestComponent/matching";
-import { Pickup } from "./requestComponent/pickup";
+import { Arrive } from "./modal-views/arrive";
+import { Matching } from "./modal-views/matching";
+import { Pickup } from "./modal-views/pickup";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
