@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import type { FC } from "react";
-import { useRequest } from "../../contexts/user-context";
+import { useClientAppRequestContext } from "../../contexts/user-context";
 import { Arrived } from "./requestComponent/arrived";
 import { Reception } from "./requestComponent/reception";
 import { Running } from "./requestComponent/running";
@@ -13,9 +13,9 @@ export const meta: MetaFunction = () => {
 };
 
 const ClientRequest: FC = () => {
-  const { data } = useRequest();
+  const data = useClientAppRequestContext();
   const requestStatus = data?.status ?? "IDLE";
-  const destinationCoordinate = data?.destination_coordinate;
+  const destinationCoordinate = data?.payload?.coordinate?.destination;
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
