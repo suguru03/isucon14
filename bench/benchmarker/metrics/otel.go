@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/metric"
 	metricsdk "go.opentelemetry.io/otel/sdk/metric"
@@ -45,7 +45,7 @@ func NewMeter(ctx context.Context) (metric.Meter, metricsdk.Exporter, error) {
 
 func getExporter() (metricsdk.Exporter, error) {
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
-		return otlpmetricgrpc.New(context.Background())
+		return otlpmetrichttp.New(context.Background())
 	}
 	return stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr))
 }
