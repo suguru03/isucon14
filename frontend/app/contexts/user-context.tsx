@@ -102,7 +102,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         })().catch((e) => {
           console.error(`ERROR: ${e}`);
         });
-        window.setTimeout(polling, 3000);
+        window.setTimeout(polling, 10000);
       };
       polling();
 

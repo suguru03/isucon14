@@ -1,20 +1,20 @@
 import { useSearchParams } from "@remix-run/react";
+import { EventSourcePolyfill } from "event-source-polyfill";
 import {
-  type ReactNode,
   createContext,
   useContext,
   useEffect,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
-import type {
-  ChairRequest,
-  RequestStatus,
-  Coordinate,
-} from "~/apiClient/apiSchemas";
-import { EventSourcePolyfill } from "event-source-polyfill";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
+import type {
+  ChairRequest,
+  Coordinate,
+  RequestStatus,
+} from "~/apiClient/apiSchemas";
 import type { ClientChairRequest } from "~/types";
 
 export const useClientChairRequest = (accessToken: string, id?: string) => {
@@ -92,7 +92,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         })().catch((e) => {
           console.error(`ERROR: ${e}`);
         });
-        timeoutId = window.setTimeout(polling, 3000);
+        timeoutId = window.setTimeout(polling, 10000);
       };
       polling();
       return () => {
@@ -107,6 +107,16 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
     const debugStatus =
       (searchParams.get("debug_status") as RequestStatus) ?? undefined;
     const candidateAppRequest = { ...clientChairPayloadWithStatus };
+    if (
+      coordinate === undefined &&
+      sessionStorage.getItem("latitude") &&
+      sessionStorage.getItem("longitude")
+    ) {
+      SetCoordinate({
+        latitude: Number(sessionStorage.getItem("latitude")),
+        longitude: Number(sessionStorage.getItem("longitude")),
+      });
+    }
     if (debugStatus !== undefined) {
       candidateAppRequest.status = debugStatus;
       candidateAppRequest.payload = { ...candidateAppRequest.payload };
@@ -131,6 +141,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
     }
     return {
       ...candidateAppRequest,
+      status: candidateAppRequest.status,
       auth: {
         accessToken,
       },
@@ -163,9 +174,6 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
   const accessTokenParameter = searchParams.get("access_token");
   const chairIdParameter = searchParams.get("id");
-  const debugStatus =
-    (searchParams.get("debug_status") as RequestStatus) ?? undefined;
-
   const { accessToken, id } = useMemo(() => {
     if (accessTokenParameter !== null && chairIdParameter !== null) {
       requestIdleCallback(() => {
@@ -188,15 +196,14 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   }, [accessTokenParameter, chairIdParameter]);
 
   const request = useClientChairRequest(accessToken ?? "", id ?? "");
-
   return (
-    <ClientChairRequestContext.Provider
-      value={{ ...request, status: debugStatus }}
-    >
+    <ClientChairRequestContext.Provider value={{ ...request }}>
       {children}
     </ClientChairRequestContext.Provider>
   );
 };
 
-export const useClientChairRequestContext = () =>
-  useContext(ClientChairRequestContext);
+export const useClientChairRequestContext = () => {
+  const context = useContext(ClientChairRequestContext);
+  return context;
+};

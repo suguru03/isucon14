@@ -28,8 +28,7 @@ export const Reception = ({
   const user = useClientAppRequestContext();
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
-      console.log('currentLocation or destLocation is empty')
-      return
+      return;
     }
     await fetchAppPostRequest({
       body: {
@@ -40,7 +39,7 @@ export const Reception = ({
         Authorization: `Bearer ${user.auth?.accessToken}`,
       },
     }).then((res) => setRequestId(res.request_id));
-  }, [user]);
+  }, [user, currentLocation, destLocation]);
 
   const handleCloseModal = useCallback(() => {
     if (modalRef.current) {
