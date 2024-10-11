@@ -27,22 +27,19 @@ export const Reception = ({
 
   const user = useClientAppRequestContext();
   const handleRideRequest = useCallback(async () => {
+    if (!currentLocation || !destLocation) {
+      return;
+    }
     await fetchAppPostRequest({
       body: {
-        pickup_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
-        destination_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
+        pickup_coordinate: currentLocation,
+        destination_coordinate: destLocation,
       },
       headers: {
         Authorization: `Bearer ${user.auth?.accessToken}`,
       },
     }).then((res) => setRequestId(res.request_id));
-  }, [user]);
+  }, [user, currentLocation, destLocation]);
 
   const handleCloseModal = useCallback(() => {
     if (modalRef.current) {
