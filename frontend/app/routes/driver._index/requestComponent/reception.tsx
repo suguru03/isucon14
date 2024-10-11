@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import {
   useChairPostActivate,
   useChairPostDeactivate,
@@ -18,12 +18,10 @@ export const Reception = ({
   { payload: ClientChairRequest["payload"] }
 >) => {
   const driver = useClientChairRequestContext();
-  const [isReception, setReception] = useState<boolean>(false);
   const { mutate: postChairActivate } = useChairPostActivate();
   const { mutate: postChairDeactivate } = useChairPostDeactivate();
 
   const onClickActivate = useCallback(() => {
-    setReception(true);
     postChairActivate({
       headers: {
         Authorization: `Bearer ${driver.auth?.accessToken}`,
@@ -31,7 +29,6 @@ export const Reception = ({
     });
   }, [driver, postChairActivate]);
   const onClickDeactivate = useCallback(() => {
-    setReception(false);
     postChairDeactivate({
       headers: {
         Authorization: `Bearer ${driver.auth?.accessToken}`,
@@ -44,24 +41,9 @@ export const Reception = ({
       {status === "MATCHING" ? (
         <Matching name={payload?.user?.name} request_id={payload?.request_id} />
       ) : null}
-      <div className="px-4 py-16 block border-t">
-        {isReception ? (
-          <Button
-            variant="danger"
-            className="w-full"
-            onClick={() => onClickDeactivate()}
-          >
-            受付終了
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            className="w-full"
-            onClick={() => onClickActivate()}
-          >
-            受付開始
-          </Button>
-        )}
+      <div className="px-4 py-16 flex justify-center border-t gap-6">
+        <Button onClick={() => onClickActivate()}>受付開始</Button>
+        <Button onClick={() => onClickDeactivate()}>受付終了</Button>
       </div>
     </>
   );

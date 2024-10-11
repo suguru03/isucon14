@@ -4,7 +4,7 @@ import {
   useChairPostRequestAccept,
   useChairPostRequestDeny,
 } from "~/apiClient/apiComponents";
-import { ChairIcon } from "~/components/icon/chair";
+import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
@@ -53,7 +53,7 @@ export const Matching = ({
   return (
     <div className="h-full text-center content-center">
       <div className="flex flex-col items-center my-8 gap-8">
-        <ChairIcon className="size-[48px]" />
+        <CarRedIcon className="size-[76px] mb-4" />
 
         <Text>
           <span className="font-bold mx-1">{name}</span>
@@ -61,19 +61,9 @@ export const Matching = ({
         </Text>
 
         <div className="w-full">
-          <LocationButton
-            type="from"
-            position="here"
-            disabled
-            className="w-full"
-          />
+          <LocationButton label="from" disabled className="w-full" />
           <Text size="xl">↓</Text>
-          <LocationButton
-            type="to"
-            position="here"
-            disabled
-            className="w-full mb-4"
-          />
+          <LocationButton label="to" disabled className="w-full mb-4" />
           <Text variant="danger" size="sm">
             到着予定時間: 21:58
           </Text>

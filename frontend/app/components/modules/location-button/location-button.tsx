@@ -4,34 +4,40 @@ import { Coordinate } from "~/apiClient/apiSchemas";
 import { Button } from "~/components/primitives/button/button";
 
 type LocationButtonProps = {
-  position: Coordinate | "here";
-  type: "from" | "to";
+  location?: Coordinate;
+  label?: string;
   disabled?: boolean;
   className?: string;
+  placeholder?: string;
   onClick?: () => void;
 };
 
 export const LocationButton: FC<LocationButtonProps> = ({
-  position,
-  type,
+  location: position,
+  label,
   disabled,
   className,
   onClick,
+  placeholder = "場所を選択する",
 }) => {
-  const label =
-    position === "here"
-      ? "現在地"
-      : `[${position.latitude}, ${position.longitude}]`;
   return (
     <Button
       disabled={disabled}
       className={twMerge("relative", className)}
       onClick={onClick}
     >
-      <span className="absolute left-4 text-xs">
-        {type === "from" ? "From" : "To"}
-      </span>
-      {label}
+      {label && (
+        <span className="absolute left-4 text-xs text-gray-500 font-mono">
+          {label}
+        </span>
+      )}
+      {position ? (
+        <span className="font-mono">
+          {`[${position.latitude}, ${position.longitude}]`}
+        </span>
+      ) : (
+        <span>{placeholder}</span>
+      )}
     </Button>
   );
 };
