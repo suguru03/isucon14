@@ -1,4 +1,4 @@
-import { IconType } from "./type";
+import { IconType } from "~/types";
 
 export const ChairIcon: IconType = function (props) {
   return (

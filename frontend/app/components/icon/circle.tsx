@@ -1,4 +1,4 @@
-import { IconType } from "./type";
+import { IconType } from "~/types";
 
 export const CircleIcon: IconType = function (props) {
   return (

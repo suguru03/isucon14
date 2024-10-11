@@ -1,4 +1,4 @@
-import { IconType } from "./type";
+import { IconType } from "~/types";
 
 export const UserIcon: IconType = function (props) {
   return (
