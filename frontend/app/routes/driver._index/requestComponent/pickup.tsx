@@ -1,5 +1,7 @@
 import { useCallback } from "react";
 import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
+import { CarGreenIcon } from "~/components/icon/car-green";
+import { CarRedIcon } from "~/components/icon/car-red";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
@@ -32,15 +34,21 @@ export const Pickup = ({
       <Map />
       <div className="flex flex-col items-center my-8 gap-8">
         {status === "DISPATCHING" ? (
-          <Text>
-            <span className="font-bold mx-1">{payload?.user?.name}</span>
-            さんの出発地点へ向かっています
-          </Text>
+          <>
+            <CarRedIcon className="size-[76px] mb-4" />
+            <Text>
+              <span className="font-bold mx-1">{payload?.user?.name}</span>
+              さんの出発地点へ向かっています
+            </Text>
+          </>
         ) : (
-          <Text>
-            <span className="font-bold mx-1">{payload?.user?.name}</span>
-            さんの出発地点へ到着しました
-          </Text>
+          <>
+            <CarGreenIcon className="size-[76px] mb-4" />
+            <Text>
+              <span className="font-bold mx-1">{payload?.user?.name}</span>
+              さんの出発地点へ到着しました
+            </Text>
+          </>
         )}
         <p>{"from -> to"}</p>
         {status === "DISPATCHED" ? (
