@@ -1,36 +1,36 @@
 import {
   FC,
-  useEffect,
-  useCallback,
-  useRef,
-  useState,
   MouseEventHandler,
   TouchEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 import { twMerge } from "tailwind-merge";
+import colors from "tailwindcss/colors";
+import { Coordinate } from "~/apiClient/apiSchemas";
+import { ToIcon } from "~/components/icon/to";
 
-const size = 5000;
+const GridDistance = 50;
+const Size = GridDistance * 100;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
-  const grad = ctx.createLinearGradient(0, 0, size, 0);
-  grad.addColorStop(0, "#f2f2f2");
-  grad.addColorStop(1, "#e8e8e8");
+  ctx.fillStyle = colors.gray[100];
+  ctx.fillRect(0, 0, Size, Size);
 
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.strokeStyle = "#dddddd";
-  ctx.lineWidth = 12;
+  ctx.strokeStyle = colors.gray[200];
+  ctx.lineWidth = 10;
   ctx.beginPath();
 
-  for (let v = 50; v < size; v += 50) {
+  for (let v = GridDistance; v < Size; v += GridDistance) {
     ctx.moveTo(v, 0);
-    ctx.lineTo(v, size);
+    ctx.lineTo(v, Size);
   }
 
-  for (let h = 50; h < size; h += 50) {
+  for (let h = GridDistance; h < Size; h += GridDistance) {
     ctx.moveTo(0, h);
-    ctx.lineTo(size, h);
+    ctx.lineTo(Size, h);
   }
 
   ctx.stroke();
@@ -40,11 +40,53 @@ const minmax = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 };
 
-export const Map: FC = () => {
+const SelectorLayer: FC<{
+  pinSize?: number;
+  pos?: { x: number; y: number };
+}> = ({ pinSize = 80, pos }) => {
+  return (
+    <div className="flex items-center justify-center w-full h-full">
+      <svg
+        className="absolute top-0 left-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+        opacity={0.1}
+      >
+        <rect x="50%" y="0" width={2} height={"100%"} />
+        <rect x="0" y="50%" width={"100%"} height={2} />
+      </svg>
+      <ToIcon
+        className="absolute mt-[-8px]"
+        color={colors.black}
+        width={pinSize}
+        height={pinSize}
+        style={{
+          transform: `translateY(-${pinSize / 2}px)`,
+        }}
+      />
+      {pos && (
+        <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
+          <span>{`${Math.ceil(pos.x)}, ${Math.ceil(pos.y)}`}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+type MapProps = {
+  onMove?: (coordinate: Coordinate) => void;
+  selectable?: boolean;
+};
+
+export const Map: FC<MapProps> = ({ selectable, onMove }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrag, setIsDrag] = useState(false);
-  const [{ x, y }, setPos] = useState({ x: -size / 4, y: -size / 4 });
+  const [{ x, y }, setPos] = useState(() => {
+    const initialX = -Size / 4;
+    const initialY = -Size / 4;
+    onMove?.({ latitude: -initialX, longitude: -initialY });
+    return { x: initialX, y: initialY };
+  });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
   const [movingStartPagePos, setMovingStartPagePos] = useState({
     x: 0,
@@ -71,7 +113,7 @@ export const Map: FC = () => {
     };
   }, []);
 
-  const onMouseDown: MouseEventHandler<HTMLCanvasElement> = useCallback(
+  const onMouseDown: MouseEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       setIsDrag(true);
       setMovingStartPagePos({ x: e.pageX, y: e.pageY });
@@ -80,7 +122,7 @@ export const Map: FC = () => {
     [x, y],
   );
 
-  const onTouchStart: TouchEventHandler<HTMLCanvasElement> = useCallback(
+  const onTouchStart: TouchEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       setIsDrag(true);
       setMovingStartPagePos({
@@ -106,33 +148,28 @@ export const Map: FC = () => {
   }, []);
 
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
+    const setFixedPos = (pageX: number, pageY: number) => {
+      const posX = minmax(
+        movingStartPos.x - (movingStartPagePos.x - pageX),
+        -Size + (outerRect?.width ?? 0),
+        0,
+      );
+      const posY = minmax(
+        movingStartPos.y - (movingStartPagePos.y - pageY),
+        -Size + (outerRect?.height ?? 0),
+        0,
+      );
       setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.pageX),
-          -size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.pageY),
-          -size + (outerRect?.height ?? 0),
-          0,
-        ),
+        x: posX,
+        y: posY,
       });
+      onMove?.({ latitude: -Math.ceil(posX), longitude: -Math.ceil(posY) });
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      setFixedPos(e.pageX, e.pageY);
     };
     const onTouchMove = (e: TouchEvent) => {
-      setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.touches[0].pageX),
-          -size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.touches[0].pageY),
-          -size + (outerRect?.height ?? 0),
-          0,
-        ),
-      });
+      setFixedPos(e.touches[0].pageX, e.touches[0].pageY);
     };
     if (isDrag) {
       window.addEventListener("mousemove", onMouseMove, { passive: true });
@@ -142,7 +179,7 @@ export const Map: FC = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [isDrag, movingStartPagePos, movingStartPos, outerRect]);
+  }, [isDrag, movingStartPagePos, movingStartPos, onMove, outerRect]);
 
   return (
     <div
@@ -151,18 +188,21 @@ export const Map: FC = () => {
         isDrag && "cursor-grab",
       )}
       ref={outerRef}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
+      role="button"
+      tabIndex={0}
     >
       <canvas
-        width={size}
-        height={size}
-        className="absolute"
+        width={Size}
+        height={Size}
+        className="absolute top-0 left-0"
         style={{
           transform: `translate(${x}px, ${y}px)`,
         }}
         ref={canvasRef}
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
       />
+      {selectable && <SelectorLayer pos={{ x: -x, y: -y }} />}
     </div>
   );
 };
