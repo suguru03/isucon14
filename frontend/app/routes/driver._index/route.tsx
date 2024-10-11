@@ -9,6 +9,7 @@ import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { useEmulator } from "~/components/hooks/emulate";
 import { Arrive } from "./modal-views/arrive";
 import { Matching } from "./modal-views/matching";
 import { Pickup } from "./modal-views/pickup";
@@ -25,7 +26,7 @@ export default function DriverRequestWrapper() {
   const { mutate: postChairDeactivate } = useChairPostDeactivate();
   const requestStatus = data?.status;
   const modalRef = useRef<{ close: () => void }>(null);
-
+  useEmulator();
   const handleComplete = useCallback(() => {
     if (modalRef.current) {
       modalRef.current.close();
