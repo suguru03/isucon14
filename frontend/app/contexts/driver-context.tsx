@@ -66,6 +66,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         };
       };
     } else {
+      let timeoutId: number = 0;
       const abortController = new AbortController();
       const polling = () => {
         (async () => {
@@ -91,9 +92,12 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         })().catch((e) => {
           console.error(`ERROR: ${e}`);
         });
-        setTimeout(polling, 3000);
+        timeoutId = window.setTimeout(polling, 3000);
       };
       polling();
+      return () => {
+        clearTimeout(timeoutId);
+      }
     }
   }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
