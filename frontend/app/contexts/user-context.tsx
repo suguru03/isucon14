@@ -2,7 +2,6 @@ import { useSearchParams } from "@remix-run/react";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type {
   AppRequest,
-  Chair,
   Coordinate,
   RequestStatus,
 } from "~/apiClient/apiSchemas";

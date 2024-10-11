@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
-import { ChairRequest } from "~/apiClient/apiSchemas";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
 import { useDriver } from "~/contexts/driver-context";

@@ -1,7 +1,5 @@
-import { Chair, User } from "./apiClient/apiSchemas";
-import { Coordinate } from "~/apiClient/apiSchemas";
+import { Chair, User, Coordinate, RequestStatus } from "./apiClient/apiSchemas";
 import { RequestId } from "./apiClient/apiParameters";
-import { RequestStatus } from "~/apiClient/apiSchemas";
 export type AccessToken = string;
 
 export type ClientAppRequest = {

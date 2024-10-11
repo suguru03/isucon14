@@ -3,7 +3,7 @@ import {
   useChairPostActivate,
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
-import { ChairRequest } from "~/apiClient/apiSchemas";
+
 import { Button } from "~/components/primitives/button/button";
 import { useDriver } from "~/contexts/driver-context";
 import { MatchingModal } from "./matching";

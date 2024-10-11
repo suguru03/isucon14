@@ -4,7 +4,6 @@ import {
   useChairPostRequestAccept,
   useChairPostRequestDeny,
 } from "~/apiClient/apiComponents";
-import { ChairRequest } from "~/apiClient/apiSchemas";
 import { ChairIcon } from "~/components/icon/chair";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
@@ -41,7 +40,7 @@ export const MatchingModal = ({
         Authorization: `Bearer ${auth?.accessToken}`,
       },
     });
-  }, [auth, postChairRequestAccept]);
+  }, [auth, postChairRequestAccept, request_id]);
   const handleDeny = useCallback(() => {
     postChairRequestDeny({
       pathParams: { requestId: request_id || "" },
@@ -49,7 +48,7 @@ export const MatchingModal = ({
         Authorization: `Bearer ${auth?.accessToken}`,
       },
     });
-  }, [auth, postChairRequestDeny]);
+  }, [auth, postChairRequestDeny, request_id]);
 
   return (
     <Modal ref={modalRef} onClose={onCloseModal}>
