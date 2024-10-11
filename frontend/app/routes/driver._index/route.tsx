@@ -8,8 +8,8 @@ export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 function DriverRequest() {
-  const { request } = useUser();
-  const requestStatus = request?.status ?? "IDLE";
+  const data = useUser();
+  const requestStatus = data?.status ?? "IDLE";
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":

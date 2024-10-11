@@ -6,12 +6,8 @@ import type {
   Coordinate,
   RequestStatus,
 } from "~/apiClient/apiSchemas";
-import {
-  type AppGetNotificationError,
-  useAppGetNotification,
-  fetchAppGetNotification,
-} from "~/apiClient/apiComponents";
-import type { User } from "~/types";
+import { fetchAppGetNotification } from "~/apiClient/apiComponents";
+import type { AccessToken } from "~/types";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useEffect, useState } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
@@ -19,7 +15,7 @@ import { RequestId } from "~/apiClient/apiParameters";
 
 type ClientAppRequest = {
   status?: RequestStatus;
-  payload: Partial<{
+  payload?: Partial<{
     request_id: RequestId;
     coordinate: Partial<{
       pickup: Coordinate;
@@ -27,11 +23,16 @@ type ClientAppRequest = {
     }>;
     chair?: Chair;
   }>;
+  auth: {
+    accessToken: AccessToken;
+    userId?: string;
+  };
 };
 
-export const useClientAppRequest = (accessToken: string) => {
+export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
-  const [clientAppRequest, setClientAppRequest] = useState<ClientAppRequest>();
+  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
+    useState<Omit<ClientAppRequest, "auth">>();
   const isSSE = false;
   if (isSSE) {
     useEffect(() => {
@@ -49,11 +50,11 @@ export const useClientAppRequest = (accessToken: string) => {
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
           const eventData = JSON.parse(event.data) as AppRequest;
-          setClientAppRequest((preRequest) => {
+          setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
               eventData.status !== preRequest.status ||
-              eventData.request_id !== preRequest.payload.request_id
+              eventData.request_id !== preRequest.payload?.request_id
             ) {
               return {
                 status: eventData.status,
@@ -75,7 +76,7 @@ export const useClientAppRequest = (accessToken: string) => {
           eventSource.close();
         };
       };
-    }, [accessToken, setClientAppRequest]);
+    }, [accessToken, setClientAppPayloadWithStatus]);
   } else {
     useEffect(() => {
       const abortController = new AbortController();
@@ -88,7 +89,7 @@ export const useClientAppRequest = (accessToken: string) => {
           },
           abortController.signal,
         );
-        setClientAppRequest({
+        setClientAppPayloadWithStatus({
           status: appRequest.status,
           payload: {
             request_id: appRequest.request_id,
@@ -98,7 +99,7 @@ export const useClientAppRequest = (accessToken: string) => {
             },
             chair: appRequest.chair,
           },
-        } satisfies ClientAppRequest);
+        });
       })();
       return () => {
         abortController.abort();
@@ -116,21 +117,30 @@ export const useClientAppRequest = (accessToken: string) => {
       if (!m) return;
       return { latitude: Number(m[1]), longitude: Number(m[2]) };
     })();
-    const candidateAppRequest = clientAppRequest;
+    const candidateAppRequest = clientAppPayloadWithStatus;
     if (debugStatus !== undefined && candidateAppRequest) {
       candidateAppRequest.status = debugStatus;
     }
-    if (debugDestinationCoordinate && candidateAppRequest?.payload.coordinate) {
+    if (
+      debugDestinationCoordinate &&
+      candidateAppRequest?.payload?.coordinate
+    ) {
       candidateAppRequest.payload.coordinate.destination =
         debugDestinationCoordinate;
     }
-    return candidateAppRequest;
-  }, [clientAppRequest]);
+    return {
+      ...candidateAppRequest,
+      auth: {
+        accessToken,
+        userId: id,
+      },
+    };
+  }, [clientAppPayloadWithStatus]);
 
   return responseClientAppRequest;
 };
 
-const UserContext = createContext<Partial<User>>({});
+const UserContext = createContext<Partial<ClientAppRequest>>({});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
@@ -160,17 +170,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [accessTokenParameter, userIdParameter]);
 
-  const request = useClientAppRequest(accessToken ?? "");
+  const request = useClientAppRequest(accessToken ?? "", id ?? "");
 
   return (
-    <UserContext.Provider
-      value={{
-        name: "ISUCON太郎",
-        accessToken,
-        id,
-        request,
-      }}
-    >
+    <UserContext.Provider value={{ ...request }}>
       {children}
     </UserContext.Provider>
   );

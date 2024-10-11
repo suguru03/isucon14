@@ -16,9 +16,9 @@ export const meta: MetaFunction = () => {
 };
 
 const ClientRequest: FC = () => {
-  const { request } = useUser();
-  const requestStatus = request?.status ?? "IDLE";
-  const destinationCoordinate = request?.payload.coordinate?.destination;
+  const data = useUser();
+  const requestStatus = data?.status ?? "IDLE";
+  const destinationCoordinate = data?.payload?.coordinate?.destination;
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
