@@ -40,8 +40,8 @@ type User struct {
 	PaymentToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
-	// LastEvaluation 完了した最後のリクエストの評価
-	LastEvaluation int
+	// TotalEvaluation 完了したリクエストの平均評価
+	TotalEvaluation int
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
@@ -140,8 +140,12 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.CompletedAt = ctx.world.Time
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
-				u.Region.TotalLastEvaluation.Add(int32(score - u.LastEvaluation))
-				u.LastEvaluation = score
+				if requests := len(u.RequestHistory); requests == 1 {
+					u.Region.TotalEvaluation.Add(int32(score))
+				} else {
+					u.Region.TotalEvaluation.Add(int32((u.TotalEvaluation+score)/requests - u.TotalEvaluation/(requests-1)))
+				}
+				u.TotalEvaluation += score
 				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
 				ctx.world.CompletedRequestChan <- u.Request
 			}
@@ -175,12 +179,25 @@ func (u *User) Tick(ctx *Context) error {
 			u.NotificationConn = conn
 		}
 
+		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
+			// 初回利用で評価1なら離脱
+			// 2回以上利用して平均評価が2以下の場合は離脱
+			u.State = UserStateInactive
+			u.NotificationConn.Close()
+			u.NotificationConn = nil
+			break
+		}
+
 		// リクエストを作成する
 		// TODO 作成する条件・頻度
 		err := u.CreateRequest(ctx)
 		if err != nil {
 			return err
 		}
+
+	// 離脱ユーザーは何もしない
+	case u.State == UserStateInactive:
+		break
 	}
 	return nil
 }
