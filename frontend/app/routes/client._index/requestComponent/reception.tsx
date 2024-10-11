@@ -104,7 +104,7 @@ export const Reception = ({
       {isModalOpen && (
         <Modal ref={modalRef} onClose={onClose}>
           <div className="flex flex-col items-center mt-4 h-full">
-            <div className="flex-grow w-full max-h-[75%] mb-4">
+            <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map onMove={onMove} selectable />
             </div>
             <p className="font-bold mb-4 text-base">

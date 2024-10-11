@@ -1,5 +1,5 @@
 import { NavLink } from "@remix-run/react";
-import type { FC } from "react";
+import type { ComponentProps, FC } from "react";
 
 type NavigationMenuType = {
   link: `/${string}`;

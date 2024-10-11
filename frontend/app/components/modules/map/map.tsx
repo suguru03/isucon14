@@ -65,7 +65,7 @@ const SelectorLayer: FC<{
       />
       {pos && (
         <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
-          <span>{`${pos.x}, ${pos.y}`}</span>
+          <span>{`${Math.ceil(pos.x)}, ${Math.ceil(pos.y)}`}</span>
         </div>
       )}
     </div>
@@ -163,7 +163,7 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
         x: posX,
         y: posY,
       });
-      onMove?.({ latitude: -posX, longitude: -posY });
+      onMove?.({ latitude: -Math.ceil(posX), longitude: -Math.ceil(posY) });
     };
     const onMouseMove = (e: MouseEvent) => {
       setFixedPos(e.pageX, e.pageY);
