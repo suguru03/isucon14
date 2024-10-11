@@ -4,11 +4,12 @@ import {
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
 
+import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
-import { useClientChairRequestContext } from "~/contexts/driver-context";
-import { MatchingModal } from "./matching";
 import type { RequestProps } from "~/components/request/type";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
 import { ClientChairRequest } from "~/types";
+import { MatchingModal } from "./matching";
 
 export const Reception = ({
   status,
@@ -47,12 +48,24 @@ export const Reception = ({
           request_id={payload?.request_id}
         />
       ) : null}
-      <div className="h-full text-center content-center bg-blue-200">Map</div>
-      <div className="px-4 py-16 block justify-center border-t">
+      <Map />
+      <div className="px-4 py-16 block border-t">
         {isReception ? (
-          <Button onClick={() => onClickDeactivate()}>受付終了</Button>
+          <Button
+            variant="danger"
+            className="w-full"
+            onClick={() => onClickDeactivate()}
+          >
+            受付終了
+          </Button>
         ) : (
-          <Button onClick={() => onClickActivate()}>受付開始</Button>
+          <Button
+            variant="primary"
+            className="w-full"
+            onClick={() => onClickActivate()}
+          >
+            受付開始
+          </Button>
         )}
       </div>
     </>

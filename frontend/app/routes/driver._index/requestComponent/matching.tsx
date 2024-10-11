@@ -64,8 +64,10 @@ export const MatchingModal = ({
           <Text>{"from->to 到着予定時間"}</Text>
 
           <div>
-            <div className="my-2">
+            <div className="my-4">
               <Button
+                variant="primary"
+                className="w-80"
                 onClick={() => {
                   handleAccept();
                   handleCloseModal();
@@ -74,8 +76,9 @@ export const MatchingModal = ({
                 配車を受け付ける
               </Button>
             </div>
-            <div className="my-2">
+            <div className="my-4">
               <Button
+                className="w-80"
                 onClick={() => {
                   handleDeny();
                   handleCloseModal();

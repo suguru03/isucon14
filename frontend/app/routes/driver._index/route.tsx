@@ -1,8 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Carry } from "./requestComponent/carry";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { Arrive } from "./requestComponent/arrive";
 import { Pickup } from "./requestComponent/pickup";
 import { Reception } from "./requestComponent/reception";
-import { useClientChairRequestContext } from "~/contexts/driver-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -16,10 +16,10 @@ function DriverRequest() {
       return <Reception status={requestStatus} payload={data.payload} />;
     case "DISPATCHING":
     case "DISPATCHED":
-      return <Pickup status={requestStatus} payload={data.payload} />;
     case "CARRYING":
+      return <Pickup status={requestStatus} payload={data.payload} />;
     case "ARRIVED":
-      return <Carry status={requestStatus} />;
+      return <Arrive status={requestStatus} />;
     default:
       return <div>unexpectedStatus: {requestStatus}</div>;
   }
@@ -27,8 +27,8 @@ function DriverRequest() {
 
 export default function DriverRequestWrapper() {
   return (
-    <div className="h-full flex flex-col">
+    <>
       <DriverRequest />
-    </div>
+    </>
   );
 }

@@ -7,7 +7,7 @@ type LocationButtonProps = {
   position: Coordinate | "here";
   type: "from" | "to";
   disabled?: boolean;
-  className: string;
+  className?: string;
   onClick?: () => void;
 };
 
