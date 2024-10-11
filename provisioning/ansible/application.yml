@@ -9,7 +9,6 @@
     - xbuild
     - xbuildwebapp
     - mysql
-    - powerdns
     - nginx
     - envcheck
     - webapp
