@@ -10,7 +10,7 @@ import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
 
-export const MatchingModal = ({
+export const Matching = ({
   name,
   request_id,
 }: {
