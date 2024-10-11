@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -171,7 +172,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
-	args.Region.UsersDB.Set(result.ID, u)
+	result.Region.UsersDB.Set(result.ID, u)
 	return result, nil
 }
 
@@ -196,11 +197,11 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	p := &Provider{
 		ServerID:       res.ServerProviderID,
 		Region:         args.Region,
+		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
-	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
 }
 
@@ -232,6 +233,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	c := &Chair{
 		ServerID:          res.ServerUserID,
 		Region:            args.Provider.Region,
+		Provider:          args.Provider,
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
@@ -242,7 +244,9 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	c.tickDone.Store(true)
-	return w.ChairDB.Create(c), nil
+	result := w.ChairDB.Create(c)
+	result.Provider.ChairDB.Set(result.ID, c)
+	return result, nil
 }
 
 func (w *World) HandleTickError(ctx *Context, err error) {

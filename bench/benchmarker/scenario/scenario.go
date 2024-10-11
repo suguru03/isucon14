@@ -172,5 +172,12 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			zap.Int("score", region.UserSatisfactionScore()),
 		)
 	}
+	for id, provider := range s.world.ProviderDB.Iter() {
+		s.contestantLogger.Info("final provider result",
+			zap.Int("id", int(id)),
+			zap.Int("chairs", provider.ChairDB.Len()),
+			zap.Int64("total_sales", provider.TotalSales.Load()),
+		)
+	}
 	return nil
 }

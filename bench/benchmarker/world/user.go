@@ -137,10 +137,13 @@ func (u *User) Tick(ctx *Context) error {
 				}
 
 				// サーバーが評価を受理したので完了状態になるのを待機する
+				u.Request.CompletedAt = ctx.world.Time
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
 				u.Region.TotalLastEvaluation.Add(int32(score - u.LastEvaluation))
 				u.LastEvaluation = score
+				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
+				ctx.world.CompletedRequestChan <- u.Request
 			}
 
 		case RequestStatusCompleted:
