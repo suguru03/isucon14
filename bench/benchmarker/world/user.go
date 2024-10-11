@@ -76,9 +76,7 @@ func (u *User) Tick(ctx *Context) error {
 		return nil
 	}
 	defer func() {
-		swapped := u.tickDone.CompareAndSwap(false, true)
-		if !swapped {
-			// TODO: panic をやめる
+		if !u.tickDone.CompareAndSwap(false, true) {
 			panic("2重でUserのTickが終了した")
 		}
 	}()
