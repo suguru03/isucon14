@@ -4,6 +4,7 @@ import {
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
 
+import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import type { RequestProps } from "~/components/request/type";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
@@ -44,7 +45,7 @@ export const Reception = ({
           request_id={payload?.request_id}
         />
       ) : null}
-      <div className="h-full text-center content-center bg-blue-200">Map</div>
+      <Map />
       <div className="px-4 py-16 flex justify-center border-t gap-6">
         <Button onClick={() => onClickActivate()}>受付開始</Button>
         <Button onClick={() => onClickDeactivate()}>受付終了</Button>
