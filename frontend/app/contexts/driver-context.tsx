@@ -1,5 +1,5 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   useChairGetNotification,
   type ChairGetNotificationError,
@@ -39,6 +39,21 @@ const RequestProvider = ({
     let fetchedData: Partial<ChairRequest> = data ?? {};
     if (data instanceof Blob) {
       fetchedData = {};
+    }
+
+    if (searchParams.get("debug_status")) {
+      fetchedData = {
+        request_id: "__DUMMY_REQUEST_ID__",
+        user: {
+          id: "1234",
+          name: "ゆーざー",
+        },
+        destination_coordinate: {
+          latitude: 34.12345678,
+          longitude: 120.447162,
+        },
+        ...fetchedData,
+      };
     }
 
     // TODO:

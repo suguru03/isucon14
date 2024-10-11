@@ -46,17 +46,13 @@ export type Chair = {
    */
   id: string;
   /**
-   * 椅子名
+   * 椅子の名前
    */
   name: string;
   /**
-   * 車種
+   * 椅子のモデル
    */
-  chair_model: string;
-  /**
-   * カーナンバー
-   */
-  chair_no: string;
+  model: string;
 };
 
 /**
@@ -71,28 +67,6 @@ export type User = {
    * ユーザー名
    */
   name: string;
-};
-
-/**
- * 問い合わせ内容
- */
-export type InquiryContent = {
-  /**
-   * 問い合わせID
-   */
-  id: string;
-  /**
-   * 件名
-   */
-  subject: string;
-  /**
-   * 問い合わせ内容
-   */
-  body: string;
-  /**
-   * 問い合わせ日時
-   */
-  created_at: number;
 };
 
 /**

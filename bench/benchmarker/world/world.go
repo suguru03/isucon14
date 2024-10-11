@@ -2,10 +2,12 @@ package world
 
 import (
 	"log"
+	"math"
 	"math/rand/v2"
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -40,10 +42,13 @@ type World struct {
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout      time.Duration
-	timeoutTicker    *time.Ticker
-	criticalErrorCh  chan error
-	waitingTickCount atomic.Int32
+	tickTimeout        time.Duration
+	timeoutTicker      *time.Ticker
+	prevTimeout        bool
+	criticalErrorCh    chan error
+	waitingTickCount   atomic.Int32
+	userIncrease       float64
+	chairIncreaseSales int64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -52,34 +57,62 @@ type World struct {
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
 	return &World{
 		Regions: []*Region{
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 0,
-				RegionOffsetY: 0,
-			},
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 300,
-				RegionOffsetY: 300,
-			},
+			NewRegion(0, 0, 100, 100),
+			NewRegion(300, 300, 100, 100),
 		},
-		UserDB:     NewGenericDB[UserID, *User](),
-		ProviderDB: NewGenericDB[ProviderID, *Provider](),
-		ChairDB:    NewGenericDB[ChairID, *Chair](),
-		RequestDB:  NewRequestDB(),
-		PaymentDB:  NewPaymentDB(),
-		// TODO シードをどうする
+		UserDB:               NewGenericDB[UserID, *User](),
+		ProviderDB:           NewGenericDB[ProviderID, *Provider](),
+		ChairDB:              NewGenericDB[ChairID, *Chair](),
+		RequestDB:            NewRequestDB(),
+		PaymentDB:            NewPaymentDB(),
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
+		userIncrease:         5,
+		chairIncreaseSales:   10000,
 	}
 }
 
 func (w *World) Tick(ctx *Context) error {
+	if !w.prevTimeout {
+		// 前回タイムアウトしなかったら地域毎に増加させる
+		for _, region := range w.Regions {
+			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
+			for range increase {
+				w.waitingTickCount.Add(1)
+				go func() {
+					defer w.waitingTickCount.Add(-1)
+					_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
+					if err != nil {
+						w.HandleTickError(ctx, err)
+					}
+				}()
+			}
+		}
+		// 前回タイムアウトしなかったらプロバイダ毎に増加させる
+		for _, p := range w.ProviderDB.Iter() {
+			increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10
+			if increase > 0 {
+				for range increase {
+					w.waitingTickCount.Add(1)
+					go func() {
+						defer w.waitingTickCount.Add(-1)
+						_, err := w.CreateChair(ctx, &CreateChairArgs{
+							Provider:          p,
+							InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+							WorkTime:          NewInterval(0, ConvertHour(2000)),
+						})
+						if err != nil {
+							w.HandleTickError(ctx, err)
+						}
+					}()
+				}
+			}
+		}
+	}
+
 	for _, c := range w.ChairDB.Iter() {
 		w.waitingTickCount.Add(1)
 		go func() {
@@ -111,6 +144,9 @@ func (w *World) Tick(ctx *Context) error {
 		if w.waitingTickCount.Load() > 0 {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
 			w.TimeoutTickCount++
+			w.prevTimeout = true
+		} else {
+			w.prevTimeout = false
 		}
 	}
 
@@ -156,7 +192,9 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
-	return w.UserDB.Create(u), nil
+	result := w.UserDB.Create(u)
+	result.Region.UsersDB.Set(result.ID, u)
+	return result, nil
 }
 
 type CreateProviderArgs struct {
@@ -180,11 +218,11 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	p := &Provider{
 		ServerID:       res.ServerProviderID,
 		Region:         args.Region,
+		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
 		RegisteredData: registeredData,
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
-	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
 }
 
@@ -216,6 +254,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	c := &Chair{
 		ServerID:          res.ServerUserID,
 		Region:            args.Provider.Region,
+		Provider:          args.Provider,
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
@@ -226,7 +265,9 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	c.tickDone.Store(true)
-	return w.ChairDB.Create(c), nil
+	result := w.ChairDB.Create(c)
+	result.Provider.ChairDB.Set(result.ID, c)
+	return result, nil
 }
 
 func (w *World) HandleTickError(ctx *Context, err error) {
@@ -245,4 +286,8 @@ func (w *World) HandleTickError(ctx *Context, err error) {
 		// TODO: エラーペナルティ
 		log.Println(err)
 	}
+}
+
+func (w *World) RestTicker() {
+	w.timeoutTicker.Reset(w.tickTimeout)
 }

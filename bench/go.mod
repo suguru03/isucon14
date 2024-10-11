@@ -12,6 +12,7 @@ require (
 	github.com/mattn/go-gimei v0.0.4
 	github.com/ogen-go/ogen v1.4.1
 	github.com/oklog/ulid/v2 v2.1.0
+	github.com/samber/lo v1.47.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.30.0
