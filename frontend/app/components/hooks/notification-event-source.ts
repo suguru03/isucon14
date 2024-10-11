@@ -11,9 +11,7 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
   accessToken: string,
 ) => {
   const [request, setRequest] = useState<InferRequest<T>>();
-  const [onCloseFunction, setOncloseFunction] = useState<() => void>(() => {});
   useEffect(() => {
-    onCloseFunction();
     /**
      * WebAPI標準のものはAuthヘッダーを利用できないため
      */
@@ -25,24 +23,22 @@ export const useNotificationEventSource = <T extends "app" | "chair">(
         },
       },
     );
-    setOncloseFunction(() => eventSource.close());
     eventSource.onmessage = (event) => {
-      console.log("event", event);
-      if (event.data === "") {
-        return;
-      }
       if (typeof event.data === "string") {
         const eventData = JSON.parse(event.data) as InferRequest<T>;
-        if (
-          eventData.status !== request?.status ||
-          eventData.request_id !== request?.request_id
-        ) {
-          setRequest(eventData);
-        }
+        setRequest((preRequest) => {
+          if (eventData.status !== preRequest?.status || eventData.request_id !== preRequest?.request_id) {
+            return eventData
+          } else {
+            return preRequest
+          }
+        });
       }
-      return;
+      return () => {
+        eventSource.close()
+      };
     };
-  }, [target, accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [target, accessToken, setRequest]); 
 
-  return { request, onCloseFunction };
+  return { request };
 };
