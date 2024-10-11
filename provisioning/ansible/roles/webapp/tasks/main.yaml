@@ -43,7 +43,7 @@
 - name: initialize tables
   become: true
   shell: |
-    /home/isucon/webapp/sql/init.sh
+    sh /home/isucon/webapp/sql/init.sh
 
 - name: Tasks for isuride-go
   include_tasks: go.yaml
