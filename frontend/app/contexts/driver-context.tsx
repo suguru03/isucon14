@@ -7,7 +7,11 @@ import {
   useState,
   useEffect,
 } from "react";
-import type { ChairRequest, RequestStatus, Coordinate } from "~/apiClient/apiSchemas";
+import type {
+  ChairRequest,
+  RequestStatus,
+  Coordinate,
+} from "~/apiClient/apiSchemas";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
@@ -120,7 +124,8 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
           name: "ISUCON椅子",
           currentCoordinate: {
             setter: SetCoordinate,
-          }
+            location: coordinate,
+          },
         },
       } satisfies ClientChairRequest;
     }
