@@ -6,7 +6,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import type { RequestProps } from "~/components/request/type";
 
-export const Arrive = ({ status }: RequestProps<"ARRIVED">) => {
+export const Arrive = ({}: RequestProps<"ARRIVED">) => {
   const modalRef = useRef<{ close: () => void }>(null);
 
   const handleCloseModal = () => {
