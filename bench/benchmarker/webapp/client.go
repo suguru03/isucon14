@@ -1,7 +1,8 @@
 package webapp
 
 import (
-	"crypto/tls"
+	"context"
+	"net"
 	"net/http"
 	"time"
 
@@ -19,25 +20,28 @@ type Client struct {
 
 type ClientConfig struct {
 	TargetBaseURL         string
-	DefaultClientTimeout  time.Duration
+	TargetAddr            string
 	ClientIdleConnTimeout time.Duration
-	InsecureSkipVerify    bool
 	ContestantLogger      *zap.Logger
 }
 
 func NewClient(config ClientConfig) (*Client, error) {
+	trs := agent.DefaultTransport.Clone()
+	trs.IdleConnTimeout = config.ClientIdleConnTimeout
+	if len(config.TargetAddr) > 0 {
+		trs.DialContext = func(ctx context.Context, network, _ string) (net.Conn, error) {
+			d := net.Dialer{}
+			return d.DialContext(ctx, network, config.TargetAddr)
+		}
+		trs.Dial = func(network, addr string) (net.Conn, error) {
+			return trs.DialContext(context.Background(), network, addr)
+		}
+	}
 	ag, err := agent.NewAgent(
 		agent.WithBaseURL(config.TargetBaseURL),
-		//agent.WithTimeout(config.DefaultClientTimeout),
 		agent.WithTimeout(1000*time.Hour),
 		agent.WithNoCache(),
-		agent.WithCloneTransport(&http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: config.InsecureSkipVerify,
-			},
-			IdleConnTimeout:   config.ClientIdleConnTimeout,
-			ForceAttemptHTTP2: true,
-		}),
+		agent.WithTransport(trs),
 	)
 	if err != nil {
 		return nil, err
