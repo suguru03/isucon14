@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/metric"
 	metricsdk "go.opentelemetry.io/otel/sdk/metric"
@@ -13,10 +14,10 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
-func NewMeter(ctx context.Context) (metric.Meter, error) {
-	exp, err := stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr))
+func NewMeter(ctx context.Context) (metric.Meter, metricsdk.Exporter, error) {
+	exp, err := getExporter()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	recources, err := resource.New(
@@ -28,7 +29,7 @@ func NewMeter(ctx context.Context) (metric.Meter, error) {
 		),
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	reader := metricsdk.NewPeriodicReader(exp, metricsdk.WithInterval(3*time.Second))
@@ -39,5 +40,12 @@ func NewMeter(ctx context.Context) (metric.Meter, error) {
 	)
 	otel.SetMeterProvider(provider)
 
-	return otel.Meter("isucon14_benchmarker"), nil
+	return otel.Meter("isucon14_benchmarker"), exp, nil
+}
+
+func getExporter() (metricsdk.Exporter, error) {
+	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
+		return otlpmetricgrpc.New(context.Background())
+	}
+	return stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr))
 }

@@ -53,11 +53,12 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		meter, err := metrics.NewMeter(cmd.Context())
+		meter, exporter, err := metrics.NewMeter(cmd.Context())
 		if err != nil {
 			l.Error("Failed to create meter", zap.Error(err))
 			return err
 		}
+		defer exporter.Shutdown(context.Background())
 
 		s := scenario.NewScenario(targetURL, targetAddr, contestantLogger, reporter, meter)
 
