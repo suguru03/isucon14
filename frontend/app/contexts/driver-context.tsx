@@ -7,7 +7,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type { ChairRequest, RequestStatus, Coordinate } from "~/apiClient/apiSchemas";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
@@ -17,6 +17,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
     useState<Omit<ClientChairRequest, "auth" | "chair">>();
+  const [coordinate, SetCoordinate] = useState<Coordinate>();
   const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
     if (isSSE) {
@@ -114,11 +115,14 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         auth: {
           accessToken,
         },
-        user: {
+        chair: {
           id,
           name: "ISUCON椅子",
+          currentCoordinate: {
+            setter: SetCoordinate,
+          }
         },
-      };
+      } satisfies ClientChairRequest;
     }
   }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
