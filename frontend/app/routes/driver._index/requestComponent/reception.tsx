@@ -10,7 +10,13 @@ import { MatchingModal } from "./matching";
 import type { RequestProps } from "~/components/request/type";
 import { ClientChairRequest } from "~/types";
 
-export const Reception = ({ status, payload }:  RequestProps<"MATCHING" | "IDLE",{payload: ClientChairRequest["payload"]}>) => {
+export const Reception = ({
+  status,
+  payload,
+}: RequestProps<
+  "MATCHING" | "IDLE",
+  { payload: ClientChairRequest["payload"] }
+>) => {
   const driver = useDriver();
   const [isReception, setReception] = useState<boolean>(false);
   const { mutate: postChairActivate } = useChairPostActivate();
@@ -35,7 +41,12 @@ export const Reception = ({ status, payload }:  RequestProps<"MATCHING" | "IDLE"
 
   return (
     <>
-      {status === "MATCHING" ? <MatchingModal name={payload?.user?.name} request_id={payload?.request_id}/> : null}
+      {status === "MATCHING" ? (
+        <MatchingModal
+          name={payload?.user?.name}
+          request_id={payload?.request_id}
+        />
+      ) : null}
       <div className="h-full text-center content-center bg-blue-200">Map</div>
       <div className="px-4 py-16 block justify-center border-t">
         {isReception ? (

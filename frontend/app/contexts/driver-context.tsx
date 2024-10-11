@@ -7,10 +7,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import type {
-  ChairRequest,
-  RequestStatus,
-} from "~/apiClient/apiSchemas";
+import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
@@ -94,31 +91,32 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   const responseClientAppRequest = useMemo<
     ClientChairRequest | undefined
   >(() => {
-    const debugStatus = (searchParams.get("debug_status") as RequestStatus) ?? undefined;
+    const debugStatus =
+      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
     const candidateAppRequest = clientChairPayloadWithStatus;
     if (debugStatus !== undefined && candidateAppRequest) {
       candidateAppRequest.status = debugStatus;
-      candidateAppRequest.payload = {...candidateAppRequest.payload}
-      candidateAppRequest.payload.request_id =  "__DUMMY_REQUEST_ID__";
-      candidateAppRequest.payload.user = {
+      candidateAppRequest.payload = { ...candidateAppRequest.payload };
+      candidateAppRequest.payload.request_id = "__DUMMY_REQUEST_ID__";
+      (candidateAppRequest.payload.user = {
         id: "1234",
         name: "ゆーざー",
-      },
-      candidateAppRequest.payload.coordinate = {
-        ...candidateAppRequest.payload.coordinate
-      }
+      }),
+        (candidateAppRequest.payload.coordinate = {
+          ...candidateAppRequest.payload.coordinate,
+        });
       candidateAppRequest.payload.coordinate.destination = {
         latitude: 34.12345678,
-      longitude: 120.447162,
+        longitude: 120.447162,
+      };
+      return {
+        ...candidateAppRequest,
+        auth: {
+          accessToken,
+          userId: id,
+        },
+      };
     }
-    return {
-      ...candidateAppRequest,
-      auth: {
-        accessToken,
-        userId: id,
-      },
-    };
-  }
   }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
   return responseClientAppRequest;

@@ -11,8 +11,14 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useDriver } from "~/contexts/driver-context";
 
-export const MatchingModal = ({name, request_id}: {name?: string, request_id?: string}) => {
-  const {auth} = useDriver()
+export const MatchingModal = ({
+  name,
+  request_id,
+}: {
+  name?: string;
+  request_id?: string;
+}) => {
+  const { auth } = useDriver();
   const modalRef = useRef<{ close: () => void }>(null);
   const handleCloseModal = () => {
     if (modalRef.current) {

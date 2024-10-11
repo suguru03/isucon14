@@ -5,10 +5,16 @@ import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
 import { useDriver } from "~/contexts/driver-context";
 import type { RequestProps } from "~/components/request/type";
-import type {ClientChairRequest } from "~/types";
+import type { ClientChairRequest } from "~/types";
 
-export const Pickup = ({status, payload }: RequestProps<"DISPATCHING" | "DISPATCHED", {payload: ClientChairRequest["payload"]}>) => {
-  const {auth} = useDriver();
+export const Pickup = ({
+  status,
+  payload,
+}: RequestProps<
+  "DISPATCHING" | "DISPATCHED",
+  { payload: ClientChairRequest["payload"] }
+>) => {
+  const { auth } = useDriver();
 
   const handleDeparture = useCallback(async () => {
     await fetchChairPostRequestDepart({
