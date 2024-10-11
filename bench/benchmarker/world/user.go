@@ -76,9 +76,7 @@ func (u *User) Tick(ctx *Context) error {
 		return nil
 	}
 	defer func() {
-		swapped := u.tickDone.CompareAndSwap(false, true)
-		if !swapped {
-			// TODO: panic をやめる
+		if !u.tickDone.CompareAndSwap(false, true) {
 			panic("2重でUserのTickが終了した")
 		}
 	}()
@@ -129,9 +127,8 @@ func (u *User) Tick(ctx *Context) error {
 		case RequestStatusArrived:
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
-				// TODO 評価を送る
 				score := u.Request.CalculateEvaluation().Score()
-				err := ctx.client.SendEvaluation(ctx, u.Request)
+				err := ctx.client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
@@ -236,6 +233,15 @@ func (u *User) CreateRequest(ctx *Context) error {
 func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string) error {
 	request := u.Request
 	if request == nil {
+		if status == RequestStatusCompleted {
+			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			for _, r := range slices.Backward(u.RequestHistory) {
+				if r.ServerID == serverRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.User = RequestStatusCompleted
+					return nil
+				}
+			}
+		}
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
 	request.Statuses.RLock()

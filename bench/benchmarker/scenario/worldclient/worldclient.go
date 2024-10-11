@@ -132,15 +132,14 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 	return nil
 }
 
-func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) error {
+func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) error {
 	userClient, err := c.getUserClient(req.User.ServerID)
 	if err != nil {
 		return err
 	}
 
-	// TODO: 評価点どうする？
 	_, err = userClient.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
-		Evaluation: 5,
+		Evaluation: score,
 	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)

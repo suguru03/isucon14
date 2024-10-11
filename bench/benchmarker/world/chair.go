@@ -80,10 +80,8 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer func() {
-		swapped := c.tickDone.CompareAndSwap(false, true)
-		if !swapped {
-			// TODO: panic をやめる
-			panic("2重でChairのTickが終了した")
+		if !c.tickDone.CompareAndSwap(false, true) {
+			panic("2重でUserのTickが終了した")
 		}
 	}()
 

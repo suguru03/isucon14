@@ -10,7 +10,7 @@ type Client interface {
 	// SendDepart サーバーに客が搭乗完了して出発することを報告する
 	SendDepart(ctx *Context, req *Request) error
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
-	SendEvaluation(ctx *Context, req *Request) error
+	SendEvaluation(ctx *Context, req *Request, score int) error
 	// SendCreateRequest サーバーにリクエスト作成を送信する
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
 	// SendActivate サーバーにリクエストの受付開始を通知する
@@ -61,8 +61,8 @@ type RegisterProviderResponse struct {
 }
 
 type RegisterChairRequest struct {
-	Name    string
-	Model  string
+	Name  string
+	Model string
 }
 
 type RegisterChairResponse struct {
