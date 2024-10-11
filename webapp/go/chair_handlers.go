@@ -194,6 +194,10 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 			ID:   user.ID,
 			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 		},
+		PickupCoordinate: Coordinate{
+			Latitude:  rideRequest.PickupLatitude,
+			Longitude: rideRequest.PickupLongitude,
+		},
 		DestinationCoordinate: Coordinate{
 			Latitude:  rideRequest.DestinationLatitude,
 			Longitude: rideRequest.DestinationLongitude,
@@ -276,6 +280,10 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						ID:   user.ID,
 						Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 					},
+					PickupCoordinate: Coordinate{
+						Latitude:  rideRequest.PickupLatitude,
+						Longitude: rideRequest.PickupLongitude,
+					},
 					DestinationCoordinate: Coordinate{
 						Latitude:  rideRequest.DestinationLatitude,
 						Longitude: rideRequest.DestinationLongitude,
@@ -307,6 +315,7 @@ type simpleUser struct {
 type getChairRequestResponse struct {
 	RequestID             string     `json:"request_id"`
 	User                  simpleUser `json:"user"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	Status                string     `json:"status"`
 }
@@ -347,6 +356,10 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 		User: simpleUser{
 			ID:   user.ID,
 			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+		},
+		PickupCoordinate: Coordinate{
+			Latitude:  rideRequest.PickupLatitude,
+			Longitude: rideRequest.PickupLongitude,
 		},
 		DestinationCoordinate: Coordinate{
 			Latitude:  rideRequest.DestinationLatitude,
