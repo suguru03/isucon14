@@ -645,6 +645,8 @@ components:
           description: 配車要求ID
         user:
           $ref: "#/components/schemas/User"
+        pickup_coordinate:
+          $ref: "#/components/schemas/Coordinate"
         destination_coordinate:
           $ref: "#/components/schemas/Coordinate"
         status:
