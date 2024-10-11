@@ -39,7 +39,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
     useState<Omit<ClientChairRequest, "auth">>();
-  const isSSE = false;
+  const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
     if (isSSE) {
       /**

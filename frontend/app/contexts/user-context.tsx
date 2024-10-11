@@ -33,7 +33,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
     useState<Omit<ClientAppRequest, "auth">>();
-  const isSSE = false;
+  const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
     if (isSSE) {
       /**
