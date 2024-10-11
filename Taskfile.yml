@@ -23,7 +23,7 @@ tasks:
     sources:
       - webapp/sql/1-schema.sql
     deps:
-      - prepare
+      - up
   backend:
     - task: go:build
     - task: go:run

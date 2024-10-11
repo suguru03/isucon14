@@ -10,30 +10,11 @@ import {
 import type {
   ChairRequest,
   RequestStatus,
-  User,
-  Coordinate,
 } from "~/apiClient/apiSchemas";
-import { RequestId } from "~/apiClient/apiParameters";
-import type { AccessToken } from "~/types";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
-
-type ClientChairRequest = {
-  status?: RequestStatus;
-  payload?: Partial<{
-    request_id: RequestId;
-    coordinate: Partial<{
-      pickup: Coordinate;
-      destination: Coordinate;
-    }>;
-    user?: User;
-  }>;
-  auth: {
-    accessToken: AccessToken;
-    userId?: string;
-  };
-};
+import type { ClientChairRequest } from "~/types";
 
 export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
@@ -113,25 +94,22 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   const responseClientAppRequest = useMemo<
     ClientChairRequest | undefined
   >(() => {
-    const debugStatus =
-      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
-    const debugDestinationCoordinate = ((): Coordinate | undefined => {
-      // expected format: 123,456
-      const v = searchParams.get("debug_destination_coordinate") ?? "";
-      const m = v.match(/(\d+),(\d+)/);
-      if (!m) return;
-      return { latitude: Number(m[1]), longitude: Number(m[2]) };
-    })();
+    const debugStatus = (searchParams.get("debug_status") as RequestStatus) ?? undefined;
     const candidateAppRequest = clientChairPayloadWithStatus;
     if (debugStatus !== undefined && candidateAppRequest) {
       candidateAppRequest.status = debugStatus;
-    }
-    if (
-      debugDestinationCoordinate &&
-      candidateAppRequest?.payload?.coordinate
-    ) {
-      candidateAppRequest.payload.coordinate.destination =
-        debugDestinationCoordinate;
+      candidateAppRequest.payload = {...candidateAppRequest.payload}
+      candidateAppRequest.payload.request_id =  "__DUMMY_REQUEST_ID__";
+      candidateAppRequest.payload.user = {
+        id: "1234",
+        name: "ゆーざー",
+      },
+      candidateAppRequest.payload.coordinate = {
+        ...candidateAppRequest.payload.coordinate
+      }
+      candidateAppRequest.payload.coordinate.destination = {
+        latitude: 34.12345678,
+      longitude: 120.447162,
     }
     return {
       ...candidateAppRequest,
@@ -140,6 +118,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
         userId: id,
       },
     };
+  }
   }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
 
   return responseClientAppRequest;

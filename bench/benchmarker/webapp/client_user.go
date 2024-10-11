@@ -203,7 +203,7 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 
 			for {
 				// TODO: tickを拾ってくる
-				time.Sleep(90 * time.Millisecond)
+				time.Sleep(30 * time.Millisecond)
 				notifications, result, err := c.AppGetNotification(context.WithValue(ctx, "nested", true))
 				if err != nil {
 					resultErr = &err

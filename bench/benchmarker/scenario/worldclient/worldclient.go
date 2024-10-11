@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"go.uber.org/zap"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
@@ -32,9 +33,9 @@ type WorldClient struct {
 	world              *world.World
 	requestQueue       chan string
 	contestantLogger   *zap.Logger
-	userClients        map[string]*userClient
-	providerClients		map[string]*providerClient
-	chairClients       map[string]*chairClient
+	userClients        *concurrent.SimpleMap[string, *userClient]
+	providerClients    *concurrent.SimpleMap[string, *providerClient]
+	chairClients       *concurrent.SimpleMap[string, *chairClient]
 }
 
 func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, requestQueue chan string, contestantLogger *zap.Logger) *WorldClient {
@@ -44,14 +45,14 @@ func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig weba
 		webappClientConfig: webappClientConfig,
 		requestQueue:       requestQueue,
 		contestantLogger:   contestantLogger,
-		userClients:        map[string]*userClient{},
-		providerClients:    map[string]*providerClient{},
-		chairClients:       map[string]*chairClient{},
+		userClients:        concurrent.NewSimpleMap[string, *userClient](),
+		providerClients:    concurrent.NewSimpleMap[string, *providerClient](),
+		chairClients:       concurrent.NewSimpleMap[string, *chairClient](),
 	}
 }
 
 func (c *WorldClient) getUserClient(userServerID string) (*userClient, error) {
-	userClient, ok := c.userClients[userServerID]
+	userClient, ok := c.userClients.Get(userServerID)
 	if !ok {
 		return nil, CodeError(ErrorCodeNotFoundUserClient)
 	}
@@ -59,7 +60,7 @@ func (c *WorldClient) getUserClient(userServerID string) (*userClient, error) {
 }
 
 func (c *WorldClient) getProviderClient(providerServerID string) (*providerClient, error) {
-	providerClient, ok := c.providerClients[providerServerID]
+	providerClient, ok := c.providerClients.Get(providerServerID)
 	if !ok {
 		return nil, CodeError(ErrorCodeNotFoundProviderClient)
 	}
@@ -67,7 +68,7 @@ func (c *WorldClient) getProviderClient(providerServerID string) (*providerClien
 }
 
 func (c *WorldClient) getChairClient(chairServerID string) (*chairClient, error) {
-	chairClient, ok := c.chairClients[chairServerID]
+	chairClient, ok := c.chairClients.Get(chairServerID)
 	if !ok {
 		return nil, CodeError(ErrorCodeNotFoundChairClient)
 	}
@@ -131,15 +132,14 @@ func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
 	return nil
 }
 
-func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request) error {
+func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) error {
 	userClient, err := c.getUserClient(req.User.ServerID)
 	if err != nil {
 		return err
 	}
 
-	// TODO: 評価点どうする？
 	_, err = userClient.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
-		Evaluation: 5,
+		Evaluation: score,
 	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
@@ -239,9 +239,9 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.userClients[response.ID] = &userClient{
+	c.userClients.Set(response.ID, &userClient{
 		client: client,
-	}
+	})
 
 	return &world.RegisterUserResponse{
 		ServerUserID: response.ID,
@@ -266,13 +266,13 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.providerClients[response.ID] = &providerClient{
+	c.providerClients.Set(response.ID, &providerClient{
 		client: client,
-	}
+	})
 
 	return &world.RegisterProviderResponse{
 		ServerProviderID: response.ID,
-		AccessToken:     response.AccessToken,
+		AccessToken:      response.AccessToken,
 	}, nil
 }
 
@@ -283,8 +283,8 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 	}
 
 	response, err := providerClient.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
-		Name:    data.Name,
-		Model:  data.Model,
+		Name:  data.Name,
+		Model: data.Model,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -299,9 +299,9 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.chairClients[response.ID] = &chairClient{
+	c.chairClients.Set(response.ID, &chairClient{
 		client: client,
-	}
+	})
 
 	return &world.RegisterChairResponse{
 		ServerUserID: response.ID,
@@ -332,7 +332,8 @@ func (c *notificationConnectionImpl) Close() {
 
 func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	newCtx, cancel := context.WithCancel(c.ctx)
-	c.userClients[user.ServerID].sseContext = newCtx
+	u, _ := c.userClients.Get(user.ServerID)
+	u.sseContext = newCtx
 	go func() {
 		c.contestantLogger.Info("User notification stream started", zap.String("user_id", user.ServerID))
 		userClient, err := c.getUserClient(user.ServerID)
@@ -404,7 +405,8 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 
 func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	newCtx, cancel := context.WithCancel(c.ctx)
-	c.chairClients[chair.ServerID].sseContext = newCtx
+	cc, _ := c.chairClients.Get(chair.ServerID)
+	cc.sseContext = newCtx
 	go func() {
 		c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
 		chairClient, err := c.getChairClient(chair.ServerID)

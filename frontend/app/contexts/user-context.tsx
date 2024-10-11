@@ -7,27 +7,10 @@ import type {
   RequestStatus,
 } from "~/apiClient/apiSchemas";
 import { fetchAppGetNotification } from "~/apiClient/apiComponents";
-import type { AccessToken } from "~/types";
+import type { ClientAppRequest } from "~/types";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useEffect, useState } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
-import { RequestId } from "~/apiClient/apiParameters";
-
-type ClientAppRequest = {
-  status?: RequestStatus;
-  payload?: Partial<{
-    request_id: RequestId;
-    coordinate: Partial<{
-      pickup: Coordinate;
-      destination: Coordinate;
-    }>;
-    chair?: Chair;
-  }>;
-  auth: {
-    accessToken: AccessToken;
-    userId?: string;
-  };
-};
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();

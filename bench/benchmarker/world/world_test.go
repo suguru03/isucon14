@@ -97,7 +97,7 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	return nil
 }
 
-func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
+func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) error {
 	time.Sleep(s.latency)
 	c, ok := s.chairDB.Get(req.Chair.ServerID)
 	if !ok {

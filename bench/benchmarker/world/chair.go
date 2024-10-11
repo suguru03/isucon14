@@ -27,6 +27,8 @@ type Chair struct {
 	ServerID string
 	// Region 椅子がいる地域
 	Region *Region
+	// Provider 椅子を所有している事業者
+	Provider *Provider
 	// Current 現在地
 	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離
@@ -61,8 +63,8 @@ type Chair struct {
 }
 
 type RegisteredChairData struct {
-	Name   string
-	Model  string
+	Name  string
+	Model string
 }
 
 func (c *Chair) String() string {
@@ -78,10 +80,8 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer func() {
-		swapped := c.tickDone.CompareAndSwap(false, true)
-		if !swapped {
-			// TODO: panic をやめる
-			panic("2重でChairのTickが終了した")
+		if !c.tickDone.CompareAndSwap(false, true) {
+			panic("2重でUserのTickが終了した")
 		}
 	}()
 
@@ -112,8 +112,12 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
+				c.Request.Statuses.Lock()
+
 				err := ctx.client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
+					c.Request.Statuses.Unlock()
+
 					return WrapCodeError(ErrorCodeFailedToAcceptRequest, err)
 				}
 
@@ -123,6 +127,9 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Current)
 				c.Request.MatchedAt = ctx.world.Time
+
+				c.Request.Statuses.Unlock()
+
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 			} else {
 				err := ctx.client.SendDenyRequest(ctx, c, c.Request.ServerID)
@@ -181,9 +188,6 @@ func (c *Chair) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusCompleted:
-			// 完了時間を記録
-			c.Request.CompletedAt = ctx.world.Time
-			ctx.world.CompletedRequestChan <- c.Request
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.ServerRequestID = null.String{}

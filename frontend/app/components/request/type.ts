@@ -5,3 +5,4 @@ export type RequestProps<
   requestStatus extends RequestStatusWithIdle,
   extraProps = NonNullable<object>,
 > = { status: requestStatus } & extraProps;
+
