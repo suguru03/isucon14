@@ -3,12 +3,15 @@ import { Carry } from "./requestComponent/carry";
 import { Pickup } from "./requestComponent/pickup";
 import { Reception } from "./requestComponent/reception";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { useEmulator } from "~/components/hooks/emulate";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
+
 function DriverRequest() {
   const data = useClientChairRequestContext();
+  useEmulator();
   const requestStatus = data?.status ?? "IDLE";
   switch (requestStatus) {
     case "IDLE":

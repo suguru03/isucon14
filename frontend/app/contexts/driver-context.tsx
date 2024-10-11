@@ -111,26 +111,38 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
           ...candidateAppRequest.payload.coordinate,
         });
       candidateAppRequest.payload.coordinate.destination = {
-        latitude: 34.12345678,
-        longitude: 120.447162,
+        latitude: 34,
+        longitude: 120,
       };
-      return {
-        ...candidateAppRequest,
-        auth: {
-          accessToken,
-        },
-        chair: {
-          id,
-          name: "ISUCON椅子",
-          currentCoordinate: {
-            setter: SetCoordinate,
-            location: coordinate,
-          },
-        },
-      };
+      if (coordinate === undefined) {
+        SetCoordinate({
+          longitude: 130,
+          latitude: 40,
+        });
+      }
     }
-  }, [clientChairPayloadWithStatus, searchParams, accessToken, id]);
-
+    return {
+      ...candidateAppRequest,
+      auth: {
+        accessToken,
+      },
+      chair: {
+        id,
+        name: "ISUCON椅子",
+        currentCoordinate: {
+          setter: SetCoordinate,
+          location: coordinate,
+        },
+      },
+    };
+  }, [
+    clientChairPayloadWithStatus,
+    searchParams,
+    accessToken,
+    id,
+    coordinate,
+    SetCoordinate,
+  ]);
   return responseClientAppRequest;
 };
 
