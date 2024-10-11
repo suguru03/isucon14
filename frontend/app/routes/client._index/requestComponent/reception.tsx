@@ -45,9 +45,7 @@ export const Reception = ({
             className="w-full"
             onClick={() => handleOpenModal("from")}
           />
-          <Text size="xl" className="self-center">
-            ↓
-          </Text>
+          <Text size="xl">↓</Text>
           <LocationButton
             type="to"
             position={{ latitude: 123, longitude: 456 }}

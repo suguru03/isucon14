@@ -25,7 +25,6 @@ const ClientRequest: FC = () => {
       return (
         <Running
           status={requestStatus}
-          message="車両が到着しました"
           destinationCoordinate={destinationCoordinate}
         />
       );
@@ -33,7 +32,6 @@ const ClientRequest: FC = () => {
       return (
         <Running
           status={requestStatus}
-          message="快適なドライビングをお楽しみください"
           destinationCoordinate={destinationCoordinate}
         />
       );

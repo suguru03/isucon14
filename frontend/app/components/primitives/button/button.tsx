@@ -2,7 +2,7 @@ import { Link } from "@remix-run/react";
 import { ComponentProps, FC, PropsWithChildren } from "react";
 import { twMerge } from "tailwind-merge";
 
-type Variant = "light" | "danger";
+type Variant = "light" | "primary" | "danger";
 
 export const ButtonLink: FC<PropsWithChildren<ComponentProps<typeof Link>>> = ({
   to,
@@ -29,11 +29,13 @@ export const Button: FC<
 > = ({ children, className, variant, ...props }) => {
   const variantClasses = (() => {
     switch (variant) {
+      case "primary":
+        return "text-white bg-[#21517A] active:brightness-[85%] hover:brightness-[85%] focus:brightness-[85%]";
       case "danger":
-        return "text-white bg-red-600 active:bg-red-700 hover:bg-red-700 focus:bg-red-700";
+        return "text-white bg-[#C52E23] active:brightness-90 hover:brightness-90 focus:brightness-90";
       case "light":
       default:
-        return "bg-neutral-100 active:bg-neutral-200 hover:bg-neutral-200 focus:bg-neutral-200";
+        return "bg-[#F0EFED] active:brightness-90 hover:brightness-90 focus:brightness-90";
     }
   })();
   return (
