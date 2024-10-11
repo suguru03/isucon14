@@ -1551,6 +1551,12 @@ func (s *ChairRequest) encodeFields(e *jx.Encoder) {
 		s.User.Encode(e)
 	}
 	{
+		if s.PickupCoordinate.Set {
+			e.FieldStart("pickup_coordinate")
+			s.PickupCoordinate.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("destination_coordinate")
 		s.DestinationCoordinate.Encode(e)
 	}
@@ -1562,11 +1568,12 @@ func (s *ChairRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfChairRequest = [4]string{
+var jsonFieldsNameOfChairRequest = [5]string{
 	0: "request_id",
 	1: "user",
-	2: "destination_coordinate",
-	3: "status",
+	2: "pickup_coordinate",
+	3: "destination_coordinate",
+	4: "status",
 }
 
 // Decode decodes ChairRequest from json.
@@ -1600,8 +1607,18 @@ func (s *ChairRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"user\"")
 			}
+		case "pickup_coordinate":
+			if err := func() error {
+				s.PickupCoordinate.Reset()
+				if err := s.PickupCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pickup_coordinate\"")
+			}
 		case "destination_coordinate":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.DestinationCoordinate.Decode(d); err != nil {
 					return err
@@ -1630,7 +1647,7 @@ func (s *ChairRequest) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00001011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

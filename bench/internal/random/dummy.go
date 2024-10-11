@@ -18,7 +18,13 @@ func init() {
 	_ = gimei.NewName()
 }
 
-func GenerateProviderName() string { return gofakeit.Company() }
+func GenerateProviderName() string {
+	company := gofakeit.Company()
+	if len(company) > 30 {
+		company = company[:30]
+	}
+	return company
+}
 func GenerateChairName() string    { return gofakeit.PetName() }
 func GenerateChairModel() string   { return gofakeit.CarModel() }
 func GenerateLastName() string     { return gimei.NewName().Last.Kanji() }

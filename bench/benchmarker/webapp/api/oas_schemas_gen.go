@@ -422,6 +422,7 @@ type ChairRequest struct {
 	// 配車要求ID.
 	RequestID             string           `json:"request_id"`
 	User                  User             `json:"user"`
+	PickupCoordinate      OptCoordinate    `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
 	Status                OptRequestStatus `json:"status"`
 }
@@ -434,6 +435,11 @@ func (s *ChairRequest) GetRequestID() string {
 // GetUser returns the value of User.
 func (s *ChairRequest) GetUser() User {
 	return s.User
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *ChairRequest) GetPickupCoordinate() OptCoordinate {
+	return s.PickupCoordinate
 }
 
 // GetDestinationCoordinate returns the value of DestinationCoordinate.
@@ -454,6 +460,11 @@ func (s *ChairRequest) SetRequestID(val string) {
 // SetUser sets the value of User.
 func (s *ChairRequest) SetUser(val User) {
 	s.User = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *ChairRequest) SetPickupCoordinate(val OptCoordinate) {
+	s.PickupCoordinate = val
 }
 
 // SetDestinationCoordinate sets the value of DestinationCoordinate.
