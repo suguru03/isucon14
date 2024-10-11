@@ -1,6 +1,6 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { readFileSync, writeFileSync } from "fs";
-import { defineConfig, type UserConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
   AppPostRegisterRequestBody,
@@ -43,7 +43,7 @@ const getLoginedSearchParamURL = async (target: "app" | "chair") => {
   const id: string = json["id"];
   const accessToken: string = json["access_token"];
   const path = target === "app" ? "client" : "driver";
-  return `${DEFAULT_URL}/${path}?access_token=${accessToken}&user_id=${id}`;
+  return `${DEFAULT_URL}/${path}?access_token=${accessToken}&id=${id}`;
 };
 
 const customConsolePlugin: Plugin = {
