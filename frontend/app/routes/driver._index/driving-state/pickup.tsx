@@ -24,7 +24,7 @@ export const Pickup: FC = () => {
   return (
     <>
       <div className="flex flex-col items-center my-8 gap-8">
-        {status === "DISPATCHING" ? (
+        {status === "DISPATCHING" && (
           <>
             <CarRedIcon className="size-[76px] mb-4" />
             <Text>
@@ -32,7 +32,8 @@ export const Pickup: FC = () => {
               さんの出発地点へ向かっています
             </Text>
           </>
-        ) : status === "DISPATCHED" ? (
+        )}
+        {status === "DISPATCHED" && (
           <>
             <CarGreenIcon className="size-[76px] mb-4" />
             <Text>
@@ -40,11 +41,6 @@ export const Pickup: FC = () => {
               さんの出発地点へ到着しました
             </Text>
           </>
-        ) : (
-          <Text>
-            <span className="font-bold mx-1">{payload?.user?.name}</span>
-            さんの配車依頼
-          </Text>
         )}
         <div className="flex flex-col w-full items-center px-8">
           <LocationButton label="from" disabled className="w-full" />
@@ -53,7 +49,7 @@ export const Pickup: FC = () => {
           <Text variant="danger" size="sm">
             到着予定時間: 21:58
           </Text>
-          {status === "DISPATCHED" ? (
+          {status === "DISPATCHED" && (
             <Button
               variant="primary"
               className="w-full mt-6"
@@ -61,7 +57,7 @@ export const Pickup: FC = () => {
             >
               出発
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </>

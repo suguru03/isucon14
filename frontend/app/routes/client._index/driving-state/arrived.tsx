@@ -10,9 +10,6 @@ import { useClientAppRequestContext } from "~/contexts/user-context";
 
 export const Arrived = () => {
   const { auth, payload } = useClientAppRequestContext();
-  // const navigate = useNavigate();
-  // const [searchParams] = useSearchParams();
-
   const [rating, setRating] = useState(0);
   const modalRef = useRef<{ close: () => void }>(null);
 
