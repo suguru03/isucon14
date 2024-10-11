@@ -13,7 +13,7 @@ function DriverRequest() {
   switch (requestStatus) {
     case "IDLE":
     case "MATCHING":
-      return <Reception status={requestStatus} />;
+      return <Reception data={data} />;
     case "DISPATCHING":
     case "DISPATCHED":
       return <Pickup status={requestStatus} />;
