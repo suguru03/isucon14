@@ -97,7 +97,7 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	return nil
 }
 
-func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
+func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) error {
 	time.Sleep(s.latency)
 	c, ok := s.chairDB.Get(req.Chair.ServerID)
 	if !ok {
@@ -150,6 +150,11 @@ func (s *FastServerStub) SendDeactivate(ctx *Context, chair *Chair) error {
 func (s *FastServerStub) GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error) {
 	time.Sleep(s.latency)
 	return &GetRequestByChairResponse{}, nil
+}
+
+func (s *FastServerStub) GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error) {
+	time.Sleep(s.latency)
+	return &GetProviderSalesResponse{}, nil
 }
 
 func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {

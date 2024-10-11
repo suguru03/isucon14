@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.uber.org/zap"
 
@@ -45,8 +46,12 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.Provider
 	return resBody, nil
 }
 
-func (c *Client) ProviderGetSales(ctx context.Context) (*api.ProviderGetSalesOK, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, "/provider/sales", nil)
+func (c *Client) ProviderGetSales(ctx context.Context, params *api.ProviderGetSalesParams) (*api.ProviderGetSalesOK, error) {
+	q := url.Values{}
+	q.Set("since", params.Since)
+	q.Set("until", params.Until)
+
+	req, err := c.agent.NewRequest(http.MethodGet, "/provider/sales?"+q.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}

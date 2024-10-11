@@ -40,6 +40,8 @@ type User struct {
 	PaymentToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
+	// TotalEvaluation 完了したリクエストの平均評価
+	TotalEvaluation int
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
@@ -74,9 +76,7 @@ func (u *User) Tick(ctx *Context) error {
 		return nil
 	}
 	defer func() {
-		swapped := u.tickDone.CompareAndSwap(false, true)
-		if !swapped {
-			// TODO: panic をやめる
+		if !u.tickDone.CompareAndSwap(false, true) {
 			panic("2重でUserのTickが終了した")
 		}
 	}()
@@ -127,15 +127,24 @@ func (u *User) Tick(ctx *Context) error {
 		case RequestStatusArrived:
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
-				// TODO 評価を送る
-				err := ctx.client.SendEvaluation(ctx, u.Request)
+				score := u.Request.CalculateEvaluation().Score()
+				err := ctx.client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
 
 				// サーバーが評価を受理したので完了状態になるのを待機する
+				u.Request.CompletedAt = ctx.world.Time
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
+				if requests := len(u.RequestHistory); requests == 1 {
+					u.Region.TotalEvaluation.Add(int32(score))
+				} else {
+					u.Region.TotalEvaluation.Add(int32((u.TotalEvaluation+score)/requests - u.TotalEvaluation/(requests-1)))
+				}
+				u.TotalEvaluation += score
+				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
+				ctx.world.CompletedRequestChan <- u.Request
 			}
 
 		case RequestStatusCompleted:
@@ -167,12 +176,25 @@ func (u *User) Tick(ctx *Context) error {
 			u.NotificationConn = conn
 		}
 
+		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
+			// 初回利用で評価1なら離脱
+			// 2回以上利用して平均評価が2以下の場合は離脱
+			u.State = UserStateInactive
+			u.NotificationConn.Close()
+			u.NotificationConn = nil
+			break
+		}
+
 		// リクエストを作成する
 		// TODO 作成する条件・頻度
 		err := u.CreateRequest(ctx)
 		if err != nil {
 			return err
 		}
+
+	// 離脱ユーザーは何もしない
+	case u.State == UserStateInactive:
+		break
 	}
 	return nil
 }
@@ -211,8 +233,19 @@ func (u *User) CreateRequest(ctx *Context) error {
 func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string) error {
 	request := u.Request
 	if request == nil {
+		if status == RequestStatusCompleted {
+			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			for _, r := range slices.Backward(u.RequestHistory) {
+				if r.ServerID == serverRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.User = RequestStatusCompleted
+					return nil
+				}
+			}
+		}
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
+	request.Statuses.RLock()
+	defer request.Statuses.RUnlock()
 	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
 		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"sync/atomic"
+
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type ProviderID int
@@ -15,6 +17,10 @@ type Provider struct {
 	ServerID string
 	// Region 椅子を配置する地域
 	Region *Region
+	// ChairDB 管理している椅子
+	ChairDB *concurrent.SimpleMap[ChairID, *Chair]
+	// TotalSales 管理している椅子による売上の合計
+	TotalSales atomic.Int64
 
 	// RegisteredData サーバーに登録されているプロバイダー情報
 	RegisteredData RegisteredProviderData
@@ -31,10 +37,29 @@ type RegisteredProviderData struct {
 	Name string
 }
 
-func (c *Provider) String() string {
-	return fmt.Sprintf("Provider{id=%d}", c.ID)
+func (p *Provider) String() string {
+	return fmt.Sprintf("Provider{id=%d}", p.ID)
 }
 
-func (c *Provider) SetID(id ProviderID) {
-	c.ID = id
+func (p *Provider) SetID(id ProviderID) {
+	p.ID = id
+}
+
+func (p *Provider) Tick(ctx *Context) error {
+	if !p.tickDone.CompareAndSwap(true, false) {
+		return nil
+	}
+	defer func() {
+		if !p.tickDone.CompareAndSwap(false, true) {
+			panic("2重でProviderのTickが終了した")
+		}
+	}()
+
+	if ctx.world.Time%LengthOfHour == LengthOfHour-1 {
+		_, err := ctx.client.GetProviderSales(ctx, p)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
+		}
+	}
+	return nil
 }

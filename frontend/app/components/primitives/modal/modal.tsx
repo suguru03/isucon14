@@ -1,18 +1,23 @@
 import {
+  ComponentProps,
   PropsWithChildren,
   forwardRef,
   useEffect,
   useImperativeHandle,
   useRef,
 } from "react";
+import { twMerge } from "tailwind-merge";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 
-type ModalProps = PropsWithChildren<{
-  onClose?: () => void;
-}>;
+type ModalProps = PropsWithChildren<
+  ComponentProps<"div"> & {
+    onClose?: () => void;
+    disableCloseOnBackdrop?: boolean;
+  }
+>;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
-  ({ children, onClose }, ref) => {
+  ({ children, onClose, disableCloseOnBackdrop, className, ...props }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
     const handleClose = () => {
@@ -38,7 +43,12 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
       return () => clearTimeout(timer);
     }, []);
 
-    useOnClickOutside(sheetRef, handleClose);
+    useOnClickOutside(sheetRef, () => {
+      if (disableCloseOnBackdrop) {
+        return;
+      }
+      handleClose();
+    });
 
     useImperativeHandle(ref, () => ({
       close: handleClose,
@@ -48,11 +58,15 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
       <>
         <div className="fixed inset-0 bg-black opacity-50 z-40"></div>
         <div
-          className="fixed bottom-0 left-0 right-0 h-[90vh] bg-white border-t border-l border-r border-gray-300 rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50"
+          className={twMerge(
+            "fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50 md:max-w-screen-md mx-auto",
+            className,
+          )}
           ref={sheetRef}
           style={{ willChange: "transform", transform: "translateY(100%)" }}
+          {...props}
         >
-          <div className="p-4 h-full">{children}</div>
+          <div className="px-8 py-6 h-full">{children}</div>
         </div>
       </>
     );

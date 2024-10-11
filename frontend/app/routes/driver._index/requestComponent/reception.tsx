@@ -1,27 +1,51 @@
+import { useCallback } from "react";
+import {
+  useChairPostActivate,
+  useChairPostDeactivate,
+} from "~/apiClient/apiComponents";
+
+import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import type { RequestProps } from "~/components/request/type";
-import { useState } from "react";
+import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { ClientChairRequest } from "~/types";
+import { Matching } from "../modal-views/matching";
 
-export const ConfirmReception = () => {};
+export const Reception = ({
+  status,
+  payload,
+}: RequestProps<
+  "MATCHING" | "IDLE",
+  { payload: ClientChairRequest["payload"] }
+>) => {
+  const driver = useClientChairRequestContext();
+  const { mutate: postChairActivate } = useChairPostActivate();
+  const { mutate: postChairDeactivate } = useChairPostDeactivate();
 
-export const Reception = ({ status }: RequestProps<"IDLE" | "MATCHING">) => {
-  const [isReception, setReception] = useState<boolean>(false);
-
-  if (status === "MATCHING") {
-    /**
-     * TODO: 配車を受付するモーダル
-     */
-  }
+  const onClickActivate = useCallback(() => {
+    postChairActivate({
+      headers: {
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
+      },
+    });
+  }, [driver, postChairActivate]);
+  const onClickDeactivate = useCallback(() => {
+    postChairDeactivate({
+      headers: {
+        Authorization: `Bearer ${driver.auth?.accessToken}`,
+      },
+    });
+  }, [driver, postChairDeactivate]);
 
   return (
     <>
-      <div className="h-full text-center content-center bg-blue-200">Map</div>
-      <div className="px-4 py-16 block justify-center border-t">
-        {isReception ? (
-          <Button onClick={() => setReception(false)}>受付終了</Button>
-        ) : (
-          <Button onClick={() => setReception(true)}>受付開始</Button>
-        )}
+      {status === "MATCHING" ? (
+        <Matching name={payload?.user?.name} request_id={payload?.request_id} />
+      ) : null}
+      <Map />
+      <div className="px-4 py-16 flex justify-center border-t gap-6">
+        <Button onClick={() => onClickActivate()}>受付開始</Button>
+        <Button onClick={() => onClickDeactivate()}>受付終了</Button>
       </div>
     </>
   );

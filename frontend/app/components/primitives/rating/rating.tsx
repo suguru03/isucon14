@@ -1,15 +1,20 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 
 type RatingProps = {
   name: string;
   starSize?: number;
+  rating: number;
+  setRating: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export const Rating: FC<RatingProps> = ({ name, starSize = 40 }) => {
-  const [rating, setRating] = useState(0);
-
+export const Rating: FC<RatingProps> = ({
+  name,
+  starSize = 40,
+  rating,
+  setRating,
+}) => {
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-row gap-1">
       {Array.from({ length: 5 }).map((_, index) => {
         const starValue = index + 1;
         return (
@@ -30,8 +35,8 @@ export const Rating: FC<RatingProps> = ({ name, starSize = 40 }) => {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              fill={starValue <= rating ? "currentColor" : "none"}
-              stroke={starValue <= rating ? "currentColor" : "gray"}
+              fill={starValue <= rating ? "currentColor" : "#d9d9d9"}
+              stroke={starValue <= rating ? "currentColor" : "#d9d9d9"}
               className={`cursor-pointer ${rating >= index + 1 ? "text-yellow-400" : "text-gray-300"}`}
               width={starSize}
               height={starSize}

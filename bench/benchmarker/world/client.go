@@ -10,7 +10,7 @@ type Client interface {
 	// SendDepart サーバーに客が搭乗完了して出発することを報告する
 	SendDepart(ctx *Context, req *Request) error
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
-	SendEvaluation(ctx *Context, req *Request) error
+	SendEvaluation(ctx *Context, req *Request, score int) error
 	// SendCreateRequest サーバーにリクエスト作成を送信する
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
 	// SendActivate サーバーにリクエストの受付開始を通知する
@@ -19,6 +19,8 @@ type Client interface {
 	SendDeactivate(ctx *Context, chair *Chair) error
 	// GetRequestByChair サーバーからリクエストの詳細を取得する(椅子側)
 	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
+	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
+	GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error)
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterProvider サーバーにプロバイダーを登録する
@@ -38,6 +40,8 @@ type SendCreateRequestResponse struct {
 }
 
 type GetRequestByChairResponse struct{}
+
+type GetProviderSalesResponse struct{}
 
 type RegisterUserRequest struct {
 	UserName    string
@@ -61,8 +65,8 @@ type RegisterProviderResponse struct {
 }
 
 type RegisterChairRequest struct {
-	Name    string
-	Model  string
+	Name  string
+	Model string
 }
 
 type RegisterChairResponse struct {

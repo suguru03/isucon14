@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
+import { useRef, useState } from "react";
 import { Modal } from "~/components/primitives/modal/modal";
-import { Text } from "~/components/primitives/text/text";
 import { Rating } from "~/components/primitives/rating/rating";
+import { Text } from "~/components/primitives/text/text";
 
 export const meta: MetaFunction = () => {
   return [
@@ -14,6 +14,7 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const modalRef = useRef<{ close: () => void }>(null);
+  const [rating, setRating] = useState(0);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -44,7 +45,7 @@ export default function Index() {
       </button>
 
       {/* Ratingコンポーネント */}
-      <Rating name="test" />
+      <Rating name="test" rating={rating} setRating={setRating} />
 
       {/* モーダルコンポーネント */}
       {isModalOpen && (

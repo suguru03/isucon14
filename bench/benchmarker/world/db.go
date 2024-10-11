@@ -2,6 +2,7 @@ package world
 
 import (
 	"iter"
+	"slices"
 	"sync"
 )
 
@@ -64,6 +65,22 @@ func (db *RequestDB) Size() int {
 	return len(db.m)
 }
 
+func (db *RequestDB) Values() iter.Seq[*Request] {
+	return func(yield func(*Request) bool) {
+		db.lock.RLock()
+		defer db.lock.RUnlock()
+		for _, v := range db.m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func (db *RequestDB) ToSlice() []*Request {
+	return slices.Collect(db.Values())
+}
+
 type DBEntry[K ~int] interface {
 	SetID(id K)
 }
@@ -112,4 +129,20 @@ func (db *GenericDB[K, V]) Size() int {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 	return len(db.m)
+}
+
+func (db *GenericDB[K, V]) Values() iter.Seq[V] {
+	return func(yield func(V) bool) {
+		db.lock.RLock()
+		defer db.lock.RUnlock()
+		for _, v := range db.m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func (db *GenericDB[K, V]) ToSlice() []V {
+	return slices.Collect(db.Values())
 }

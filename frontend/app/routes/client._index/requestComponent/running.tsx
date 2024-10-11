@@ -1,21 +1,36 @@
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { CoordinateText } from "~/components/primitives/coordinate/coordinate";
+import { CarGreenIcon } from "~/components/icon/car-green";
+import { CarYellowIcon } from "~/components/icon/car-yellow";
+import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Text } from "~/components/primitives/text/text";
 import type { RequestProps } from "~/components/request/type";
 
 export const Running = ({
-  message,
+  status,
   destinationCoordinate,
 }: RequestProps<
   "DISPATCHED" | "CARRYING",
-  { message: string; destinationCoordinate?: Coordinate }
+  { destinationCoordinate?: Coordinate }
 >) => {
   return (
-    <div className="h-full flex flex-col items-center justify-center gap-4">
-      <Text>{message}</Text>
-      {destinationCoordinate && (
-        <CoordinateText value={destinationCoordinate} />
+    <div className="w-full h-full px-8 flex flex-col items-center justify-center">
+      {status === "DISPATCHED" ? (
+        <CarYellowIcon className="size-[76px] mb-4" />
+      ) : (
+        <CarGreenIcon className="size-[76px] mb-4" />
       )}
+      <Text size="xl" className="mb-6">
+        {status === "DISPATCHED"
+          ? "車両が到着しました"
+          : "快適なドライビングをお楽しみください"}
+      </Text>
+      <LocationButton label="from" className="w-80" />
+      <Text size="xl">↓</Text>
+      <LocationButton
+        label="to"
+        location={destinationCoordinate}
+        className="w-80"
+      />
     </div>
   );
 };
