@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
@@ -28,9 +28,10 @@ const move = (
       throw Error("Error: Expected status to be 'Arraived'.");
   }
 };
+
 export const useEmulator = () => {
   const clientChair = useClientChairRequestContext();
-
+  const [, setCurrentTimeoutId] = useState<number>();
   useEffect(() => {
     if (
       !(
@@ -58,7 +59,7 @@ export const useEmulator = () => {
         });
       }
     };
-    setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       currentCoodinatePost();
       switch (status) {
         case "DISPATCHING":
@@ -73,5 +74,9 @@ export const useEmulator = () => {
           break;
       }
     }, 3000);
-  }, [clientChair]);
+    setCurrentTimeoutId((preTimeoutId) => {
+      clearTimeout(preTimeoutId);
+      return timeoutId;
+    });
+  }, [clientChair, setCurrentTimeoutId]);
 };
