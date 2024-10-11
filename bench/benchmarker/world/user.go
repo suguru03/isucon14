@@ -128,7 +128,6 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				// TODO 評価を送る
-				log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
 				err := ctx.client.SendEvaluation(ctx, u.Request)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)

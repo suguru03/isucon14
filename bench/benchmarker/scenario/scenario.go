@@ -125,7 +125,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	go func() {
 		for req := range s.completedRequestChan {
-			s.contestantLogger.Info("request completed", zap.Any("request", req))
+			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
 			step.AddScore(score.ScoreTag("completed_request"))
 		}
 	}()
