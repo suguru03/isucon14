@@ -1,8 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { NavLink } from "@remix-run/react";
 import type { FC } from "react";
-import { Avatar } from "~/components/primitives/avatar/avatar";
-import { Header } from "~/components/primitives/header/header";
 import { useRequest } from "../../contexts/user-context";
 import { Arrived } from "./requestComponent/arrived";
 import { Reception } from "./requestComponent/reception";
@@ -50,11 +47,6 @@ const ClientRequest: FC = () => {
 export default function ClientRequestWrapper() {
   return (
     <>
-      <Header className="absolute top-0 z-10">
-        <NavLink to="/client/account">
-          <Avatar size="sm" />
-        </NavLink>
-      </Header>
       <ClientRequest />
     </>
   );

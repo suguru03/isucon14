@@ -9,7 +9,7 @@ type NavigationMenuType = {
 };
 
 export const FooterNavigation: FC<{
-  navigationMenus: [NavigationMenuType, NavigationMenuType];
+  navigationMenus: [NavigationMenuType, NavigationMenuType, NavigationMenuType];
 }> = ({ navigationMenus }) => {
   return (
     <nav className="sticky bottom-[env(safe-area-inset-bottom)] z-10 border-t border-secondary-border bg-white">
