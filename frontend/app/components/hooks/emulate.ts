@@ -31,7 +31,7 @@ const move = (
 
 export const useEmulator = () => {
   const clientChair = useClientChairRequestContext();
-  const [, setCurrentTimeoutId] = useState<number>();
+  const [currentTimeoutId, setCurrentTimeoutId] = useState<number>();
   useEffect(() => {
     if (
       !(
@@ -74,9 +74,13 @@ export const useEmulator = () => {
           break;
       }
     }, 3000);
+
     setCurrentTimeoutId((preTimeoutId) => {
       clearTimeout(preTimeoutId);
       return timeoutId;
     });
+    () => {
+      return clearTimeout(currentTimeoutId);
+    };
   }, [clientChair, setCurrentTimeoutId]);
 };
