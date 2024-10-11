@@ -1,5 +1,10 @@
 import { RequestId } from "./apiClient/apiParameters";
-import { Chair, Coordinate, RequestStatus, User } from "./apiClient/apiSchemas";
+import {
+  Coordinate as ApiCoodinate,
+  Chair,
+  RequestStatus,
+  User,
+} from "./apiClient/apiSchemas";
 
 export type AccessToken = string;
 
@@ -41,3 +46,10 @@ export type ClientChairRequest = {
     name: string;
   };
 };
+
+export type Pos = {
+  x: number;
+  y: number;
+};
+
+export type Coordinate = ApiCoodinate;

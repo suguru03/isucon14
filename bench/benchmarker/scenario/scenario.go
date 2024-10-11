@@ -34,6 +34,7 @@ import (
 //   - 料金の整合性をみたいかも
 type Scenario struct {
 	target           string
+	addr             string
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
@@ -46,15 +47,13 @@ type Scenario struct {
 	completedRequestChan chan *world.Request
 }
 
-func NewScenario(target string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
+func NewScenario(target string, addr string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
 	requestQueue := make(chan string, 1000)
 	completedRequestChan := make(chan *world.Request, 1000)
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan)
 	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
 		TargetBaseURL:         target,
-		DefaultClientTimeout:  5 * time.Second,
 		ClientIdleConnTimeout: 10 * time.Second,
-		InsecureSkipVerify:    true,
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
@@ -142,6 +141,7 @@ func NewScenario(target string, contestantLogger *zap.Logger, reporter benchrun.
 
 	return &Scenario{
 		target:           target,
+		addr:             addr,
 		contestantLogger: contestantLogger,
 		world:            w,
 		worldCtx:         worldCtx,
@@ -158,9 +158,8 @@ func NewScenario(target string, contestantLogger *zap.Logger, reporter benchrun.
 func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) error {
 	client, err := webapp.NewClient(webapp.ClientConfig{
 		TargetBaseURL:         s.target,
-		DefaultClientTimeout:  5 * time.Second,
+		TargetAddr:            s.addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-		InsecureSkipVerify:    true,
 		ContestantLogger:      s.contestantLogger,
 	})
 	if err != nil {

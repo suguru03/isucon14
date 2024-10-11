@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
@@ -20,38 +20,40 @@ export const Reception = ({
   const [destLocation, setDestLocation] = useState<Coordinate>();
   const modalRef = useRef<{ close: () => void }>(null);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     if (modalRef.current) {
       modalRef.current.close();
     }
-  };
+  }, []);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     if (action === "from") setCurrentLocation(selectLocation);
     if (action === "to") setDestLocation(selectLocation);
     setSelectLocation(undefined);
     setIsModalOpen(false);
-  };
+  }, [action, selectLocation]);
 
-  const onMove = (coordinate: Coordinate) => {
+  const onMove = useCallback((coordinate: Coordinate) => {
     setSelectLocation(coordinate);
-  };
+  }, []);
 
-  const handleOpenModal = (action: Action) => {
+  const handleOpenModal = useCallback((action: Action) => {
     setIsModalOpen(true);
     setAction(action);
-  };
+  }, []);
 
   return (
     <>
       {status === "IDLE" ? (
         <>
-          <Map />
+          <Map from={currentLocation} to={destLocation} />
           <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
             <LocationButton
               className="w-full"
               location={currentLocation}
-              onClick={() => handleOpenModal("from")}
+              onClick={() => {
+                handleOpenModal("from");
+              }}
               placeholder="現在地を選択する"
               label="from"
             />
@@ -59,7 +61,9 @@ export const Reception = ({
             <LocationButton
               location={destLocation}
               className="w-full"
-              onClick={() => handleOpenModal("to")}
+              onClick={() => {
+                handleOpenModal("to");
+              }}
               placeholder="目的地を選択する"
               label="to"
             />
@@ -101,7 +105,12 @@ export const Reception = ({
         <Modal ref={modalRef} onClose={onClose}>
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
-              <Map onMove={onMove} selectable />
+              <Map
+                onMove={onMove}
+                from={currentLocation}
+                to={destLocation}
+                selectable
+              />
             </div>
             <p className="font-bold mb-4 text-base">
               {action === "from" ? "現在地" : "目的地"}を選択してください
