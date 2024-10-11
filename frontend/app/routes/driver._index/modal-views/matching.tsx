@@ -1,16 +1,15 @@
-import { useNavigate } from "@remix-run/react";
 import { useCallback, useRef } from "react";
 import {
   useChairPostRequestAccept,
   useChairPostRequestDeny,
 } from "~/apiClient/apiComponents";
 import { CarRedIcon } from "~/components/icon/car-red";
+import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Button } from "~/components/primitives/button/button";
-import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
 
-export const MatchingModal = ({
+export const Matching = ({
   name,
   request_id,
 }: {
@@ -23,11 +22,6 @@ export const MatchingModal = ({
     if (modalRef.current) {
       modalRef.current.close();
     }
-  };
-
-  const navigate = useNavigate();
-  const onCloseModal = () => {
-    navigate("/driver", { replace: true });
   };
 
   const { mutate: postChairRequestAccept } = useChairPostRequestAccept();
@@ -51,42 +45,50 @@ export const MatchingModal = ({
   }, [auth, postChairRequestDeny, request_id]);
 
   return (
-    <Modal ref={modalRef} onClose={onCloseModal}>
-      <div className="h-full text-center content-center">
-        <div className="flex flex-col items-center my-8 gap-8">
-          <CarRedIcon className="size-[76px] mb-4" />
+    <div className="h-full text-center content-center">
+      <div className="flex flex-col items-center my-8 gap-8">
+        <CarRedIcon className="size-[76px] mb-4" />
 
-          <Text>
-            <span className="font-bold mx-1">{name}</span>
-            さんから配車要求が届いています
+        <Text>
+          <span className="font-bold mx-1">{name}</span>
+          さんから配車要求が届いています
+        </Text>
+
+        <div className="w-full">
+          <LocationButton label="from" disabled className="w-full" />
+          <Text size="xl">↓</Text>
+          <LocationButton label="to" disabled className="w-full mb-4" />
+          <Text variant="danger" size="sm">
+            到着予定時間: 21:58
           </Text>
+        </div>
 
-          <Text>{"from->to 到着予定時間"}</Text>
-
-          <div>
-            <div className="my-2">
-              <Button
-                onClick={() => {
-                  handleAccept();
-                  handleCloseModal();
-                }}
-              >
-                配車を受け付ける
-              </Button>
-            </div>
-            <div className="my-2">
-              <Button
-                onClick={() => {
-                  handleDeny();
-                  handleCloseModal();
-                }}
-              >
-                キャンセル
-              </Button>
-            </div>
+        <div>
+          <div className="my-4">
+            <Button
+              variant="primary"
+              className="w-80"
+              onClick={() => {
+                handleAccept();
+                handleCloseModal();
+              }}
+            >
+              配車を受け付ける
+            </Button>
+          </div>
+          <div className="my-4">
+            <Button
+              className="w-80"
+              onClick={() => {
+                handleDeny();
+                handleCloseModal();
+              }}
+            >
+              キャンセル
+            </Button>
           </div>
         </div>
       </div>
-    </Modal>
+    </div>
   );
 };

@@ -3,9 +3,9 @@ import {
   type ReactNode,
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
-  useEffect,
 } from "react";
 import type {
   ChairRequest,
@@ -155,6 +155,8 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams] = useSearchParams();
   const accessTokenParameter = searchParams.get("access_token");
   const chairIdParameter = searchParams.get("id");
+  const debugStatus =
+    (searchParams.get("debug_status") as RequestStatus) ?? undefined;
 
   const { accessToken, id } = useMemo(() => {
     if (accessTokenParameter !== null && chairIdParameter !== null) {
@@ -180,7 +182,9 @@ export const DriverProvider = ({ children }: { children: ReactNode }) => {
   const request = useClientChairRequest(accessToken ?? "", id ?? "");
 
   return (
-    <ClientChairRequestContext.Provider value={{ ...request }}>
+    <ClientChairRequestContext.Provider
+      value={{ ...request, status: debugStatus }}
+    >
       {children}
     </ClientChairRequestContext.Provider>
   );

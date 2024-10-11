@@ -7,7 +7,7 @@ type LocationButtonProps = {
   location?: Coordinate;
   label?: string;
   disabled?: boolean;
-  className: string;
+  className?: string;
   placeholder?: string;
   onClick?: () => void;
 };

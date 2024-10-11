@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { fetchAppPostRequest } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
@@ -7,6 +8,7 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import type { RequestProps } from "~/components/request/type";
+import { useClientAppRequestContext } from "~/contexts/user-context";
 
 type Action = "from" | "to";
 
@@ -14,11 +16,33 @@ export const Reception = ({
   status,
 }: RequestProps<"IDLE" | "MATCHING" | "DISPATCHING">) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [action, setAction] = useState<Action>();
-  const [selectLocation, setSelectLocation] = useState<Coordinate>();
+  const [action, setAction] = useState<Action>("from");
+  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
   const modalRef = useRef<{ close: () => void }>(null);
+  // TODO: requestId をベースに配車キャンセルしたい
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  const [requestId, setRequestId] = useState<string>("");
+
+  const user = useClientAppRequestContext();
+  const handleRideRequest = useCallback(async () => {
+    await fetchAppPostRequest({
+      body: {
+        pickup_coordinate: {
+          latitude: 0,
+          longitude: 0,
+        },
+        destination_coordinate: {
+          latitude: 0,
+          longitude: 0,
+        },
+      },
+      headers: {
+        Authorization: `Bearer ${user.auth?.accessToken}`,
+      },
+    }).then((res) => setRequestId(res.request_id));
+  }, [user]);
 
   const handleCloseModal = useCallback(() => {
     if (modalRef.current) {
@@ -27,14 +51,13 @@ export const Reception = ({
   }, []);
 
   const onClose = useCallback(() => {
-    if (action === "from") setCurrentLocation(selectLocation);
-    if (action === "to") setDestLocation(selectLocation);
-    setSelectLocation(undefined);
+    if (action === "from") setCurrentLocation(selectedLocation);
+    if (action === "to") setDestLocation(selectedLocation);
     setIsModalOpen(false);
-  }, [action, selectLocation]);
+  }, [action, selectedLocation]);
 
   const onMove = useCallback((coordinate: Coordinate) => {
-    setSelectLocation(coordinate);
+    setSelectedLocation(coordinate);
   }, []);
 
   const handleOpenModal = useCallback((action: Action) => {
@@ -46,7 +69,11 @@ export const Reception = ({
     <>
       {status === "IDLE" ? (
         <>
-          <Map from={currentLocation} to={destLocation} />
+          <Map
+            from={currentLocation}
+            to={destLocation}
+            initialCoordinate={selectedLocation}
+          />
           <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
             <LocationButton
               className="w-full"
@@ -70,7 +97,7 @@ export const Reception = ({
             <Button
               variant="primary"
               className="w-full mt-6 font-bold"
-              onClick={() => {}}
+              onClick={() => void handleRideRequest()}
               disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
             >
               ISURIDE
@@ -109,6 +136,9 @@ export const Reception = ({
                 onMove={onMove}
                 from={currentLocation}
                 to={destLocation}
+                initialCoordinate={
+                  action === "from" ? currentLocation : destLocation
+                }
                 selectable
               />
             </div>
