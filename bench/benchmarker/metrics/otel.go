@@ -14,7 +14,7 @@ import (
 )
 
 func NewMeter(ctx context.Context) (metric.Meter, error) {
-	exp, err := stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr), stdoutmetric.WithPrettyPrint())
+	exp, err := stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr))
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func NewMeter(ctx context.Context) (metric.Meter, error) {
 		return nil, err
 	}
 
-	reader:= metricsdk.NewPeriodicReader(exp, metricsdk.WithInterval(3 * time.Second))
+	reader := metricsdk.NewPeriodicReader(exp, metricsdk.WithInterval(3*time.Second))
 
 	provider := metricsdk.NewMeterProvider(
 		metricsdk.WithResource(recources),
@@ -41,4 +41,3 @@ func NewMeter(ctx context.Context) (metric.Meter, error) {
 
 	return otel.Meter("isucon14_benchmarker"), nil
 }
-

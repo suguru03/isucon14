@@ -65,6 +65,22 @@ func (db *RequestDB) Size() int {
 	return len(db.m)
 }
 
+func (db *RequestDB) Values() iter.Seq[*Request] {
+	return func(yield func(*Request) bool) {
+		db.lock.RLock()
+		defer db.lock.RUnlock()
+		for _, v := range db.m {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func (db *RequestDB) ToSlice() []*Request {
+	return slices.Collect(db.Values())
+}
+
 type DBEntry[K ~int] interface {
 	SetID(id K)
 }
