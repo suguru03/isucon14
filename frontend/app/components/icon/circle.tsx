@@ -1,6 +1,6 @@
-import { IconType } from "~/types";
+import type { ComponentProps, FC } from "react";
 
-export const CircleIcon: IconType = function (props) {
+export const CircleIcon: FC<ComponentProps<"svg">> = function (props) {
   return (
     <svg
       fill="currentColor"

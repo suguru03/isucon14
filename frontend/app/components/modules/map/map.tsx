@@ -9,17 +9,14 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
+import { Coordinate } from "~/apiClient/apiSchemas";
 import { ToIcon } from "~/components/icon/to";
 
 const GridDistance = 50;
 const Size = GridDistance * 100;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
-  const grad = ctx.createLinearGradient(0, 0, Size, 0);
-  grad.addColorStop(0, colors.white);
-  grad.addColorStop(1, colors.gray[100]);
-
-  ctx.fillStyle = grad;
+  ctx.fillStyle = colors.gray[100];
   ctx.fillRect(0, 0, Size, Size);
 
   ctx.strokeStyle = colors.gray[200];
@@ -43,7 +40,10 @@ const minmax = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 };
 
-const SelectorLayer: FC<{ pinSize?: number }> = ({ pinSize = 80 }) => {
+const SelectorLayer: FC<{
+  pinSize?: number;
+  pos?: { x: number; y: number };
+}> = ({ pinSize = 80, pos }) => {
   return (
     <div className="flex items-center justify-center w-full h-full">
       <svg
@@ -63,12 +63,17 @@ const SelectorLayer: FC<{ pinSize?: number }> = ({ pinSize = 80 }) => {
           transform: `translateY(-${pinSize / 2}px)`,
         }}
       />
+      {pos && (
+        <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
+          <span>{`${pos.x}, ${pos.y}`}</span>
+        </div>
+      )}
     </div>
   );
 };
 
 type MapProps = {
-  onMove?: (lat: number, lon: number) => void;
+  onMove?: (coordinate: Coordinate) => void;
   selectable?: boolean;
 };
 
@@ -76,7 +81,12 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrag, setIsDrag] = useState(false);
-  const [{ x, y }, setPos] = useState({ x: -Size / 4, y: -Size / 4 });
+  const [{ x, y }, setPos] = useState(() => {
+    const initialX = -Size / 4;
+    const initialY = -Size / 4;
+    onMove?.({ latitude: -initialX, longitude: -initialY });
+    return { x: initialX, y: initialY };
+  });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
   const [movingStartPagePos, setMovingStartPagePos] = useState({
     x: 0,
@@ -138,33 +148,28 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
   }, []);
 
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
+    const setFixedPos = (pageX: number, pageY: number) => {
+      const posX = minmax(
+        movingStartPos.x - (movingStartPagePos.x - pageX),
+        -Size + (outerRect?.width ?? 0),
+        0,
+      );
+      const posY = minmax(
+        movingStartPos.y - (movingStartPagePos.y - pageY),
+        -Size + (outerRect?.height ?? 0),
+        0,
+      );
       setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.pageX),
-          -Size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.pageY),
-          -Size + (outerRect?.height ?? 0),
-          0,
-        ),
+        x: posX,
+        y: posY,
       });
+      onMove?.({ latitude: -posX, longitude: -posY });
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      setFixedPos(e.pageX, e.pageY);
     };
     const onTouchMove = (e: TouchEvent) => {
-      setPos({
-        x: minmax(
-          movingStartPos.x - (movingStartPagePos.x - e.touches[0].pageX),
-          -Size + (outerRect?.width ?? 0),
-          0,
-        ),
-        y: minmax(
-          movingStartPos.y - (movingStartPagePos.y - e.touches[0].pageY),
-          -Size + (outerRect?.height ?? 0),
-          0,
-        ),
-      });
+      setFixedPos(e.touches[0].pageX, e.touches[0].pageY);
     };
     if (isDrag) {
       window.addEventListener("mousemove", onMouseMove, { passive: true });
@@ -174,11 +179,7 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [isDrag, movingStartPagePos, movingStartPos, outerRect]);
-
-  useEffect(() => {
-    onMove?.(-x, -y);
-  }, [onMove, x, y]);
+  }, [isDrag, movingStartPagePos, movingStartPos, onMove, outerRect]);
 
   return (
     <div
@@ -201,7 +202,7 @@ export const Map: FC<MapProps> = ({ selectable, onMove }) => {
         }}
         ref={canvasRef}
       />
-      {!selectable && <SelectorLayer />}
+      {selectable && <SelectorLayer pos={{ x: -x, y: -y }} />}
     </div>
   );
 };

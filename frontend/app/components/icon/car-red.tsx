@@ -1,6 +1,6 @@
-import type { IconType } from "~/types";
+import type { ComponentProps, FC } from "react";
 
-export const CarRedIcon: IconType = function (props) {
+export const CarRedIcon: FC<ComponentProps<"svg">> = function (props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

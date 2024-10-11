@@ -1,11 +1,10 @@
 import { NavLink } from "@remix-run/react";
 import type { FC } from "react";
-import type { IconType } from "~/types";
 
 type NavigationMenuType = {
   link: `/${string}`;
   label: string;
-  icon: IconType;
+  icon: FC<ComponentProps<"svg">>;
 };
 
 export const FooterNavigation: FC<{

@@ -1,4 +1,3 @@
-import type { SVGProps } from "react";
 import { RequestId } from "./apiClient/apiParameters";
 import { Chair, Coordinate, RequestStatus, User } from "./apiClient/apiSchemas";
 
@@ -42,7 +41,3 @@ export type ClientChairRequest = {
     name: string;
   };
 };
-
-export type IconType<P = SVGProps<SVGSVGElement>> = (
-  props: P & SVGProps<SVGSVGElement>,
-) => JSX.Element;
