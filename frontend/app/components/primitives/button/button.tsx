@@ -2,6 +2,8 @@ import { Link } from "@remix-run/react";
 import { ComponentProps, FC, PropsWithChildren } from "react";
 import { twMerge } from "tailwind-merge";
 
+type Variant = "light" | "primary" | "danger";
+
 export const ButtonLink: FC<PropsWithChildren<ComponentProps<typeof Link>>> = ({
   to,
   className,
@@ -22,16 +24,26 @@ export const ButtonLink: FC<PropsWithChildren<ComponentProps<typeof Link>>> = ({
   );
 };
 
-export const Button: FC<PropsWithChildren<ComponentProps<"button">>> = ({
-  children,
-  className,
-  ...props
-}) => {
+export const Button: FC<
+  PropsWithChildren<ComponentProps<"button"> & { variant?: Variant }>
+> = ({ children, className, variant, ...props }) => {
+  const variantClasses = (() => {
+    switch (variant) {
+      case "primary":
+        return "text-white bg-[#21517A] active:brightness-[85%] hover:brightness-[85%] focus:brightness-[85%]";
+      case "danger":
+        return "text-white bg-[#C52E23] active:brightness-90 hover:brightness-90 focus:brightness-90";
+      case "light":
+      default:
+        return "bg-[#F0EFED] active:brightness-90 hover:brightness-90 focus:brightness-90";
+    }
+  })();
   return (
     <button
       type="button"
       className={twMerge(
-        "rounded-md bg-gray-800 py-2 px-4 border border-transparent text-center text-sm text-white transition-all shadow-md hover:shadow-lg focus:bg-gray-700 focus:shadow-none active:bg-gray-700 hover:bg-gray-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none ml-2",
+        "rounded-md py-2 px-4 border border-transparent text-center transition-all shadow-md shadow-gray-400 hover:shadow-lg focus:shadow-none active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none",
+        variantClasses,
         className,
       )}
       {...props}
