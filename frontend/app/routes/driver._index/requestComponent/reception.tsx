@@ -4,7 +4,6 @@ import {
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
 
-import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import type { RequestProps } from "~/components/request/type";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
@@ -48,7 +47,6 @@ export const Reception = ({
           request_id={payload?.request_id}
         />
       ) : null}
-      <Map />
       <div className="px-4 py-16 block border-t">
         {isReception ? (
           <Button

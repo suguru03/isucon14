@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
 import { LocationButton } from "~/components/modules/location-button/location-button";
-import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Text } from "~/components/primitives/text/text";
 import type { RequestProps } from "~/components/request/type";
@@ -30,7 +29,6 @@ export const Pickup = ({
 
   return (
     <>
-      <Map />
       <div className="flex flex-col items-center my-8 gap-8">
         {status === "DISPATCHING" ? (
           <Text>
