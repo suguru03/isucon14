@@ -53,7 +53,7 @@ export default defineConfig({
       });
       writeFileSync(
         `${outputDir}/${filenamePrefix}BaseURL.ts`,
-        `export const apiBaseURL = "${targetBaseURL}";`,
+        `export const apiBaseURL = "${targetBaseURL}";\n`,
       );
     },
   },
