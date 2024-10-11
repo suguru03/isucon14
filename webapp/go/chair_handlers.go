@@ -467,7 +467,7 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = tx.Exec("UPDATE ride_requests SET status = ?, updated_at = isu_now() WHERE id = ?", "CARRYING", requestID); err != nil {
+	if _, err = tx.Exec("UPDATE ride_requests SET status = ?, rode_at = isu_now(), updated_at = isu_now() WHERE id = ?", "CARRYING", requestID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
