@@ -9,7 +9,9 @@ type NavigationMenuType = {
 };
 
 export const FooterNavigation: FC<{
-  navigationMenus: [NavigationMenuType, NavigationMenuType];
+  navigationMenus:
+    | [NavigationMenuType, NavigationMenuType]
+    | [NavigationMenuType, NavigationMenuType, NavigationMenuType];
 }> = ({ navigationMenus }) => {
   return (
     <nav className="sticky bottom-[env(safe-area-inset-bottom)] z-10 border-t border-secondary-border bg-white">
@@ -17,7 +19,7 @@ export const FooterNavigation: FC<{
         {navigationMenus.map((menu, index) => (
           <li
             key={index}
-            className="flex justify-center border-b-4 has-[.active]:border-black"
+            className="flex justify-center border-b-4 border-transparent has-[.active]:border-black"
           >
             <NavLink
               to={menu.link}

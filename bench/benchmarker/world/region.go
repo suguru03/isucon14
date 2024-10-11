@@ -8,6 +8,7 @@ import (
 )
 
 type Region struct {
+	Name          string
 	RegionOffsetX int
 	RegionOffsetY int
 	RegionWidth   int
@@ -18,8 +19,9 @@ type Region struct {
 	TotalEvaluation atomic.Int32
 }
 
-func NewRegion(offsetX, offsetY, width, height int) *Region {
+func NewRegion(name string, offsetX, offsetY, width, height int) *Region {
 	return &Region{
+		Name:          name,
 		RegionOffsetX: offsetX,
 		RegionOffsetY: offsetY,
 		RegionWidth:   width,

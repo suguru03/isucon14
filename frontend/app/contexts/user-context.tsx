@@ -1,79 +1,137 @@
 import { useSearchParams } from "@remix-run/react";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import {
-  useAppGetNotification,
-  type AppGetNotificationError,
-} from "~/apiClient/apiComponents";
 import type {
   AppRequest,
   Coordinate,
   RequestStatus,
 } from "~/apiClient/apiSchemas";
-import type { User } from "~/types";
+import { fetchAppGetNotification } from "~/apiClient/apiComponents";
+import type { ClientAppRequest } from "~/types";
+import { EventSourcePolyfill } from "event-source-polyfill";
+import { useEffect, useState } from "react";
+import { apiBaseURL } from "~/apiClient/APIBaseURL";
 
-const UserContext = createContext<Partial<User>>({});
-
-const RequestContext = createContext<{
-  data?: AppRequest;
-  error?: AppGetNotificationError | null;
-  isLoading: boolean;
-}>({ isLoading: false });
-
-const RequestProvider = ({
-  children,
-  accessToken,
-}: {
-  children: ReactNode;
-  accessToken: string;
-}) => {
-  const notificationResponse = useAppGetNotification({
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "text/event-stream",
-    },
-  });
-  const { data, error, isLoading } = notificationResponse;
-  // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
+export const useClientAppRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
-  const responseData = useMemo(() => {
-    const status = (searchParams.get("debug_status") ?? undefined) as
-      | RequestStatus
-      | undefined;
-    const destination_coordinate = ((): Coordinate | undefined => {
+  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
+    useState<Omit<ClientAppRequest, "auth" | "user">>();
+  const isSSE = localStorage.getItem("isSSE") === "true";
+  useEffect(() => {
+    if (isSSE) {
+      /**
+       * WebAPI標準のものはAuthヘッダーを利用できないため
+       */
+      const eventSource = new EventSourcePolyfill(
+        `${apiBaseURL}/app/notification`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      eventSource.onmessage = (event) => {
+        if (typeof event.data === "string") {
+          const eventData = JSON.parse(event.data) as AppRequest;
+          setClientAppPayloadWithStatus((preRequest) => {
+            if (
+              preRequest === undefined ||
+              eventData.status !== preRequest.status ||
+              eventData.request_id !== preRequest.payload?.request_id
+            ) {
+              return {
+                status: eventData.status,
+                payload: {
+                  request_id: eventData.request_id,
+                  coordinate: {
+                    pickup: eventData.pickup_coordinate,
+                    destination: eventData.destination_coordinate,
+                  },
+                  chair: eventData.chair,
+                },
+              };
+            } else {
+              return preRequest;
+            }
+          });
+        }
+        return () => {
+          eventSource.close();
+        };
+      };
+    } else {
+      const abortController = new AbortController();
+      (async () => {
+        const appRequest = await fetchAppGetNotification(
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+          abortController.signal,
+        );
+        setClientAppPayloadWithStatus({
+          status: appRequest.status,
+          payload: {
+            request_id: appRequest.request_id,
+            coordinate: {
+              pickup: appRequest.pickup_coordinate,
+              destination: appRequest.destination_coordinate,
+            },
+            chair: appRequest.chair,
+          },
+        });
+      })().catch((e) => {
+        console.error(`ERROR: ${e}`);
+      });
+    }
+  }, [accessToken, setClientAppPayloadWithStatus, isSSE]);
+
+  const responseClientAppRequest = useMemo<ClientAppRequest | undefined>(() => {
+    const debugStatus =
+      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
+    const debugDestinationCoordinate = ((): Coordinate | undefined => {
       // expected format: 123,456
       const v = searchParams.get("debug_destination_coordinate") ?? "";
       const m = v.match(/(\d+),(\d+)/);
       if (!m) return;
       return { latitude: Number(m[1]), longitude: Number(m[2]) };
     })();
-
-    let fetchedData: Partial<AppRequest> = data ?? {};
-    if (data instanceof Blob) {
-      fetchedData = {};
+    const candidateAppRequest = clientAppPayloadWithStatus;
+    if (debugStatus !== undefined && candidateAppRequest) {
+      candidateAppRequest.status = debugStatus;
     }
+    if (
+      debugDestinationCoordinate &&
+      candidateAppRequest?.payload?.coordinate
+    ) {
+      candidateAppRequest.payload.coordinate.destination =
+        debugDestinationCoordinate;
+    }
+    return {
+      ...candidateAppRequest,
+      auth: {
+        accessToken,
+      },
+      user: {
+        id,
+        name: "ISUCON太郎",
+      },
+    };
+  }, [clientAppPayloadWithStatus, searchParams, accessToken, id]);
 
-    // TODO:
-    return { ...fetchedData, status, destination_coordinate } as AppRequest;
-  }, [data, searchParams]);
-
-  /**
-   * TODO: SSE処理
-   */
-
-  return (
-    <RequestContext.Provider value={{ data: responseData, error, isLoading }}>
-      {children}
-    </RequestContext.Provider>
-  );
+  return responseClientAppRequest;
 };
+
+const ClientAppRequestContext = createContext<Partial<ClientAppRequest>>({});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
+
   const accessTokenParameter = searchParams.get("access_token");
   const userIdParameter = searchParams.get("id");
 
-  const user: Partial<User> = useMemo(() => {
+  const { accessToken, id } = useMemo(() => {
     if (accessTokenParameter !== null && userIdParameter !== null) {
       requestIdleCallback(() => {
         sessionStorage.setItem("user_access_token", accessTokenParameter);
@@ -82,7 +140,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return {
         accessToken: accessTokenParameter,
         id: userIdParameter,
-        name: "ISUCON太郎",
       };
     }
     const accessToken =
@@ -91,19 +148,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return {
       accessToken,
       id,
-      name: "ISUCON太郎",
     };
   }, [accessTokenParameter, userIdParameter]);
 
+  const request = useClientAppRequest(accessToken ?? "", id ?? "");
+
   return (
-    <UserContext.Provider value={user}>
-      <RequestProvider accessToken={user.accessToken ?? ""}>
-        {children}
-      </RequestProvider>
-    </UserContext.Provider>
+    <ClientAppRequestContext.Provider value={{ ...request }}>
+      {children}
+    </ClientAppRequestContext.Provider>
   );
 };
 
-export const useUser = () => useContext(UserContext);
-
-export const useRequest = () => useContext(RequestContext);
+export const useClientAppRequestContext = () =>
+  useContext(ClientAppRequestContext);

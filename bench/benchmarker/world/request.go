@@ -117,31 +117,29 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	result := Evaluation{}
 	{
 		// マッチング待ち時間評価
-		time := int(r.MatchedAt - r.RequestedAt)
-		if time < 100 {
+		if r.MatchedAt-r.RequestedAt < 100 {
 			// 100ticks以内ならOK
 			result.Matching = true
 		}
 	}
 	{
-		// 配椅子時間評価
-		idealTime := neededTime(r.StartPoint.V.DistanceTo(r.PickupPoint), r.Chair.Speed)
-		actualTime := int(r.DispatchedAt - r.MatchedAt)
-		if actualTime-idealTime < 5 {
-			// 理想時間との誤差が5ticks以内ならOK
+		// 乗車待ち時間評価
+		if r.StartPoint.V.DistanceTo(r.PickupPoint) < 25 {
+			// 割り当てられた椅子が自分の場所から距離25以内
 			result.Dispatch = true
 		}
 	}
 	{
-		// 到着待ち時間評価
-		time := int(r.PickedUpAt - r.DispatchedAt)
-		if time < 10 {
-			// 理想時間との誤差が10ticks以内ならOK
+		// 乗車待ち時間誤差評価
+		idealTime := neededTime(r.StartPoint.V.DistanceTo(r.PickupPoint), r.Chair.Speed)
+		actualTime := int(r.PickedUpAt - r.MatchedAt)
+		if actualTime-idealTime < 15 {
+			// 理想時間との誤差が15ticks以内ならOK
 			result.Pickup = true
 		}
 	}
 	{
-		// 乗車時間評価
+		// 乗車時間誤差評価
 		idealTime := neededTime(r.PickupPoint.DistanceTo(r.DestinationPoint), r.Chair.Speed)
 		actualTime := int(r.ArrivedAt - r.PickedUpAt)
 		if actualTime-idealTime < 5 {
