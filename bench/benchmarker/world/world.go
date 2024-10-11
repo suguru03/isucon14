@@ -52,18 +52,8 @@ type World struct {
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
 	return &World{
 		Regions: []*Region{
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 0,
-				RegionOffsetY: 0,
-			},
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 300,
-				RegionOffsetY: 300,
-			},
+			NewRegion(0, 0, 100, 100),
+			NewRegion(300, 300, 100, 100),
 		},
 		UserDB:     NewGenericDB[UserID, *User](),
 		ProviderDB: NewGenericDB[ProviderID, *Provider](),
@@ -156,7 +146,9 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
-	return w.UserDB.Create(u), nil
+	result := w.UserDB.Create(u)
+	args.Region.UsersDB.Set(result.ID, u)
+	return result, nil
 }
 
 type CreateProviderArgs struct {
