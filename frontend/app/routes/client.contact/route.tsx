@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Header } from "~/components/primitives/header/header";
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,14 +10,11 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   return (
-    <div className="font-sans p-4">
-      <Link
-        to="/client/account"
-        className="text-blue-600 hover:underline self-start"
-      >
-        戻る
-      </Link>
-      <h1 className="text-3xl my-4">お問い合わせ</h1>
-    </div>
+    <>
+      <Header backTo={"/client"} />
+      <section className="flex-1 mx-4">
+        <h2 className="text-2xl my-4">お問い合わせ</h2>
+      </section>
+    </>
   );
 }

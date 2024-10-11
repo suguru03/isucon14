@@ -2,10 +2,13 @@ package scenario
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/score"
+	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
+	"github.com/isucon/isucon14/bench/payment"
 	"go.uber.org/zap"
 
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
@@ -32,6 +35,7 @@ type Scenario struct {
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
+	paymentServer    *payment.Server
 	step             *isucandar.BenchmarkStep
 
 	requestQueue         chan string // あんまり考えて導入してないです
@@ -50,12 +54,18 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
+	paymentServer := payment.NewServer(w.PaymentDB, 300*time.Millisecond, 5)
+	// TODO: サーバーハンドリング
+	go func() {
+		http.ListenAndServe(":12345", paymentServer)
+	}()
 
 	return &Scenario{
 		target:           target,
 		contestantLogger: contestantLogger,
 		world:            w,
 		worldCtx:         worldCtx,
+		paymentServer:    paymentServer,
 
 		requestQueue:         requestQueue,
 		completedRequestChan: completedRequestChan,
@@ -75,7 +85,8 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	_, err = client.PostInitialize(ctx)
+	// TODO: 決済サーバーアドレス
+	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: "http://localhost:12345"})
 	if err != nil {
 		return err
 	}
@@ -114,30 +125,38 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	go func() {
 		for req := range s.completedRequestChan {
-			s.contestantLogger.Info("request completed", zap.Any("request", req))
+			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
 			step.AddScore(score.ScoreTag("completed_request"))
 		}
 	}()
 
-	region := s.world.Regions[1]
-	for range 1 {
-		_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
-			Region:            region,
-			InitialCoordinate: world.RandomCoordinateOnRegion(region),
-			WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(23)),
+	for i := range 5 {
+		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
+			Region: s.world.Regions[i%len(s.world.Regions)],
 		})
 		if err != nil {
 			return err
 		}
+
+		for range 10 {
+			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
+				Provider:          provider,
+				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
+				WorkTime:          world.NewInterval(world.ConvertHour(0), world.ConvertHour(2000)),
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
-	for range 1 {
-		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: region})
+
+	for i := range 10 {
+		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: s.world.Regions[i%len(s.world.Regions)]})
 		if err != nil {
 			return err
 		}
 	}
 
-	lastLogTime := time.Now()
 	for now := range world.ConvertHour(24 * 14) {
 		err := s.world.Tick(s.worldCtx)
 		if err != nil {
@@ -145,9 +164,12 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 
-		if now%world.ConvertHour(1) == 0 {
-			s.contestantLogger.Info("tick", zap.Duration("since", time.Since(lastLogTime)), zap.Int("time", now/world.ConvertHour(1)))
-			lastLogTime = time.Now()
+		if now%world.LengthOfHour == 0 {
+			s.contestantLogger.Info("tick",
+				zap.Int64("ticks", s.world.Time),
+				zap.Int("timeouts", s.world.TimeoutTickCount),
+				zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
+			)
 		}
 	}
 

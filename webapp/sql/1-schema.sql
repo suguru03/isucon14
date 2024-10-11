@@ -1,43 +1,11 @@
-
-CREATE DATABASE IF NOT EXISTS isucon DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
-CREATE USER 'isucon'@'%' IDENTIFIED BY 'isucon';
-GRANT ALL ON isucon.* TO 'isucon'@'%';
-
 USE isucon;
-
-DELIMITER //
-CREATE FUNCTION ISU_NOW() RETURNS DATETIME(6)
-  READS SQL DATA
-BEGIN
-  DECLARE base_time DATETIME(6);
-  DECLARE time_elapsed_microseconds BIGINT;
-  DECLARE accelerated_time BIGINT;
-
-  -- 今日の0時を基準にする（マイクロ秒精度）
-  SET base_time = CURDATE() + INTERVAL 0 MICROSECOND;
-
-  -- 経過時間をマイクロ秒単位で計算する（現在時刻 - 今日の0時）
-  SET time_elapsed_microseconds = TIMESTAMPDIFF(MICROSECOND, base_time, NOW(6));
-
-  -- 2000倍に加速させる
-  SET accelerated_time = time_elapsed_microseconds * 2000;
-
-  -- 0時から加速した時間を加える（マイクロ秒単位）
-  RETURN base_time + INTERVAL accelerated_time MICROSECOND;
-END //
-DELIMITER ;
-
 
 create table chairs
 (
   id         varchar(26) not null comment '椅子ID',
-  username   varchar(30) not null comment 'ユーザー名',
-  firstname  varchar(30) not null comment '本名(名前)',
-  lastname   varchar(30) not null comment '本名(名字)',
-  date_of_birth varchar(30)      not null comment '生年月日',
-  chair_model  text        not null comment '車種',
-  chair_no     varchar(30) not null comment 'ISUナンバー',
+  provider_id varchar(26) not null comment 'プロバイダーID',
+  name       varchar(30) not null comment '椅子の名前',
+  model      text        not null comment '椅子のモデル',
   is_active  tinyint(1)  not null comment '配椅子受付中かどうか',
   access_token varchar(255) not null comment 'アクセストークン',
   created_at datetime(6)  not null comment '登録日時',
@@ -48,7 +16,7 @@ create table chairs
 
 create table chair_locations
 (
-  id         varchar(26)         not null,
+  id         varchar(26) not null,
   chair_id   varchar(26) not null comment '椅子ID',
   latitude   integer    not null comment '経度',
   longitude  integer    not null comment '緯度',
@@ -85,19 +53,6 @@ create table payment_tokens
 )
   comment = '決済トークンテーブル';
 
-create table inquiries
-(
-  id         varchar(26) not null comment '問い合わせID',
-  user_id    varchar(26) not null comment 'ユーザーID',
-  subject    text        not null comment '件名',
-  body       text        not null comment '本文',
-  created_at datetime(6)   not null comment '問い合わせ日時',
-  primary key (id),
-  constraint inquiries_users_id_fk
-    foreign key (user_id) references users (id)
-)
-  comment = '問い合わせテーブル';
-
 create table ride_requests
 (
   id                    varchar(26)                                                                                    not null comment '配車/乗車リクエストID',
@@ -122,3 +77,16 @@ create table ride_requests
     foreign key (user_id) references users (id)
 )
   comment = '配車/乗車リクエスト情報テーブル';
+
+create table providers
+(
+  id        varchar(26) not null comment 'プロバイダーID',
+  name       varchar(30) not null comment 'プロバイダー名',
+  access_token varchar(255) not null comment 'アクセストークン',
+  created_at datetime(6)   not null comment '登録日時',
+  updated_at datetime(6)   not null comment '更新日時',
+  primary key (id),
+  unique (name),
+  unique (access_token)
+)
+  comment = '椅子プロバイダー情報テーブル';

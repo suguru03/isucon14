@@ -81,46 +81,59 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
 		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /app/notification", appGetNotification)
-		authedMux.HandleFunc("POST /app/inquiry", appPostInquiry)
+	}
+
+	// provider handlers
+	{
+		mux.HandleFunc("POST /provider/register", providerPostRegister)
+
+		authedMux := mux.With(providerAuthMiddleware)
+		authedMux.HandleFunc("GET /provider/sales", providerGetSales)
 	}
 
 	// chair handlers
 	{
-		mux.HandleFunc("POST /chair/register", chairPostRegister)
+		authedMux1 := mux.With(providerAuthMiddleware)
+		authedMux1.HandleFunc("POST /chair/register", chairPostRegister)
 
-		authedMux := mux.With(chairAuthMiddleware)
-		authedMux.HandleFunc("POST /chair/activate", chairPostActivate)
-		authedMux.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
-		authedMux.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
-		//authedMux.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
-		authedMux.HandleFunc("GET /chair/notification", chairGetNotification)
-		authedMux.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
-		authedMux.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
-	}
-
-	// admin
-	{
-		mux.HandleFunc("GET /admin/inquiries", adminGetInquiries)
-		mux.HandleFunc("GET /admin/inquiries/{inquiry_id}", adminGetInquiry)
+		authedMux2 := mux.With(chairAuthMiddleware)
+		authedMux2.HandleFunc("POST /chair/activate", chairPostActivate)
+		authedMux2.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
+		authedMux2.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
+		//authedMux2.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
+		authedMux2.HandleFunc("GET /chair/notification", chairGetNotification)
+		authedMux2.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux2.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
 	}
 
 	return mux
 }
 
+type postInitializeRequest struct {
+	PaymentServer string `json:"payment_server"`
+}
+
 func postInitialize(w http.ResponseWriter, r *http.Request) {
+	req := &postInitializeRequest{}
+	if err := bindJSON(r, req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
 	tables := []string{
 		"chair_locations",
 		"ride_requests",
-		"inquiries",
+		"payment_tokens",
 		"users",
 		"chairs",
+		"providers",
 	}
 	tx, err := db.Beginx()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	defer tx.Rollback()
@@ -129,18 +142,18 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	for _, table := range tables {
 		_, err := tx.Exec("TRUNCATE TABLE " + table)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 	}
 	tx.MustExec("SET FOREIGN_KEY_CHECKS = 1")
 	if err := tx.Commit(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+	paymentURL = req.PaymentServer
 
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
-	w.Write([]byte(`{"language":"golang"}`))
+	writeJSON(w, http.StatusOK, map[string]string{"language": "go"})
 }
 
 type Coordinate struct {
@@ -152,7 +165,7 @@ func bindJSON(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
-func respondJSON(w http.ResponseWriter, statusCode int, v interface{}) {
+func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
 	buf, err := json.Marshal(v)
@@ -161,7 +174,6 @@ func respondJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 		return
 	}
 	w.Write(buf)
-	return
 }
 
 func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
@@ -186,7 +198,7 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 	return nil
 }
 
-func respondError(w http.ResponseWriter, statusCode int, err error) {
+func writeError(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
 	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})
@@ -196,7 +208,8 @@ func respondError(w http.ResponseWriter, statusCode int, err error) {
 		return
 	}
 	w.Write(buf)
-	return
+
+	fmt.Fprintln(os.Stderr, err)
 }
 
 func secureRandomStr(b int) string {

@@ -50,9 +50,9 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 			if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 				switch req.Statuses.Desired {
 				case RequestStatusDispatched:
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatched{ServerRequestID: req.ServerID}}
 				case RequestStatusArrived:
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventArrived{ServerRequestID: req.ServerID}}
 				}
 			}
 		}
@@ -69,7 +69,7 @@ func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Requ
 		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.Statuses.Desired)
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{}}
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventDispatching{ServerRequestID: req.ServerID}}
 	}
 	return nil
 }
@@ -92,7 +92,7 @@ func (s *FastServerStub) SendDenyRequest(ctx *Context, chair *Chair, serverReque
 func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	time.Sleep(s.latency)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
-		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCarrying{}}
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCarrying{ServerRequestID: req.ServerID}}
 	}
 	return nil
 }
@@ -102,6 +102,9 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request) error {
 	c, ok := s.chairDB.Get(req.Chair.ServerID)
 	if !ok {
 		return fmt.Errorf("chair not found")
+	}
+	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
+		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{ServerRequestID: req.ServerID}}
 	}
 	if f, ok := s.chairNotificationReceiverMap.Get(req.Chair.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &ChairNotificationEventCompleted{ServerRequestID: req.ServerID}, afterFunc: func() {
@@ -154,7 +157,12 @@ func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (
 	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
 }
 
-func (s *FastServerStub) RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error) {
+func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error) {
+	time.Sleep(s.latency)
+	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: ulid.Make().String()}, nil
+}
+
+func (s *FastServerStub) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
 	time.Sleep(s.latency)
 	c := &chairState{ServerID: ulid.Make().String(), Active: false}
 	s.chairDB.Set(c.ServerID, c)
@@ -207,7 +215,7 @@ func (s *FastServerStub) MatchingLoop() {
 			if time.Since(entry.QueuedTime) > s.matchingTimeout {
 				// キャンセル
 				if f, ok := s.userNotificationReceiverMap.Get(entry.ServerUserID); ok {
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{}}
+					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{ServerRequestID: entry.ServerID}}
 				}
 			} else {
 				s.requestQueue <- entry
@@ -245,7 +253,6 @@ func TestWorld(t *testing.T) {
 			world:  world,
 			client: client,
 		}
-		region = world.Regions[1]
 	)
 
 	// MEMO: chan が詰まらないように
@@ -255,18 +262,28 @@ func TestWorld(t *testing.T) {
 		}
 	}()
 
-	for range 10 {
-		_, err := world.CreateChair(ctx, &CreateChairArgs{
-			Region:            region,
-			InitialCoordinate: RandomCoordinateOnRegion(region),
-			WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
+	for i := range 5 {
+		provider, err := world.CreateProvider(ctx, &CreateProviderArgs{
+			Region: world.Regions[i%len(world.Regions)],
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		for range 10 {
+			_, err := world.CreateChair(ctx, &CreateChairArgs{
+				Provider:          provider,
+				InitialCoordinate: RandomCoordinateOnRegion(provider.Region),
+				WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
-	for range 20 {
-		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: region})
+
+	for i := range 20 {
+		_, err := world.CreateUser(ctx, &CreateUserArgs{Region: world.Regions[i%len(world.Regions)]})
 		if err != nil {
 			t.Fatal(err)
 		}

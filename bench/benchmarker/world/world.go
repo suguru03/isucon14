@@ -1,12 +1,11 @@
 package world
 
 import (
-	"fmt"
 	"log"
 	"math/rand/v2"
+	"sync/atomic"
 	"time"
 
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 )
 
@@ -25,39 +24,52 @@ type World struct {
 	// TimeOfDay 仮想世界の1日の時刻
 	TimeOfDay int
 	// Regions 地域
-	Regions map[int]*Region
+	Regions []*Region
 	// UserDB 全ユーザーDB
 	UserDB *GenericDB[UserID, *User]
+	// ProviderDB 全プロバイダーDB
+	ProviderDB *GenericDB[ProviderID, *Provider]
 	// ChairDB 全椅子DB
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
 	RequestDB *RequestDB
+	// PaymentDB 支払い結果DB
+	PaymentDB *PaymentDB
 	// RootRand ルートの乱数生成器
 	RootRand *rand.Rand
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
 
-	tickTimeout     time.Duration
-	timeoutTicker   *time.Ticker
-	wg              concurrent.WaitGroupWithCount
-	criticalErrorCh chan error
+	tickTimeout      time.Duration
+	timeoutTicker    *time.Ticker
+	criticalErrorCh  chan error
+	waitingTickCount atomic.Int32
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
-	region := &Region{
-		RegionWidth:   30,
-		RegionHeight:  30,
-		RegionOffsetX: 0,
-		RegionOffsetY: 0,
-	}
 	return &World{
-		Regions:   map[int]*Region{1: region},
-		UserDB:    NewGenericDB[UserID, *User](),
-		ChairDB:   NewGenericDB[ChairID, *Chair](),
-		RequestDB: NewRequestDB(),
+		Regions: []*Region{
+			{
+				RegionWidth:   100,
+				RegionHeight:  100,
+				RegionOffsetX: 0,
+				RegionOffsetY: 0,
+			},
+			{
+				RegionWidth:   100,
+				RegionHeight:  100,
+				RegionOffsetX: 300,
+				RegionOffsetY: 300,
+			},
+		},
+		UserDB:     NewGenericDB[UserID, *User](),
+		ProviderDB: NewGenericDB[ProviderID, *Provider](),
+		ChairDB:    NewGenericDB[ChairID, *Chair](),
+		RequestDB:  NewRequestDB(),
+		PaymentDB:  NewPaymentDB(),
 		// TODO シードをどうする
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
@@ -68,12 +80,10 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 }
 
 func (w *World) Tick(ctx *Context) error {
-	var done bool
-
 	for _, c := range w.ChairDB.Iter() {
-		w.wg.Add(1)
+		w.waitingTickCount.Add(1)
 		go func() {
-			defer w.wg.Done()
+			defer w.waitingTickCount.Add(-1)
 			err := c.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
@@ -81,20 +91,15 @@ func (w *World) Tick(ctx *Context) error {
 		}()
 	}
 	for _, u := range w.UserDB.Iter() {
-		w.wg.Add(1)
+		w.waitingTickCount.Add(1)
 		go func() {
-			defer w.wg.Done()
+			defer w.waitingTickCount.Add(-1)
 			err := u.Tick(ctx)
 			if err != nil {
 				w.HandleTickError(ctx, err)
 			}
 		}()
 	}
-
-	go func() {
-		w.wg.Wait()
-		done = true
-	}()
 
 	select {
 	// クリティカルエラーが発生
@@ -103,7 +108,7 @@ func (w *World) Tick(ctx *Context) error {
 
 	// タイムアウト
 	case <-w.timeoutTicker.C:
-		if !done {
+		if w.waitingTickCount.Load() > 0 {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
 			w.TimeoutTickCount++
 		}
@@ -147,15 +152,45 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		AccessToken:       res.AccessToken,
 		PaymentToken:      random.GeneratePaymentToken(),
 		Rand:              random.CreateChildRand(w.RootRand),
-		notificationQueue: make(chan NotificationEvent, 100),
+		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	u.tickDone.Store(true)
+	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	return w.UserDB.Create(u), nil
 }
 
-type CreateChairArgs struct {
+type CreateProviderArgs struct {
 	// Region 椅子を配置する地域
 	Region *Region
+}
+
+// CreateProvider 仮想世界に椅子のプロバイダーを作成する
+func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provider, error) {
+	registeredData := RegisteredProviderData{
+		Name: random.GenerateProviderName(),
+	}
+
+	res, err := ctx.client.RegisterProvider(ctx, &RegisterProviderRequest{
+		Name: registeredData.Name,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
+	}
+
+	p := &Provider{
+		ServerID:       res.ServerProviderID,
+		Region:         args.Region,
+		RegisteredData: registeredData,
+		AccessToken:    res.AccessToken,
+		Rand:           random.CreateChildRand(w.RootRand),
+	}
+	p.tickDone.Store(true)
+	return w.ProviderDB.Create(p), nil
+}
+
+type CreateChairArgs struct {
+	// Provider 椅子のプロバイダー
+	Provider *Provider
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
 	// WorkTime 稼働時間
@@ -165,22 +200,14 @@ type CreateChairArgs struct {
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
-		UserName:    random.GenerateUserName(),
-		FirstName:   random.GenerateFirstName(),
-		LastName:    random.GenerateLastName(),
-		DateOfBirth: random.GenerateDateOfBirth(),
-		// TODO model, noの扱い
-		ChairModel: "ISU_X",
-		ChairNo:    fmt.Sprintf("%d", rand.Uint32()),
+		Name: random.GenerateChairName(),
+		// TODO modelの扱い
+		Model: random.GenerateChairModel(),
 	}
 
-	res, err := ctx.client.RegisterChair(ctx, &RegisterChairRequest{
-		UserName:    registeredData.UserName,
-		FirstName:   registeredData.FirstName,
-		LastName:    registeredData.LastName,
-		DateOfBirth: registeredData.DateOfBirth,
-		ChairModel:  registeredData.ChairModel,
-		ChairNo:     registeredData.ChairNo,
+	res, err := ctx.client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
+		Name:  registeredData.Name,
+		Model: registeredData.Model,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -188,15 +215,15 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 
 	c := &Chair{
 		ServerID:          res.ServerUserID,
-		Region:            args.Region,
+		Region:            args.Provider.Region,
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
 		WorkTime:          args.WorkTime,
 		RegisteredData:    registeredData,
 		AccessToken:       res.AccessToken,
-		Rand:              random.CreateChildRand(w.RootRand),
-		notificationQueue: make(chan NotificationEvent, 100),
+		Rand:              random.CreateChildRand(args.Provider.Rand),
+		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	c.tickDone.Store(true)
 	return w.ChairDB.Create(c), nil

@@ -5,9 +5,10 @@ import {
   type ChairGetNotificationError,
 } from "~/apiClient/apiComponents";
 import type { ChairRequest, RequestStatus } from "~/apiClient/apiSchemas";
-import type { User } from "~/types";
+import type { User as Chair } from "~/types";
 
-const DriverContext = createContext<Partial<User>>({});
+const DriverContext = createContext<Partial<Chair>>({});
+
 const RequestContext = createContext<{
   data?: ChairRequest;
   error?: ChairGetNotificationError | null;
@@ -21,23 +22,27 @@ const RequestProvider = ({
   children: ReactNode;
   accessToken: string;
 }) => {
-  const { data, error, isLoading } = useChairGetNotification({
+  const notificationResponse = useChairGetNotification({
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "text/event-stream",
     },
   });
-  const [searchParams] = useSearchParams();
-
+  const { data, error, isLoading } = notificationResponse;
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
-  const fetchedData = useMemo(() => {
+  const [searchParams] = useSearchParams();
+  const responseData = useMemo(() => {
+    const status = (searchParams.get("debug_status") ?? undefined) as
+      | RequestStatus
+      | undefined;
+
+    let fetchedData: Partial<ChairRequest> = data ?? {};
     if (data instanceof Blob) {
-      return undefined;
+      fetchedData = {};
     }
+
     // TODO:
-    const status = (searchParams.get("debug_status") ??
-      undefined) as RequestStatus;
-    return { ...data, status } as ChairRequest;
+    return { ...fetchedData, status } as ChairRequest;
   }, [data, searchParams]);
 
   /**
@@ -45,7 +50,7 @@ const RequestProvider = ({
    */
 
   return (
-    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
+    <RequestContext.Provider value={{ data: responseData, error, isLoading }}>
       {children}
     </RequestContext.Provider>
   );
@@ -54,21 +59,36 @@ const RequestProvider = ({
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token");
-  const id = searchParams.get("user_id");
-  if (accessToken === null || id === null) {
-    return <div>must set access_token and user_id</div>;
-  }
+  const accessTokenParameter = searchParams.get("access_token");
+  const chairIdParameter = searchParams.get("id");
+
+  const chair: Partial<Chair> = useMemo(() => {
+    if (accessTokenParameter !== null && chairIdParameter !== null) {
+      requestIdleCallback(() => {
+        sessionStorage.setItem("chair_access_token", accessTokenParameter);
+        sessionStorage.setItem("chair_id", chairIdParameter);
+      });
+      return {
+        accessToken: accessTokenParameter,
+        id: chairIdParameter,
+        name: "ISUCON太郎",
+      };
+    }
+    const accessToken =
+      sessionStorage.getItem("chair_access_token") ?? undefined;
+    const id = sessionStorage.getItem("chair_id") ?? undefined;
+    return {
+      accessToken,
+      id,
+      name: "ISUCON太郎",
+    };
+  }, [accessTokenParameter, chairIdParameter]);
 
   return (
-    <DriverContext.Provider
-      value={{
-        id,
-        accessToken,
-        name: "ISUCON太郎",
-      }}
-    >
-      <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
+    <DriverContext.Provider value={chair}>
+      <RequestProvider accessToken={chair.accessToken ?? ""}>
+        {children}
+      </RequestProvider>
     </DriverContext.Provider>
   );
 };

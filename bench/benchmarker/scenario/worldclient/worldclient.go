@@ -2,6 +2,7 @@ package worldclient
 
 import (
 	"context"
+	"net/http"
 
 	"go.uber.org/zap"
 
@@ -10,12 +11,17 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/world"
 )
 
-type chairClient struct {
+type userClient struct {
 	sseContext context.Context
 	client     *webapp.Client
 }
 
-type userClient struct {
+type providerClient struct {
+	sseContext context.Context
+	client     *webapp.Client
+}
+
+type chairClient struct {
 	sseContext context.Context
 	client     *webapp.Client
 }
@@ -26,8 +32,9 @@ type WorldClient struct {
 	world              *world.World
 	requestQueue       chan string
 	contestantLogger   *zap.Logger
-	chairClients       map[string]*chairClient
 	userClients        map[string]*userClient
+	providerClients		map[string]*providerClient
+	chairClients       map[string]*chairClient
 }
 
 func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, requestQueue chan string, contestantLogger *zap.Logger) *WorldClient {
@@ -37,17 +44,10 @@ func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig weba
 		webappClientConfig: webappClientConfig,
 		requestQueue:       requestQueue,
 		contestantLogger:   contestantLogger,
-		chairClients:       map[string]*chairClient{},
 		userClients:        map[string]*userClient{},
+		providerClients:    map[string]*providerClient{},
+		chairClients:       map[string]*chairClient{},
 	}
-}
-
-func (c *WorldClient) getChairClient(chairServerID string) (*chairClient, error) {
-	chairClient, ok := c.chairClients[chairServerID]
-	if !ok {
-		return nil, CodeError(ErrorCodeNotFoundChairClient)
-	}
-	return chairClient, nil
 }
 
 func (c *WorldClient) getUserClient(userServerID string) (*userClient, error) {
@@ -56,6 +56,22 @@ func (c *WorldClient) getUserClient(userServerID string) (*userClient, error) {
 		return nil, CodeError(ErrorCodeNotFoundUserClient)
 	}
 	return userClient, nil
+}
+
+func (c *WorldClient) getProviderClient(providerServerID string) (*providerClient, error) {
+	providerClient, ok := c.providerClients[providerServerID]
+	if !ok {
+		return nil, CodeError(ErrorCodeNotFoundProviderClient)
+	}
+	return providerClient, nil
+}
+
+func (c *WorldClient) getChairClient(chairServerID string) (*chairClient, error) {
+	chairClient, ok := c.chairClients[chairServerID]
+	if !ok {
+		return nil, CodeError(ErrorCodeNotFoundChairClient)
+	}
+	return chairClient, nil
 }
 
 func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) error {
@@ -196,7 +212,7 @@ func (c *WorldClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 
 	_, err = chairClient.client.ChairGetRequest(c.ctx, serverRequestID)
 	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetDriverRequest, err)
+		return nil, WrapCodeError(ErrorCodeFailedToGetChairRequest, err)
 	}
 
 	// TODO: GetRequestByChairResponse の中身入れる
@@ -219,6 +235,10 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
+	client.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
+	})
+
 	c.userClients[response.ID] = &userClient{
 		client: client,
 	}
@@ -229,23 +249,55 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 	}, nil
 }
 
-func (c *WorldClient) RegisterChair(ctx *world.Context, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterProviderRequest) (*world.RegisterProviderResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
-		Username:    data.UserName,
-		Firstname:   data.FirstName,
-		Lastname:    data.LastName,
-		DateOfBirth: data.DateOfBirth,
-		ChairModel:  data.ChairModel,
-		ChairNo:     data.ChairNo,
+	response, err := client.ProviderPostRegister(c.ctx, &api.ProviderPostRegisterReq{
+		Name: data.Name,
 	})
 	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToRegisterDriver, err)
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
 	}
+
+	client.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
+	})
+
+	c.providerClients[response.ID] = &providerClient{
+		client: client,
+	}
+
+	return &world.RegisterProviderResponse{
+		ServerProviderID: response.ID,
+		AccessToken:     response.AccessToken,
+	}, nil
+}
+
+func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+	providerClient, err := c.getProviderClient(provider.ServerID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := providerClient.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
+		Name:    data.Name,
+		Model:  data.Model,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
+	}
+
+	client, err := webapp.NewClient(c.webappClientConfig)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
+	}
+
+	client.AddRequestModifier(func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
+	})
 
 	c.chairClients[response.ID] = &chairClient{
 		client: client,
@@ -309,15 +361,25 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 				case api.RequestStatusMATCHING:
 					// event = &world.UserNotificationEventMatching{}
 				case api.RequestStatusDISPATCHING:
-					event = &world.UserNotificationEventDispatching{}
+					event = &world.UserNotificationEventDispatching{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusDISPATCHED:
-					event = &world.UserNotificationEventDispatched{}
+					event = &world.UserNotificationEventDispatched{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCARRYING:
-					event = &world.UserNotificationEventCarrying{}
+					event = &world.UserNotificationEventCarrying{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusARRIVED:
-					event = &world.UserNotificationEventArrived{}
+					event = &world.UserNotificationEventArrived{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCOMPLETED:
-					// event = &world.UserNotificationEventCompleted{}
+					event = &world.UserNotificationEventCompleted{
+						ServerRequestID: receivedRequest.RequestID,
+					}
 				case api.RequestStatusCANCELED:
 					// event = &world.UserNotificationEventCanceled{}
 				}

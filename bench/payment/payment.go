@@ -16,16 +16,16 @@ type Payment struct {
 	Token          string
 	Amount         int
 	Status         Status
-	Locked         atomic.Bool
-	ProcessChan    chan struct{}
+	locked         atomic.Bool
+	processChan    chan struct{}
 }
 
 func NewPayment(idk string) *Payment {
 	p := &Payment{
 		IdempotencyKey: idk,
 		Status:         StatusInitial,
-		ProcessChan:    make(chan struct{}),
+		processChan:    make(chan struct{}),
 	}
-	p.Locked.Store(true)
+	p.locked.Store(true)
 	return p
 }

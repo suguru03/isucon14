@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"slices"
 	"sync/atomic"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
@@ -124,17 +125,18 @@ func (u *User) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusArrived:
-			// 送迎の評価を行う
-			// TODO 評価を送る
-			log.Printf("evaluation: %v", u.Request.CalculateEvaluation())
-			err := ctx.client.SendEvaluation(ctx, u.Request)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToEvaluate, err)
-			}
+			// 送迎の評価及び支払いがまだの場合は行う
+			if !u.Request.Evaluated {
+				// TODO 評価を送る
+				err := ctx.client.SendEvaluation(ctx, u.Request)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
 
-			// サーバーが評価を受理したので完了状態にする
-			u.Request.Statuses.Desired = RequestStatusCompleted
-			u.Request.Statuses.User = RequestStatusCompleted
+				// サーバーが評価を受理したので完了状態になるのを待機する
+				u.Request.Statuses.Desired = RequestStatusCompleted
+				u.Request.Evaluated = true
+			}
 
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
@@ -206,15 +208,28 @@ func (u *User) CreateRequest(ctx *Context) error {
 	return nil
 }
 
-func (u *User) ChangeRequestStatus(status RequestStatus) error {
+func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string) error {
 	request := u.Request
 	if request == nil {
 		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
 	}
 	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
-		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched {
+		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
+		} else if request.Statuses.User == RequestStatusDispatched && request.Statuses.Desired == RequestStatusArrived && status == RequestStatusCarrying {
+			// もう到着しているが、ユーザー側の通知が遅延していて、DISPATCHED状態からまだCARRYINGに遷移してないときは、CARRYINGを許容する
+		} else if request.Statuses.Desired == RequestStatusDispatched && request.Statuses.User == RequestStatusDispatched && status == RequestStatusCarrying {
+			// FIXME: 出発リクエストを送った後、ベンチマーカーのDesiredステータスの変更を行う前に通知が届いてしまうことがある
+		} else if status == RequestStatusCompleted {
+			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			for _, r := range slices.Backward(u.RequestHistory) {
+				if r.ServerID == serverRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.User = RequestStatusCompleted
+					return nil
+				}
+			}
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		} else {
 			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		}
@@ -224,29 +239,34 @@ func (u *User) ChangeRequestStatus(status RequestStatus) error {
 }
 
 func (u *User) HandleNotification(event NotificationEvent) error {
-	switch event.(type) {
+	switch data := event.(type) {
 	case *UserNotificationEventDispatching:
-		err := u.ChangeRequestStatus(RequestStatusDispatching)
+		err := u.ChangeRequestStatus(RequestStatusDispatching, data.ServerRequestID)
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventDispatched:
-		err := u.ChangeRequestStatus(RequestStatusDispatched)
+		err := u.ChangeRequestStatus(RequestStatusDispatched, data.ServerRequestID)
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventCarrying:
-		err := u.ChangeRequestStatus(RequestStatusCarrying)
+		err := u.ChangeRequestStatus(RequestStatusCarrying, data.ServerRequestID)
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventArrived:
-		err := u.ChangeRequestStatus(RequestStatusArrived)
+		err := u.ChangeRequestStatus(RequestStatusArrived, data.ServerRequestID)
+		if err != nil {
+			return err
+		}
+	case *UserNotificationEventCompleted:
+		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID)
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventCanceled:
-		err := u.ChangeRequestStatus(RequestStatusCanceled)
+		err := u.ChangeRequestStatus(RequestStatusCanceled, data.ServerRequestID)
 		if err != nil {
 			return err
 		}

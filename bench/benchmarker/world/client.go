@@ -21,8 +21,10 @@ type Client interface {
 	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
+	// RegisterProvider サーバーにプロバイダーを登録する
+	RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
-	RegisterChair(ctx *Context, data *RegisterChairRequest) (*RegisterChairResponse, error)
+	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
 	RegisterPaymentMethods(ctx *Context, user *User) error
 	// ConnectUserNotificationStream ユーザー用の通知ストリームに接続する
@@ -49,13 +51,18 @@ type RegisterUserResponse struct {
 	AccessToken  string
 }
 
+type RegisterProviderRequest struct {
+	Name string
+}
+
+type RegisterProviderResponse struct {
+	ServerProviderID string
+	AccessToken      string
+}
+
 type RegisterChairRequest struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
-	ChairModel  string
-	ChairNo     string
+	Name    string
+	Model  string
 }
 
 type RegisterChairResponse struct {

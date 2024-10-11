@@ -7,3 +7,15 @@ services:
       - 3306:3306
     volumes:
       - ../webapp/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uisucon", "-pisucon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+  waiter:
+    image: busybox
+    depends_on:
+      db:
+        condition: service_healthy

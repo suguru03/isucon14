@@ -1,10 +1,14 @@
 import { useSearchParams } from "@remix-run/react";
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   useAppGetNotification,
   type AppGetNotificationError,
 } from "~/apiClient/apiComponents";
-import type { AppRequest, RequestStatus } from "~/apiClient/apiSchemas";
+import type {
+  AppRequest,
+  Coordinate,
+  RequestStatus,
+} from "~/apiClient/apiSchemas";
 import type { User } from "~/types";
 
 const UserContext = createContext<Partial<User>>({});
@@ -29,18 +33,27 @@ const RequestProvider = ({
     },
   });
   const { data, error, isLoading } = notificationResponse;
-
   // react-queryでstatusCodeが取れない && 現状statusCode:204はBlobで帰ってくる
   const [searchParams] = useSearchParams();
-  const fetchedData = useMemo(() => {
-    if (data instanceof Blob) {
-      return undefined;
-    }
-    // TODO:
+  const responseData = useMemo(() => {
     const status = (searchParams.get("debug_status") ?? undefined) as
       | RequestStatus
       | undefined;
-    return { ...data, status } as AppRequest;
+    const destination_coordinate = ((): Coordinate | undefined => {
+      // expected format: 123,456
+      const v = searchParams.get("debug_destination_coordinate") ?? "";
+      const m = v.match(/(\d+),(\d+)/);
+      if (!m) return;
+      return { latitude: Number(m[1]), longitude: Number(m[2]) };
+    })();
+
+    let fetchedData: Partial<AppRequest> = data ?? {};
+    if (data instanceof Blob) {
+      fetchedData = {};
+    }
+
+    // TODO:
+    return { ...fetchedData, status, destination_coordinate } as AppRequest;
   }, [data, searchParams]);
 
   /**
@@ -48,7 +61,7 @@ const RequestProvider = ({
    */
 
   return (
-    <RequestContext.Provider value={{ data: fetchedData, error, isLoading }}>
+    <RequestContext.Provider value={{ data: responseData, error, isLoading }}>
       {children}
     </RequestContext.Provider>
   );
@@ -57,22 +70,36 @@ const RequestProvider = ({
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token") ?? undefined;
-  const id = searchParams.get("user_id") ?? undefined;
+  const accessTokenParameter = searchParams.get("access_token");
+  const userIdParameter = searchParams.get("id");
 
-  if (accessToken === undefined || id === undefined) {
-    return <div>must set access_token and user_id</div>;
-  }
+  const user: Partial<User> = useMemo(() => {
+    if (accessTokenParameter !== null && userIdParameter !== null) {
+      requestIdleCallback(() => {
+        sessionStorage.setItem("user_access_token", accessTokenParameter);
+        sessionStorage.setItem("user_id", userIdParameter);
+      });
+      return {
+        accessToken: accessTokenParameter,
+        id: userIdParameter,
+        name: "ISUCON太郎",
+      };
+    }
+    const accessToken =
+      sessionStorage.getItem("user_access_token") ?? undefined;
+    const id = sessionStorage.getItem("user_id") ?? undefined;
+    return {
+      accessToken,
+      id,
+      name: "ISUCON太郎",
+    };
+  }, [accessTokenParameter, userIdParameter]);
 
   return (
-    <UserContext.Provider
-      value={{
-        id,
-        accessToken,
-        name: "ISUCON太郎",
-      }}
-    >
-      <RequestProvider accessToken={accessToken}>{children}</RequestProvider>
+    <UserContext.Provider value={user}>
+      <RequestProvider accessToken={user.accessToken ?? ""}>
+        {children}
+      </RequestProvider>
     </UserContext.Provider>
   );
 };

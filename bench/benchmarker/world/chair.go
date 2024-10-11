@@ -61,12 +61,8 @@ type Chair struct {
 }
 
 type RegisteredChairData struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
-	ChairModel  string
-	ChairNo     string
+	Name   string
+	Model  string
 }
 
 func (c *Chair) String() string {
@@ -457,6 +453,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(c.RequestHistory) {
 				if r.ServerID == data.ServerRequestID && r.Statuses.Desired == RequestStatusCompleted {
+					r.Statuses.Chair = RequestStatusCompleted
 					return nil
 				}
 			}
