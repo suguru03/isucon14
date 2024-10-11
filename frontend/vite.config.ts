@@ -21,9 +21,8 @@ const getLoginedSearchParamURL = async (target: "app" | "chair") => {
   };
   if (target === "chair") {
     bodyJson = {
-      ...bodyJson,
-      chair_model: "isuconChair",
-      chair_no: "1111",
+      name: "testIsuconUser",
+      model: "isuconChair",
     };
   }
   const fetched = await fetch(`http://localhost:8080/${target}/register`, {
