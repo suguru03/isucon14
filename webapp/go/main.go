@@ -126,8 +126,10 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	tables := []string{
 		"chair_locations",
 		"ride_requests",
+		"payment_tokens",
 		"users",
 		"chairs",
+		"providers",
 	}
 	tx, err := db.Beginx()
 	if err != nil {
