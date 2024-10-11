@@ -103,6 +103,7 @@ func (w *World) Tick(ctx *Context) error {
 						_, err := w.CreateChair(ctx, &CreateChairArgs{
 							Provider:          p,
 							InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+							WorkTime:          NewInterval(0, ConvertHour(2000)),
 						})
 						if err != nil {
 							w.HandleTickError(ctx, err)
