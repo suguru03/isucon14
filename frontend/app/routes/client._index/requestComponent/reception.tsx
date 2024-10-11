@@ -27,16 +27,14 @@ export const Reception = ({
 
   const user = useClientAppRequestContext();
   const handleRideRequest = useCallback(async () => {
+    if (!currentLocation || !destLocation) {
+      console.log('currentLocation or destLocation is empty')
+      return
+    }
     await fetchAppPostRequest({
       body: {
-        pickup_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
-        destination_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
+        pickup_coordinate: currentLocation,
+        destination_coordinate: destLocation,
       },
       headers: {
         Authorization: `Bearer ${user.auth?.accessToken}`,
