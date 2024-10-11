@@ -15,7 +15,7 @@ export const Reception = ({
 }: RequestProps<"IDLE" | "MATCHING" | "DISPATCHING">) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [action, setAction] = useState<Action>();
-  const [selectLocation, setSelectLocation] = useState<Coordinate>();
+  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
   const modalRef = useRef<{ close: () => void }>(null);
@@ -27,14 +27,13 @@ export const Reception = ({
   }, []);
 
   const onClose = useCallback(() => {
-    if (action === "from") setCurrentLocation(selectLocation);
-    if (action === "to") setDestLocation(selectLocation);
-    setSelectLocation(undefined);
+    if (action === "from") setCurrentLocation(selectedLocation);
+    if (action === "to") setDestLocation(selectedLocation);
     setIsModalOpen(false);
-  }, [action, selectLocation]);
+  }, [action, selectedLocation]);
 
   const onMove = useCallback((coordinate: Coordinate) => {
-    setSelectLocation(coordinate);
+    setSelectedLocation(coordinate);
   }, []);
 
   const handleOpenModal = useCallback((action: Action) => {
@@ -46,7 +45,11 @@ export const Reception = ({
     <>
       {status === "IDLE" ? (
         <>
-          <Map from={currentLocation} to={destLocation} />
+          <Map
+            from={currentLocation}
+            to={destLocation}
+            initialCoordinate={selectedLocation}
+          />
           <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
             <LocationButton
               className="w-full"
@@ -109,6 +112,9 @@ export const Reception = ({
                 onMove={onMove}
                 from={currentLocation}
                 to={destLocation}
+                initialCoordinate={
+                  action === "from" ? currentLocation : destLocation
+                }
                 selectable
               />
             </div>
