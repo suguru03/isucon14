@@ -19,7 +19,7 @@ function DriverRequest() {
     case "CARRYING":
       return <Pickup status={requestStatus} payload={data.payload} />;
     case "ARRIVED":
-      return <Arrive status={requestStatus} />;
+      return <Arrive />;
     default:
       return <div>unexpectedStatus: {requestStatus}</div>;
   }
