@@ -206,9 +206,9 @@ LOOP:
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
-	for i, region := range s.world.Regions {
+	for _, region := range s.world.Regions {
 		s.contestantLogger.Info("final region result",
-			zap.Int("region", i),
+			zap.String("region", region.Name),
 			zap.Int("users", region.UsersDB.Len()),
 			zap.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
 			zap.Int("score", region.UserSatisfactionScore()),
@@ -217,8 +217,10 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 	for id, provider := range s.world.ProviderDB.Iter() {
 		s.contestantLogger.Info("final provider result",
 			zap.Int("id", int(id)),
-			zap.Int("chairs", provider.ChairDB.Len()),
+			zap.String("region", provider.Region.Name),
 			zap.Int64("total_sales", provider.TotalSales.Load()),
+			zap.Int("chairs", provider.ChairDB.Len()),
+			zap.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Current.Within(provider.Region) })),
 		)
 	}
 	return sendResult(s, true, true)
