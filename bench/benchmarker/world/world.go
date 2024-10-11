@@ -133,6 +133,16 @@ func (w *World) Tick(ctx *Context) error {
 			}
 		}()
 	}
+	for _, p := range w.ProviderDB.Iter() {
+		w.waitingTickCount.Add(1)
+		go func() {
+			defer w.waitingTickCount.Add(-1)
+			err := p.Tick(ctx)
+			if err != nil {
+				w.HandleTickError(ctx, err)
+			}
+		}()
+	}
 
 	select {
 	// クリティカルエラーが発生
@@ -223,6 +233,7 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 		AccessToken:    res.AccessToken,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
+	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
 }
 

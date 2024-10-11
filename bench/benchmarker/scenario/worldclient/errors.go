@@ -13,7 +13,7 @@ const (
 	// ErrorCodeNotFoundProviderClient ProviderClientが見つからないエラー
 	ErrorCodeNotFoundProviderClient
 	// ErrorCodeNotFoundChairClient ChairClientが見つからないエラー
-	ErrorCodeNotFoundChairClient 
+	ErrorCodeNotFoundChairClient
 	// ErrorCodeFailedToPostCoordinate 座標送信に失敗したエラー
 	ErrorCodeFailedToPostCoordinate
 	// ErrorCodeFailedToPostAccept リクエスト受諾に失敗したエラー
@@ -42,6 +42,8 @@ const (
 	ErrorCodeFailedToPostRequest
 	// ErrorCodeFailedToPostPaymentMethods ユーザー支払い情報登録に失敗したエラー
 	ErrorCodeFailedToPostPaymentMethods
+	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗したエラー
+	ErrorCodeFailedToGetProviderSales
 )
 
 type codeError struct {

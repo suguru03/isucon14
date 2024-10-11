@@ -1,11 +1,11 @@
-import type { RequestId } from "./apiClient/apiParameters";
-import type {
+import { RequestId } from "./apiClient/apiParameters";
+import type { Dispatch, SetStateAction } from "react";
+import {
+  Coordinate as ApiCoodinate,
   Chair,
-  Coordinate,
   RequestStatus,
   User,
 } from "./apiClient/apiSchemas";
-import type { Dispatch, SetStateAction } from "react";
 
 export type AccessToken = string;
 
@@ -51,3 +51,10 @@ export type ClientChairRequest = {
     };
   };
 };
+
+export type Pos = {
+  x: number;
+  y: number;
+};
+
+export type Coordinate = ApiCoodinate;
