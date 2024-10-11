@@ -91,46 +91,13 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	return nil
-}
+	const (
+		initialProvidersNum         = 5
+		initialChairsNumPerProvider = 10
+		initialUsersNum             = 10
+	)
 
-// Load はシナリオのメイン処理を行う
-func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
-	// agent, err := verify.NewAgent(s.target, s.contestantLogger)
-	// if err != nil {
-	// 	s.contestantLogger.Error("Failed to create agent", zap.Error(err))
-	// 	return err
-	// }
-
-	// if err := agent.Run(); err != nil {
-	// 	s.contestantLogger.Error("Failed to run agent", zap.Error(err))
-	// 	return err
-	// }
-	//w, err := worker.NewWorker(func(ctx context.Context, _ int) {
-	//	agent, err := verify.NewAgent(s.target, s.contestantLogger)
-	//	if err != nil {
-	//		s.contestantLogger.Error("Failed to create agent", zap.Error(err))
-	//		return
-	//	}
-	//
-	//	if err := agent.Run(); err != nil {
-	//		s.contestantLogger.Error("Failed to run agent", zap.Error(err))
-	//	}
-	//}, worker.WithMaxParallelism(10))
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//w.Process(ctx)
-
-	go func() {
-		for req := range s.completedRequestChan {
-			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
-			step.AddScore(score.ScoreTag("completed_request"))
-		}
-	}()
-
-	for i := range 5 {
+	for i := range initialProvidersNum {
 		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
 			Region: s.world.Regions[i%len(s.world.Regions)],
 		})
@@ -138,7 +105,7 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			return err
 		}
 
-		for range 10 {
+		for range initialChairsNumPerProvider {
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Provider:          provider,
 				InitialCoordinate: world.RandomCoordinateOnRegion(provider.Region),
@@ -149,27 +116,47 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 			}
 		}
 	}
-
-	for i := range 10 {
+	for i := range initialUsersNum {
 		_, err := s.world.CreateUser(s.worldCtx, &world.CreateUserArgs{Region: s.world.Regions[i%len(s.world.Regions)]})
 		if err != nil {
 			return err
 		}
 	}
 
-	for now := range world.ConvertHour(24 * 14) {
-		err := s.world.Tick(s.worldCtx)
-		if err != nil {
-			s.contestantLogger.Error("critical error", zap.Error(err))
-			return err
-		}
+	return nil
+}
 
-		if now%world.LengthOfHour == 0 {
-			s.contestantLogger.Info("tick",
-				zap.Int64("ticks", s.world.Time),
-				zap.Int("timeouts", s.world.TimeoutTickCount),
-				zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
-			)
+// Load はシナリオのメイン処理を行う
+func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	go func() {
+		for req := range s.completedRequestChan {
+			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
+			step.AddScore(score.ScoreTag("completed_request"))
+		}
+	}()
+
+	s.world.RestTicker()
+LOOP:
+	for {
+		select {
+		case <-ctx.Done():
+			// 負荷走行終了
+			break LOOP
+
+		default:
+			err := s.world.Tick(s.worldCtx)
+			if err != nil {
+				s.contestantLogger.Error("critical error", zap.Error(err))
+				return err
+			}
+
+			if s.world.Time%world.LengthOfHour == 0 {
+				s.contestantLogger.Info("tick",
+					zap.Int64("ticks", s.world.Time),
+					zap.Int("timeouts", s.world.TimeoutTickCount),
+					zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
+				)
+			}
 		}
 	}
 
@@ -178,5 +165,12 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	for i, region := range s.world.Regions {
+		s.contestantLogger.Info("final region result",
+			zap.Int("region", i),
+			zap.Int("users", region.UsersDB.Len()),
+			zap.Int("score", region.UserSatisfactionScore()),
+		)
+	}
 	return nil
 }

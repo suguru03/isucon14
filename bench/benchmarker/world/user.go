@@ -40,6 +40,8 @@ type User struct {
 	PaymentToken string
 	// RequestHistory リクエスト履歴
 	RequestHistory []*Request
+	// LastEvaluation 完了した最後のリクエストの評価
+	LastEvaluation int
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
@@ -128,6 +130,7 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				// TODO 評価を送る
+				score := u.Request.CalculateEvaluation().Score()
 				err := ctx.client.SendEvaluation(ctx, u.Request)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
@@ -136,6 +139,8 @@ func (u *User) Tick(ctx *Context) error {
 				// サーバーが評価を受理したので完了状態になるのを待機する
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
+				u.Region.TotalLastEvaluation.Add(int32(score - u.LastEvaluation))
+				u.LastEvaluation = score
 			}
 
 		case RequestStatusCompleted:

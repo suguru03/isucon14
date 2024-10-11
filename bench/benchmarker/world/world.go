@@ -2,6 +2,7 @@ package world
 
 import (
 	"log"
+	"math"
 	"math/rand/v2"
 	"sync/atomic"
 	"time"
@@ -42,8 +43,10 @@ type World struct {
 
 	tickTimeout      time.Duration
 	timeoutTicker    *time.Ticker
+	prevTimeout      bool
 	criticalErrorCh  chan error
 	waitingTickCount atomic.Int32
+	userIncrease     float64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -52,18 +55,8 @@ type World struct {
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *World {
 	return &World{
 		Regions: []*Region{
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 0,
-				RegionOffsetY: 0,
-			},
-			{
-				RegionWidth:   100,
-				RegionHeight:  100,
-				RegionOffsetX: 300,
-				RegionOffsetY: 300,
-			},
+			NewRegion(0, 0, 100, 100),
+			NewRegion(300, 300, 100, 100),
 		},
 		UserDB:     NewGenericDB[UserID, *User](),
 		ProviderDB: NewGenericDB[ProviderID, *Provider](),
@@ -76,10 +69,28 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request) *Wo
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
+		userIncrease:         5,
 	}
 }
 
 func (w *World) Tick(ctx *Context) error {
+	if !w.prevTimeout {
+		// 前回タイムアウトしなかったら地域毎に増加させる
+		for _, region := range w.Regions {
+			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
+			for range increase {
+				w.waitingTickCount.Add(1)
+				go func() {
+					defer w.waitingTickCount.Add(-1)
+					_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
+					if err != nil {
+						w.HandleTickError(ctx, err)
+					}
+				}()
+			}
+		}
+	}
+
 	for _, c := range w.ChairDB.Iter() {
 		w.waitingTickCount.Add(1)
 		go func() {
@@ -111,6 +122,9 @@ func (w *World) Tick(ctx *Context) error {
 		if w.waitingTickCount.Load() > 0 {
 			// タイムアウトまでにエンティティの行動が全て完了しなかった
 			w.TimeoutTickCount++
+			w.prevTimeout = true
+		} else {
+			w.prevTimeout = false
 		}
 	}
 
@@ -156,7 +170,9 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
-	return w.UserDB.Create(u), nil
+	result := w.UserDB.Create(u)
+	args.Region.UsersDB.Set(result.ID, u)
+	return result, nil
 }
 
 type CreateProviderArgs struct {
@@ -245,4 +261,8 @@ func (w *World) HandleTickError(ctx *Context, err error) {
 		// TODO: エラーペナルティ
 		log.Println(err)
 	}
+}
+
+func (w *World) RestTicker() {
+	w.timeoutTicker.Reset(w.tickTimeout)
 }
