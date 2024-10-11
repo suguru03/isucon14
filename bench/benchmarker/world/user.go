@@ -129,9 +129,8 @@ func (u *User) Tick(ctx *Context) error {
 		case RequestStatusArrived:
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
-				// TODO 評価を送る
 				score := u.Request.CalculateEvaluation().Score()
-				err := ctx.client.SendEvaluation(ctx, u.Request)
+				err := ctx.client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
