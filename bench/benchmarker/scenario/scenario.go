@@ -8,7 +8,10 @@ import (
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucandar/score"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
+	"github.com/isucon/isucon14/bench/benchrun"
+	"github.com/isucon/isucon14/bench/benchrun/gen/isuxportal/resources"
 	"github.com/isucon/isucon14/bench/payment"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	// "github.com/isucon/isucon14/bench/benchmarker/scenario/agents/verify"
@@ -37,12 +40,14 @@ type Scenario struct {
 	worldCtx         *world.Context
 	paymentServer    *payment.Server
 	step             *isucandar.BenchmarkStep
+	reporter         benchrun.Reporter
+	meter            metric.Meter
 
 	requestQueue         chan string // あんまり考えて導入してないです
 	completedRequestChan chan *world.Request
 }
 
-func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
+func NewScenario(target string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
 	requestQueue := make(chan string, 1000)
 	completedRequestChan := make(chan *world.Request, 1000)
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan)
@@ -54,6 +59,7 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
 	worldCtx := world.NewContext(w, worldClient)
+
 	paymentServer := payment.NewServer(w.PaymentDB, 300*time.Millisecond, 5)
 	// TODO: サーバーハンドリング
 	go func() {
@@ -66,6 +72,8 @@ func NewScenario(target string, contestantLogger *zap.Logger) *Scenario {
 		world:            w,
 		worldCtx:         worldCtx,
 		paymentServer:    paymentServer,
+		reporter:         reporter,
+		meter:            meter,
 
 		requestQueue:         requestQueue,
 		completedRequestChan: completedRequestChan,
@@ -123,6 +131,10 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	//
 	//w.Process(ctx)
 
+	if err := s.setupMeter(); err != nil {
+		return err
+	}
+
 	go func() {
 		for req := range s.completedRequestChan {
 			s.contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", req.CalculateEvaluation()))
@@ -157,6 +169,20 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		}
 	}
 
+	go func() {	
+			ticker := time.NewTicker(3 * time.Second)
+			for {
+				select {
+				case <-ticker.C:
+					if err := sendResult(s, false, false); err != nil {
+						// TODO: エラーをadmin側に出力する
+					}
+				case <-ctx.Done():
+					ticker.Stop()
+				}
+			}
+	}()
+
 	for now := range world.ConvertHour(24 * 14) {
 		err := s.world.Tick(s.worldCtx)
 		if err != nil {
@@ -178,5 +204,59 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	return sendResult(s, true, true)
+}
+
+func (s *Scenario) setupMeter() error {
+	if _, err := s.meter.Int64ObservableCounter("world.time", metric.WithDescription("Time"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(s.world.Time))
+		return nil
+	})); err != nil {
+		return err
+	}
+
+	if _, err := s.meter.Int64ObservableCounter("world.users", metric.WithDescription("Number of users"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(s.world.UserDB.Size()))
+		return nil
+	})); err != nil {
+		return err
+	}
+
+	if _ , err := s.meter.Int64ObservableCounter("world.providers", metric.WithDescription("Number of providers"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(s.world.ProviderDB.Size()))
+		return nil
+	})); err != nil {
+		return err
+	}
+
+	if _, err := s.meter.Int64ObservableCounter("world.chairs", metric.WithDescription("Number of chairs"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(s.world.ChairDB.Size()))
+		return nil
+	})); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func sendResult(s *Scenario, finished bool, passed bool) error {
+	if err := s.reporter.Report(&resources.BenchmarkResult{
+		Finished: finished,
+		Passed: passed,
+
+		// TODO: 仮置き
+		Score: s.world.Time,
+		ScoreBreakdown: &resources.BenchmarkResult_ScoreBreakdown{
+			Raw: s.world.Time,
+			Deduction: 0,
+		},
+		// Reason以外はsupervisorが設定する
+		Execution: &resources.BenchmarkResult_Execution{
+			Reason: "実行終了",
+		},
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
