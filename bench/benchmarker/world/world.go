@@ -49,6 +49,7 @@ type World struct {
 	waitingTickCount   atomic.Int32
 	userIncrease       float64
 	chairIncreaseSales int64
+	increasingChairs   atomic.Int64
 
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
@@ -91,24 +92,28 @@ func (w *World) Tick(ctx *Context) error {
 				}()
 			}
 		}
-		// 前回タイムアウトしなかったらプロバイダ毎に増加させる
-		for _, p := range w.ProviderDB.Iter() {
-			increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10
-			if increase > 0 {
-				for range increase {
-					w.waitingTickCount.Add(1)
-					go func() {
-						defer w.waitingTickCount.Add(-1)
-						_, err := w.CreateChair(ctx, &CreateChairArgs{
-							Provider:          p,
-							InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-							WorkTime:          NewInterval(0, ConvertHour(2000)),
-						})
-						if err != nil {
-							w.HandleTickError(ctx, err)
-						}
+	}
+
+	for _, p := range w.ProviderDB.Iter() {
+		increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10 - w.increasingChairs.Load()
+		if increase > 0 {
+			w.increasingChairs.Add(increase)
+			for range increase {
+				w.waitingTickCount.Add(1)
+				go func() {
+					defer func() {
+						w.waitingTickCount.Add(-1)
+						w.increasingChairs.Add(-1)
 					}()
-				}
+					_, err := w.CreateChair(ctx, &CreateChairArgs{
+						Provider:          p,
+						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+						WorkTime:          NewInterval(0, ConvertHour(2000)),
+					})
+					if err != nil {
+						w.HandleTickError(ctx, err)
+					}
+				}()
 			}
 		}
 	}
