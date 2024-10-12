@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
@@ -31,7 +31,7 @@ const move = (
 
 export const useEmulator = () => {
   const clientChair = useClientChairRequestContext();
-  const [, setCurrentTimeoutId] = useState<number>();
+
   useEffect(() => {
     if (
       !(
@@ -43,10 +43,12 @@ export const useEmulator = () => {
     ) {
       return;
     }
+
     const { location, setter } = clientChair.chair.currentCoordinate;
     const { pickup, destination } = clientChair.payload.coordinate;
     const accessToken = clientChair.auth.accessToken;
     const status = clientChair.status;
+
     const currentCoodinatePost = () => {
       if (location) {
         sessionStorage.setItem("latitude", String(location.latitude));
@@ -61,8 +63,10 @@ export const useEmulator = () => {
         });
       }
     };
-    const timeoutId = window.setTimeout(() => {
+
+    const timeoutId = setTimeout(() => {
       currentCoodinatePost();
+
       switch (status) {
         case "DISPATCHING":
           if (pickup) {
@@ -77,12 +81,8 @@ export const useEmulator = () => {
       }
     }, 3000);
 
-    setCurrentTimeoutId((preTimeoutId) => {
-      clearTimeout(preTimeoutId);
-      return timeoutId;
-    });
-    () => {
-      return clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
     };
-  }, [clientChair, setCurrentTimeoutId]);
+  }, [clientChair]);
 };

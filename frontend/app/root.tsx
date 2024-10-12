@@ -7,10 +7,10 @@ import {
   ScrollRestoration,
   useRouteError,
 } from "@remix-run/react";
-import "./tailwind.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MainFrame } from "./components/primitives/frame/frame";
 import { ErrorMessage } from "./components/primitives/error-message/error-message";
+import { MainFrame } from "./components/primitives/frame/frame";
+import "./tailwind.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient();
@@ -23,7 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="overscroll-none bg-gray-100">
+      <body className="overscroll-none bg-neutral-100">
         <QueryClientProvider client={queryClient}>
           <MainFrame>{children}</MainFrame>
         </QueryClientProvider>

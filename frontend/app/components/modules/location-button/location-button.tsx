@@ -27,7 +27,7 @@ export const LocationButton: FC<LocationButtonProps> = ({
       onClick={onClick}
     >
       {label && (
-        <span className="absolute left-4 text-xs text-gray-500 font-mono">
+        <span className="absolute left-4 text-xs text-neutral-500 font-mono">
           {label}
         </span>
       )}

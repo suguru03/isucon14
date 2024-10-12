@@ -43,9 +43,9 @@ export const Pickup: FC = () => {
           </>
         )}
         <div className="flex flex-col w-full items-center px-8">
-          <LocationButton label="from" disabled className="w-full" />
+          <LocationButton label="現在地" disabled className="w-full" />
           <Text size="xl">↓</Text>
-          <LocationButton label="to" disabled className="w-full mb-4" />
+          <LocationButton label="目的地" disabled className="w-full mb-4" />
           <Text variant="danger" size="sm">
             到着予定時間: 21:58
           </Text>

@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { redirect, ClientActionFunctionArgs, Form } from "@remix-run/react";
+import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
 import { fetchAppPostRegister } from "~/apiClient/apiComponents";
 
 export const meta: MetaFunction = () => {
@@ -13,10 +13,10 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
   const data = await fetchAppPostRegister({
     body: {
-      date_of_birth: String(formData.get("date_of_birth")) ?? "",
-      username: String(formData.get("username")) ?? "",
-      firstname: String(formData.get("firstname")) ?? "",
-      lastname: String(formData.get("lastname")) ?? "",
+      date_of_birth: String(formData.get("date_of_birth")),
+      username: String(formData.get("username")),
+      firstname: String(formData.get("firstname")),
+      lastname: String(formData.get("lastname")),
     },
   });
   return redirect(`/client?access_token=${data.access_token}&id=${data.id}`);
@@ -35,7 +35,7 @@ export default function ClientRegister() {
             type="text"
             id="username"
             name="username"
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <label htmlFor="firstname">Firstname:</label>
@@ -43,7 +43,7 @@ export default function ClientRegister() {
             type="text"
             id="firstname"
             name="firstname"
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <label htmlFor="lastname">Lastname:</label>
@@ -51,7 +51,7 @@ export default function ClientRegister() {
             type="text"
             id="lastname"
             name="lastname"
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <label htmlFor="date_of_birth">dateOfBirth:</label>
@@ -59,7 +59,7 @@ export default function ClientRegister() {
             type="text"
             id="date_of_birth"
             name="date_of_birth"
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>

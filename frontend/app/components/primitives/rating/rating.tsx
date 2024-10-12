@@ -40,7 +40,7 @@ export const Rating: FC<RatingProps> = ({
               viewBox="0 0 24 24"
               fill={starValue <= rating ? "currentColor" : "#d9d9d9"}
               stroke={starValue <= rating ? "currentColor" : "#d9d9d9"}
-              className={`cursor-pointer ${rating >= index + 1 ? "text-yellow-400" : "text-gray-300"}`}
+              className={`cursor-pointer ${rating >= index + 1 ? "text-yellow-400" : "text-neutral-300"}`}
               width={starSize}
               height={starSize}
               onClick={() => setRating(starValue)}

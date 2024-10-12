@@ -13,9 +13,9 @@ export const Dispatched: FC<{ destLocation?: Coordinate }> = ({
       <Text size="xl" className="mb-6">
         車両が到着しました
       </Text>
-      <LocationButton label="from" className="w-80" />
+      <LocationButton label="現在地" className="w-80" />
       <Text size="xl">↓</Text>
-      <LocationButton label="to" location={destLocation} className="w-80" />
+      <LocationButton label="目的地" location={destLocation} className="w-80" />
     </div>
   );
 };
