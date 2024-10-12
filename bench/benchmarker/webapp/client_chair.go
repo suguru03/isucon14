@@ -274,18 +274,19 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		scanner := bufio.NewScanner(resp.Body)
 		return func(yield func(ok *api.ChairRequest) bool) {
-				defer resp.Body.Close()
 				for scanner.Scan() {
 					request := &api.ChairRequest{}
 					line := scanner.Text()
 					if strings.HasPrefix(line, "data:") {
-
 						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
 							resultErr = &err
+							io.Copy(io.Discard, resp.Body)
+							resp.Body.Close()
 							return
 						}
-
 						if !yield(request) {
+							io.Copy(io.Discard, resp.Body)
+							resp.Body.Close()
 							return
 						}
 					}
@@ -295,6 +296,11 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 			}, nil
 	}
 
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
+
 	request := &api.ChairRequest{}
 	if resp.StatusCode == http.StatusOK {
 		decoder := json.NewDecoder(resp.Body)
@@ -302,10 +308,9 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 			return nil, nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 		}
 	} else if resp.StatusCode != http.StatusNoContent {
-		resp.Body.Close()
 		return nil, nil, fmt.Errorf("GET /chair/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
 	}
-	resp.Body.Close()
+
 	return func(yield func(ok *api.ChairRequest) bool) {
 			if !yield(request) || ctx.Value("nested") != nil {
 				return

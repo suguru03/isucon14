@@ -150,6 +150,7 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 	return resBody, nil
 }
 
+// AppGetNotification 
 func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppRequest], func() error, error) {
 	req, err := c.agent.NewRequest(http.MethodGet, "/app/notification", nil)
 	if err != nil {
@@ -169,30 +170,24 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 	if err != nil {
 		return nil, nil, fmt.Errorf("GET /app/notifications のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
 
 	resultErr := new(error)
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		scanner := bufio.NewScanner(resp.Body)
 		return func(yield func(ok *api.AppRequest) bool) {
-				defer func() {
-					io.Copy(io.Discard, resp.Body)
-					resp.Body.Close()
-				}()
 				for scanner.Scan() {
 					request := &api.AppRequest{}
 					line := scanner.Text()
 					if strings.HasPrefix(line, "data:") {
-
 						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
 							resultErr = &err
+							io.Copy(io.Discard, resp.Body)
+							resp.Body.Close()
 							return
 						}
-
 						if !yield(request) {
+							io.Copy(io.Discard, resp.Body)
+							resp.Body.Close()
 							return
 						}
 					}
@@ -201,6 +196,11 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 				return *resultErr
 			}, nil
 	}
+
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	request := &api.AppRequest{}
 	if resp.StatusCode == http.StatusOK {
