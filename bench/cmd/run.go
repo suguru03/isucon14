@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 		}
 
 		if benchrun.GetPublicIP() != "" {
-			paymentURL = fmt.Sprintf("https://%s:%d", benchrun.GetPublicIP(), 12345)
+			paymentURL = fmt.Sprintf("http://%s:%d", benchrun.GetPublicIP(), 12345)
 		}
 
 		var reporter benchrun.Reporter
