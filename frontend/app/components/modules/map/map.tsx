@@ -69,8 +69,8 @@ const centerPosFrom = (pos: Pos, outerRect: DOMRect): Pos => {
 const SelectorLayer: FC<{
   pinSize?: number;
   pos?: Pos;
-  setInitialLoc: (coordinate: Coordinate) => void;
-}> = ({ pinSize = 80, pos, setInitialLoc }) => {
+  updateViewLocation: (coordinate: Coordinate) => void;
+}> = ({ pinSize = 80, pos, updateViewLocation }) => {
   const loc = useMemo(() => pos && posToCoordinate(pos), [pos]);
   const [isOpenCustomSelector, setIsOpenCustomSelector] = useState(false);
   const inputLatitudeRef = useRef<HTMLInputElement>(null);
@@ -148,7 +148,7 @@ const SelectorLayer: FC<{
                 latitude: Number(inputLatitudeRef.current?.value ?? 0),
                 longitude: Number(inputLongitudeRef.current?.value ?? 0),
               };
-              setInitialLoc(inputLoc);
+              updateViewLocation(inputLoc);
               setIsOpenCustomSelector(false);
             }}
           >
@@ -210,7 +210,6 @@ export const Map: FC<MapProps> = ({
   const onMoveRef = useRef(onMove);
   const outerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [initialLoc, setInitialLoc] = useState(initialCoordinate);
   const [isDrag, setIsDrag] = useState(false);
   const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
@@ -220,13 +219,13 @@ export const Map: FC<MapProps> = ({
   });
   const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
 
-  useLayoutEffect(() => {
+  const updateViewLocation = useCallback((loc: Coordinate) => {
     if (!outerRef.current) {
       return;
     }
     const rect = outerRef.current.getBoundingClientRect();
-    if (initialLoc) {
-      const pos = coordinateToPos(initialLoc);
+    if (loc) {
+      const pos = coordinateToPos(loc);
       const initalPos = {
         x: pos.x + rect.width / 2,
         y: pos.y + rect.height / 2,
@@ -241,7 +240,11 @@ export const Map: FC<MapProps> = ({
     };
     setPos(mapCenterPos);
     onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
-  }, [initialLoc]);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (initialCoordinate) updateViewLocation(initialCoordinate);
+  }, [initialCoordinate, updateViewLocation]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -360,7 +363,7 @@ export const Map: FC<MapProps> = ({
       {selectable && outerRect && (
         <SelectorLayer
           pos={centerPosFrom({ x, y }, outerRect)}
-          setInitialLoc={setInitialLoc}
+          updateViewLocation={updateViewLocation}
         />
       )}
     </div>
