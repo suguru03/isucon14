@@ -1,6 +1,7 @@
-import { FC } from "react";
+import { ComponentProps, FC } from "react";
+import { twMerge } from "tailwind-merge";
 
-type RatingProps = {
+type RatingProps = ComponentProps<"div"> & {
   name: string;
   starSize?: number;
   rating: number;
@@ -12,9 +13,11 @@ export const Rating: FC<RatingProps> = ({
   starSize = 40,
   rating,
   setRating,
+  className,
+  ...props
 }) => {
   return (
-    <div className="flex flex-row gap-1">
+    <div className={twMerge("flex flex-row gap-1", className)} {...props}>
       {Array.from({ length: 5 }).map((_, index) => {
         const starValue = index + 1;
         return (
