@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"net/http"
 	"strings"
@@ -33,6 +34,10 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegist
 	if err != nil {
 		return nil, fmt.Errorf("POST /app/register のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("POST /app/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
@@ -65,6 +70,10 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequest
 	if err != nil {
 		return nil, fmt.Errorf("POST /app/requests のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusAccepted {
 		return nil, fmt.Errorf("POST /app/requests へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusAccepted, resp.StatusCode)
@@ -92,6 +101,10 @@ func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppR
 	if err != nil {
 		return nil, fmt.Errorf("GET /app/requests/{request_id} のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET /app/requests/{request_id} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
@@ -124,6 +137,10 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 	if err != nil {
 		return nil, fmt.Errorf("POST /app/requests/{request_id}/evaluate のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /app/requests/{request_id}/evaluate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
@@ -152,12 +169,19 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 	if err != nil {
 		return nil, nil, fmt.Errorf("GET /app/notifications のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	resultErr := new(error)
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		scanner := bufio.NewScanner(resp.Body)
 		return func(yield func(ok *api.AppRequest) bool) {
-				defer resp.Body.Close()
+				defer func() {
+					io.Copy(io.Discard, resp.Body)
+					resp.Body.Close()
+				}()
 				for scanner.Scan() {
 					request := &api.AppRequest{}
 					line := scanner.Text()
@@ -185,10 +209,9 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 			return nil, nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 		}
 	} else if resp.StatusCode != http.StatusNoContent {
-		resp.Body.Close()
 		return nil, nil, fmt.Errorf("GET /app/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
 	}
-	resp.Body.Close()
+
 	return func(yield func(ok *api.AppRequest) bool) {
 			if !yield(request) || ctx.Value("nested") != nil {
 				return
@@ -237,6 +260,10 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 	if err != nil {
 		return nil, fmt.Errorf("POST /app/payment-methods のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /app/payment-methods へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)

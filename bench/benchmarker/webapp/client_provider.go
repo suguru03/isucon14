@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -30,6 +31,10 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.Provider
 	if err != nil {
 		return nil, fmt.Errorf("POST /provider/register のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("POST /provider/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
@@ -61,6 +66,10 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.ProviderGetSa
 	if err != nil {
 		return nil, fmt.Errorf("GET /provider/sales のリクエストが失敗しました: %w", err)
 	}
+	defer func() {
+    io.Copy(io.Discard, resp.Body)
+    resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET /provider/sales へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
