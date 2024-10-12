@@ -18,4 +18,4 @@ WORKDIR /app
 COPY --from=builder /app/bench /app/bench
 COPY --from=supervisor /usr/local/bin/isuxportal-supervisor /app/supervisor
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/app/supervisor", "/app/bench"]
+CMD ["/app/supervisor", "/app/bench", "run"]
