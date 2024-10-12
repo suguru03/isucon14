@@ -18,12 +18,12 @@ export default function Index() {
       <ul className="mt-4 list-disc ps-8">
         <li>
           <Link to="/client" className="text-blue-600 hover:underline">
-            Client page
+            Client Application
           </Link>
         </li>
         <li>
           <Link to="/driver" className="text-blue-600 hover:underline">
-            Driver page
+            Chair Simulator
           </Link>
         </li>
       </ul>

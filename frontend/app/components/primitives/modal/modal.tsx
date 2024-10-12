@@ -7,17 +7,15 @@ import {
   useRef,
 } from "react";
 import { twMerge } from "tailwind-merge";
-import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 
 type ModalProps = PropsWithChildren<
   ComponentProps<"div"> & {
     onClose?: () => void;
-    disableCloseOnBackdrop?: boolean;
   }
 >;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
-  ({ children, onClose, disableCloseOnBackdrop, className, ...props }, ref) => {
+  ({ children, onClose, className, ...props }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
     const handleClose = () => {
@@ -42,13 +40,6 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
       }, 50);
       return () => clearTimeout(timer);
     }, []);
-
-    useOnClickOutside(sheetRef, () => {
-      if (disableCloseOnBackdrop) {
-        return;
-      }
-      handleClose();
-    });
 
     useImperativeHandle(ref, () => ({
       close: handleClose,

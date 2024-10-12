@@ -5,14 +5,15 @@ import {
   useChairPostActivate,
   useChairPostDeactivate,
 } from "~/apiClient/apiComponents";
+import { useEmulator } from "~/components/hooks/emulate";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { useClientChairRequestContext } from "~/contexts/driver-context";
-import { useEmulator } from "~/components/hooks/emulate";
-import { Arrive } from "./modal-views/arrive";
-import { Matching } from "./modal-views/matching";
-import { Pickup } from "./modal-views/pickup";
+import { Arrived } from "./driving-state/arrived";
+import { Matching } from "./driving-state/matching";
+import { Pickup } from "./driving-state/pickup";
+import LocationInput from "./setCurrentCoordination";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -21,10 +22,8 @@ export const meta: MetaFunction = () => {
 export default function DriverRequestWrapper() {
   const data = useClientChairRequestContext();
   const navigate = useNavigate();
-  const driver = useClientChairRequestContext();
   const { mutate: postChairActivate } = useChairPostActivate();
   const { mutate: postChairDeactivate } = useChairPostDeactivate();
-  const requestStatus = data?.status;
   const modalRef = useRef<{ close: () => void }>(null);
   useEmulator();
   const handleComplete = useCallback(() => {
@@ -40,18 +39,18 @@ export default function DriverRequestWrapper() {
   const onClickActivate = useCallback(() => {
     postChairActivate({
       headers: {
-        Authorization: `Bearer ${driver.auth?.accessToken}`,
+        Authorization: `Bearer ${data.auth?.accessToken}`,
       },
     });
-  }, [driver, postChairActivate]);
+  }, [data, postChairActivate]);
 
   const onClickDeactivate = useCallback(() => {
     postChairDeactivate({
       headers: {
-        Authorization: `Bearer ${driver.auth?.accessToken}`,
+        Authorization: `Bearer ${data.auth?.accessToken}`,
       },
     });
-  }, [driver, postChairDeactivate]);
+  }, [data, postChairDeactivate]);
 
   return (
     <>
@@ -59,23 +58,20 @@ export default function DriverRequestWrapper() {
       <div className="px-4 py-16 flex justify-center border-t gap-6">
         <Button onClick={() => onClickActivate()}>受付開始</Button>
         <Button onClick={() => onClickDeactivate()}>受付終了</Button>
+        <LocationInput />
       </div>
-      {requestStatus && (
-        <Modal ref={modalRef} disableCloseOnBackdrop onClose={onCloseModal}>
-          {requestStatus === "MATCHING" && (
+      {data?.status && (
+        <Modal ref={modalRef} onClose={onCloseModal}>
+          {data.status === "MATCHING" && (
             <Matching
               name={data?.payload?.user?.name}
               request_id={data?.payload?.request_id}
             />
           )}
-          {requestStatus === "DISPATCHING" ||
-            requestStatus === "DISPATCHED" ||
-            (requestStatus === "CARRYING" && (
-              <Pickup status={requestStatus} payload={data.payload} />
-            ))}
-          {requestStatus === "ARRIVED" && (
-            <Arrive onComplete={handleComplete} />
-          )}
+          {(data.status === "DISPATCHING" ||
+            data.status === "DISPATCHED" ||
+            data.status === "CARRYING") && <Pickup />}
+          {data.status === "ARRIVED" && <Arrived onComplete={handleComplete} />}
         </Modal>
       )}
     </>

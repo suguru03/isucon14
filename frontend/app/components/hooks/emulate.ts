@@ -49,6 +49,8 @@ export const useEmulator = () => {
     const status = clientChair.status;
     const currentCoodinatePost = () => {
       if (location) {
+        sessionStorage.setItem("latitude", String(location.latitude));
+        sessionStorage.setItem("longitude", String(location.longitude));
         fetchChairPostCoordinate({
           body: location,
           headers: {

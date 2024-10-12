@@ -32,3 +32,7 @@ func GetReportFD() (int, error) {
 
 	return fd, nil
 }
+
+func GetPublicIP() string {
+	return os.Getenv("ISUXBENCH_PUBLIC_IP")
+}
