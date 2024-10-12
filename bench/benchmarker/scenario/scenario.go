@@ -35,6 +35,7 @@ import (
 type Scenario struct {
 	target           string
 	addr             string
+	paymentURL 		   string
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
@@ -47,7 +48,7 @@ type Scenario struct {
 	completedRequestChan chan *world.Request
 }
 
-func NewScenario(target string, addr string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
+func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
 	requestQueue := make(chan string, 1000)
 	completedRequestChan := make(chan *world.Request, 1000)
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan)
@@ -59,7 +60,6 @@ func NewScenario(target string, addr string, contestantLogger *zap.Logger, repor
 	worldCtx := world.NewContext(w, worldClient)
 
 	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 5)
-	// TODO: サーバーハンドリング
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
 	}()
@@ -142,6 +142,7 @@ func NewScenario(target string, addr string, contestantLogger *zap.Logger, repor
 	return &Scenario{
 		target:           target,
 		addr:             addr,
+		paymentURL:       paymentURL,
 		contestantLogger: contestantLogger,
 		world:            w,
 		worldCtx:         worldCtx,
@@ -166,8 +167,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	// TODO: 決済サーバーアドレス
-	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: "http://localhost:12345"})
+	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
 	if err != nil {
 		return err
 	}

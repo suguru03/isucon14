@@ -1,9 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
-import {
-  fetchChairPostRegister,
-  fetchProviderPostRegister,
-} from "~/apiClient/apiComponents";
+import { fetchChairPostRegister } from "~/apiClient/apiComponents";
 import { TextInput } from "~/components/primitives/form/text";
 
 export const meta: MetaFunction = () => {
@@ -12,19 +9,16 @@ export const meta: MetaFunction = () => {
     { name: "description", content: "チェア登録" },
   ];
 };
-
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-
-  const provider = await fetchProviderPostRegister({
-    body: {
-      name: String(formData.get("provider_name")) ?? "",
-    },
-  });
-
+  // const provider = await fetchProviderPostRegister({
+  //   body: {
+  //     name: String(formData.get("provider_name")) ?? "",
+  //   },
+  // });
   const chair = await fetchChairPostRegister({
     headers: {
-      Authorization: `Bearer ${provider.access_token}`,
+      Authorization: `Bearer ${String(formData.get("provide_access_token")) ?? ""}`,
     },
     body: {
       model: String(formData.get("model")) ?? "",
@@ -43,9 +37,9 @@ export default function DriverRegister() {
       >
         <div>
           <TextInput
-            id="provide_name"
-            name="provide_name"
-            label="Provider name:"
+            id="provide_access_token"
+            name="provide_access_token"
+            label="provide_access_token:"
             required
           />
           <TextInput

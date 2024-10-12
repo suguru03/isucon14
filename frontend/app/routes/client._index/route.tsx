@@ -59,22 +59,19 @@ export default function Index() {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
   const handleRideRequest = useCallback(async () => {
+    if (!currentLocation || !destLocation) {
+      return;
+    }
     await fetchAppPostRequest({
       body: {
-        pickup_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
-        destination_coordinate: {
-          latitude: 0,
-          longitude: 0,
-        },
+        pickup_coordinate: currentLocation,
+        destination_coordinate: destLocation,
       },
       headers: {
         Authorization: `Bearer ${data.auth?.accessToken}`,
       },
     }).then((res) => setRequestId(res.request_id));
-  }, [data]);
+  }, [data, currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
 
