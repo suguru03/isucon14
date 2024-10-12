@@ -7,7 +7,6 @@ import (
 
 	"github.com/isucon/isucon14/bench/benchrun"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/metric"
@@ -27,8 +26,7 @@ func NewMeter(ctx context.Context) (metric.Meter, metricsdk.Exporter, error) {
 		resource.WithProcessCommandArgs(),
 		resource.WithHost(),
 		resource.WithAttributes(
-			semconv.ServiceName("isucon14_benchmarker"),
-			attribute.String("target", benchrun.GetTargetAddress()),
+			semconv.ServiceName(benchrun.GetTargetAddress()),
 		),
 	)
 	if err != nil {
