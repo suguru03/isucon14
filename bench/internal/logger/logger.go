@@ -12,6 +12,7 @@ func SetupGlobalLogger() *zap.Logger {
 }
 
 func CreateContestantLogger() (*zap.Logger, error) {
-	l, err := zap.NewProduction()
-	return l, err
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	return config.Build()
 }
