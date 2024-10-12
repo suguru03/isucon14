@@ -34,7 +34,7 @@ func NewClient(config ClientConfig) (*Client, error) {
 			return d.DialContext(ctx, network, config.TargetAddr)
 		}
 		trs.Dial = func(network, addr string) (net.Conn, error) {
-			return trs.DialContext(context.Background(), network, addr)
+			return trs.DialContext(context.Background(), network, config.TargetAddr)
 		}
 	}
 	ag, err := agent.NewAgent(
