@@ -35,7 +35,7 @@ import (
 type Scenario struct {
 	target           string
 	addr             string
-	paymentURL 		   string
+	paymentURL       string
 	contestantLogger *zap.Logger
 	world            *world.World
 	worldCtx         *world.Context
@@ -54,6 +54,7 @@ func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, 
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan)
 	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
 		TargetBaseURL:         target,
+		TargetAddr:            addr,
 		ClientIdleConnTimeout: 10 * time.Second,
 		ContestantLogger:      contestantLogger,
 	}, requestQueue, contestantLogger)
