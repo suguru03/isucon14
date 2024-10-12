@@ -3,7 +3,7 @@ ARG SV_IMAGE="692859926955.dkr.ecr.ap-northeast-1.amazonaws.com/stg/benchmarker:
 FROM golang:1.23 AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o /app/benchmarker -ldflags "-s -w"
+RUN go build -o /app/bench -ldflags "-s -w" .
 
 FROM ${SV_IMAGE} AS supervisor
 
