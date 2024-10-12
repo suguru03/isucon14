@@ -24,15 +24,15 @@ variable "revision" {
 locals {
   name = "${var.commit_hash}-${formatdate("YYYYMMDD-hhmm", timestamp())}"
   ami_tags = {
-    Project  = "14"
-    Family   = "14"
+    Project  = "isucon14"
+    Family   = "isucon14"
     Name     = "${local.name}"
     Revision = "${var.revision}"
     Packer   = "1"
   }
   run_tags = {
-    Project = "14"
-    Name    = "packer-${local.name}"
+    Project = "isucon14"
+    Name    = "contestant-${local.name}"
     Packer  = "1"
     Ignore  = "1"
   }
