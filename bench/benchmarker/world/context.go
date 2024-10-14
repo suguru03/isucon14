@@ -1,13 +1,11 @@
 package world
 
 type Context struct {
-	world  *World
-	client Client
+	world *World
 }
 
-func NewContext(world *World, client Client) *Context {
+func NewContext(world *World) *Context {
 	return &Context{
-		world:  world,
-		client: client,
+		world: world,
 	}
 }

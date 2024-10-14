@@ -56,6 +56,8 @@ type Chair struct {
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
 
+	// Client webappへのクライアント
+	Client ChairClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
@@ -114,7 +116,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
 				c.Request.Statuses.Lock()
 
-				err := ctx.client.SendAcceptRequest(ctx, c, c.Request)
+				err := c.Client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
 					c.Request.Statuses.Unlock()
 
@@ -132,7 +134,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 			} else {
-				err := ctx.client.SendDenyRequest(ctx, c, c.Request.ServerID)
+				err := c.Client.SendDenyRequest(ctx, c, c.Request.ServerID)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
 				}
@@ -161,7 +163,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				break
 			}
 
-			err := ctx.client.SendDepart(ctx, c.Request)
+			err := c.Client.SendDepart(ctx, c.Request)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToDepart, err)
 			}
@@ -205,7 +207,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		req := ctx.world.RequestDB.GetByServerID(c.ServerRequestID.String)
 		if req == nil {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
-			err := ctx.client.SendDenyRequest(ctx, c, c.ServerRequestID.String)
+			err := c.Client.SendDenyRequest(ctx, c, c.ServerRequestID.String)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
 			}
@@ -213,7 +215,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			c.ServerRequestID = null.String{}
 		} else {
 			// TODO detailレスポンス検証
-			_, err := ctx.client.GetRequestByChair(ctx, c, c.ServerRequestID.String)
+			_, err := c.Client.GetRequestByChair(ctx, c, c.ServerRequestID.String)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToGetRequestDetail, err)
 			}
@@ -226,7 +228,7 @@ func (c *Chair) Tick(ctx *Context) error {
 	case c.State == ChairStateActive:
 		if !c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻を過ぎたので退勤する
-			err := ctx.client.SendDeactivate(ctx, c)
+			err := c.Client.SendDeactivate(ctx, c)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToDeactivate, err)
 			}
@@ -252,7 +254,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			if c.NotificationConn == nil {
 				// 先に通知コネクションを繋いでおく
-				conn, err := ctx.client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
+				conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
 					if !concurrent.TrySend(c.notificationQueue, event) {
 						log.Printf("通知受け取りチャンネルが詰まってる: chair server id: %s", c.ServerID)
 						c.notificationQueue <- event
@@ -264,7 +266,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.NotificationConn = conn
 			}
 
-			err := ctx.client.SendActivate(ctx, c)
+			err := c.Client.SendActivate(ctx, c)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToActivate, err)
 			}
@@ -278,7 +280,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	if c.State == ChairStateActive {
 		// 稼働中なら自身の座標をサーバーに送信
-		err := ctx.client.SendChairCoordinate(ctx, c)
+		err := c.Client.SendChairCoordinate(ctx, c)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
 		}

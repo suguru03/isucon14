@@ -47,6 +47,8 @@ type User struct {
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
 
+	// Client webappへのクライアント
+	Client UserClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
@@ -93,7 +95,7 @@ func (u *User) Tick(ctx *Context) error {
 	// 支払いトークンが未登録
 	case u.State == UserStatePaymentMethodsNotRegister:
 		// トークン登録を試みる
-		err := ctx.client.RegisterPaymentMethods(ctx, u)
+		err := u.Client.RegisterPaymentMethods(ctx, u)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
 		}
@@ -128,7 +130,7 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				score := u.Request.CalculateEvaluation().Score()
-				err := ctx.client.SendEvaluation(ctx, u.Request, score)
+				err := u.Client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
@@ -164,7 +166,7 @@ func (u *User) Tick(ctx *Context) error {
 	case u.Request == nil && u.State == UserStateActive:
 		if u.NotificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
-			conn, err := ctx.client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
+			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
 				if !concurrent.TrySend(u.notificationQueue, event) {
 					log.Printf("通知受け取りチャンネルが詰まってる: user server id: %s", u.ServerID)
 					u.notificationQueue <- event
@@ -219,7 +221,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 			User:    RequestStatusMatching,
 		},
 	}
-	res, err := ctx.client.SendCreateRequest(ctx, req)
+	res, err := u.Client.SendCreateRequest(ctx, req)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}

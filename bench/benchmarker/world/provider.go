@@ -27,6 +27,8 @@ type Provider struct {
 	// AccessToken サーバーアクセストークン
 	AccessToken string
 
+	// Client webappへのクライアント
+	Client ProviderClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
@@ -56,7 +58,7 @@ func (p *Provider) Tick(ctx *Context) error {
 	}()
 
 	if ctx.world.Time%LengthOfHour == LengthOfHour-1 {
-		_, err := ctx.client.GetProviderSales(ctx, p)
+		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 		}
