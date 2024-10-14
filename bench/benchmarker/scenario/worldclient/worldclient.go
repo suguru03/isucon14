@@ -13,7 +13,6 @@ import (
 
 type userClient struct {
 	ctx              context.Context
-	sseContext       context.Context
 	client           *webapp.Client
 	contestantLogger *zap.Logger
 }
@@ -27,7 +26,6 @@ type providerClient struct {
 
 type chairClient struct {
 	ctx              context.Context
-	sseContext       context.Context
 	client           *webapp.Client
 	contestantLogger *zap.Logger
 }
@@ -213,19 +211,18 @@ func (c *chairClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 }
 
 func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	newCtx, cancel := context.WithCancel(c.ctx)
-	c.sseContext = newCtx
+	sseContext, cancel := context.WithCancel(c.ctx)
 	go func() {
 		//c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
 		for {
 			select {
-			case <-c.sseContext.Done():
+			case <-sseContext.Done():
 				//c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
 				return
 			default:
 			}
 
-			res, result, err := c.client.ChairGetNotification(c.sseContext)
+			res, result, err := c.client.ChairGetNotification(sseContext)
 			if err != nil {
 				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
 				return
@@ -312,19 +309,18 @@ func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User
 }
 
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	newCtx, cancel := context.WithCancel(c.ctx)
-	c.sseContext = newCtx
+	sseContext, cancel := context.WithCancel(c.ctx)
 	go func() {
 		//c.contestantLogger.Info("User notification stream started", zap.String("user_id", user.ServerID))
 		for {
 			select {
-			case <-c.sseContext.Done():
+			case <-sseContext.Done():
 				//c.contestantLogger.Info("User notification stream closed", zap.String("user_id", user.ServerID))
 				return
 			default:
 			}
 
-			res, result, err := c.client.AppGetNotification(c.sseContext)
+			res, result, err := c.client.AppGetNotification(sseContext)
 			if err != nil {
 				// TODO: 減点
 				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
