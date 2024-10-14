@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand/v2"
 	"slices"
-	"sync/atomic"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
@@ -50,7 +49,7 @@ type User struct {
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
-	tickDone atomic.Bool
+	tickDone tickDone
 }
 
 type RegisteredUserData struct {
@@ -72,14 +71,10 @@ func (u *User) SetID(id UserID) {
 }
 
 func (u *User) Tick(ctx *Context) error {
-	if !u.tickDone.CompareAndSwap(true, false) {
+	if u.tickDone.DoOrSkip() {
 		return nil
 	}
-	defer func() {
-		if !u.tickDone.CompareAndSwap(false, true) {
-			panic("2重でUserのTickが終了した")
-		}
-	}()
+	defer u.tickDone.Done()
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(u.notificationQueue) {

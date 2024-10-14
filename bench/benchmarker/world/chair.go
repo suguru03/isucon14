@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand/v2"
 	"slices"
-	"sync/atomic"
 
 	"github.com/guregu/null/v5"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
@@ -59,7 +58,7 @@ type Chair struct {
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
-	tickDone atomic.Bool
+	tickDone tickDone
 }
 
 type RegisteredChairData struct {
@@ -76,14 +75,10 @@ func (c *Chair) SetID(id ChairID) {
 }
 
 func (c *Chair) Tick(ctx *Context) error {
-	if !c.tickDone.CompareAndSwap(true, false) {
+	if c.tickDone.DoOrSkip() {
 		return nil
 	}
-	defer func() {
-		if !c.tickDone.CompareAndSwap(false, true) {
-			panic("2重でUserのTickが終了した")
-		}
-	}()
+	defer c.tickDone.Done()
 
 	// 後処理ができていないリクエストがあれば対応する
 	if c.oldRequest != nil {

@@ -208,7 +208,6 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		Rand:              random.CreateChildRand(w.RootRand),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
-	u.tickDone.Store(true)
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
 	result.Region.UsersDB.Set(result.ID, u)
@@ -241,7 +240,6 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 		Client:         res.Client,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
-	p.tickDone.Store(true)
 	return w.ProviderDB.Create(p), nil
 }
 
@@ -283,7 +281,6 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		Rand:              random.CreateChildRand(args.Provider.Rand),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
-	c.tickDone.Store(true)
 	result := w.ChairDB.Create(c)
 	result.Provider.ChairDB.Set(result.ID, c)
 	return result, nil
