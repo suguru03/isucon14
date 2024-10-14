@@ -24,8 +24,6 @@ type Provider struct {
 
 	// RegisteredData サーバーに登録されているプロバイダー情報
 	RegisteredData RegisteredProviderData
-	// AccessToken サーバーアクセストークン
-	AccessToken string
 
 	// Client webappへのクライアント
 	Client ProviderClient

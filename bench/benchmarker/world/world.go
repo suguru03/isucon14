@@ -203,7 +203,6 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		Region:            args.Region,
 		State:             UserStatePaymentMethodsNotRegister,
 		RegisteredData:    registeredData,
-		AccessToken:       res.AccessToken,
 		PaymentToken:      random.GeneratePaymentToken(),
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(w.RootRand),
@@ -239,7 +238,6 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 		Region:         args.Region,
 		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
 		RegisteredData: registeredData,
-		AccessToken:    res.AccessToken,
 		Client:         res.Client,
 		Rand:           random.CreateChildRand(w.RootRand),
 	}
@@ -281,7 +279,6 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		State:             ChairStateInactive,
 		WorkTime:          args.WorkTime,
 		RegisteredData:    registeredData,
-		AccessToken:       res.AccessToken,
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(args.Provider.Rand),
 		notificationQueue: make(chan NotificationEvent, 500),

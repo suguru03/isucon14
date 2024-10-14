@@ -34,8 +34,6 @@ type User struct {
 
 	// RegisteredData サーバーに登録されているユーザー情報
 	RegisteredData RegisteredUserData
-	// AccessToken サーバーアクセストークン
-	AccessToken string
 	// PaymentToken 支払いトークン
 	PaymentToken string
 	// RequestHistory リクエスト履歴

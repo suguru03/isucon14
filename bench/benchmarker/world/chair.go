@@ -49,8 +49,6 @@ type Chair struct {
 
 	// RegisteredData サーバーに登録されている椅子情報
 	RegisteredData RegisteredChairData
-	// AccessToken サーバーアクセストークン
-	AccessToken string
 	// NotificationConn 通知ストリームコネクション
 	NotificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
