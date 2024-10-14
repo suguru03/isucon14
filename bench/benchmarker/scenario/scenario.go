@@ -44,21 +44,20 @@ type Scenario struct {
 	reporter         benchrun.Reporter
 	meter            metric.Meter
 
-	requestQueue         chan string // あんまり考えて導入してないです
 	completedRequestChan chan *world.Request
 }
 
 func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
-	requestQueue := make(chan string, 1000)
 	completedRequestChan := make(chan *world.Request, 1000)
-	w := world.NewWorld(30*time.Millisecond, completedRequestChan)
-	worldClient := worldclient.NewWorldClient(context.Background(), w, webapp.ClientConfig{
+	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
 		TargetAddr:            addr,
 		ClientIdleConnTimeout: 10 * time.Second,
 		ContestantLogger:      contestantLogger,
-	}, requestQueue, contestantLogger)
-	worldCtx := world.NewContext(w, worldClient)
+	}, contestantLogger)
+	w := world.NewWorld(30*time.Millisecond, completedRequestChan, worldClient)
+
+	worldCtx := world.NewContext(w)
 
 	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 5)
 	go func() {
@@ -151,7 +150,6 @@ func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, 
 		reporter:         reporter,
 		meter:            meter,
 
-		requestQueue:         requestQueue,
 		completedRequestChan: completedRequestChan,
 	}
 }

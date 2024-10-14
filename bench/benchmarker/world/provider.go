@@ -24,13 +24,13 @@ type Provider struct {
 
 	// RegisteredData サーバーに登録されているプロバイダー情報
 	RegisteredData RegisteredProviderData
-	// AccessToken サーバーアクセストークン
-	AccessToken string
 
+	// Client webappへのクライアント
+	Client ProviderClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
-	tickDone atomic.Bool
+	tickDone tickDone
 }
 
 type RegisteredProviderData struct {
@@ -46,17 +46,13 @@ func (p *Provider) SetID(id ProviderID) {
 }
 
 func (p *Provider) Tick(ctx *Context) error {
-	if !p.tickDone.CompareAndSwap(true, false) {
+	if p.tickDone.DoOrSkip() {
 		return nil
 	}
-	defer func() {
-		if !p.tickDone.CompareAndSwap(false, true) {
-			panic("2重でProviderのTickが終了した")
-		}
-	}()
+	defer p.tickDone.Done()
 
 	if ctx.world.Time%LengthOfHour == LengthOfHour-1 {
-		_, err := ctx.client.GetProviderSales(ctx, p)
+		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 		}

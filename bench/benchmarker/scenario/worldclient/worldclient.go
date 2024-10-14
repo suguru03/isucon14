@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"go.uber.org/zap"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
@@ -13,225 +12,36 @@ import (
 )
 
 type userClient struct {
-	sseContext context.Context
-	client     *webapp.Client
+	ctx              context.Context
+	client           *webapp.Client
+	contestantLogger *zap.Logger
 }
 
 type providerClient struct {
-	sseContext context.Context
-	client     *webapp.Client
+	ctx                context.Context
+	client             *webapp.Client
+	contestantLogger   *zap.Logger
+	webappClientConfig webapp.ClientConfig
 }
 
 type chairClient struct {
-	sseContext context.Context
-	client     *webapp.Client
+	ctx              context.Context
+	client           *webapp.Client
+	contestantLogger *zap.Logger
 }
 
 type WorldClient struct {
 	ctx                context.Context
 	webappClientConfig webapp.ClientConfig
-	world              *world.World
-	requestQueue       chan string
 	contestantLogger   *zap.Logger
-	userClients        *concurrent.SimpleMap[string, *userClient]
-	providerClients    *concurrent.SimpleMap[string, *providerClient]
-	chairClients       *concurrent.SimpleMap[string, *chairClient]
 }
 
-func NewWorldClient(ctx context.Context, w *world.World, webappClientConfig webapp.ClientConfig, requestQueue chan string, contestantLogger *zap.Logger) *WorldClient {
+func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig, contestantLogger *zap.Logger) *WorldClient {
 	return &WorldClient{
 		ctx:                ctx,
-		world:              w,
 		webappClientConfig: webappClientConfig,
-		requestQueue:       requestQueue,
 		contestantLogger:   contestantLogger,
-		userClients:        concurrent.NewSimpleMap[string, *userClient](),
-		providerClients:    concurrent.NewSimpleMap[string, *providerClient](),
-		chairClients:       concurrent.NewSimpleMap[string, *chairClient](),
 	}
-}
-
-func (c *WorldClient) getUserClient(userServerID string) (*userClient, error) {
-	userClient, ok := c.userClients.Get(userServerID)
-	if !ok {
-		return nil, CodeError(ErrorCodeNotFoundUserClient)
-	}
-	return userClient, nil
-}
-
-func (c *WorldClient) getProviderClient(providerServerID string) (*providerClient, error) {
-	providerClient, ok := c.providerClients.Get(providerServerID)
-	if !ok {
-		return nil, CodeError(ErrorCodeNotFoundProviderClient)
-	}
-	return providerClient, nil
-}
-
-func (c *WorldClient) getChairClient(chairServerID string) (*chairClient, error) {
-	chairClient, ok := c.chairClients.Get(chairServerID)
-	if !ok {
-		return nil, CodeError(ErrorCodeNotFoundChairClient)
-	}
-	return chairClient, nil
-}
-
-func (c *WorldClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) error {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return err
-	}
-	_, err = chairClient.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
-		Latitude:  chair.Current.X,
-		Longitude: chair.Current.Y,
-	})
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return err
-	}
-	_, err = chairClient.client.ChairPostRequestAccept(c.ctx, req.ServerID)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, serverRequestID string) error {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return err
-	}
-
-	_, err = chairClient.client.ChairPostRequestDeny(c.ctx, serverRequestID)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendDepart(ctx *world.Context, req *world.Request) error {
-	chairClient, err := c.getChairClient(req.Chair.ServerID)
-	if err != nil {
-		return err
-	}
-
-	_, err = chairClient.client.ChairPostRequestDepart(c.ctx, req.ServerID)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) error {
-	userClient, err := c.getUserClient(req.User.ServerID)
-	if err != nil {
-		return err
-	}
-
-	_, err = userClient.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
-		Evaluation: score,
-	})
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendCreateRequest(ctx *world.Context, req *world.Request) (*world.SendCreateRequestResponse, error) {
-	userClient, err := c.getUserClient(req.User.ServerID)
-	if err != nil {
-		return nil, err
-	}
-
-	pickup := req.PickupPoint
-	destination := req.DestinationPoint
-	response, err := userClient.client.AppPostRequest(c.ctx, &api.AppPostRequestReq{
-		PickupCoordinate: api.Coordinate{
-			Latitude:  pickup.X,
-			Longitude: pickup.Y,
-		},
-		DestinationCoordinate: api.Coordinate{
-			Latitude:  destination.X,
-			Longitude: destination.Y,
-		},
-	})
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToPostRequest, err)
-	}
-
-	// TODO webapp側から通知してもらうようにする
-	c.requestQueue <- response.RequestID
-
-	return &world.SendCreateRequestResponse{ServerRequestID: response.RequestID}, nil
-}
-
-func (c *WorldClient) SendActivate(ctx *world.Context, chair *world.Chair) error {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return err
-	}
-
-	_, err = chairClient.client.ChairPostActivate(c.ctx)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) SendDeactivate(ctx *world.Context, chair *world.Chair) error {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return err
-	}
-
-	_, err = chairClient.client.ChairPostDeactivate(c.ctx)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
-	}
-
-	return nil
-}
-
-func (c *WorldClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, serverRequestID string) (*world.GetRequestByChairResponse, error) {
-	chairClient, err := c.getChairClient(chair.ServerID)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = chairClient.client.ChairGetRequest(c.ctx, serverRequestID)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetChairRequest, err)
-	}
-
-	// TODO: GetRequestByChairResponse の中身入れる
-	return &world.GetRequestByChairResponse{}, nil
-}
-
-func (c *WorldClient) GetProviderSales(ctx *world.Context, provider *world.Provider) (*world.GetProviderSalesResponse, error) {
-	providerClient, err := c.getProviderClient(provider.ServerID)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: ちゃんと実装する
-	_, err = providerClient.client.ProviderGetSales(c.ctx, &api.ProviderGetSalesParams{})
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
-	}
-
-	return &world.GetProviderSalesResponse{}, nil
 }
 
 func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserRequest) (*world.RegisterUserResponse, error) {
@@ -254,13 +64,14 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.userClients.Set(response.ID, &userClient{
-		client: client,
-	})
-
 	return &world.RegisterUserResponse{
 		ServerUserID: response.ID,
 		AccessToken:  response.AccessToken,
+		Client: &userClient{
+			ctx:              c.ctx,
+			client:           client,
+			contestantLogger: c.contestantLogger,
+		},
 	}, nil
 }
 
@@ -281,23 +92,30 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.providerClients.Set(response.ID, &providerClient{
-		client: client,
-	})
-
 	return &world.RegisterProviderResponse{
 		ServerProviderID: response.ID,
 		AccessToken:      response.AccessToken,
+		Client: &providerClient{
+			ctx:                c.ctx,
+			client:             client,
+			contestantLogger:   c.contestantLogger,
+			webappClientConfig: c.webappClientConfig,
+		},
 	}, nil
 }
 
-func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
-	providerClient, err := c.getProviderClient(provider.ServerID)
+func (c *providerClient) GetProviderSales(ctx *world.Context, provider *world.Provider) (*world.GetProviderSalesResponse, error) {
+	// TODO: ちゃんと実装する
+	_, err := c.client.ProviderGetSales(c.ctx, &api.ProviderGetSalesParams{})
 	if err != nil {
-		return nil, err
+		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 	}
 
-	response, err := providerClient.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
+	return &world.GetProviderSalesResponse{}, nil
+}
+
+func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+	response, err := c.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
 		Name:  data.Name,
 		Model: data.Model,
 	})
@@ -314,57 +132,195 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
 	})
 
-	c.chairClients.Set(response.ID, &chairClient{
-		client: client,
-	})
-
 	return &world.RegisterChairResponse{
 		ServerUserID: response.ID,
 		AccessToken:  response.AccessToken,
+		Client: &chairClient{
+			ctx:              c.ctx,
+			client:           client,
+			contestantLogger: c.contestantLogger,
+		},
 	}, nil
 }
 
-func (c *WorldClient) RegisterPaymentMethods(ctx *world.Context, user *world.User) error {
-	userClient, err := c.getUserClient(user.ServerID)
+func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) error {
+	_, err := c.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
+		Latitude:  chair.Current.X,
+		Longitude: chair.Current.Y,
+	})
 	if err != nil {
-		return err
+		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	_, err = userClient.client.AppPostPaymentMethods(c.ctx, &api.AppPostPaymentMethodsReq{Token: user.PaymentToken})
+	return nil
+}
+
+func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
+	_, err := c.client.ChairPostRequestAccept(c.ctx, req.ServerID)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
+	}
+
+	return nil
+}
+
+func (c *chairClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, serverRequestID string) error {
+	_, err := c.client.ChairPostRequestDeny(c.ctx, serverRequestID)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
+	}
+
+	return nil
+}
+
+func (c *chairClient) SendDepart(ctx *world.Context, req *world.Request) error {
+	_, err := c.client.ChairPostRequestDepart(c.ctx, req.ServerID)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
+	}
+
+	return nil
+}
+
+func (c *chairClient) SendActivate(ctx *world.Context, chair *world.Chair) error {
+	_, err := c.client.ChairPostActivate(c.ctx)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
+	}
+
+	return nil
+}
+
+func (c *chairClient) SendDeactivate(ctx *world.Context, chair *world.Chair) error {
+	_, err := c.client.ChairPostDeactivate(c.ctx)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
+	}
+
+	return nil
+}
+
+func (c *chairClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, serverRequestID string) (*world.GetRequestByChairResponse, error) {
+	_, err := c.client.ChairGetRequest(c.ctx, serverRequestID)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToGetChairRequest, err)
+	}
+
+	// TODO: GetRequestByChairResponse の中身入れる
+	return &world.GetRequestByChairResponse{}, nil
+}
+
+func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	sseContext, cancel := context.WithCancel(c.ctx)
+	go func() {
+		//c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
+		for {
+			select {
+			case <-sseContext.Done():
+				//c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
+				return
+			default:
+			}
+
+			res, result, err := c.client.ChairGetNotification(sseContext)
+			if err != nil {
+				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				return
+			}
+			for receivedRequest := range res {
+				var event world.NotificationEvent
+				// TODO: 意図しない通知の種類の減点
+				switch receivedRequest.Status.Value {
+				case api.RequestStatusMATCHING:
+					event = &world.ChairNotificationEventMatched{
+						ServerRequestID: receivedRequest.RequestID,
+					}
+				case api.RequestStatusDISPATCHING:
+					// event = &world.ChairNotificationEventDispatching{}
+				case api.RequestStatusDISPATCHED:
+					// event = &world.ChairNotificationEventDispatched{}
+				case api.RequestStatusCARRYING:
+					// event = &world.ChairNotificationEventCarrying{}
+				case api.RequestStatusARRIVED:
+					// event = &world.ChairNotificationEventArrived{}
+				case api.RequestStatusCOMPLETED:
+					event = &world.ChairNotificationEventCompleted{
+						ServerRequestID: receivedRequest.RequestID,
+					}
+				case api.RequestStatusCANCELED:
+					// event = &world.ChairNotificationEventCanceled{}
+				}
+				if event == nil {
+					// c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
+					continue
+				}
+				receiver(event)
+			}
+
+			if err := result(); err != nil {
+				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				return
+			}
+		}
+	}()
+
+	return &notificationConnectionImpl{
+		close: cancel,
+	}, nil
+}
+
+func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) error {
+	_, err := c.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
+		Evaluation: score,
+	})
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
+	}
+
+	return nil
+}
+
+func (c *userClient) SendCreateRequest(ctx *world.Context, req *world.Request) (*world.SendCreateRequestResponse, error) {
+	pickup := req.PickupPoint
+	destination := req.DestinationPoint
+	response, err := c.client.AppPostRequest(c.ctx, &api.AppPostRequestReq{
+		PickupCoordinate: api.Coordinate{
+			Latitude:  pickup.X,
+			Longitude: pickup.Y,
+		},
+		DestinationCoordinate: api.Coordinate{
+			Latitude:  destination.X,
+			Longitude: destination.Y,
+		},
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostRequest, err)
+	}
+
+	return &world.SendCreateRequestResponse{ServerRequestID: response.RequestID}, nil
+}
+
+func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User) error {
+	_, err := c.client.AppPostPaymentMethods(c.ctx, &api.AppPostPaymentMethodsReq{Token: user.PaymentToken})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostPaymentMethods, err)
 	}
 	return nil
 }
 
-type notificationConnectionImpl struct {
-	close func()
-}
-
-func (c *notificationConnectionImpl) Close() {
-	c.close()
-}
-
-func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	newCtx, cancel := context.WithCancel(c.ctx)
-	u, _ := c.userClients.Get(user.ServerID)
-	u.sseContext = newCtx
+func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
+	sseContext, cancel := context.WithCancel(c.ctx)
 	go func() {
 		//c.contestantLogger.Info("User notification stream started", zap.String("user_id", user.ServerID))
-		userClient, err := c.getUserClient(user.ServerID)
-		if err != nil {
-			return
-		}
-
 		for {
 			select {
-			case <-userClient.sseContext.Done():
+			case <-sseContext.Done():
 				//c.contestantLogger.Info("User notification stream closed", zap.String("user_id", user.ServerID))
 				return
 			default:
 			}
 
-			res, result, err := userClient.client.AppGetNotification(userClient.sseContext)
+			res, result, err := c.client.AppGetNotification(sseContext)
 			if err != nil {
 				// TODO: 減点
 				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
@@ -418,68 +374,10 @@ func (c *WorldClient) ConnectUserNotificationStream(ctx *world.Context, user *wo
 	}, nil
 }
 
-func (c *WorldClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
-	newCtx, cancel := context.WithCancel(c.ctx)
-	cc, _ := c.chairClients.Get(chair.ServerID)
-	cc.sseContext = newCtx
-	go func() {
-		//c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
-		chairClient, err := c.getChairClient(chair.ServerID)
-		if err != nil {
-			return
-		}
+type notificationConnectionImpl struct {
+	close func()
+}
 
-		for {
-			select {
-			case <-chairClient.sseContext.Done():
-				//c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
-				return
-			default:
-			}
-
-			res, result, err := chairClient.client.ChairGetNotification(chairClient.sseContext)
-			if err != nil {
-				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
-				return
-			}
-			for receivedRequest := range res {
-				var event world.NotificationEvent
-				// TODO: 意図しない通知の種類の減点
-				switch receivedRequest.Status.Value {
-				case api.RequestStatusMATCHING:
-					event = &world.ChairNotificationEventMatched{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusDISPATCHING:
-					// event = &world.ChairNotificationEventDispatching{}
-				case api.RequestStatusDISPATCHED:
-					// event = &world.ChairNotificationEventDispatched{}
-				case api.RequestStatusCARRYING:
-					// event = &world.ChairNotificationEventCarrying{}
-				case api.RequestStatusARRIVED:
-					// event = &world.ChairNotificationEventArrived{}
-				case api.RequestStatusCOMPLETED:
-					event = &world.ChairNotificationEventCompleted{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusCANCELED:
-					// event = &world.ChairNotificationEventCanceled{}
-				}
-				if event == nil {
-					// c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
-					continue
-				}
-				receiver(event)
-			}
-
-			if err := result(); err != nil {
-				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
-				return
-			}
-		}
-	}()
-
-	return &notificationConnectionImpl{
-		close: cancel,
-	}, nil
+func (c *notificationConnectionImpl) Close() {
+	c.close()
 }

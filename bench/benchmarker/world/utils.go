@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"golang.org/x/exp/constraints"
 )
@@ -55,4 +56,18 @@ func UnwrapMultiError(err error) ([]error, bool) {
 		return errors.Unwrap(), true
 	}
 	return nil, false
+}
+
+type tickDone struct {
+	f atomic.Bool
+}
+
+func (t *tickDone) DoOrSkip() (skip bool) {
+	return !t.f.CompareAndSwap(false, true)
+}
+
+func (t *tickDone) Done() {
+	if !t.f.CompareAndSwap(true, false) {
+		panic("2重でDoneした")
+	}
 }

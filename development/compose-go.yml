@@ -13,6 +13,7 @@ services:
   db:
     image: mysql:8
     environment:
+      ENV: local-dev
       MYSQL_ROOT_PASSWORD: isucon
       MYSQL_DATABASE: isucon
     ports:

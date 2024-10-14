@@ -159,19 +159,19 @@ func (s *FastServerStub) GetProviderSales(ctx *Context, provider *Provider) (*Ge
 
 func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {
 	time.Sleep(s.latency)
-	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String()}, nil
+	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String(), Client: s}, nil
 }
 
 func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error) {
 	time.Sleep(s.latency)
-	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: ulid.Make().String()}, nil
+	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: ulid.Make().String(), Client: s}, nil
 }
 
 func (s *FastServerStub) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
 	time.Sleep(s.latency)
 	c := &chairState{ServerID: ulid.Make().String(), Active: false}
 	s.chairDB.Set(c.ServerID, c)
-	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID}, nil
+	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID, Client: s}, nil
 }
 
 func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {
@@ -242,7 +242,6 @@ func (s *FastServerStub) SendEventLoop() {
 func TestWorld(t *testing.T) {
 	var (
 		completedRequestChan = make(chan *Request, 1000)
-		world                = NewWorld(30*time.Millisecond, completedRequestChan)
 		client               = &FastServerStub{
 			t:                            t,
 			chairDB:                      concurrent.NewSimpleMap[string, *chairState](),
@@ -254,9 +253,9 @@ func TestWorld(t *testing.T) {
 			chairNotificationReceiverMap: concurrent.NewSimpleMap[string, NotificationReceiverFunc](),
 			eventQueue:                   make(chan *eventEntry, 1000),
 		}
-		ctx = &Context{
-			world:  world,
-			client: client,
+		world = NewWorld(30*time.Millisecond, completedRequestChan, client)
+		ctx   = &Context{
+			world: world,
 		}
 	)
 

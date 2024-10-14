@@ -3,6 +3,10 @@
 set -eux
 cd $(dirname $0)
 
+if [ "${ENV:-}" == "local-dev" ]; then
+  exit 0
+fi
+
 if test -f /home/isucon/env.sh; then
 	. /home/isucon/env.sh
 fi
