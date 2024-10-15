@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.uber.org/zap"
 )
 
 // Scenario はシナリオを表す構造体
@@ -36,7 +36,7 @@ type Scenario struct {
 	target           string
 	addr             string
 	paymentURL       string
-	contestantLogger *zap.Logger
+	contestantLogger *slog.Logger
 	world            *world.World
 	worldCtx         *world.Context
 	paymentServer    *payment.Server
@@ -47,15 +47,14 @@ type Scenario struct {
 	completedRequestChan chan *world.Request
 }
 
-func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
+func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
 	completedRequestChan := make(chan *world.Request, 1000)
 	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
 		TargetAddr:            addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-		ContestantLogger:      contestantLogger,
-	}, contestantLogger)
-	w := world.NewWorld(30*time.Millisecond, completedRequestChan, worldClient)
+	})
+	w := world.NewWorld(30*time.Millisecond, completedRequestChan, worldClient, logger)
 
 	worldCtx := world.NewContext(w)
 
@@ -131,7 +130,6 @@ func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, 
 		for req := range completedRequestChan {
 			eval := req.CalculateEvaluation()
 			intervals := req.Intervals()
-			contestantLogger.Info("request completed", zap.Stringer("request", req), zap.Stringer("eval", eval))
 			requestsRecorder.Add(context.Background(), 1, metric.WithAttributes(attribute.Int("score", eval.Score()), attribute.Bool("matching", eval.Matching), attribute.Bool("dispatch", eval.Dispatch), attribute.Bool("pickup", eval.Pickup), attribute.Bool("drive", eval.Drive)))
 			matchingLatency.Record(context.Background(), intervals[0])
 			dispatchingLatency.Record(context.Background(), intervals[1])
@@ -143,7 +141,7 @@ func NewScenario(target, addr, paymentURL string, contestantLogger *zap.Logger, 
 		target:           target,
 		addr:             addr,
 		paymentURL:       paymentURL,
-		contestantLogger: contestantLogger,
+		contestantLogger: logger,
 		world:            w,
 		worldCtx:         worldCtx,
 		paymentServer:    paymentServer,
@@ -160,7 +158,6 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		TargetBaseURL:         s.target,
 		TargetAddr:            s.addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-		ContestantLogger:      s.contestantLogger,
 	})
 	if err != nil {
 		return err
@@ -233,16 +230,12 @@ LOOP:
 		default:
 			err := s.world.Tick(s.worldCtx)
 			if err != nil {
-				s.contestantLogger.Error("critical error", zap.Error(err))
+				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
 				return err
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				s.contestantLogger.Info("tick",
-					zap.Int64("ticks", s.world.Time),
-					zap.Int("timeouts", s.world.TimeoutTickCount),
-					zap.Float64("timeouts(%)", float64(s.world.TimeoutTickCount)/float64(s.world.Time)*100),
-				)
+				s.contestantLogger.Info("仮想世界の時間が60分経過しました", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
 			}
 		}
 	}
@@ -253,28 +246,30 @@ LOOP:
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
 	for _, region := range s.world.Regions {
-		s.contestantLogger.Info("final region result",
-			zap.String("region", region.Name),
-			zap.Int("users", region.UsersDB.Len()),
-			zap.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
-			zap.Int("score", region.UserSatisfactionScore()),
+		s.contestantLogger.Info("最終Region情報",
+			slog.String("region", region.Name),
+			slog.Int("users", region.UsersDB.Len()),
+			slog.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
 		)
 	}
 	for id, provider := range s.world.ProviderDB.Iter() {
-		s.contestantLogger.Info("final provider result",
-			zap.Int("id", int(id)),
-			zap.String("region", provider.Region.Name),
-			zap.Int64("total_sales", provider.TotalSales.Load()),
-			zap.Int("chairs", provider.ChairDB.Len()),
-			zap.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Current.Within(provider.Region) })),
+		s.contestantLogger.Info("最終Provider情報",
+			slog.Int("id", int(id)),
+			slog.Int64("total_sales", provider.TotalSales.Load()),
+			slog.Int("chairs", provider.ChairDB.Len()),
+			slog.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Current.Within(provider.Region) })),
 		)
 	}
-	s.contestantLogger.Info("error counts", zap.Any("errors", s.world.ErrorCounter.Count()))
+	s.contestantLogger.Info("種別エラー発生数", slog.Any("errors", s.world.ErrorCounter.Count()))
 	return sendResult(s, true, true)
 }
 
+func (s *Scenario) Score() int64 {
+	return lo.SumBy(s.world.ProviderDB.ToSlice(), func(p *world.Provider) int64 { return p.TotalSales.Load() })
+}
+
 func sendResult(s *Scenario, finished bool, passed bool) error {
-	rawScore := lo.SumBy(s.world.ProviderDB.ToSlice(), func(p *world.Provider) int64 { return p.TotalSales.Load() })
+	rawScore := s.Score()
 	if err := s.reporter.Report(&resources.BenchmarkResult{
 		Finished: finished,
 		Passed:   passed,

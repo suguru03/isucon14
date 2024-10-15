@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"go.uber.org/zap"
-
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
@@ -30,8 +28,7 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.Provider
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /provider/register のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /provider/register のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusCreated {
@@ -62,8 +59,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.ProviderGetSa
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /provider/sales のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("GET /provider/sales のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {

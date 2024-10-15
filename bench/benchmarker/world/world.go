@@ -1,6 +1,7 @@
 package world
 
 import (
+	"log/slog"
 	"math"
 	"math/rand/v2"
 	"sync/atomic"
@@ -54,11 +55,14 @@ type World struct {
 	chairIncreaseSales int64
 	increasingChairs   atomic.Int64
 
+	// contestantLogger 競技者向けに出力されるロガー
+	contestantLogger *slog.Logger
+
 	// TimeoutTickCount タイムアウトしたTickの累計数
 	TimeoutTickCount int
 }
 
-func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, client WorldClient) *World {
+func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, client WorldClient, contestantLogger *slog.Logger) *World {
 	return &World{
 		Regions: []*Region{
 			NewRegion("A", 0, 0, 100, 100),
@@ -78,6 +82,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 		criticalErrorCh:      make(chan error),
 		userIncrease:         5,
 		chairIncreaseSales:   10000,
+		contestantLogger:     contestantLogger,
 	}
 }
 
@@ -86,15 +91,18 @@ func (w *World) Tick(ctx *Context) error {
 		// 前回タイムアウトしなかったら地域毎に増加させる
 		for _, region := range w.Regions {
 			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
-			for range increase {
-				w.waitingTickCount.Add(1)
-				go func() {
-					defer w.waitingTickCount.Add(-1)
-					_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
-					if err != nil {
-						w.handleTickError(err)
-					}
-				}()
+			if increase > 0 {
+				w.contestantLogger.Info("RegionにUserが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
+				for range increase {
+					w.waitingTickCount.Add(1)
+					go func() {
+						defer w.waitingTickCount.Add(-1)
+						_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
+						if err != nil {
+							w.handleTickError(err)
+						}
+					}()
+				}
 			}
 		}
 	}
@@ -102,6 +110,7 @@ func (w *World) Tick(ctx *Context) error {
 	for _, p := range w.ProviderDB.Iter() {
 		increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10 - w.increasingChairs.Load()
 		if increase > 0 {
+			w.contestantLogger.Info("ProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
 			w.increasingChairs.Add(increase)
 			for range increase {
 				w.waitingTickCount.Add(1)
@@ -297,6 +306,7 @@ func (w *World) handleTickError(err error) {
 		_ = w.ErrorCounter.Add(err)
 		w.criticalErrorCh <- err
 	} else {
+		w.contestantLogger.Error("エラーが発生しました", slog.String("error", err.Error()))
 		if err2 := w.ErrorCounter.Add(err); err2 != nil {
 			w.criticalErrorCh <- err2
 		}

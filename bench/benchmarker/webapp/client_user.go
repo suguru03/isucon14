@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
@@ -33,8 +31,7 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegist
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /app/register のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /app/register のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusCreated {
@@ -66,8 +63,7 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequest
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /app/requests のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /app/requests のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusAccepted {
@@ -94,8 +90,7 @@ func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppR
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /app/requests/{request_id} のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("GET /app/requests/{request_id} のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -127,8 +122,7 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /app/requests/{request_id}/evaluate のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /app/requests/{request_id}/evaluate のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -156,8 +150,7 @@ func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppReque
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /app/notifications のリクエストが失敗しました", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("GET /app/notifications のリクエストが失敗しました: %w", err)
 	}
 
 	resultErr := new(error)
@@ -242,8 +235,7 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /app/payment-methods のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /app/payment-methods のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {

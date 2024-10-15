@@ -4,43 +4,36 @@ import (
 	"context"
 	"net/http"
 
-	"go.uber.org/zap"
-
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
 )
 
 type userClient struct {
-	ctx              context.Context
-	client           *webapp.Client
-	contestantLogger *zap.Logger
+	ctx    context.Context
+	client *webapp.Client
 }
 
 type providerClient struct {
 	ctx                context.Context
 	client             *webapp.Client
-	contestantLogger   *zap.Logger
 	webappClientConfig webapp.ClientConfig
 }
 
 type chairClient struct {
-	ctx              context.Context
-	client           *webapp.Client
-	contestantLogger *zap.Logger
+	ctx    context.Context
+	client *webapp.Client
 }
 
 type WorldClient struct {
 	ctx                context.Context
 	webappClientConfig webapp.ClientConfig
-	contestantLogger   *zap.Logger
 }
 
-func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig, contestantLogger *zap.Logger) *WorldClient {
+func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig) *WorldClient {
 	return &WorldClient{
 		ctx:                ctx,
 		webappClientConfig: webappClientConfig,
-		contestantLogger:   contestantLogger,
 	}
 }
 
@@ -68,9 +61,8 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		ServerUserID: response.ID,
 		AccessToken:  response.AccessToken,
 		Client: &userClient{
-			ctx:              c.ctx,
-			client:           client,
-			contestantLogger: c.contestantLogger,
+			ctx:    c.ctx,
+			client: client,
 		},
 	}, nil
 }
@@ -98,7 +90,6 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		Client: &providerClient{
 			ctx:                c.ctx,
 			client:             client,
-			contestantLogger:   c.contestantLogger,
 			webappClientConfig: c.webappClientConfig,
 		},
 	}, nil
@@ -136,9 +127,8 @@ func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provi
 		ServerUserID: response.ID,
 		AccessToken:  response.AccessToken,
 		Client: &chairClient{
-			ctx:              c.ctx,
-			client:           client,
-			contestantLogger: c.contestantLogger,
+			ctx:    c.ctx,
+			client: client,
 		},
 	}, nil
 }
@@ -224,7 +214,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 
 			res, result, err := c.client.ChairGetNotification(sseContext)
 			if err != nil {
-				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				//c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
 				return
 			}
 			for receivedRequest := range res {
@@ -258,7 +248,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 			}
 
 			if err := result(); err != nil {
-				c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
+				//c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
 				return
 			}
 		}
@@ -323,8 +313,8 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 			res, result, err := c.client.AppGetNotification(sseContext)
 			if err != nil {
 				// TODO: 減点
-				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
-				continue
+				//c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
+				return
 			}
 			for receivedRequest := range res {
 				var event world.NotificationEvent
@@ -363,8 +353,8 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 			}
 
 			if err := result(); err != nil {
-				c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
-				continue
+				//c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
+				return
 			}
 		}
 	}()

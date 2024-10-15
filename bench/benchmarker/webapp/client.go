@@ -7,14 +7,10 @@ import (
 	"time"
 
 	"github.com/isucon/isucandar/agent"
-	"go.uber.org/zap"
 )
 
 type Client struct {
-	agent *agent.Agent
-
-	contestantLogger *zap.Logger
-
+	agent            *agent.Agent
 	requestModifiers []func(*http.Request)
 }
 
@@ -22,7 +18,6 @@ type ClientConfig struct {
 	TargetBaseURL         string
 	TargetAddr            string
 	ClientIdleConnTimeout time.Duration
-	ContestantLogger      *zap.Logger
 }
 
 func NewClient(config ClientConfig) (*Client, error) {
@@ -48,8 +43,7 @@ func NewClient(config ClientConfig) (*Client, error) {
 	}
 
 	return &Client{
-		agent:            ag,
-		contestantLogger: config.ContestantLogger,
+		agent: ag,
 	}, nil
 }
 

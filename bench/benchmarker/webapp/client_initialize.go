@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
-	"go.uber.org/zap"
 )
 
 type PostInitializeResponse struct {
@@ -29,7 +28,6 @@ func (c *Client) PostInitialize(ctx context.Context, reqBody *api.PostInitialize
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /api/initialize のリクエストが失敗しました", zap.Error(err))
 		return nil, fmt.Errorf("POST /api/initialize のリクエストが失敗しました: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {

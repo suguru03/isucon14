@@ -2,7 +2,7 @@ package world
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand/v2"
 	"slices"
 
@@ -249,7 +249,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				// 先に通知コネクションを繋いでおく
 				conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
 					if !concurrent.TrySend(c.notificationQueue, event) {
-						log.Printf("通知受け取りチャンネルが詰まってる: chair server id: %s", c.ServerID)
+						slog.Error("通知受け取りチャンネルが詰まってる", slog.String("chair_server_id", c.ServerID))
 						c.notificationQueue <- event
 					}
 				})
