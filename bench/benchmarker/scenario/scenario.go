@@ -245,6 +245,12 @@ LOOP:
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	payments := s.world.PaymentDB.TotalPayment()
+	sales := s.Score()
+	if payments != sales {
+		s.contestantLogger.Error("決済サーバーの決済額とRideRequestの売り上げが一致していません", slog.Int64("diff(payments-sales)", payments-sales))
+	}
+
 	for _, region := range s.world.Regions {
 		s.contestantLogger.Info("最終Region情報",
 			slog.String("region", region.Name),
