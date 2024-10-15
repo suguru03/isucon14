@@ -3,13 +3,21 @@ package world
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"sync"
+)
+
+const (
+	ErrorLimit = 200
 )
 
 type ErrorCode int
 
 const (
+	// ErrorCodeUnknown 不明なエラー
+	ErrorCodeUnknown ErrorCode = iota
 	// ErrorCodeFailedToSendChairCoordinate 椅子の座標送信リクエストが失敗した
-	ErrorCodeFailedToSendChairCoordinate ErrorCode = iota + 1
+	ErrorCodeFailedToSendChairCoordinate
 	// ErrorCodeFailedToDepart 椅子が出発しようとしたが、departリクエストが失敗した
 	ErrorCodeFailedToDepart
 	// ErrorCodeFailedToAcceptRequest 椅子がリクエストを受理しようとしたが失敗した
@@ -97,9 +105,48 @@ func CodeError(code ErrorCode) error {
 }
 
 func IsCriticalError(err error) bool {
+	return CriticalErrorCodes[GetErrorCode(err)]
+}
+
+func GetErrorCode(err error) ErrorCode {
 	var t *codeError
 	if errors.As(err, &t) {
-		return CriticalErrorCodes[t.code]
+		return t.code
 	}
-	return false
+	return ErrorCodeUnknown
+}
+
+type ErrorCounter struct {
+	counter map[ErrorCode]int
+	total   int
+	m       sync.Mutex
+}
+
+func NewErrorCounter() *ErrorCounter {
+	return &ErrorCounter{
+		counter: make(map[ErrorCode]int),
+	}
+}
+
+func (c *ErrorCounter) Add(err error) error {
+	c.m.Lock()
+	defer c.m.Unlock()
+	c.total++
+	c.counter[GetErrorCode(err)]++
+	if c.total > ErrorLimit {
+		return errors.New("発生しているエラーが多すぎます")
+	}
+	return nil
+}
+
+func (c *ErrorCounter) Total() int {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return c.total
+}
+
+func (c *ErrorCounter) Count() map[ErrorCode]int {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return maps.Clone(c.counter)
 }

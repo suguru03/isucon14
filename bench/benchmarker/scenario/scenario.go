@@ -269,6 +269,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			zap.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Current.Within(provider.Region) })),
 		)
 	}
+	s.contestantLogger.Info("error counts", zap.Any("errors", s.world.ErrorCounter.Count()))
 	return sendResult(s, true, true)
 }
 

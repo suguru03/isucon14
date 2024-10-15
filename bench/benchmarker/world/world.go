@@ -1,7 +1,6 @@
 package world
 
 import (
-	"log"
 	"math"
 	"math/rand/v2"
 	"sync/atomic"
@@ -43,6 +42,8 @@ type World struct {
 	RootRand *rand.Rand
 	// CompletedRequestChan 完了したリクエストのチャンネル
 	CompletedRequestChan chan *Request
+	// ErrorCounter エラーカウンター
+	ErrorCounter *ErrorCounter
 
 	tickTimeout        time.Duration
 	timeoutTicker      *time.Ticker
@@ -71,6 +72,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 		Client:               client,
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
+		ErrorCounter:         NewErrorCounter(),
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
@@ -90,7 +92,7 @@ func (w *World) Tick(ctx *Context) error {
 					defer w.waitingTickCount.Add(-1)
 					_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
 					if err != nil {
-						w.HandleTickError(ctx, err)
+						w.handleTickError(err)
 					}
 				}()
 			}
@@ -114,7 +116,7 @@ func (w *World) Tick(ctx *Context) error {
 						WorkTime:          NewInterval(0, ConvertHour(2000)),
 					})
 					if err != nil {
-						w.HandleTickError(ctx, err)
+						w.handleTickError(err)
 					}
 				}()
 			}
@@ -127,7 +129,7 @@ func (w *World) Tick(ctx *Context) error {
 			defer w.waitingTickCount.Add(-1)
 			err := c.Tick(ctx)
 			if err != nil {
-				w.HandleTickError(ctx, err)
+				w.handleTickError(err)
 			}
 		}()
 	}
@@ -137,7 +139,7 @@ func (w *World) Tick(ctx *Context) error {
 			defer w.waitingTickCount.Add(-1)
 			err := u.Tick(ctx)
 			if err != nil {
-				w.HandleTickError(ctx, err)
+				w.handleTickError(err)
 			}
 		}()
 	}
@@ -147,7 +149,7 @@ func (w *World) Tick(ctx *Context) error {
 			defer w.waitingTickCount.Add(-1)
 			err := p.Tick(ctx)
 			if err != nil {
-				w.HandleTickError(ctx, err)
+				w.handleTickError(err)
 			}
 		}()
 	}
@@ -286,21 +288,18 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	return result, nil
 }
 
-func (w *World) HandleTickError(ctx *Context, err error) {
+func (w *World) handleTickError(err error) {
 	if errs, ok := UnwrapMultiError(err); ok {
 		for _, err2 := range errs {
-			if IsCriticalError(err2) {
-				w.criticalErrorCh <- err2
-			} else {
-				// TODO: エラーペナルティ
-				log.Println(err2)
-			}
+			w.handleTickError(err2)
 		}
 	} else if IsCriticalError(err) {
+		_ = w.ErrorCounter.Add(err)
 		w.criticalErrorCh <- err
 	} else {
-		// TODO: エラーペナルティ
-		log.Println(err)
+		if err2 := w.ErrorCounter.Add(err); err2 != nil {
+			w.criticalErrorCh <- err2
+		}
 	}
 }
 
