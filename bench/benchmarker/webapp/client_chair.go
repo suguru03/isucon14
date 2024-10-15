@@ -301,26 +301,3 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 			return *resultErr
 		}, nil
 }
-
-func (c *Client) ChairPostRequestPayment(ctx context.Context, requestID string) (*api.ChairPostRequestPaymentNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/chair/requests/%s/payment", requestID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("POST /chair/requests/{requestID}/payment のリクエストが失敗しました: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /chair/requests/{requestID}/payment へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
-	}
-
-	resBody := &api.ChairPostRequestPaymentNoContent{}
-	return resBody, nil
-}

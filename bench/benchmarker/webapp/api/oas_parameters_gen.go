@@ -38,12 +38,6 @@ type ChairPostRequestDepartParams struct {
 	RequestID string
 }
 
-// ChairPostRequestPaymentParams is parameters of chair-post-request-payment operation.
-type ChairPostRequestPaymentParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
 // ProviderGetSalesParams is parameters of provider-get-sales operation.
 type ProviderGetSalesParams struct {
 	// 開始日（含む）.
