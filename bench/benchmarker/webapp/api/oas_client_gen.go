@@ -106,12 +106,6 @@ type Invoker interface {
 	//
 	// POST /chair/requests/{request_id}/depart
 	ChairPostRequestDepart(ctx context.Context, params ChairPostRequestDepartParams) (ChairPostRequestDepartRes, error)
-	// ChairPostRequestPayment invokes chair-post-request-payment operation.
-	//
-	// 支払いを実行する.
-	//
-	// POST /chair/requests/{request_id}/payment
-	ChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (ChairPostRequestPaymentRes, error)
 	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
@@ -845,61 +839,6 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 	defer resp.Body.Close()
 
 	result, err := decodeChairPostRequestDepartResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ChairPostRequestPayment invokes chair-post-request-payment operation.
-//
-// 支払いを実行する.
-//
-// POST /chair/requests/{request_id}/payment
-func (c *Client) ChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (ChairPostRequestPaymentRes, error) {
-	res, err := c.sendChairPostRequestPayment(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendChairPostRequestPayment(ctx context.Context, params ChairPostRequestPaymentParams) (res ChairPostRequestPaymentRes, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/chair/requests/"
-	{
-		// Encode "request_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "request_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.RequestID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/payment"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeChairPostRequestPaymentResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

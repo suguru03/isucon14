@@ -403,19 +403,6 @@ type ChairPostRequestDepartNotFound Error
 
 func (*ChairPostRequestDepartNotFound) chairPostRequestDepartRes() {}
 
-type ChairPostRequestPaymentBadRequest Error
-
-func (*ChairPostRequestPaymentBadRequest) chairPostRequestPaymentRes() {}
-
-// ChairPostRequestPaymentNoContent is response for ChairPostRequestPayment operation.
-type ChairPostRequestPaymentNoContent struct{}
-
-func (*ChairPostRequestPaymentNoContent) chairPostRequestPaymentRes() {}
-
-type ChairPostRequestPaymentNotFound Error
-
-func (*ChairPostRequestPaymentNotFound) chairPostRequestPaymentRes() {}
-
 // Chair向け配車要求情報.
 // Ref: #/components/schemas/ChairRequest
 type ChairRequest struct {

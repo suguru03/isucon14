@@ -106,7 +106,6 @@ func setup() http.Handler {
 		authedMux2.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
 		authedMux2.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
 		authedMux2.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
-		authedMux2.HandleFunc("POST /chair/requests/{request_id}/payment", chairPostRequestPayment)
 	}
 
 	return mux

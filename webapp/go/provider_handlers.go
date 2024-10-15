@@ -87,7 +87,7 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		chairSales := calculateSales(reqs)
+		chairSales := sumSales(reqs)
 		res.TotalSales += chairSales
 
 		res.Chairs = append(res.Chairs, ChairSales{
@@ -117,12 +117,16 @@ const (
 	farePerDistance = 100
 )
 
-func calculateSales(requests []RideRequest) int {
+func sumSales(requests []RideRequest) int {
 	sale := 0
 	for _, req := range requests {
-		latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
-		lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
-		sale += initialFare + farePerDistance*(latDiff+lonDiff)
+		sale += calculateSale(req)
 	}
 	return sale
+}
+
+func calculateSale(req RideRequest) int {
+	latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
+	lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
+	return initialFare + farePerDistance*(latDiff+lonDiff)
 }

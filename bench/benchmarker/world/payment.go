@@ -3,6 +3,7 @@ package world
 import (
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/payment"
+	"github.com/samber/lo"
 )
 
 type PaymentDB struct {
@@ -27,4 +28,8 @@ func (db *PaymentDB) Verify(p *payment.Payment) payment.Status {
 	}
 	db.CommittedPayments.Append(p)
 	return payment.StatusSuccess
+}
+
+func (db *PaymentDB) TotalPayment() int64 {
+	return lo.SumBy(db.CommittedPayments.ToSlice(), func(p *payment.Payment) int64 { return int64(p.Amount) })
 }
