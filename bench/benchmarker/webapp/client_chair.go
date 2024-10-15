@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
@@ -33,8 +31,7 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/register のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/register のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusCreated {
@@ -61,8 +58,7 @@ func (c *Client) ChairPostActivate(ctx context.Context) (*api.ChairPostActivateN
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/activate のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/activate のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -85,8 +81,7 @@ func (c *Client) ChairPostDeactivate(ctx context.Context) (*api.ChairPostDeactiv
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/deactivate のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/deactivate のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -114,8 +109,7 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/coordinate のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/coordinate のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -138,8 +132,7 @@ func (c *Client) ChairGetRequest(ctx context.Context, requestID string) (*api.Ch
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /chair/requests/{requestID} のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("GET /chair/requests/{requestID} のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -166,8 +159,7 @@ func (c *Client) ChairPostRequestAccept(ctx context.Context, requestID string) (
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/requests/{requestID}/accept のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/accept のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -190,8 +182,7 @@ func (c *Client) ChairPostRequestDeny(ctx context.Context, requestID string) (*a
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/requests/{requestID}/deny のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/deny のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -214,8 +205,7 @@ func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/requests/{requestID}/depart のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/depart のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
@@ -243,8 +233,7 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		c.contestantLogger.Warn("GET /chair/notifications のリクエストが失敗しました", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("GET /chair/notifications のリクエストが失敗しました: %w", err)
 	}
 
 	resultErr := new(error)
@@ -325,8 +314,7 @@ func (c *Client) ChairPostRequestPayment(ctx context.Context, requestID string) 
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		c.contestantLogger.Warn("POST /chair/requests/{requestID}/payment のリクエストが失敗しました", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("POST /chair/requests/{requestID}/payment のリクエストが失敗しました: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
