@@ -161,7 +161,7 @@ func (u *User) Tick(ctx *Context) error {
 			// 通知コネクションが無い場合は繋いでおく
 			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
 				if !concurrent.TrySend(u.notificationQueue, event) {
-					slog.Error("通知受け取りチャンネルが詰まってる: user server id: %s", u.ServerID)
+					slog.Error("通知受け取りチャンネルが詰まってる", slog.String("user_server_id", u.ServerID))
 					u.notificationQueue <- event
 				}
 			})
