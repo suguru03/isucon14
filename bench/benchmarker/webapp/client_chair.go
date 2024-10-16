@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"iter"
 	"net/http"
 	"strings"
@@ -34,10 +33,7 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/register のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("POST /chair/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
@@ -65,10 +61,7 @@ func (c *Client) ChairPostActivate(ctx context.Context) (*api.ChairPostActivateN
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/activate のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/activate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -92,10 +85,7 @@ func (c *Client) ChairPostDeactivate(ctx context.Context) (*api.ChairPostDeactiv
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/deactivate のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/deactivate へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -124,10 +114,7 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/coordinate のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/coordinate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -151,10 +138,7 @@ func (c *Client) ChairGetRequest(ctx context.Context, requestID string) (*api.Ch
 	if err != nil {
 		return nil, fmt.Errorf("GET /chair/requests/{requestID} のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET /chair/requests/{requestID} へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
@@ -182,10 +166,7 @@ func (c *Client) ChairPostRequestAccept(ctx context.Context, requestID string) (
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/accept のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/accept へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -209,10 +190,7 @@ func (c *Client) ChairPostRequestDeny(ctx context.Context, requestID string) (*a
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/deny のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/deny へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -236,10 +214,7 @@ func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (
 	if err != nil {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/depart のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("POST /chair/requests/{requestID}/depart へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
@@ -274,19 +249,16 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		scanner := bufio.NewScanner(resp.Body)
 		return func(yield func(ok *api.ChairRequest) bool) {
+				defer closeBody(resp)
 				for scanner.Scan() {
 					request := &api.ChairRequest{}
 					line := scanner.Text()
 					if strings.HasPrefix(line, "data:") {
 						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
 							resultErr = &err
-							io.Copy(io.Discard, resp.Body)
-							resp.Body.Close()
 							return
 						}
 						if !yield(request) {
-							io.Copy(io.Discard, resp.Body)
-							resp.Body.Close()
 							return
 						}
 					}
@@ -296,10 +268,7 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 			}, nil
 	}
 
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	request := &api.ChairRequest{}
 	if resp.StatusCode == http.StatusOK {

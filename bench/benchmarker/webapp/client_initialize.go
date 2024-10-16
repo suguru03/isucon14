@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
@@ -30,10 +29,7 @@ func (c *Client) PostInitialize(ctx context.Context, reqBody *api.PostInitialize
 	if err != nil {
 		return nil, fmt.Errorf("POST /api/initialize のリクエストが失敗しました: %w", err)
 	}
-	defer func() {
-    io.Copy(io.Discard, resp.Body)
-    resp.Body.Close()
-	}()
+	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("POST /api/initialize へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
