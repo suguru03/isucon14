@@ -993,68 +993,6 @@ export const useChairPostRequestDepart = (
   });
 };
 
-export type ChairPostRequestPaymentPathParams = {
-  /**
-   * 配車要求ID
-   */
-  requestId: string;
-};
-
-export type ChairPostRequestPaymentError = Fetcher.ErrorWrapper<
-  | {
-      status: 400;
-      payload: Schemas.Error;
-    }
-  | {
-      status: 404;
-      payload: Schemas.Error;
-    }
->;
-
-export type ChairPostRequestPaymentVariables = {
-  pathParams: ChairPostRequestPaymentPathParams;
-} & ApiContext["fetcherOptions"];
-
-export const fetchChairPostRequestPayment = (
-  variables: ChairPostRequestPaymentVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    undefined,
-    ChairPostRequestPaymentError,
-    undefined,
-    {},
-    {},
-    ChairPostRequestPaymentPathParams
-  >({
-    url: "/chair/requests/{requestId}/payment",
-    method: "post",
-    ...variables,
-    signal,
-  });
-
-export const useChairPostRequestPayment = (
-  options?: Omit<
-    reactQuery.UseMutationOptions<
-      undefined,
-      ChairPostRequestPaymentError,
-      ChairPostRequestPaymentVariables
-    >,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<
-    undefined,
-    ChairPostRequestPaymentError,
-    ChairPostRequestPaymentVariables
-  >({
-    mutationFn: (variables: ChairPostRequestPaymentVariables) =>
-      fetchChairPostRequestPayment({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
 export type ChairGetNotificationError = Fetcher.ErrorWrapper<undefined>;
 
 export type ChairGetNotificationVariables = ApiContext["fetcherOptions"];
