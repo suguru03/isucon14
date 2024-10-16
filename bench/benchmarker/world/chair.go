@@ -100,6 +100,8 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 
+	moved := false
+
 	switch {
 	// 進行中のリクエストが存在
 	case c.Request != nil:
@@ -140,6 +142,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusDispatching:
 			// 配椅子位置に向かう
 			c.moveToward(c.Request.PickupPoint)
+			moved = true
 			if c.Current.Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
@@ -169,6 +172,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusCarrying:
 			// 目的地に向かう
 			c.moveToward(c.Request.DestinationPoint)
+			moved = true
 			if c.Current.Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
@@ -231,17 +235,10 @@ func (c *Chair) Tick(ctx *Context) error {
 			// 通知コネクションを切断
 			c.NotificationConn.Close()
 			c.NotificationConn = nil
-		} else {
-			// ランダムに徘徊する
-			c.moveRandom()
 		}
 
 	// 未稼働
 	case c.State == ChairStateInactive:
-		// TODO 動かし方調整
-		// 退勤時の座標と出勤時の座標を変えておきたいためにある程度動かしておく
-		c.moveRandom()
-
 		if c.WorkTime.Include(ctx.world.TimeOfDay) {
 			// 稼働時刻になっているので出勤する
 
@@ -266,13 +263,14 @@ func (c *Chair) Tick(ctx *Context) error {
 
 			// 出勤
 			c.State = ChairStateActive
+			moved = true
 
 			// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 		}
 	}
 
-	if c.State == ChairStateActive {
-		// 稼働中なら自身の座標をサーバーに送信
+	if c.State == ChairStateActive && moved {
+		// 稼働中かつ動いた場合に自身の座標をサーバーに送信
 		err := c.Client.SendChairCoordinate(ctx, c)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
