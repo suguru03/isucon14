@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "remix vite:dev",
+    "dev": "API_BASE_URL=/api remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "preview": "vite preview",
-    "start": "pnpm run build && pnpm run preview",
+    "start": "pnpm run build && API_BASE_URL=/api pnpm run preview",
     "typecheck": "tsc",
     "fmtcheck": "prettier ./*.{cjs,ts,js} ./app --check",
     "fmt": "prettier ./*.{cjs,ts,js} ./app --write",

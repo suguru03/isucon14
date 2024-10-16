@@ -1,3 +1,4 @@
+import { alternativeAPIURLString, alternativeURLExpression } from './api-url.mjs';
 import {
   generateSchemaTypes,
   generateReactQueryComponents,
@@ -7,6 +8,7 @@ import { writeFile, readdir, readFile } from "fs/promises";
 import {join as pathJoin} from "path";
 
 const outputDir = "./app/apiClient";
+
 export default defineConfig({
   isucon: {
     from: {
@@ -29,11 +31,7 @@ export default defineConfig({
         throw Error("he servers.url must have only one entry.");
       }
 
-      const targetBaseURL = targetBaseCandidateURLs[0];
-
       const filenamePrefix = "API";
-      const placeholderTextForAPIURL = "API_BASE_URL_A9fXkLz8YmNp";
-      const alternativeAPIBaseURL = `process.env.API_BASE_URL || "${targetBaseURL}"`
       const contextServers = context.openAPIDocument.servers;
       /**
        * 後で、任意のコードに置き換えるためにAPIのbaseURLをユニーク文字列に置き換える
@@ -42,7 +40,7 @@ export default defineConfig({
         (serverObject) => {
           return {
             ...serverObject,
-            url: placeholderTextForAPIURL,
+            url: alternativeAPIURLString,
           };
         },
       );
@@ -53,16 +51,18 @@ export default defineConfig({
         filenamePrefix,
         schemasFiles,
       });
-      await rewriteFileInTargetDir(outputDir, (content) => {
-        return content.replace(`"${placeholderTextForAPIURL}"`, alternativeAPIBaseURL);
-      })
+
+      /**
+       * viteのdefineで探索可能にする
+       */
+      await rewriteFileInTargetDir(outputDir, (content) => content.replace(`"${alternativeAPIURLString}"`, alternativeURLExpression))
       
       /**
        * SSE通信などでは、自動生成のfetcherを利用しないため
        */
       await writeFile(
         `${outputDir}/${filenamePrefix}BaseURL.ts`,
-        `export const apiBaseURL = ${alternativeAPIBaseURL};\n`,
+        `export const apiBaseURL = ${alternativeURLExpression};\n`,
       );
     },
   },
@@ -91,6 +91,8 @@ async function rewriteFileInTargetDir(
         }
       }
     } catch (err) {
-    console.error(`CONSOLE ERROR: ${err}`);
+      if (typeof err === "string") {
+        console.error(`CONSOLE ERROR: ${err}`);
+      }
   }
 }
