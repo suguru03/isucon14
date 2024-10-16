@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -49,4 +50,11 @@ func NewClient(config ClientConfig) (*Client, error) {
 
 func (c *Client) AddRequestModifier(modifier func(*http.Request)) {
 	c.requestModifiers = append(c.requestModifiers, modifier)
+}
+
+func closeBody(resp *http.Response) {
+	if resp.Body != nil {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}
 }
