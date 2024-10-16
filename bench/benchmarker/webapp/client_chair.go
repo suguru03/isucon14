@@ -224,10 +224,14 @@ func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (
 	return resBody, nil
 }
 
-func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairRequest], func() error, error) {
+func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairRequest, error] {
+	return c.chairGetNotification(ctx, false)
+}
+
+func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.ChairRequest, error] {
 	req, err := c.agent.NewRequest(http.MethodGet, "/chair/notification", nil)
 	if err != nil {
-		return nil, nil, err
+		return func(yield func(*api.ChairRequest, error) bool) { yield(nil, err) }
 	}
 
 	for _, modifier := range c.requestModifiers {
@@ -239,72 +243,65 @@ func (c *Client) ChairGetNotification(ctx context.Context) (iter.Seq[*api.ChairR
 		Timeout:   60 * time.Second,
 	}
 
-	resp, err := httpClient.Do(req)
+	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return nil, nil, fmt.Errorf("GET /chair/notifications のリクエストが失敗しました: %w", err)
+		return func(yield func(*api.ChairRequest, error) bool) {
+			yield(nil, fmt.Errorf("GET /chair/notifications のリクエストが失敗しました: %w", err))
+		}
 	}
 
-	resultErr := new(error)
-
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
-		scanner := bufio.NewScanner(resp.Body)
-		return func(yield func(ok *api.ChairRequest) bool) {
-				defer closeBody(resp)
-				for scanner.Scan() {
-					request := &api.ChairRequest{}
-					line := scanner.Text()
-					if strings.HasPrefix(line, "data:") {
-						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
-							resultErr = &err
-							return
-						}
-						if !yield(request) {
-							return
-						}
+		return func(yield func(*api.ChairRequest, error) bool) {
+			defer closeBody(resp)
+
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				request := &api.ChairRequest{}
+				line := scanner.Text()
+				if strings.HasPrefix(line, "data:") {
+					err := json.Unmarshal([]byte(line[5:]), request)
+					if !yield(request, err) || err != nil {
+						return
 					}
 				}
-			}, func() error {
-				return *resultErr
-			}, nil
+			}
+		}
 	}
 
 	defer closeBody(resp)
-
 	request := &api.ChairRequest{}
 	if resp.StatusCode == http.StatusOK {
-		decoder := json.NewDecoder(resp.Body)
-		if err := decoder.Decode(request); err != nil {
-			return nil, nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
+			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 		}
 	} else if resp.StatusCode != http.StatusNoContent {
-		return nil, nil, fmt.Errorf("GET /chair/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+		err = fmt.Errorf("GET /chair/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
 	}
 
-	return func(yield func(ok *api.ChairRequest) bool) {
-			if !yield(request) || ctx.Value("nested") != nil {
+	if nested {
+		return func(yield func(*api.ChairRequest, error) bool) { yield(request, err) }
+	} else {
+		return func(yield func(*api.ChairRequest, error) bool) {
+			if !yield(request, err) {
 				return
 			}
 
 			for {
-				// TODO: tickを拾ってくる
-				time.Sleep(30 * time.Millisecond)
-				notifications, result, err := c.ChairGetNotification(context.WithValue(ctx, "nested", true))
-				if err != nil {
-					resultErr = &err
+				select {
+				// こちらから切断
+				case <-ctx.Done():
 					return
-				}
 
-				for notification := range notifications {
-					if !yield(notification) {
-						return
+				default:
+					// TODO: tickを拾ってくる
+					time.Sleep(30 * time.Millisecond)
+					for notification, err := range c.chairGetNotification(ctx, true) {
+						if !yield(notification, err) {
+							return
+						}
 					}
 				}
-				if err := result(); err != nil {
-					resultErr = &err
-					return
-				}
 			}
-		}, func() error {
-			return *resultErr
-		}, nil
+		}
+	}
 }
