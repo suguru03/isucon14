@@ -2,6 +2,8 @@ package worldclient
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
@@ -202,55 +204,43 @@ func (c *chairClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, 
 
 func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
+
 	go func() {
-		//c.contestantLogger.Info("Chair notification stream started", zap.String("chair_id", chair.ServerID))
-		for {
-			select {
-			case <-sseContext.Done():
-				//c.contestantLogger.Info("Chair notification stream closed", zap.String("chair_id", chair.ServerID))
-				return
-			default:
-			}
-
-			res, result, err := c.client.ChairGetNotification(sseContext)
+		for r, err := range c.client.ChairGetNotification(sseContext) {
 			if err != nil {
-				//c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
-				return
-			}
-			for receivedRequest := range res {
-				var event world.NotificationEvent
-				// TODO: 意図しない通知の種類の減点
-				switch receivedRequest.Status.Value {
-				case api.RequestStatusMATCHING:
-					event = &world.ChairNotificationEventMatched{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusDISPATCHING:
-					// event = &world.ChairNotificationEventDispatching{}
-				case api.RequestStatusDISPATCHED:
-					// event = &world.ChairNotificationEventDispatched{}
-				case api.RequestStatusCARRYING:
-					// event = &world.ChairNotificationEventCarrying{}
-				case api.RequestStatusARRIVED:
-					// event = &world.ChairNotificationEventArrived{}
-				case api.RequestStatusCOMPLETED:
-					event = &world.ChairNotificationEventCompleted{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusCANCELED:
-					// event = &world.ChairNotificationEventCanceled{}
+				if !errors.Is(err, context.Canceled) {
+					// TODO ロギング
+					slog.Debug(err.Error())
 				}
-				if event == nil {
-					// c.contestantLogger.Warn("Unexpected chair notification", zap.Any("request", receivedRequest))
-					continue
-				}
-				receiver(event)
+				continue
 			}
 
-			if err := result(); err != nil {
-				//c.contestantLogger.Error("Failed to receive chair notifications", zap.Error(err))
-				return
+			var event world.NotificationEvent
+			switch r.Status.Value {
+			case api.RequestStatusMATCHING:
+				event = &world.ChairNotificationEventMatched{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusDISPATCHING:
+				// event = &world.ChairNotificationEventDispatching{}
+			case api.RequestStatusDISPATCHED:
+				// event = &world.ChairNotificationEventDispatched{}
+			case api.RequestStatusCARRYING:
+				// event = &world.ChairNotificationEventCarrying{}
+			case api.RequestStatusARRIVED:
+				// event = &world.ChairNotificationEventArrived{}
+			case api.RequestStatusCOMPLETED:
+				event = &world.ChairNotificationEventCompleted{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusCANCELED:
+				// event = &world.ChairNotificationEventCanceled{}
 			}
+			if event == nil {
+				// TODO: 意図しない通知の種類の減点
+				continue
+			}
+			receiver(event)
 		}
 	}()
 
@@ -300,62 +290,49 @@ func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User
 
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
+
 	go func() {
-		//c.contestantLogger.Info("User notification stream started", zap.String("user_id", user.ServerID))
-		for {
-			select {
-			case <-sseContext.Done():
-				//c.contestantLogger.Info("User notification stream closed", zap.String("user_id", user.ServerID))
-				return
-			default:
-			}
-
-			res, result, err := c.client.AppGetNotification(sseContext)
+		for r, err := range c.client.AppGetNotification(sseContext) {
 			if err != nil {
-				// TODO: 減点
-				//c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
-				return
-			}
-			for receivedRequest := range res {
-				var event world.NotificationEvent
-				// TODO: 意図しない通知の種類の減点
-				switch receivedRequest.Status {
-				case api.RequestStatusMATCHING:
-					// event = &world.UserNotificationEventMatching{}
-				case api.RequestStatusDISPATCHING:
-					event = &world.UserNotificationEventDispatching{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusDISPATCHED:
-					event = &world.UserNotificationEventDispatched{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusCARRYING:
-					event = &world.UserNotificationEventCarrying{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusARRIVED:
-					event = &world.UserNotificationEventArrived{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusCOMPLETED:
-					event = &world.UserNotificationEventCompleted{
-						ServerRequestID: receivedRequest.RequestID,
-					}
-				case api.RequestStatusCANCELED:
-					// event = &world.UserNotificationEventCanceled{}
+				if !errors.Is(err, context.Canceled) {
+					// TODO ロギング
+					slog.Debug(err.Error())
 				}
-				if event == nil {
-					// c.contestantLogger.Warn("Unexpected user notification", zap.Any("request", receivedRequest))
-					continue
-				}
-				receiver(event)
+				continue
 			}
 
-			if err := result(); err != nil {
-				//c.contestantLogger.Error("Failed to receive app notifications", zap.Error(err))
-				return
+			var event world.NotificationEvent
+			switch r.Status {
+			case api.RequestStatusMATCHING:
+				// event = &world.UserNotificationEventMatching{}
+			case api.RequestStatusDISPATCHING:
+				event = &world.UserNotificationEventDispatching{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusDISPATCHED:
+				event = &world.UserNotificationEventDispatched{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusCARRYING:
+				event = &world.UserNotificationEventCarrying{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusARRIVED:
+				event = &world.UserNotificationEventArrived{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusCOMPLETED:
+				event = &world.UserNotificationEventCompleted{
+					ServerRequestID: r.RequestID,
+				}
+			case api.RequestStatusCANCELED:
+				// event = &world.UserNotificationEventCanceled{}
 			}
+			if event == nil {
+				// TODO: 意図しない通知の種類の減点
+				continue
+			}
+			receiver(event)
 		}
 	}()
 

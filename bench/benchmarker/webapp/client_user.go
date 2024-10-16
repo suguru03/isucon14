@@ -137,90 +137,6 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 	return resBody, nil
 }
 
-func (c *Client) AppGetNotification(ctx context.Context) (iter.Seq[*api.AppRequest], func() error, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, "/app/notification", nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	httpClient := &http.Client{
-		Transport: c.agent.HttpClient.Transport,
-		Timeout:   60 * time.Second,
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, nil, fmt.Errorf("GET /app/notifications のリクエストが失敗しました: %w", err)
-	}
-
-	resultErr := new(error)
-	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
-		scanner := bufio.NewScanner(resp.Body)
-		return func(yield func(ok *api.AppRequest) bool) {
-				defer closeBody(resp)
-				for scanner.Scan() {
-					request := &api.AppRequest{}
-					line := scanner.Text()
-					if strings.HasPrefix(line, "data:") {
-						if err := json.Unmarshal([]byte(line[5:]), request); err != nil {
-							resultErr = &err
-							return
-						}
-						if !yield(request) {
-							return
-						}
-					}
-				}
-			}, func() error {
-				return *resultErr
-			}, nil
-	}
-
-	defer closeBody(resp)
-
-	request := &api.AppRequest{}
-	if resp.StatusCode == http.StatusOK {
-		decoder := json.NewDecoder(resp.Body)
-		if err := decoder.Decode(request); err != nil {
-			return nil, nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
-		}
-	} else if resp.StatusCode != http.StatusNoContent {
-		return nil, nil, fmt.Errorf("GET /app/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
-	}
-
-	return func(yield func(ok *api.AppRequest) bool) {
-			if !yield(request) || ctx.Value("nested") != nil {
-				return
-			}
-
-			for {
-				// TODO: tickを拾ってくる
-				time.Sleep(30 * time.Millisecond)
-				notifications, result, err := c.AppGetNotification(context.WithValue(ctx, "nested", true))
-				if err != nil {
-					resultErr = &err
-					return
-				}
-
-				for notification := range notifications {
-					if !yield(notification) {
-						return
-					}
-				}
-				if err := result(); err != nil {
-					resultErr = &err
-					return
-				}
-			}
-		}, func() error {
-			return *resultErr
-		}, nil
-}
-
 func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPostPaymentMethodsReq) (*api.AppPostPaymentMethodsNoContent, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
@@ -248,4 +164,86 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 
 	resBody := &api.AppPostPaymentMethodsNoContent{}
 	return resBody, nil
+}
+
+func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppRequest, error] {
+	return c.appGetNotification(ctx, false)
+}
+
+func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.AppRequest, error] {
+	req, err := c.agent.NewRequest(http.MethodGet, "/app/notification", nil)
+	if err != nil {
+		return func(yield func(*api.AppRequest, error) bool) { yield(nil, err) }
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
+	httpClient := &http.Client{
+		Transport: c.agent.HttpClient.Transport,
+		Timeout:   60 * time.Second,
+	}
+
+	resp, err := httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return func(yield func(*api.AppRequest, error) bool) {
+			yield(nil, fmt.Errorf("GET /app/notifications のリクエストが失敗しました: %w", err))
+		}
+	}
+
+	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
+		return func(yield func(*api.AppRequest, error) bool) {
+			defer closeBody(resp)
+
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				request := &api.AppRequest{}
+				line := scanner.Text()
+				if strings.HasPrefix(line, "data:") {
+					err := json.Unmarshal([]byte(line[5:]), request)
+					if !yield(request, err) || err != nil {
+						return
+					}
+				}
+			}
+		}
+	}
+
+	defer closeBody(resp)
+	request := &api.AppRequest{}
+	if resp.StatusCode == http.StatusOK {
+		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
+			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		}
+	} else if resp.StatusCode != http.StatusNoContent {
+		err = fmt.Errorf("GET /app/notifications へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+	}
+
+	if nested {
+		return func(yield func(*api.AppRequest, error) bool) { yield(request, err) }
+	} else {
+		return func(yield func(*api.AppRequest, error) bool) {
+			if !yield(request, err) {
+				return
+			}
+
+			for {
+				select {
+				// こちらから切断
+				case <-ctx.Done():
+					return
+
+				default:
+					// TODO: tickを拾ってくる
+					time.Sleep(30 * time.Millisecond)
+					for notification, err := range c.appGetNotification(ctx, true) {
+						if !yield(notification, err) {
+							return
+						}
+					}
+				}
+			}
+		}
+	}
 }
