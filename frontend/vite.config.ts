@@ -123,13 +123,13 @@ export const config = {
     customConsolePlugin,
   ],
   define: {
-    [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "http://localhost:8080"}"`
+    [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "http://localhost:8080"}"`,
   },
   server: {
     proxy: {
       "/api": {
         target: "http://localhost:8080",
-        changeOrigin: true
+        changeOrigin: true,
       },
     },
     host: DEFAULT_HOSTNAME,

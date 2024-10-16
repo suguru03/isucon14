@@ -1,11 +1,14 @@
-import { alternativeAPIURLString, alternativeURLExpression } from './api-url.mjs';
+import {
+  alternativeAPIURLString,
+  alternativeURLExpression,
+} from "./api-url.mjs";
 import {
   generateSchemaTypes,
   generateReactQueryComponents,
 } from "@openapi-codegen/typescript";
 import { defineConfig } from "@openapi-codegen/cli";
 import { writeFile, readdir, readFile } from "fs/promises";
-import {join as pathJoin} from "path";
+import { join as pathJoin } from "path";
 
 const outputDir = "./app/apiClient";
 
@@ -20,7 +23,9 @@ export default defineConfig({
       /**
        * openapi.yamlに定義済みのurl配列
        */
-        const targetBaseCandidateURLs = context.openAPIDocument.servers?.map((server) => server.url);
+      const targetBaseCandidateURLs = context.openAPIDocument.servers?.map(
+        (server) => server.url,
+      );
       if (
         targetBaseCandidateURLs === undefined ||
         targetBaseCandidateURLs.length === 0
@@ -33,17 +38,12 @@ export default defineConfig({
 
       const filenamePrefix = "API";
       const contextServers = context.openAPIDocument.servers;
-      /**
-       * 後で、任意のコードに置き換えるためにAPIのbaseURLをユニーク文字列に置き換える
-       */
-      context.openAPIDocument.servers = contextServers?.map(
-        (serverObject) => {
-          return {
-            ...serverObject,
-            url: alternativeAPIURLString,
-          };
-        },
-      );
+      context.openAPIDocument.servers = contextServers?.map((serverObject) => {
+        return {
+          ...serverObject,
+          url: alternativeAPIURLString,
+        };
+      });
       const { schemasFiles } = await generateSchemaTypes(context, {
         filenamePrefix,
       });
@@ -55,8 +55,13 @@ export default defineConfig({
       /**
        * viteのdefineで探索可能にする
        */
-      await rewriteFileInTargetDir(outputDir, (content) => content.replace(`"${alternativeAPIURLString}"`, alternativeURLExpression))
-      
+      await rewriteFileInTargetDir(outputDir, (content) =>
+        content.replace(
+          `"${alternativeAPIURLString}"`,
+          alternativeURLExpression,
+        ),
+      );
+
       /**
        * SSE通信などでは、自動生成のfetcherを利用しないため
        */
@@ -68,13 +73,12 @@ export default defineConfig({
   },
 });
 
-
 /**
  * 指定されたディレクトリ配下のファイルコンテンツをrewriteFnで置き換える
  */
 async function rewriteFileInTargetDir(
   dirPath: string,
-  rewriteFn: (content: string) => string
+  rewriteFn: (content: string) => string,
 ): Promise<void> {
   try {
     const files = await readdir(dirPath, { withFileTypes: true });
@@ -85,14 +89,14 @@ async function rewriteFileInTargetDir(
         continue;
       }
       if (file.isFile()) {
-        const data = await readFile(filePath, 'utf8');
+        const data = await readFile(filePath, "utf8");
         const rewrittenContent = rewriteFn(data);
         await writeFile(filePath, rewrittenContent);
-        }
       }
-    } catch (err) {
-      if (typeof err === "string") {
-        console.error(`CONSOLE ERROR: ${err}`);
-      }
+    }
+  } catch (err) {
+    if (typeof err === "string") {
+      console.error(`CONSOLE ERROR: ${err}`);
+    }
   }
 }
