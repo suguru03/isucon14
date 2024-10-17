@@ -129,7 +129,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 				if !c.Request.User.Region.Contains(c.Current) {
-					ctx.world.contestantLogger.Warn("Userが居るRegionの外にある椅子がマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Current)))
+					ctx.world.contestantLogger.Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Current)))
 				}
 			} else {
 				err := c.Client.SendDenyRequest(ctx, c, c.Request.ServerID)
