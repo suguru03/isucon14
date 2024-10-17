@@ -92,7 +92,7 @@ func (w *World) Tick(ctx *Context) error {
 		for _, region := range w.Regions {
 			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
 			if increase > 0 {
-				w.contestantLogger.Info("RegionにUserが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
+				w.contestantLogger.Info("Region内の評判を元にUserが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
 				for range increase {
 					w.waitingTickCount.Add(1)
 					go func() {
@@ -110,7 +110,7 @@ func (w *World) Tick(ctx *Context) error {
 	for _, p := range w.ProviderDB.Iter() {
 		increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10 - w.increasingChairs.Load()
 		if increase > 0 {
-			w.contestantLogger.Info("ProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
+			w.contestantLogger.Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
 			w.increasingChairs.Add(increase)
 			for range increase {
 				w.waitingTickCount.Add(1)
