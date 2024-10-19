@@ -10,3 +10,9 @@ var (
 	ChairModelB = &ChairModel{Name: "B", Speed: 3}
 	ChairModelC = &ChairModel{Name: "C", Speed: 5}
 )
+
+var ChairModels = []*ChairModel{
+	ChairModelA,
+	ChairModelB,
+	ChairModelC,
+}

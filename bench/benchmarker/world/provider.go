@@ -34,6 +34,10 @@ type Provider struct {
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
+
+	chairCountPerModel map[*ChairModel]int
+	// createChairTryCount 椅子の追加登録を行った回数(成功したかどうかは問わない)
+	createChairTryCount int
 }
 
 type RegisteredProviderData struct {
@@ -54,21 +58,21 @@ func (p *Provider) Tick(ctx *Context) error {
 	}
 	defer p.tickDone.Done()
 
-	// TODO: 売り上げ取得で売上を確認してから椅子を増やすようにする
 	if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 		}
 	} else {
-		increase := p.TotalSales.Load()/10000 - int64(p.ChairDB.Len()) + 10
-		if increase > 0 {
-			ctx.ContestantLogger().Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
+		// TODO: 売り上げ取得で売上を確認してから椅子を増やすようにする
+		if increase := int(p.TotalSales.Load()/15000) - p.createChairTryCount; increase > 0 {
+			ctx.ContestantLogger().Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
 			for range increase {
+				p.createChairTryCount++
 				_, err := p.World.CreateChair(ctx, &CreateChairArgs{
 					Provider:          p,
 					InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-					Model:             ChairModelA,
+					Model:             ChairModels[(p.createChairTryCount-1)%len(ChairModels)],
 				})
 				if err != nil {
 					return err
@@ -77,4 +81,9 @@ func (p *Provider) Tick(ctx *Context) error {
 		}
 	}
 	return nil
+}
+
+func (p *Provider) AddChair(c *Chair) {
+	p.ChairDB.Set(c.ID, c)
+	p.chairCountPerModel[c.Model]++
 }

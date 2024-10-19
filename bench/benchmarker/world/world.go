@@ -215,13 +215,14 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	}
 
 	p := &Provider{
-		ServerID:       res.ServerProviderID,
-		World:          w,
-		Region:         args.Region,
-		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
-		RegisteredData: registeredData,
-		Client:         res.Client,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:           res.ServerProviderID,
+		World:              w,
+		Region:             args.Region,
+		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
+		RegisteredData:     registeredData,
+		Client:             res.Client,
+		Rand:               random.CreateChildRand(w.RootRand),
+		chairCountPerModel: map[*ChairModel]int{},
 	}
 	return w.ProviderDB.Create(p), nil
 }
@@ -263,7 +264,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	result := w.ChairDB.Create(c)
-	result.Provider.ChairDB.Set(result.ID, c)
+	args.Provider.AddChair(c)
 	return result, nil
 }
 
