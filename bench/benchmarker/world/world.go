@@ -276,7 +276,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		ServerID:          res.ServerUserID,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,
-		Current:           args.InitialCoordinate,
+		Location:          ChairLocation{Initial: args.InitialCoordinate},
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
 		RegisteredData:    registeredData,

@@ -97,7 +97,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 	lo.Must1(meter.Int64ObservableGauge("world.chairs.num", metric.WithDescription("Number of chairs"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
 		for _, p := range w.ProviderDB.Iter() {
 			chairs := p.ChairDB.ToSlice()
-			insideRegion := lo.CountBy(chairs, func(c *world.Chair) bool { return c.Current.Within(p.Region) })
+			insideRegion := lo.CountBy(chairs, func(c *world.Chair) bool { return c.Location.Current().Within(p.Region) })
 			o.Observe(int64(insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", true)))
 			o.Observe(int64(len(chairs)-insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", false)))
 		}
@@ -261,7 +261,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			slog.Int("id", int(id)),
 			slog.Int64("total_sales", provider.TotalSales.Load()),
 			slog.Int("chairs", provider.ChairDB.Len()),
-			slog.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Current.Within(provider.Region) })),
+			slog.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Location.Current().Within(provider.Region) })),
 		)
 	}
 	s.contestantLogger.Info("種別エラー発生数", slog.Any("errors", s.world.ErrorCounter.Count()))

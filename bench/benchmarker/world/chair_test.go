@@ -17,16 +17,16 @@ func TestChair_moveRandom(t *testing.T) {
 		RegionHeight:  100,
 	}
 	c := Chair{
-		Region:  region,
-		Current: C(0, 0),
-		Speed:   13,
-		Rand:    rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
+		Region: region,
+		Speed:  13,
+		Rand:   rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
 	}
-	for range 1000 {
-		prev := c.Current
-		c.moveRandom()
-		assert.Equal(t, c.Speed, prev.DistanceTo(c.Current), "ランダムに動く量は常にSpeedと一致しなければならない")
-		assert.True(t, c.Current.Within(region), "ランダムに動く範囲はリージョン内に収まっている")
+	c.Location.PlaceTo(&LocationEntry{Coord: C(0, 0)})
+	for i := range int64(1000) {
+		prev := c.Location.Current()
+		c.Location.MoveTo(&LocationEntry{Coord: c.moveRandom(), Time: i})
+		assert.Equal(t, c.Speed, prev.DistanceTo(c.Location.Current()), "ランダムに動く量は常にSpeedと一致しなければならない")
+		assert.True(t, c.Location.Current().Within(region), "ランダムに動く範囲はリージョン内に収まっている")
 	}
 }
 
@@ -37,93 +37,93 @@ func TestChair_moveToward(t *testing.T) {
 	}{
 		{
 			chair: &Chair{
-				Current: C(30, 30),
-				Speed:   13,
+				Location: ChairLocation{Initial: C(30, 30)},
+				Speed:    13,
 			},
 			dest: C(30, 30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   13,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    13,
 			},
 			dest: C(30, 30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   13,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    13,
 			},
 			dest: C(-30, 30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   13,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    13,
 			},
 			dest: C(30, -30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   13,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    13,
 			},
 			dest: C(-30, -30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   10,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    10,
 			},
 			dest: C(30, 30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   10,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    10,
 			},
 			dest: C(-30, 30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   10,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    10,
 			},
 			dest: C(30, -30),
 		},
 		{
 			chair: &Chair{
-				Current: C(0, 0),
-				Speed:   10,
+				Location: ChairLocation{Initial: C(0, 0)},
+				Speed:    10,
 			},
 			dest: C(-30, -30),
 		},
 	}
 	for _, tt := range tests {
 		tt.chair.Rand = rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
-		t.Run(fmt.Sprintf("%s->%s,speed:%d", tt.chair.Current, tt.dest, tt.chair.Speed), func(t *testing.T) {
-			initialCurrent := tt.chair.Current
-
+		t.Run(fmt.Sprintf("%s->%s,speed:%d", tt.chair.Location.Initial, tt.dest, tt.chair.Speed), func(t *testing.T) {
 			// 初期位置から目的地までの距離
-			distance := tt.chair.Current.DistanceTo(tt.dest)
+			distance := tt.chair.Location.Initial.DistanceTo(tt.dest)
 			// 到着までにかかるループ数
 			expectedTick := neededTime(distance, tt.chair.Speed)
 
 			t.Logf("distance: %d, expected ticks: %d", distance, expectedTick)
 
 			for range 100 {
-				tt.chair.Current = initialCurrent
-				for range expectedTick {
-					// t.Logf("Current: %s", tt.chair.Current)
-					require.NotEqual(t, tt.dest, tt.chair.Current, "必要なループ数より前に到着している")
+				tt.chair.Location.PlaceTo(&LocationEntry{Coord: tt.chair.Location.Initial, Time: -1})
+				for tick := range int64(expectedTick) {
+					prev := tt.chair.Location.Current()
+					require.NotEqual(t, tt.dest, prev, "必要なループ数より前に到着している")
 
-					prev := tt.chair.Current
-					tt.chair.moveToward(tt.dest)
-					if !tt.dest.Equals(tt.chair.Current) {
-						require.Equal(t, tt.chair.Speed, prev.DistanceTo(tt.chair.Current), "目的地に到着するまでの１ループあたりの移動量は常にSpeedと一致しないといけない")
+					tt.chair.Location.MoveTo(&LocationEntry{
+						Coord: tt.chair.moveToward(tt.dest),
+						Time:  tick,
+					})
+					if !tt.dest.Equals(tt.chair.Location.Current()) {
+						require.Equal(t, tt.chair.Speed, prev.DistanceTo(tt.chair.Location.Current()), "目的地に到着するまでの１ループあたりの移動量は常にSpeedと一致しないといけない")
 					}
 				}
-				require.Equal(t, tt.dest, tt.chair.Current, "想定しているループ数で到着できていない")
+				require.Equal(t, tt.dest, tt.chair.Location.Current(), "想定しているループ数で到着できていない")
 			}
 		})
 	}
