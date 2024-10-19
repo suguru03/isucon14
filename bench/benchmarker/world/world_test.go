@@ -279,7 +279,6 @@ func TestWorld(t *testing.T) {
 			_, err := world.CreateChair(ctx, &CreateChairArgs{
 				Provider:          provider,
 				InitialCoordinate: RandomCoordinateOnRegion(provider.Region),
-				WorkTime:          NewInterval(ConvertHour(0), ConvertHour(24)),
 			})
 			if err != nil {
 				t.Fatal(err)
