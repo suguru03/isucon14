@@ -13,3 +13,15 @@ type EventRequestCompleted struct {
 
 	unimplementedEvent
 }
+
+type EventUserActivated struct {
+	User *User
+
+	unimplementedEvent
+}
+
+type EventUserLeave struct {
+	User *User
+
+	unimplementedEvent
+}

@@ -217,7 +217,8 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
-	result.Region.UsersDB.Set(result.ID, u)
+	args.Region.AddUser(u)
+	w.PublishEvent(&EventUserActivated{User: u})
 	return result, nil
 }
 
@@ -316,5 +317,7 @@ func (w *World) PublishEvent(e Event) {
 	switch data := e.(type) {
 	case *EventRequestCompleted:
 		w.CompletedRequestChan <- data.Request
+	case *EventUserLeave:
+		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
 	}
 }

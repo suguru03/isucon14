@@ -249,7 +249,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 		s.contestantLogger.Info("最終Region情報",
 			slog.String("region", region.Name),
 			slog.Int("users", region.UsersDB.Len()),
-			slog.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
+			slog.Int("active_users", region.ActiveUserNum()),
 		)
 	}
 	for id, provider := range s.world.ProviderDB.Iter() {

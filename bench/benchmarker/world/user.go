@@ -166,11 +166,10 @@ func (u *User) Tick(ctx *Context) error {
 		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
 			// 初回利用で評価1なら離脱
 			// 2回以上利用して平均評価が2以下の場合は離脱
-			u.State = UserStateInactive
-			u.notificationConn.Close()
-			u.notificationConn = nil
-			ctx.ContestantLogger().Warn("RideRequestの評価が悪かったためUserが離脱しました")
-			break
+			if u.Region.UserLeave(u) {
+				break
+			}
+			// Region内の最低ユーザー数を下回るならそのまま残る
 		}
 
 		// リクエストを作成する
@@ -185,6 +184,13 @@ func (u *User) Tick(ctx *Context) error {
 		break
 	}
 	return nil
+}
+
+func (u *User) Deactivate() {
+	u.State = UserStateInactive
+	u.notificationConn.Close()
+	u.notificationConn = nil
+	u.World.PublishEvent(&EventUserLeave{User: u})
 }
 
 func (u *User) CreateRequest(ctx *Context) error {
