@@ -1,5 +1,13 @@
 USE isucon;
 
+create table chair_models
+(
+  name  varchar(30) not null comment '椅子モデル名',
+  speed integer     not null comment '移動速度',
+  primary key (name)
+)
+  comment = '椅子モデルテーブル';
+
 create table chairs
 (
   id           varchar(26)  not null comment '椅子ID',
@@ -21,10 +29,7 @@ create table chair_locations
   latitude   integer     not null comment '経度',
   longitude  integer     not null comment '緯度',
   created_at datetime(6) not null comment '登録日時',
-  primary key (id),
-  constraint chair_locations_chairs_id_fk
-    foreign key (chair_id) references chairs (id)
-      on update cascade on delete cascade
+  primary key (id)
 )
   comment = '椅子の現在位置情報テーブル';
 
@@ -70,11 +75,7 @@ create table ride_requests
   rode_at               datetime(6)                                                                        null comment '乗車日時',
   arrived_at            datetime(6)                                                                        null comment '目的地到着日時',
   updated_at            datetime(6)                                                                        not null comment '状態更新日時',
-  primary key (id),
-  constraint ride_requests_chairs_id_fk
-    foreign key (chair_id) references chairs (id),
-  constraint ride_requests_users_id_fk
-    foreign key (user_id) references users (id)
+  primary key (id)
 )
   comment = '配車/乗車リクエスト情報テーブル';
 

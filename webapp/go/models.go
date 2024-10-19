@@ -33,6 +33,11 @@ type Chair struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
+type ChairModel struct {
+	Name  string `db:"name"`
+	Speed int    `db:"speed"`
+}
+
 type RideRequest struct {
 	ID                   string         `db:"id"`
 	UserID               string         `db:"user_id"`
