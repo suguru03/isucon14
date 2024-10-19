@@ -262,6 +262,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			slog.Int64("total_sales", provider.TotalSales.Load()),
 			slog.Int("chairs", provider.ChairDB.Len()),
 			slog.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Location.Current().Within(provider.Region) })),
+			slog.Int("total_chair_travel_distance", lo.SumBy(provider.ChairDB.ToSlice(), func(c *world.Chair) int { return c.Location.TotalTravelDistance() })),
 		)
 	}
 	s.contestantLogger.Info("種別エラー発生数", slog.Any("errors", s.world.ErrorCounter.Count()))

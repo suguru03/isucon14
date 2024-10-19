@@ -9,3 +9,7 @@ func NewContext(world *World) *Context {
 		world: world,
 	}
 }
+
+func (c *Context) CurrentTime() int64 {
+	return c.world.Time
+}

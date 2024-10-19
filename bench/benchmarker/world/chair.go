@@ -82,7 +82,7 @@ func (c *Chair) Tick(ctx *Context) error {
 	if c.oldRequest != nil {
 		if c.oldRequest.Statuses.Chair == RequestStatusCompleted {
 			// 完了時間を記録
-			c.oldRequest.CompletedAt = ctx.world.Time
+			c.oldRequest.CompletedAt = ctx.CurrentTime()
 			ctx.world.CompletedRequestChan <- c.oldRequest
 			c.oldRequest = nil
 		} else {
@@ -120,7 +120,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Statuses.Desired = RequestStatusDispatching
 				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Location.Current())
-				c.Request.MatchedAt = ctx.world.Time
+				c.Request.MatchedAt = ctx.CurrentTime()
 
 				c.Request.Statuses.Unlock()
 
@@ -143,13 +143,13 @@ func (c *Chair) Tick(ctx *Context) error {
 			// 配椅子位置に向かう
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.PickupPoint),
-				Time:  ctx.world.Time,
+				Time:  ctx.CurrentTime(),
 			})
 			if c.Location.Current().Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
 				c.Request.Statuses.Chair = RequestStatusDispatched
-				c.Request.DispatchedAt = ctx.world.Time
+				c.Request.DispatchedAt = ctx.CurrentTime()
 			}
 
 		case RequestStatusDispatched:
@@ -169,19 +169,19 @@ func (c *Chair) Tick(ctx *Context) error {
 			// サーバーがdepartを受理したので出発する
 			c.Request.Statuses.Desired = RequestStatusCarrying
 			c.Request.Statuses.Chair = RequestStatusCarrying
-			c.Request.PickedUpAt = ctx.world.Time
+			c.Request.PickedUpAt = ctx.CurrentTime()
 
 		case RequestStatusCarrying:
 			// 目的地に向かう
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.DestinationPoint),
-				Time:  ctx.world.Time,
+				Time:  ctx.CurrentTime(),
 			})
 			if c.Location.Current().Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
 				c.Request.Statuses.Chair = RequestStatusArrived
-				c.Request.ArrivedAt = ctx.world.Time
+				c.Request.ArrivedAt = ctx.CurrentTime()
 				break
 			}
 
@@ -257,7 +257,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		// 出勤
 		c.Location.PlaceTo(&LocationEntry{
 			Coord: c.Location.Initial,
-			Time:  ctx.world.Time,
+			Time:  ctx.CurrentTime(),
 		})
 		c.State = ChairStateActive
 

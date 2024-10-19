@@ -129,7 +129,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 
 				// サーバーが評価を受理したので完了状態になるのを待機する
-				u.Request.CompletedAt = ctx.world.Time
+				u.Request.CompletedAt = ctx.CurrentTime()
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
 				if requests := len(u.RequestHistory); requests == 1 {
@@ -200,7 +200,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 		User:             u,
 		PickupPoint:      pickup,
 		DestinationPoint: dest,
-		RequestedAt:      ctx.world.Time,
+		RequestedAt:      ctx.CurrentTime(),
 		Statuses: RequestStatuses{
 			Desired: RequestStatusMatching,
 			Chair:   RequestStatusMatching,

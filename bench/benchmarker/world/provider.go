@@ -51,7 +51,7 @@ func (p *Provider) Tick(ctx *Context) error {
 	}
 	defer p.tickDone.Done()
 
-	if ctx.world.Time%LengthOfHour == LengthOfHour-1 {
+	if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
