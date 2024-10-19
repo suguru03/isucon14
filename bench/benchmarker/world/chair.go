@@ -126,15 +126,16 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusDispatching:
 			// 配椅子位置に向かう
+			time := ctx.CurrentTime()
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.PickupPoint),
-				Time:  ctx.CurrentTime(),
+				Time:  time,
 			})
 			if c.Location.Current().Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
 				c.Request.Statuses.Chair = RequestStatusDispatched
-				c.Request.DispatchedAt = ctx.CurrentTime()
+				c.Request.DispatchedAt = time
 			}
 
 		case RequestStatusDispatched:
@@ -158,15 +159,16 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusCarrying:
 			// 目的地に向かう
+			time := ctx.CurrentTime()
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.DestinationPoint),
-				Time:  ctx.CurrentTime(),
+				Time:  time,
 			})
 			if c.Location.Current().Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
 				c.Request.Statuses.Chair = RequestStatusArrived
-				c.Request.ArrivedAt = ctx.CurrentTime()
+				c.Request.ArrivedAt = time
 				break
 			}
 
