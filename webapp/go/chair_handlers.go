@@ -157,7 +157,8 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 	if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
 		matchRequest := &RideRequest{}
-		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
+		// TODO: いい感じに椅子とユーザーをマッチングさせる
+		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY requested_at LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -244,7 +245,8 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 
 				if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
 					matchRequest := &RideRequest{}
-					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY RAND() LIMIT 1 FOR UPDATE`); err != nil {
+					// TODO: いい感じに椅子とユーザーをマッチングさせる
+					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY requested_at LIMIT 1 FOR UPDATE`); err != nil {
 						if errors.Is(err, sql.ErrNoRows) {
 							return nil
 						}
