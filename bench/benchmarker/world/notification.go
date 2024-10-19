@@ -49,9 +49,3 @@ type UserNotificationEventCompleted struct {
 
 	unimplementedNotificationEvent
 }
-
-type UserNotificationEventCanceled struct {
-	ServerRequestID string
-
-	unimplementedNotificationEvent
-}

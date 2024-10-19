@@ -173,8 +173,6 @@ func (s RequestStatus) Validate() error {
 		return nil
 	case "COMPLETED":
 		return nil
-	case "CANCELED":
-		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}

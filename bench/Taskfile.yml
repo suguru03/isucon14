@@ -16,3 +16,6 @@ tasks:
   image-build:
     cmds:
       - ko build -L .
+  gen:
+    cmds:
+      - go generate ./...

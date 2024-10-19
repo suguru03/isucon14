@@ -2999,8 +2999,6 @@ func (s *RequestStatus) Decode(d *jx.Decoder) error {
 		*s = RequestStatusARRIVED
 	case RequestStatusCOMPLETED:
 		*s = RequestStatusCOMPLETED
-	case RequestStatusCANCELED:
-		*s = RequestStatusCANCELED
 	default:
 		*s = RequestStatus(v)
 	}
