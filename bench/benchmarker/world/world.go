@@ -23,8 +23,6 @@ const (
 type World struct {
 	// Time 仮想世界開始からの経過時間
 	Time int64
-	// TimeOfDay 仮想世界の1日の時刻
-	TimeOfDay int
 	// Regions 地域
 	Regions []*Region
 	// UserDB 全ユーザーDB
@@ -122,7 +120,6 @@ func (w *World) Tick(ctx *Context) error {
 					_, err := w.CreateChair(ctx, &CreateChairArgs{
 						Provider:          p,
 						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-						WorkTime:          NewInterval(0, ConvertHour(2000)),
 					})
 					if err != nil {
 						w.handleTickError(err)
@@ -180,8 +177,6 @@ func (w *World) Tick(ctx *Context) error {
 	}
 
 	w.Time++
-	w.TimeOfDay = int(w.Time % LengthOfDay)
-
 	return nil
 }
 
@@ -259,8 +254,6 @@ type CreateChairArgs struct {
 	Provider *Provider
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
-	// WorkTime 稼働時間
-	WorkTime Interval[int]
 }
 
 // CreateChair 仮想世界に椅子を作成する
@@ -286,7 +279,6 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		Current:           args.InitialCoordinate,
 		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
-		WorkTime:          args.WorkTime,
 		RegisteredData:    registeredData,
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(args.Provider.Rand),

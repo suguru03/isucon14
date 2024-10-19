@@ -34,8 +34,6 @@ type Chair struct {
 	Speed int
 	// State 椅子の状態
 	State ChairState
-	// WorkTime 稼働時刻
-	WorkTime Interval[int]
 
 	// ServerRequestID 進行中のリクエストのサーバー上でのID
 	ServerRequestID null.String
@@ -108,7 +106,8 @@ func (c *Chair) Tick(ctx *Context) error {
 		switch c.Request.Statuses.Chair {
 		case RequestStatusMatching:
 			// 配椅子要求を受理するか、拒否する
-			if c.isRequestAcceptable(c.Request, ctx.world.TimeOfDay) {
+			// TODO: 拒否ロジック
+			if c.State == ChairStateActive {
 				c.Request.Statuses.Lock()
 
 				err := c.Client.SendAcceptRequest(ctx, c, c.Request)
@@ -226,50 +225,45 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 進行中のリクエストが存在せず、稼働中
 	case c.State == ChairStateActive:
-		if !c.WorkTime.Include(ctx.world.TimeOfDay) {
-			// 稼働時刻を過ぎたので退勤する
-			err := c.Client.SendDeactivate(ctx, c)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToDeactivate, err)
-			}
-
-			// 退勤
-			c.State = ChairStateInactive
-			// 通知コネクションを切断
-			c.NotificationConn.Close()
-			c.NotificationConn = nil
-		}
+		// TODO: deactivateタイミング
+		//err := c.Client.SendDeactivate(ctx, c)
+		//if err != nil {
+		//	return WrapCodeError(ErrorCodeFailedToDeactivate, err)
+		//}
+		//
+		//// 退勤
+		//c.State = ChairStateInactive
+		//// 通知コネクションを切断
+		//c.NotificationConn.Close()
+		//c.NotificationConn = nil
 
 	// 未稼働
 	case c.State == ChairStateInactive:
-		if c.WorkTime.Include(ctx.world.TimeOfDay) {
-			// 稼働時刻になっているので出勤する
-
-			if c.NotificationConn == nil {
-				// 先に通知コネクションを繋いでおく
-				conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
-					if !concurrent.TrySend(c.notificationQueue, event) {
-						slog.Error("通知受け取りチャンネルが詰まってる", slog.String("chair_server_id", c.ServerID))
-						c.notificationQueue <- event
-					}
-				})
-				if err != nil {
-					return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
+		// TODO: 稼働開始タイミング
+		if c.NotificationConn == nil {
+			// 先に通知コネクションを繋いでおく
+			conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
+				if !concurrent.TrySend(c.notificationQueue, event) {
+					slog.Error("通知受け取りチャンネルが詰まってる", slog.String("chair_server_id", c.ServerID))
+					c.notificationQueue <- event
 				}
-				c.NotificationConn = conn
-			}
-
-			err := c.Client.SendActivate(ctx, c)
+			})
 			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToActivate, err)
+				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
-
-			// 出勤
-			c.State = ChairStateActive
-			moved = true
-
-			// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
+			c.NotificationConn = conn
 		}
+
+		err := c.Client.SendActivate(ctx, c)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToActivate, err)
+		}
+
+		// 出勤
+		c.State = ChairStateActive
+		moved = true
+
+		// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 	}
 
 	if c.State == ChairStateActive && moved {
@@ -421,22 +415,6 @@ func (c *Chair) moveRandom() {
 	}
 
 	c.Current = C(c.Current.X+x, c.Current.Y+y)
-}
-
-func (c *Chair) isRequestAcceptable(req *Request, timeOfDay int) bool {
-	if c.State != ChairStateActive {
-		// 稼働してないなら拒否
-		return false
-	}
-
-	// リクエスト完了までに最低限必要な時間
-	t := neededTime(c.Current.DistanceTo(req.PickupPoint)+req.PickupPoint.DistanceTo(req.DestinationPoint), c.Speed)
-	if !c.WorkTime.Include(timeOfDay + t) {
-		// 到着する前に稼働時間を過ぎることが確実な場合は拒否
-		return false
-	}
-
-	return true
 }
 
 func (c *Chair) HandleNotification(event NotificationEvent) error {
