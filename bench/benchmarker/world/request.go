@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/guregu/null/v5"
 )
@@ -76,6 +77,8 @@ type Request struct {
 	ArrivedAt int64
 	// CompletedAt リクエストが正常に完了した時間。割り当てられるまで0
 	CompletedAt int64
+	// ServerCompletedAt サーバー側で記録されている完了時間
+	ServerCompletedAt time.Time
 
 	// Evaluated リクエストの評価が完了しているかどうか
 	Evaluated bool

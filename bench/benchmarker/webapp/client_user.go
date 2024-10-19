@@ -108,7 +108,7 @@ func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppR
 	return resBody, nil
 }
 
-func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, reqBody *api.AppPostRequestEvaluateReq) (*api.AppPostRequestEvaluateNoContent, error) {
+func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, reqBody *api.AppPostRequestEvaluateReq) (*api.AppPostRequestEvaluateOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -129,11 +129,15 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 	}
 	defer closeBody(resp)
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("POST /app/requests/{request_id}/evaluate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppPostRequestEvaluateNoContent{}
+	resBody := &api.AppPostRequestEvaluateOK{}
+	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
+		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+	}
+
 	return resBody, nil
 }
 

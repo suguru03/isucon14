@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
@@ -247,15 +248,23 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 	}, nil
 }
 
-func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) error {
-	_, err := c.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
+func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) (*world.SendEvaluationResponse, error) {
+	res, err := c.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
 		Evaluation: score,
 	})
 	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
+		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
-	return nil
+	completedAt, err := time.Parse(time.RFC3339Nano, res.CompletedAt)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
+	}
+
+	return &world.SendEvaluationResponse{
+		Fare:        res.Fare,
+		CompletedAt: completedAt,
+	}, nil
 }
 
 func (c *userClient) SendCreateRequest(ctx *world.Context, req *world.Request) (*world.SendCreateRequestResponse, error) {

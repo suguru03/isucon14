@@ -128,14 +128,38 @@ type AppPostRequestEvaluateBadRequest Error
 
 func (*AppPostRequestEvaluateBadRequest) appPostRequestEvaluateRes() {}
 
-// AppPostRequestEvaluateNoContent is response for AppPostRequestEvaluate operation.
-type AppPostRequestEvaluateNoContent struct{}
-
-func (*AppPostRequestEvaluateNoContent) appPostRequestEvaluateRes() {}
-
 type AppPostRequestEvaluateNotFound Error
 
 func (*AppPostRequestEvaluateNotFound) appPostRequestEvaluateRes() {}
+
+type AppPostRequestEvaluateOK struct {
+	// 運賃.
+	Fare int `json:"fare"`
+	// 完了日時.
+	CompletedAt string `json:"completed_at"`
+}
+
+// GetFare returns the value of Fare.
+func (s *AppPostRequestEvaluateOK) GetFare() int {
+	return s.Fare
+}
+
+// GetCompletedAt returns the value of CompletedAt.
+func (s *AppPostRequestEvaluateOK) GetCompletedAt() string {
+	return s.CompletedAt
+}
+
+// SetFare sets the value of Fare.
+func (s *AppPostRequestEvaluateOK) SetFare(val int) {
+	s.Fare = val
+}
+
+// SetCompletedAt sets the value of CompletedAt.
+func (s *AppPostRequestEvaluateOK) SetCompletedAt(val string) {
+	s.CompletedAt = val
+}
+
+func (*AppPostRequestEvaluateOK) appPostRequestEvaluateRes() {}
 
 type AppPostRequestEvaluateReq struct {
 	// 椅子の評価.

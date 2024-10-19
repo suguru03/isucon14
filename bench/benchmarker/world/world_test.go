@@ -95,11 +95,11 @@ func (s *FastServerStub) SendDepart(ctx *Context, req *Request) error {
 	return nil
 }
 
-func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) error {
+func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) (*SendEvaluationResponse, error) {
 	time.Sleep(s.latency)
 	c, ok := s.chairDB.Get(req.Chair.ServerID)
 	if !ok {
-		return fmt.Errorf("chair not found")
+		return nil, fmt.Errorf("chair not found")
 	}
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{ServerRequestID: req.ServerID}}
@@ -111,7 +111,10 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) e
 			c.Unlock()
 		}}
 	}
-	return nil
+	return &SendEvaluationResponse{
+		Fare:        req.Fare(),
+		CompletedAt: time.Now(),
+	}, nil
 }
 
 func (s *FastServerStub) SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error) {
