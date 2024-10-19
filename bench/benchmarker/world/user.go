@@ -145,14 +145,6 @@ func (u *User) Tick(ctx *Context) error {
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
 			u.Request = nil
-
-		case RequestStatusCanceled:
-			// サーバー側でリクエストがキャンセルされた
-			u.Request.Statuses.Desired = RequestStatusCanceled
-
-			// 進行中のリクエストが無い状態にする
-			u.Request = nil
-			return CodeError(ErrorCodeRequestCanceledByServer)
 		}
 
 	// 進行中のリクエストは存在しないが、ユーザーがアクティブ状態
@@ -242,7 +234,7 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 	}
 	request.Statuses.RLock()
 	defer request.Statuses.RUnlock()
-	if status != RequestStatusCanceled && request.Statuses.User != status && request.Statuses.Desired != status {
+	if request.Statuses.User != status && request.Statuses.Desired != status {
 		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
 		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
@@ -291,11 +283,6 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 		}
 	case *UserNotificationEventCompleted:
 		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID)
-		if err != nil {
-			return err
-		}
-	case *UserNotificationEventCanceled:
-		err := u.ChangeRequestStatus(RequestStatusCanceled, data.ServerRequestID)
 		if err != nil {
 			return err
 		}

@@ -75,7 +75,6 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		world.RequestStatusCarrying:    attribute.NewSet(attribute.Int("status", int(world.RequestStatusCarrying))),
 		world.RequestStatusArrived:     attribute.NewSet(attribute.Int("status", int(world.RequestStatusArrived))),
 		world.RequestStatusCompleted:   attribute.NewSet(attribute.Int("status", int(world.RequestStatusCompleted))),
-		world.RequestStatusCanceled:    attribute.NewSet(attribute.Int("status", int(world.RequestStatusCanceled))),
 	}
 
 	lo.Must1(meter.Int64ObservableCounter("world.time", metric.WithDescription("Time"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {

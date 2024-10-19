@@ -1330,9 +1330,7 @@ func (s *ProviderPostRegisterReq) SetName(val string) {
 // DISPATCHED: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
 // CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
 // ARRIVED: 目的地に到着した
-// COMPLETED: ユーザーの決済・椅子評価が完了した
-// CANCELED:
-// 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定).
+// COMPLETED: ユーザーの決済・椅子評価が完了した.
 // Ref: #/components/schemas/RequestStatus
 type RequestStatus string
 
@@ -1343,7 +1341,6 @@ const (
 	RequestStatusCARRYING    RequestStatus = "CARRYING"
 	RequestStatusARRIVED     RequestStatus = "ARRIVED"
 	RequestStatusCOMPLETED   RequestStatus = "COMPLETED"
-	RequestStatusCANCELED    RequestStatus = "CANCELED"
 )
 
 // AllValues returns all RequestStatus values.
@@ -1355,7 +1352,6 @@ func (RequestStatus) AllValues() []RequestStatus {
 		RequestStatusCARRYING,
 		RequestStatusARRIVED,
 		RequestStatusCOMPLETED,
-		RequestStatusCANCELED,
 	}
 }
 
@@ -1373,8 +1369,6 @@ func (s RequestStatus) MarshalText() ([]byte, error) {
 	case RequestStatusARRIVED:
 		return []byte(s), nil
 	case RequestStatusCOMPLETED:
-		return []byte(s), nil
-	case RequestStatusCANCELED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1401,9 +1395,6 @@ func (s *RequestStatus) UnmarshalText(data []byte) error {
 		return nil
 	case RequestStatusCOMPLETED:
 		*s = RequestStatusCOMPLETED
-		return nil
-	case RequestStatusCANCELED:
-		*s = RequestStatusCANCELED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

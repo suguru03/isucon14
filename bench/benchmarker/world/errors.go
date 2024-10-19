@@ -52,8 +52,6 @@ const (
 	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToConnectNotificationStream 通知ストリームへの接続に失敗した
 	ErrorCodeFailedToConnectNotificationStream
-	// ErrorCodeRequestCanceledByServer リクエストがサーバー側でキャンセルされた
-	ErrorCodeRequestCanceledByServer
 	// ErrorCodeFailedToRegisterPaymentMethods ユーザーの支払い情報の登録に失敗した
 	ErrorCodeFailedToRegisterPaymentMethods
 	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗した

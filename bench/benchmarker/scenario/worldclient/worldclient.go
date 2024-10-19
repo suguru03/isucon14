@@ -233,8 +233,6 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				event = &world.ChairNotificationEventCompleted{
 					ServerRequestID: r.RequestID,
 				}
-			case api.RequestStatusCANCELED:
-				// event = &world.ChairNotificationEventCanceled{}
 			}
 			if event == nil {
 				// TODO: 意図しない通知の種類の減点
@@ -325,8 +323,6 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				event = &world.UserNotificationEventCompleted{
 					ServerRequestID: r.RequestID,
 				}
-			case api.RequestStatusCANCELED:
-				// event = &world.UserNotificationEventCanceled{}
 			}
 			if event == nil {
 				// TODO: 意図しない通知の種類の減点

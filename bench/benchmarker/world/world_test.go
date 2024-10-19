@@ -63,9 +63,6 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 
 func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {
 	time.Sleep(s.latency)
-	if req.Statuses.Desired == RequestStatusCanceled {
-		return fmt.Errorf("request has been already canceled")
-	}
 	if req.Statuses.Desired != RequestStatusMatching {
 		return fmt.Errorf("expected request status %v, got %v", RequestStatusMatching, req.Statuses.Desired)
 	}
@@ -218,14 +215,7 @@ func (s *FastServerStub) MatchingLoop() {
 			chair.Unlock()
 		}
 		if !matched {
-			if time.Since(entry.QueuedTime) > s.matchingTimeout {
-				// キャンセル
-				if f, ok := s.userNotificationReceiverMap.Get(entry.ServerUserID); ok {
-					s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCanceled{ServerRequestID: entry.ServerID}}
-				}
-			} else {
-				s.requestQueue <- entry
-			}
+			s.requestQueue <- entry
 		}
 	}
 }

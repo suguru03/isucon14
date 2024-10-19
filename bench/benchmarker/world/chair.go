@@ -192,13 +192,6 @@ func (c *Chair) Tick(ctx *Context) error {
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.ServerRequestID = null.String{}
-
-		case RequestStatusCanceled:
-			// サーバー側でリクエストがキャンセルされた
-
-			// 進行中のリクエストが無い状態にする
-			c.Request = nil
-			c.ServerRequestID = null.String{}
 		}
 
 	// オファーされたリクエストが存在するが、詳細を未取得

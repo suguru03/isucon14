@@ -31,8 +31,6 @@ func (r RequestStatus) String() string {
 		return "ARRIVED"
 	case RequestStatusCompleted:
 		return "COMPLETED"
-	case RequestStatusCanceled:
-		return "CANCELED"
 	default:
 		return "UNKNOWN"
 	}
@@ -45,7 +43,6 @@ const (
 	RequestStatusCarrying
 	RequestStatusArrived
 	RequestStatusCompleted
-	RequestStatusCanceled
 )
 
 type RequestID int
