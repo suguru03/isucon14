@@ -40,8 +40,8 @@ type ChairPostRequestDepartParams struct {
 
 // ProviderGetSalesParams is parameters of provider-get-sales operation.
 type ProviderGetSalesParams struct {
-	// 開始日（含む）.
-	Since string
-	// 終了日（含む）.
-	Until string
+	// 開始日時（含む）.
+	Since OptString
+	// 終了日時（含む）.
+	Until OptString
 }

@@ -98,14 +98,21 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 	}, nil
 }
 
-func (c *providerClient) GetProviderSales(ctx *world.Context, provider *world.Provider) (*world.GetProviderSalesResponse, error) {
-	// TODO: ちゃんと実装する
-	_, err := c.client.ProviderGetSales(c.ctx, &api.ProviderGetSalesParams{})
+func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
+	params := api.ProviderGetSalesParams{}
+	if !args.Since.IsZero() {
+		params.Since.SetTo(args.Since.Format(time.RFC3339Nano))
+	}
+	if !args.Until.IsZero() {
+		params.Until.SetTo(args.Until.Format(time.RFC3339Nano))
+	}
+
+	response, err := c.client.ProviderGetSales(c.ctx, &params)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 	}
 
-	return &world.GetProviderSalesResponse{}, nil
+	return &world.GetProviderSalesResponse{Total: response.TotalSales}, nil
 }
 
 func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {

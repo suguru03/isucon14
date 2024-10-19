@@ -912,7 +912,10 @@ func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSal
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(params.Since))
+			if val, ok := params.Since.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode query")
 		}
@@ -926,7 +929,10 @@ func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSal
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(params.Until))
+			if val, ok := params.Until.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
 		}); err != nil {
 			return res, errors.Wrap(err, "encode query")
 		}

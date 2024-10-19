@@ -1202,7 +1202,7 @@ func (s *PostInitializeReq) SetPaymentServer(val string) {
 
 type ProviderGetSalesOK struct {
 	// プロバイダー全体の売上.
-	TotalSales OptInt `json:"total_sales"`
+	TotalSales int `json:"total_sales"`
 	// 椅子ごとの売上情報.
 	Chairs []ProviderGetSalesOKChairsItem `json:"chairs"`
 	// モデルごとの売上情報.
@@ -1210,7 +1210,7 @@ type ProviderGetSalesOK struct {
 }
 
 // GetTotalSales returns the value of TotalSales.
-func (s *ProviderGetSalesOK) GetTotalSales() OptInt {
+func (s *ProviderGetSalesOK) GetTotalSales() int {
 	return s.TotalSales
 }
 
@@ -1225,7 +1225,7 @@ func (s *ProviderGetSalesOK) GetModels() []ProviderGetSalesOKModelsItem {
 }
 
 // SetTotalSales sets the value of TotalSales.
-func (s *ProviderGetSalesOK) SetTotalSales(val OptInt) {
+func (s *ProviderGetSalesOK) SetTotalSales(val int) {
 	s.TotalSales = val
 }
 

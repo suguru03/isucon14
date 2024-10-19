@@ -10,6 +10,7 @@ import (
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/neilotoole/slogt"
 	"github.com/oklog/ulid/v2"
+	"github.com/samber/lo"
 )
 
 type requestEntry struct {
@@ -31,9 +32,31 @@ type chairState struct {
 	sync.RWMutex
 }
 
+type providerClient struct {
+	serverProviderID  string
+	providerName      string
+	fs                *FastServerStub
+	completedRequests *concurrent.SimpleSlice[*Request]
+}
+
+func (pc *providerClient) GetProviderSales(ctx *Context, args *GetProviderSalesRequest) (*GetProviderSalesResponse, error) {
+	time.Sleep(pc.fs.latency)
+	return &GetProviderSalesResponse{
+		Total: lo.SumBy(lo.Filter(pc.completedRequests.ToSlice(), func(r *Request, _ int) bool { return !r.ServerCompletedAt.After(args.Until) }), func(r *Request) int { return r.Fare() }),
+	}, nil
+}
+
+func (pc *providerClient) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
+	time.Sleep(pc.fs.latency)
+	c := &chairState{ServerID: ulid.Make().String(), Active: false}
+	pc.fs.chairDB.Set(c.ServerID, c)
+	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID, Client: pc.fs}, nil
+}
+
 type FastServerStub struct {
 	t                            *testing.T
 	chairDB                      *concurrent.SimpleMap[string, *chairState]
+	providerDB                   *concurrent.SimpleMap[string, *providerClient]
 	latency                      time.Duration
 	matchingTimeout              time.Duration
 	requestQueue                 chan *requestEntry
@@ -101,6 +124,11 @@ func (s *FastServerStub) SendEvaluation(ctx *Context, req *Request, score int) (
 	if !ok {
 		return nil, fmt.Errorf("chair not found")
 	}
+	p, ok := s.providerDB.Get(req.Chair.Provider.ServerID)
+	if !ok {
+		return nil, fmt.Errorf("provider not found")
+	}
+	p.completedRequests.Append(req)
 	if f, ok := s.userNotificationReceiverMap.Get(req.User.ServerID); ok {
 		s.eventQueue <- &eventEntry{handler: f, event: &UserNotificationEventCompleted{ServerRequestID: req.ServerID}}
 	}
@@ -153,11 +181,6 @@ func (s *FastServerStub) GetRequestByChair(ctx *Context, chair *Chair, serverReq
 	return &GetRequestByChairResponse{}, nil
 }
 
-func (s *FastServerStub) GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error) {
-	time.Sleep(s.latency)
-	return &GetProviderSalesResponse{}, nil
-}
-
 func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {
 	time.Sleep(s.latency)
 	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String(), Client: s}, nil
@@ -165,14 +188,15 @@ func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (
 
 func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error) {
 	time.Sleep(s.latency)
-	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: ulid.Make().String(), Client: s}, nil
-}
-
-func (s *FastServerStub) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
-	time.Sleep(s.latency)
-	c := &chairState{ServerID: ulid.Make().String(), Active: false}
-	s.chairDB.Set(c.ServerID, c)
-	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID, Client: s}, nil
+	id := ulid.Make().String()
+	client := &providerClient{
+		serverProviderID:  id,
+		providerName:      data.Name,
+		fs:                s,
+		completedRequests: concurrent.NewSimpleSlice[*Request](),
+	}
+	s.providerDB.Set(client.serverProviderID, client)
+	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: id, Client: client}, nil
 }
 
 func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {
@@ -239,6 +263,7 @@ func TestWorld(t *testing.T) {
 		client               = &FastServerStub{
 			t:                            t,
 			chairDB:                      concurrent.NewSimpleMap[string, *chairState](),
+			providerDB:                   concurrent.NewSimpleMap[string, *providerClient](),
 			latency:                      1 * time.Millisecond,
 			matchingTimeout:              200 * time.Millisecond,
 			requestQueue:                 make(chan *requestEntry, 1000),

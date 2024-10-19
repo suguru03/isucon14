@@ -58,6 +58,8 @@ const (
 	ErrorCodeFailedToGetProviderSales
 	// ErrorCodeIncorrectAmountOfFareCharged ユーザーのリクエストに対して誤った金額が請求されました
 	ErrorCodeIncorrectAmountOfFareCharged
+	// ErrorCodeSalesMismatched 取得したプロバイダーの売り上げ情報が想定しているものとズレています
+	ErrorCodeSalesMismatched
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
