@@ -269,6 +269,7 @@ func TestWorld(t *testing.T) {
 			_, err := world.CreateChair(ctx, &CreateChairArgs{
 				Provider:          provider,
 				InitialCoordinate: RandomCoordinateOnRegion(provider.Region),
+				Model:             ChairModelA,
 			})
 			if err != nil {
 				t.Fatal(err)

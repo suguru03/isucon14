@@ -30,8 +30,8 @@ type Chair struct {
 	Region *Region
 	// Provider 椅子を所有している事業者
 	Provider *Provider
-	// Speed 椅子の単位時間あたりの移動距離
-	Speed int
+	// Model 椅子のモデル
+	Model *ChairModel
 	// State 椅子の状態
 	State ChairState
 	// Location 椅子の位置情報
@@ -57,8 +57,7 @@ type Chair struct {
 }
 
 type RegisteredChairData struct {
-	Name  string
-	Model string
+	Name string
 }
 
 func (c *Chair) String() string {
@@ -277,8 +276,8 @@ func (c *Chair) moveToward(target Coordinate) (to Coordinate) {
 	to = c.Location.Current()
 
 	// ランダムにx, y方向で近づける
-	x := c.Rand.IntN(c.Speed + 1)
-	y := c.Speed - x
+	x := c.Rand.IntN(c.Model.Speed + 1)
+	y := c.Model.Speed - x
 	remain := 0
 
 	switch {
@@ -301,7 +300,7 @@ func (c *Chair) moveToward(target Coordinate) (to Coordinate) {
 			to.X -= x
 		}
 	default:
-		y = c.Speed
+		y = c.Model.Speed
 	}
 
 	switch {
@@ -352,8 +351,8 @@ func (c *Chair) moveRandom() (to Coordinate) {
 	prev := c.Location.Current()
 
 	// 移動量の決定
-	x := c.Rand.IntN(c.Speed + 1)
-	y := c.Speed - x
+	x := c.Rand.IntN(c.Model.Speed + 1)
+	y := c.Model.Speed - x
 
 	// 移動方向の決定
 	left, right := c.Region.RangeX()

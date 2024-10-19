@@ -44,14 +44,12 @@ type World struct {
 	// ErrorCounter エラーカウンター
 	ErrorCounter *ErrorCounter
 
-	tickTimeout        time.Duration
-	timeoutTicker      *time.Ticker
-	prevTimeout        bool
-	criticalErrorCh    chan error
-	waitingTickCount   atomic.Int32
-	userIncrease       float64
-	chairIncreaseSales int64
-	increasingChairs   atomic.Int64
+	tickTimeout      time.Duration
+	timeoutTicker    *time.Ticker
+	prevTimeout      bool
+	criticalErrorCh  chan error
+	waitingTickCount atomic.Int32
+	userIncrease     float64
 
 	// contestantLogger 競技者向けに出力されるロガー
 	contestantLogger *slog.Logger
@@ -79,7 +77,6 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 		userIncrease:         5,
-		chairIncreaseSales:   10000,
 		contestantLogger:     contestantLogger,
 	}
 }
@@ -101,30 +98,6 @@ func (w *World) Tick(ctx *Context) error {
 						}
 					}()
 				}
-			}
-		}
-	}
-
-	for _, p := range w.ProviderDB.Iter() {
-		increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10 - w.increasingChairs.Load()
-		if increase > 0 {
-			w.contestantLogger.Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
-			w.increasingChairs.Add(increase)
-			for range increase {
-				w.waitingTickCount.Add(1)
-				go func() {
-					defer func() {
-						w.waitingTickCount.Add(-1)
-						w.increasingChairs.Add(-1)
-					}()
-					_, err := w.CreateChair(ctx, &CreateChairArgs{
-						Provider:          p,
-						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-					})
-					if err != nil {
-						w.handleTickError(err)
-					}
-				}()
 			}
 		}
 	}
@@ -241,13 +214,14 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	}
 
 	p := &Provider{
-		ServerID:       res.ServerProviderID,
-		World:          w,
-		Region:         args.Region,
-		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
-		RegisteredData: registeredData,
-		Client:         res.Client,
-		Rand:           random.CreateChildRand(w.RootRand),
+		ServerID:           res.ServerProviderID,
+		World:              w,
+		Region:             args.Region,
+		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
+		RegisteredData:     registeredData,
+		Client:             res.Client,
+		Rand:               random.CreateChildRand(w.RootRand),
+		chairCountPerModel: map[*ChairModel]int{},
 	}
 	return w.ProviderDB.Create(p), nil
 }
@@ -257,19 +231,19 @@ type CreateChairArgs struct {
 	Provider *Provider
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
+	// Model 椅子モデル
+	Model *ChairModel
 }
 
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
 		Name: random.GenerateChairName(),
-		// TODO modelの扱い
-		Model: random.GenerateChairModel(),
 	}
 
 	res, err := args.Provider.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
 		Name:  registeredData.Name,
-		Model: registeredData.Model,
+		Model: args.Model.Name,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -280,8 +254,8 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		World:             w,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,
+		Model:             args.Model,
 		Location:          ChairLocation{Initial: args.InitialCoordinate},
-		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
 		RegisteredData:    registeredData,
 		Client:            res.Client,
@@ -289,7 +263,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	result := w.ChairDB.Create(c)
-	result.Provider.ChairDB.Set(result.ID, c)
+	args.Provider.AddChair(c)
 	return result, nil
 }
 
