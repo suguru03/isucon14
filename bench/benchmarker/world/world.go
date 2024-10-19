@@ -218,6 +218,7 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 		World:              w,
 		Region:             args.Region,
 		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
+		CompletedRequest:   concurrent.NewSimpleSlice[*Request](),
 		RegisteredData:     registeredData,
 		Client:             res.Client,
 		Rand:               random.CreateChildRand(w.RootRand),

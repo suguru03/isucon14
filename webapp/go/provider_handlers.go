@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -63,9 +64,25 @@ type ModelSales struct {
 	Sales int    `json:"sales"`
 }
 
-// TODO: ちゃんと実装する
 func providerGetSales(w http.ResponseWriter, r *http.Request) {
 	provider := r.Context().Value("provider").(*Provider)
+
+	since := time.Time{}
+	until := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
+	if r.URL.Query().Get("since") != "" {
+		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("since"))
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err)
+		}
+		since = parsed
+	}
+	if r.URL.Query().Get("until") != "" {
+		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("until"))
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err)
+		}
+		until = parsed
+	}
 
 	chairs := []Chair{}
 	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
@@ -81,8 +98,7 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
-		// TODO: Since, Untilの実装
-		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED'", chair.ID); err != nil {
+		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}

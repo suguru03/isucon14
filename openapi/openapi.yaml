@@ -286,14 +286,12 @@ paths:
       parameters:
         - name: since
           in: query
-          description: 開始日（含む）
-          required: true
+          description: 開始日時（含む）
           schema:
             type: string
         - name: until
           in: query
-          description: 終了日（含む）
-          required: true
+          description: 終了日時（含む）
           schema:
             type: string
       responses:
@@ -334,6 +332,10 @@ paths:
                           type: integer
                           description: モデルごとの売上
                     description: モデルごとの売上情報
+                required:
+                  - total_sales
+                  - chairs
+                  - models
   /chair/register:
     post:
       tags:

@@ -143,6 +143,7 @@ func (u *User) Tick(ctx *Context) error {
 					u.Region.TotalEvaluation.Add(int32((u.TotalEvaluation+score)/requests - u.TotalEvaluation/(requests-1)))
 				}
 				u.TotalEvaluation += score
+				u.Request.Chair.Provider.CompletedRequest.Append(u.Request)
 				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}

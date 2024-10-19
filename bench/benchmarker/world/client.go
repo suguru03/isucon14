@@ -24,7 +24,7 @@ type ProviderClient interface {
 	// RegisterChair サーバーにユーザーを登録する
 	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
-	GetProviderSales(ctx *Context, provider *Provider) (*GetProviderSalesResponse, error)
+	GetProviderSales(ctx *Context, args *GetProviderSalesRequest) (*GetProviderSalesResponse, error)
 }
 
 type ChairClient interface {
@@ -52,7 +52,14 @@ type SendCreateRequestResponse struct {
 
 type GetRequestByChairResponse struct{}
 
-type GetProviderSalesResponse struct{}
+type GetProviderSalesRequest struct {
+	Since time.Time
+	Until time.Time
+}
+
+type GetProviderSalesResponse struct {
+	Total int
+}
 
 type SendEvaluationResponse struct {
 	Fare        int

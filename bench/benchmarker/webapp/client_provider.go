@@ -46,8 +46,12 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.Provider
 
 func (c *Client) ProviderGetSales(ctx context.Context, params *api.ProviderGetSalesParams) (*api.ProviderGetSalesOK, error) {
 	q := url.Values{}
-	q.Set("since", params.Since)
-	q.Set("until", params.Until)
+	if params.Since.IsSet() {
+		q.Set("since", params.Since.Value)
+	}
+	if params.Until.IsSet() {
+		q.Set("until", params.Until.Value)
+	}
 
 	req, err := c.agent.NewRequest(http.MethodGet, "/provider/sales?"+q.Encode(), nil)
 	if err != nil {

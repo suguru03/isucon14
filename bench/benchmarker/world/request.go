@@ -103,7 +103,6 @@ func (r *Request) SetID(id RequestID) {
 
 // Fare 料金
 func (r *Request) Fare() int {
-	// TODO 料金計算
 	return InitialFare + r.PickupPoint.DistanceTo(r.DestinationPoint)*FarePerDistance
 }
 

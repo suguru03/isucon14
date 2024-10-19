@@ -845,6 +845,15 @@ func decodeProviderGetSalesResponse(resp *http.Response) (res *ProviderGetSalesO
 				}
 				return res, err
 			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
 			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
