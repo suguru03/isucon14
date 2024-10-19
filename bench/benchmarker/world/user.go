@@ -30,7 +30,6 @@ type User struct {
 	State UserState
 	// Request 進行中の配椅子・送迎リクエスト
 	Request *Request
-
 	// RegisteredData サーバーに登録されているユーザー情報
 	RegisteredData RegisteredUserData
 	// PaymentToken 支払いトークン
@@ -39,17 +38,16 @@ type User struct {
 	RequestHistory []*Request
 	// TotalEvaluation 完了したリクエストの平均評価
 	TotalEvaluation int
-	// NotificationConn 通知ストリームコネクション
-	NotificationConn NotificationStream
-	// notificationQueue 通知キュー。毎Tickで最初に処理される
-	notificationQueue chan NotificationEvent
-
 	// Client webappへのクライアント
 	Client UserClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
+	// notificationConn 通知ストリームコネクション
+	notificationConn NotificationStream
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 }
 
 type RegisteredUserData struct {
@@ -149,7 +147,7 @@ func (u *User) Tick(ctx *Context) error {
 
 	// 進行中のリクエストは存在しないが、ユーザーがアクティブ状態
 	case u.Request == nil && u.State == UserStateActive:
-		if u.NotificationConn == nil {
+		if u.notificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
 			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
 				if !concurrent.TrySend(u.notificationQueue, event) {
@@ -160,15 +158,15 @@ func (u *User) Tick(ctx *Context) error {
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
-			u.NotificationConn = conn
+			u.notificationConn = conn
 		}
 
 		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
 			// 初回利用で評価1なら離脱
 			// 2回以上利用して平均評価が2以下の場合は離脱
 			u.State = UserStateInactive
-			u.NotificationConn.Close()
-			u.NotificationConn = nil
+			u.notificationConn.Close()
+			u.notificationConn = nil
 			ctx.ContestantLogger().Warn("RideRequestの評価が悪かったためUserが離脱しました")
 			break
 		}

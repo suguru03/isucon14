@@ -34,27 +34,24 @@ type Chair struct {
 	State ChairState
 	// Location 椅子の位置情報
 	Location ChairLocation
-
+	// RegisteredData サーバーに登録されている椅子情報
+	RegisteredData RegisteredChairData
 	// ServerRequestID 進行中のリクエストのサーバー上でのID
 	ServerRequestID null.String
 	// Request 進行中のリクエスト
 	Request *Request
 	// RequestHistory 引き受けたリクエストの履歴
 	RequestHistory []*Request
-
-	// RegisteredData サーバーに登録されている椅子情報
-	RegisteredData RegisteredChairData
-	// NotificationConn 通知ストリームコネクション
-	NotificationConn NotificationStream
-	// notificationQueue 通知キュー。毎Tickで最初に処理される
-	notificationQueue chan NotificationEvent
-
 	// Client webappへのクライアント
 	Client ChairClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
+	// notificationConn 通知ストリームコネクション
+	notificationConn NotificationStream
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 }
 
 type RegisteredChairData struct {
@@ -215,13 +212,13 @@ func (c *Chair) Tick(ctx *Context) error {
 		//// 退勤
 		//c.State = ChairStateInactive
 		//// 通知コネクションを切断
-		//c.NotificationConn.Close()
-		//c.NotificationConn = nil
+		//c.notificationConn.Close()
+		//c.notificationConn = nil
 
 	// 未稼働
 	case c.State == ChairStateInactive:
 		// TODO: 稼働開始タイミング
-		if c.NotificationConn == nil {
+		if c.notificationConn == nil {
 			// 先に通知コネクションを繋いでおく
 			conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
 				if !concurrent.TrySend(c.notificationQueue, event) {
@@ -232,7 +229,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
-			c.NotificationConn = conn
+			c.notificationConn = conn
 		}
 
 		err := c.Client.SendActivate(ctx, c)
