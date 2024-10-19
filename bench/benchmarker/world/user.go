@@ -169,7 +169,7 @@ func (u *User) Tick(ctx *Context) error {
 			u.State = UserStateInactive
 			u.NotificationConn.Close()
 			u.NotificationConn = nil
-			ctx.world.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
+			ctx.ContestantLogger().Warn("RideRequestの評価が悪かったためUserが離脱しました")
 			break
 		}
 
