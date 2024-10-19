@@ -128,7 +128,7 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	}
 	{
 		// 乗車待ち時間誤差評価
-		idealTime := neededTime(r.StartPoint.V.DistanceTo(r.PickupPoint), r.Chair.Speed)
+		idealTime := neededTime(r.StartPoint.V.DistanceTo(r.PickupPoint), r.Chair.Model.Speed)
 		actualTime := int(r.PickedUpAt - r.MatchedAt)
 		if actualTime-idealTime < 15 {
 			// 理想時間との誤差が15ticks以内ならOK
@@ -137,7 +137,7 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	}
 	{
 		// 乗車時間誤差評価
-		idealTime := neededTime(r.PickupPoint.DistanceTo(r.DestinationPoint), r.Chair.Speed)
+		idealTime := neededTime(r.PickupPoint.DistanceTo(r.DestinationPoint), r.Chair.Model.Speed)
 		actualTime := int(r.ArrivedAt - r.PickedUpAt)
 		if actualTime-idealTime < 5 {
 			// 理想時間との誤差が5ticks以内ならOK

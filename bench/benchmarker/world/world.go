@@ -261,15 +261,15 @@ type CreateChairArgs struct {
 
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
+	// TODO modelの決定
+	model := ChairModelA
 	registeredData := RegisteredChairData{
 		Name: random.GenerateChairName(),
-		// TODO modelの扱い
-		Model: random.GenerateChairModel(),
 	}
 
 	res, err := args.Provider.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
 		Name:  registeredData.Name,
-		Model: registeredData.Model,
+		Model: model.Name,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -280,8 +280,8 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		World:             w,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,
+		Model:             model,
 		Location:          ChairLocation{Initial: args.InitialCoordinate},
-		Speed:             2, // TODO 速度どうする
 		State:             ChairStateInactive,
 		RegisteredData:    registeredData,
 		Client:            res.Client,
