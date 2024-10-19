@@ -50,7 +50,6 @@ type World struct {
 	criticalErrorCh  chan error
 	waitingTickCount atomic.Int32
 	userIncrease     float64
-	increasingChairs atomic.Int64
 
 	// contestantLogger 競技者向けに出力されるロガー
 	contestantLogger *slog.Logger

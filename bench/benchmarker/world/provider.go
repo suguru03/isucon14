@@ -75,6 +75,7 @@ func (p *Provider) Tick(ctx *Context) error {
 					Model:             ChairModels[(p.createChairTryCount-1)%len(ChairModels)],
 				})
 				if err != nil {
+					// 登録に失敗した椅子はリトライされない
 					return err
 				}
 			}
