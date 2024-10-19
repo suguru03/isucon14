@@ -56,6 +56,8 @@ const (
 	ErrorCodeFailedToRegisterPaymentMethods
 	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗した
 	ErrorCodeFailedToGetProviderSales
+	// ErrorCodeIncorrectAmountOfFareCharged ユーザーのリクエストに対して誤った金額が請求されました
+	ErrorCodeIncorrectAmountOfFareCharged
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -64,6 +66,7 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUnexpectedUserRequestStatusTransitionOccurred:  true,
 	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: true,
 	ErrorCodeChairAlreadyHasRequest:                         true,
+	ErrorCodeIncorrectAmountOfFareCharged:                   true,
 }
 
 type codeError struct {

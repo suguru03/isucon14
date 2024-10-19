@@ -123,13 +123,18 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				score := u.Request.CalculateEvaluation().Score()
-				err := u.Client.SendEvaluation(ctx, u.Request, score)
+				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
 
+				if res.Fare != u.Request.Fare() {
+					return CodeError(ErrorCodeIncorrectAmountOfFareCharged)
+				}
+
 				// サーバーが評価を受理したので完了状態になるのを待機する
 				u.Request.CompletedAt = ctx.CurrentTime()
+				u.Request.ServerCompletedAt = res.CompletedAt
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
 				if requests := len(u.RequestHistory); requests == 1 {

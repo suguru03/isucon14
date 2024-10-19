@@ -204,6 +204,11 @@ type postAppEvaluateRequest struct {
 	Evaluation int `json:"evaluation"`
 }
 
+type postAppEvaluateResponse struct {
+	Fare        int       `json:"fare"`
+	CompletedAt time.Time `json:"completed_at"`
+}
+
 func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	requestID := r.PathValue("request_id")
 	postAppEvaluateRequest := &postAppEvaluateRequest{}
@@ -249,6 +254,15 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE id = ?`, requestID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, errors.New("request not found"))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	paymentToken := &PaymentToken{}
 	if err := tx.Get(paymentToken, `SELECT * FROM payment_tokens WHERE user_id = ?`, rideRequest.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -277,7 +291,10 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, &postAppEvaluateResponse{
+		Fare:        calculateSale(*rideRequest),
+		CompletedAt: rideRequest.UpdatedAt,
+	})
 }
 
 func appGetNotification(w http.ResponseWriter, r *http.Request) {

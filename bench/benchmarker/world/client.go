@@ -1,5 +1,7 @@
 package world
 
+import "time"
+
 type WorldClient interface {
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
@@ -11,7 +13,7 @@ type UserClient interface {
 	// SendCreateRequest サーバーにリクエスト作成を送信する
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
-	SendEvaluation(ctx *Context, req *Request, score int) error
+	SendEvaluation(ctx *Context, req *Request, score int) (*SendEvaluationResponse, error)
 	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
 	RegisterPaymentMethods(ctx *Context, user *User) error
 	// ConnectUserNotificationStream ユーザー用の通知ストリームに接続する
@@ -51,6 +53,11 @@ type SendCreateRequestResponse struct {
 type GetRequestByChairResponse struct{}
 
 type GetProviderSalesResponse struct{}
+
+type SendEvaluationResponse struct {
+	Fare        int
+	CompletedAt time.Time
+}
 
 type RegisterUserRequest struct {
 	UserName    string
