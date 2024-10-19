@@ -24,6 +24,8 @@ type Chair struct {
 	ID ChairID
 	// ServerID サーバー上での椅子ID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region 椅子がいる地域
 	Region *Region
 	// Provider 椅子を所有している事業者
@@ -181,7 +183,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// オファーされたリクエストが存在するが、詳細を未取得
 	case c.Request == nil && c.ServerRequestID.Valid:
-		req := ctx.world.RequestDB.GetByServerID(c.ServerRequestID.String)
+		req := c.World.RequestDB.GetByServerID(c.ServerRequestID.String)
 		if req == nil {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
 			err := c.Client.SendDenyRequest(ctx, c, c.ServerRequestID.String)

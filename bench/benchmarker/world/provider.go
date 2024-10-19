@@ -15,6 +15,8 @@ type Provider struct {
 	ID ProviderID
 	// ServerID サーバー上でのプロバイダーID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region 椅子を配置する地域
 	Region *Region
 	// ChairDB 管理している椅子

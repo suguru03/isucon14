@@ -43,8 +43,6 @@ type Scenario struct {
 	step             *isucandar.BenchmarkStep
 	reporter         benchrun.Reporter
 	meter            metric.Meter
-
-	completedRequestChan chan *world.Request
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
@@ -146,8 +144,6 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		paymentServer:    paymentServer,
 		reporter:         reporter,
 		meter:            meter,
-
-		completedRequestChan: completedRequestChan,
 	}
 }
 

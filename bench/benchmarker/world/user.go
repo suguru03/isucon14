@@ -24,6 +24,8 @@ type User struct {
 	ID UserID
 	// ServerID サーバー上でのユーザーID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region ユーザーが居る地域
 	Region *Region
 	// State ユーザーの状態
@@ -137,7 +139,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 				u.TotalEvaluation += score
 				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
-				ctx.world.CompletedRequestChan <- u.Request
+				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}
 
 		case RequestStatusCompleted:
@@ -212,7 +214,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 	req.ServerID = res.ServerRequestID
 	u.Request = req
 	u.RequestHistory = append(u.RequestHistory, req)
-	ctx.world.RequestDB.Create(req)
+	u.World.RequestDB.Create(req)
 	return nil
 }
 
