@@ -137,8 +137,8 @@ func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provi
 
 func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) error {
 	_, err := c.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
-		Latitude:  chair.Current.X,
-		Longitude: chair.Current.Y,
+		Latitude:  chair.Location.Current().X,
+		Longitude: chair.Location.Current().Y,
 	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)

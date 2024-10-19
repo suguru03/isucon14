@@ -28,12 +28,12 @@ type Chair struct {
 	Region *Region
 	// Provider 椅子を所有している事業者
 	Provider *Provider
-	// Current 現在地
-	Current Coordinate
 	// Speed 椅子の単位時間あたりの移動距離
 	Speed int
 	// State 椅子の状態
 	State ChairState
+	// Location 椅子の位置情報
+	Location ChairLocation
 
 	// ServerRequestID 進行中のリクエストのサーバー上でのID
 	ServerRequestID null.String
@@ -65,7 +65,7 @@ type RegisteredChairData struct {
 }
 
 func (c *Chair) String() string {
-	return fmt.Sprintf("Chair{id=%d,c=%s}", c.ID, c.Current)
+	return fmt.Sprintf("Chair{id=%d,c=%s}", c.ID, c.Location.Current())
 }
 
 func (c *Chair) SetID(id ChairID) {
@@ -98,8 +98,6 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 	}
 
-	moved := false
-
 	switch {
 	// 進行中のリクエストが存在
 	case c.Request != nil:
@@ -121,14 +119,14 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Chair = c
 				c.Request.Statuses.Desired = RequestStatusDispatching
 				c.Request.Statuses.Chair = RequestStatusDispatching
-				c.Request.StartPoint = null.ValueFrom(c.Current)
+				c.Request.StartPoint = null.ValueFrom(c.Location.Current())
 				c.Request.MatchedAt = ctx.world.Time
 
 				c.Request.Statuses.Unlock()
 
 				c.RequestHistory = append(c.RequestHistory, c.Request)
-				if !c.Request.User.Region.Contains(c.Current) {
-					ctx.world.contestantLogger.Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Current)))
+				if !c.Request.User.Region.Contains(c.Location.Current()) {
+					ctx.world.contestantLogger.Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
 			} else {
 				err := c.Client.SendDenyRequest(ctx, c, c.Request.ServerID)
@@ -143,9 +141,11 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusDispatching:
 			// 配椅子位置に向かう
-			c.moveToward(c.Request.PickupPoint)
-			moved = true
-			if c.Current.Equals(c.Request.PickupPoint) {
+			c.Location.MoveTo(&LocationEntry{
+				Coord: c.moveToward(c.Request.PickupPoint),
+				Time:  ctx.world.Time,
+			})
+			if c.Location.Current().Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
 				c.Request.Statuses.Chair = RequestStatusDispatched
@@ -173,9 +173,11 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusCarrying:
 			// 目的地に向かう
-			c.moveToward(c.Request.DestinationPoint)
-			moved = true
-			if c.Current.Equals(c.Request.DestinationPoint) {
+			c.Location.MoveTo(&LocationEntry{
+				Coord: c.moveToward(c.Request.DestinationPoint),
+				Time:  ctx.world.Time,
+			})
+			if c.Location.Current().Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
 				c.Request.Statuses.Chair = RequestStatusArrived
@@ -253,18 +255,23 @@ func (c *Chair) Tick(ctx *Context) error {
 		}
 
 		// 出勤
+		c.Location.PlaceTo(&LocationEntry{
+			Coord: c.Location.Initial,
+			Time:  ctx.world.Time,
+		})
 		c.State = ChairStateActive
-		moved = true
 
 		// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 	}
 
-	if c.State == ChairStateActive && moved {
-		// 稼働中かつ動いた場合に自身の座標をサーバーに送信
+	if c.Location.Dirty() {
+		// 動いた場合に自身の座標をサーバーに送信
 		err := c.Client.SendChairCoordinate(ctx, c)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
 		}
+		// c.Location.SetServerTime()
+		c.Location.ResetDirtyFlag()
 	}
 	return nil
 }
@@ -291,51 +298,54 @@ func (c *Chair) AssignRequest(serverRequestID string) error {
 	return nil
 }
 
-func (c *Chair) moveToward(target Coordinate) {
+func (c *Chair) moveToward(target Coordinate) (to Coordinate) {
+	prev := c.Location.Current()
+	to = c.Location.Current()
+
 	// ランダムにx, y方向で近づける
 	x := c.Rand.IntN(c.Speed + 1)
 	y := c.Speed - x
 	remain := 0
 
 	switch {
-	case c.Current.X < target.X:
-		xDiff := target.X - (c.Current.X + x)
+	case prev.X < target.X:
+		xDiff := target.X - (prev.X + x)
 		if xDiff < 0 {
 			// X座標で追い越すので、追い越す分をyの移動に加える
-			c.Current.X = target.X
+			to.X = target.X
 			y += -xDiff
 		} else {
-			c.Current.X += x
+			to.X += x
 		}
-	case c.Current.X > target.X:
-		xDiff := (c.Current.X - x) - target.X
+	case prev.X > target.X:
+		xDiff := (prev.X - x) - target.X
 		if xDiff < 0 {
 			// X座標で追い越すので、追い越す分をyの移動に加える
-			c.Current.X = target.X
+			to.X = target.X
 			y += -xDiff
 		} else {
-			c.Current.X -= x
+			to.X -= x
 		}
 	default:
 		y = c.Speed
 	}
 
 	switch {
-	case c.Current.Y < target.Y:
-		yDiff := target.Y - (c.Current.Y + y)
+	case prev.Y < target.Y:
+		yDiff := target.Y - (prev.Y + y)
 		if yDiff < 0 {
-			c.Current.Y = target.Y
+			to.Y = target.Y
 			remain += -yDiff
 		} else {
-			c.Current.Y += y
+			to.Y += y
 		}
-	case c.Current.Y > target.Y:
-		yDiff := (c.Current.Y - y) - target.Y
+	case prev.Y > target.Y:
+		yDiff := (prev.Y - y) - target.Y
 		if yDiff < 0 {
-			c.Current.Y = target.Y
+			to.Y = target.Y
 			remain += -yDiff
 		} else {
-			c.Current.Y -= y
+			to.Y -= y
 		}
 	default:
 		remain = y
@@ -344,25 +354,29 @@ func (c *Chair) moveToward(target Coordinate) {
 	if remain > 0 {
 		x = remain
 		switch {
-		case c.Current.X < target.X:
-			xDiff := target.X - (c.Current.X + x)
+		case to.X < target.X:
+			xDiff := target.X - (to.X + x)
 			if xDiff < 0 {
-				c.Current.X = target.X
+				to.X = target.X
 			} else {
-				c.Current.X += x
+				to.X += x
 			}
-		case c.Current.X > target.X:
-			xDiff := (c.Current.X - x) - target.X
+		case to.X > target.X:
+			xDiff := (to.X - x) - target.X
 			if xDiff < 0 {
-				c.Current.X = target.X
+				to.X = target.X
 			} else {
-				c.Current.X -= x
+				to.X -= x
 			}
 		}
 	}
+
+	return to
 }
 
-func (c *Chair) moveRandom() {
+func (c *Chair) moveRandom() (to Coordinate) {
+	prev := c.Location.Current()
+
 	// 移動量の決定
 	x := c.Rand.IntN(c.Speed + 1)
 	y := c.Speed - x
@@ -374,40 +388,40 @@ func (c *Chair) moveRandom() {
 	switch c.Rand.IntN(4) {
 	case 0:
 		x *= -1
-		if c.Current.X+x < left {
+		if prev.X+x < left {
 			x *= -1 // 逆側に戻す
 		}
-		if top < c.Current.Y+y {
+		if top < prev.Y+y {
 			y *= -1 // 逆側に戻す
 		}
 	case 1:
 		y *= -1
-		if right < c.Current.X+x {
+		if right < prev.X+x {
 			x *= -1 // 逆側に戻す
 		}
-		if c.Current.Y+y < bottom {
+		if prev.Y+y < bottom {
 			y *= -1 // 逆側に戻す
 		}
 	case 2:
 		x *= -1
 		y *= -1
-		if c.Current.X+x < left {
+		if prev.X+x < left {
 			x *= -1 // 逆側に戻す
 		}
-		if c.Current.Y+y < bottom {
+		if prev.Y+y < bottom {
 			y *= -1 // 逆側に戻す
 		}
 	case 3:
-		if right < c.Current.X+x {
+		if right < prev.X+x {
 			x *= -1 // 逆側に戻す
 		}
-		if top < c.Current.Y+y {
+		if top < prev.Y+y {
 			y *= -1 // 逆側に戻す
 		}
 		break
 	}
 
-	c.Current = C(c.Current.X+x, c.Current.Y+y)
+	return C(prev.X+x, prev.Y+y)
 }
 
 func (c *Chair) HandleNotification(event NotificationEvent) error {
