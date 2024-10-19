@@ -15,6 +15,8 @@ type Provider struct {
 	ID ProviderID
 	// ServerID サーバー上でのプロバイダーID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region 椅子を配置する地域
 	Region *Region
 	// ChairDB 管理している椅子
@@ -51,7 +53,7 @@ func (p *Provider) Tick(ctx *Context) error {
 	}
 	defer p.tickDone.Done()
 
-	if ctx.world.Time%LengthOfHour == LengthOfHour-1 {
+	if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)

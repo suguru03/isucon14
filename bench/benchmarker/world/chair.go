@@ -24,6 +24,8 @@ type Chair struct {
 	ID ChairID
 	// ServerID サーバー上での椅子ID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region 椅子がいる地域
 	Region *Region
 	// Provider 椅子を所有している事業者
@@ -34,29 +36,24 @@ type Chair struct {
 	State ChairState
 	// Location 椅子の位置情報
 	Location ChairLocation
-
+	// RegisteredData サーバーに登録されている椅子情報
+	RegisteredData RegisteredChairData
 	// ServerRequestID 進行中のリクエストのサーバー上でのID
 	ServerRequestID null.String
 	// Request 進行中のリクエスト
 	Request *Request
 	// RequestHistory 引き受けたリクエストの履歴
 	RequestHistory []*Request
-	// oldRequest Completedだが後処理されてないRequest
-	oldRequest *Request
-
-	// RegisteredData サーバーに登録されている椅子情報
-	RegisteredData RegisteredChairData
-	// NotificationConn 通知ストリームコネクション
-	NotificationConn NotificationStream
-	// notificationQueue 通知キュー。毎Tickで最初に処理される
-	notificationQueue chan NotificationEvent
-
 	// Client webappへのクライアント
 	Client ChairClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
+	// notificationConn 通知ストリームコネクション
+	notificationConn NotificationStream
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 }
 
 type RegisteredChairData struct {
@@ -77,18 +74,6 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer c.tickDone.Done()
-
-	// 後処理ができていないリクエストがあれば対応する
-	if c.oldRequest != nil {
-		if c.oldRequest.Statuses.Chair == RequestStatusCompleted {
-			// 完了時間を記録
-			c.oldRequest.CompletedAt = ctx.world.Time
-			ctx.world.CompletedRequestChan <- c.oldRequest
-			c.oldRequest = nil
-		} else {
-			panic("想定していないステータス")
-		}
-	}
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(c.notificationQueue) {
@@ -120,13 +105,13 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Statuses.Desired = RequestStatusDispatching
 				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Location.Current())
-				c.Request.MatchedAt = ctx.world.Time
+				c.Request.MatchedAt = ctx.CurrentTime()
 
 				c.Request.Statuses.Unlock()
 
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 				if !c.Request.User.Region.Contains(c.Location.Current()) {
-					ctx.world.contestantLogger.Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
+					ctx.ContestantLogger().Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
 			} else {
 				err := c.Client.SendDenyRequest(ctx, c, c.Request.ServerID)
@@ -141,15 +126,16 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		case RequestStatusDispatching:
 			// 配椅子位置に向かう
+			time := ctx.CurrentTime()
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.PickupPoint),
-				Time:  ctx.world.Time,
+				Time:  time,
 			})
 			if c.Location.Current().Equals(c.Request.PickupPoint) {
 				// 配椅子位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
 				c.Request.Statuses.Chair = RequestStatusDispatched
-				c.Request.DispatchedAt = ctx.world.Time
+				c.Request.DispatchedAt = time
 			}
 
 		case RequestStatusDispatched:
@@ -169,19 +155,20 @@ func (c *Chair) Tick(ctx *Context) error {
 			// サーバーがdepartを受理したので出発する
 			c.Request.Statuses.Desired = RequestStatusCarrying
 			c.Request.Statuses.Chair = RequestStatusCarrying
-			c.Request.PickedUpAt = ctx.world.Time
+			c.Request.PickedUpAt = ctx.CurrentTime()
 
 		case RequestStatusCarrying:
 			// 目的地に向かう
+			time := ctx.CurrentTime()
 			c.Location.MoveTo(&LocationEntry{
 				Coord: c.moveToward(c.Request.DestinationPoint),
-				Time:  ctx.world.Time,
+				Time:  time,
 			})
 			if c.Location.Current().Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
 				c.Request.Statuses.Chair = RequestStatusArrived
-				c.Request.ArrivedAt = ctx.world.Time
+				c.Request.ArrivedAt = time
 				break
 			}
 
@@ -198,7 +185,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// オファーされたリクエストが存在するが、詳細を未取得
 	case c.Request == nil && c.ServerRequestID.Valid:
-		req := ctx.world.RequestDB.GetByServerID(c.ServerRequestID.String)
+		req := c.World.RequestDB.GetByServerID(c.ServerRequestID.String)
 		if req == nil {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
 			err := c.Client.SendDenyRequest(ctx, c, c.ServerRequestID.String)
@@ -229,13 +216,13 @@ func (c *Chair) Tick(ctx *Context) error {
 		//// 退勤
 		//c.State = ChairStateInactive
 		//// 通知コネクションを切断
-		//c.NotificationConn.Close()
-		//c.NotificationConn = nil
+		//c.notificationConn.Close()
+		//c.notificationConn = nil
 
 	// 未稼働
 	case c.State == ChairStateInactive:
 		// TODO: 稼働開始タイミング
-		if c.NotificationConn == nil {
+		if c.notificationConn == nil {
 			// 先に通知コネクションを繋いでおく
 			conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
 				if !concurrent.TrySend(c.notificationQueue, event) {
@@ -246,7 +233,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
-			c.NotificationConn = conn
+			c.notificationConn = conn
 		}
 
 		err := c.Client.SendActivate(ctx, c)
@@ -257,7 +244,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		// 出勤
 		c.Location.PlaceTo(&LocationEntry{
 			Coord: c.Location.Initial,
-			Time:  ctx.world.Time,
+			Time:  ctx.CurrentTime(),
 		})
 		c.State = ChairStateActive
 
@@ -278,21 +265,8 @@ func (c *Chair) Tick(ctx *Context) error {
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
 	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
-		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID {
-			request := c.Request
-			// 椅子が別のリクエストを保持している
-			switch {
-			case request.Statuses.Chair == RequestStatusCompleted:
-				// 既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
-				// 後処理を次のTickで完了させるために退避させる
-				c.oldRequest = request
-				c.Request = nil
-			default:
-				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, request, serverRequestID))
-			}
-		} else {
-			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
-		}
+		// 椅子が別のリクエストを保持している
+		return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
 	}
 	c.ServerRequestID = null.StringFrom(serverRequestID)
 	return nil
@@ -442,7 +416,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 					return nil
 				}
 			}
-			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest))
+			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v, got: %v", data.ServerRequestID, RequestStatusCompleted))
 		}
 		if request.Statuses.Desired != RequestStatusCompleted {
 			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))

@@ -24,13 +24,14 @@ type User struct {
 	ID UserID
 	// ServerID サーバー上でのユーザーID
 	ServerID string
+	// World Worldへの逆参照
+	World *World
 	// Region ユーザーが居る地域
 	Region *Region
 	// State ユーザーの状態
 	State UserState
 	// Request 進行中の配椅子・送迎リクエスト
 	Request *Request
-
 	// RegisteredData サーバーに登録されているユーザー情報
 	RegisteredData RegisteredUserData
 	// PaymentToken 支払いトークン
@@ -39,17 +40,16 @@ type User struct {
 	RequestHistory []*Request
 	// TotalEvaluation 完了したリクエストの平均評価
 	TotalEvaluation int
-	// NotificationConn 通知ストリームコネクション
-	NotificationConn NotificationStream
-	// notificationQueue 通知キュー。毎Tickで最初に処理される
-	notificationQueue chan NotificationEvent
-
 	// Client webappへのクライアント
 	Client UserClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
+	// notificationConn 通知ストリームコネクション
+	notificationConn NotificationStream
+	// notificationQueue 通知キュー。毎Tickで最初に処理される
+	notificationQueue chan NotificationEvent
 }
 
 type RegisteredUserData struct {
@@ -129,7 +129,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 
 				// サーバーが評価を受理したので完了状態になるのを待機する
-				u.Request.CompletedAt = ctx.world.Time
+				u.Request.CompletedAt = ctx.CurrentTime()
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated = true
 				if requests := len(u.RequestHistory); requests == 1 {
@@ -139,7 +139,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 				u.TotalEvaluation += score
 				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
-				ctx.world.CompletedRequestChan <- u.Request
+				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}
 
 		case RequestStatusCompleted:
@@ -149,7 +149,7 @@ func (u *User) Tick(ctx *Context) error {
 
 	// 進行中のリクエストは存在しないが、ユーザーがアクティブ状態
 	case u.Request == nil && u.State == UserStateActive:
-		if u.NotificationConn == nil {
+		if u.notificationConn == nil {
 			// 通知コネクションが無い場合は繋いでおく
 			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
 				if !concurrent.TrySend(u.notificationQueue, event) {
@@ -160,17 +160,16 @@ func (u *User) Tick(ctx *Context) error {
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
 			}
-			u.NotificationConn = conn
+			u.notificationConn = conn
 		}
 
 		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
 			// 初回利用で評価1なら離脱
 			// 2回以上利用して平均評価が2以下の場合は離脱
-			u.State = UserStateInactive
-			u.NotificationConn.Close()
-			u.NotificationConn = nil
-			ctx.world.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
-			break
+			if u.Region.UserLeave(u) {
+				break
+			}
+			// Region内の最低ユーザー数を下回るならそのまま残る
 		}
 
 		// リクエストを作成する
@@ -187,6 +186,13 @@ func (u *User) Tick(ctx *Context) error {
 	return nil
 }
 
+func (u *User) Deactivate() {
+	u.State = UserStateInactive
+	u.notificationConn.Close()
+	u.notificationConn = nil
+	u.World.PublishEvent(&EventUserLeave{User: u})
+}
+
 func (u *User) CreateRequest(ctx *Context) error {
 	if u.Request != nil {
 		panic("ユーザーに進行中のリクエストがあるのにも関わらず、リクエストを新規作成しようとしている")
@@ -200,7 +206,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 		User:             u,
 		PickupPoint:      pickup,
 		DestinationPoint: dest,
-		RequestedAt:      ctx.world.Time,
+		RequestedAt:      ctx.CurrentTime(),
 		Statuses: RequestStatuses{
 			Desired: RequestStatusMatching,
 			Chair:   RequestStatusMatching,
@@ -214,7 +220,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 	req.ServerID = res.ServerRequestID
 	u.Request = req
 	u.RequestHistory = append(u.RequestHistory, req)
-	ctx.world.RequestDB.Create(req)
+	u.World.RequestDB.Create(req)
 	return nil
 }
 

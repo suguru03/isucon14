@@ -43,8 +43,6 @@ type Scenario struct {
 	step             *isucandar.BenchmarkStep
 	reporter         benchrun.Reporter
 	meter            metric.Meter
-
-	completedRequestChan chan *world.Request
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
@@ -146,8 +144,6 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		paymentServer:    paymentServer,
 		reporter:         reporter,
 		meter:            meter,
-
-		completedRequestChan: completedRequestChan,
 	}
 }
 
@@ -253,7 +249,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 		s.contestantLogger.Info("最終Region情報",
 			slog.String("region", region.Name),
 			slog.Int("users", region.UsersDB.Len()),
-			slog.Int("active_users", len(lo.Filter(region.UsersDB.ToSlice(), func(u *world.User, _ int) bool { return u.State == world.UserStateActive }))),
+			slog.Int("active_users", region.ActiveUserNum()),
 		)
 	}
 	for id, provider := range s.world.ProviderDB.Iter() {
@@ -262,6 +258,7 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			slog.Int64("total_sales", provider.TotalSales.Load()),
 			slog.Int("chairs", provider.ChairDB.Len()),
 			slog.Int("chairs_outside_region", lo.CountBy(provider.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Location.Current().Within(provider.Region) })),
+			slog.Int("total_chair_travel_distance", lo.SumBy(provider.ChairDB.ToSlice(), func(c *world.Chair) int { return c.Location.TotalTravelDistance() })),
 		)
 	}
 	s.contestantLogger.Info("種別エラー発生数", slog.Any("errors", s.world.ErrorCounter.Count()))

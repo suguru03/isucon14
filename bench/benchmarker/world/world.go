@@ -206,6 +206,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 
 	u := &User{
 		ServerID:          res.ServerUserID,
+		World:             w,
 		Region:            args.Region,
 		State:             UserStatePaymentMethodsNotRegister,
 		RegisteredData:    registeredData,
@@ -216,7 +217,8 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
-	result.Region.UsersDB.Set(result.ID, u)
+	args.Region.AddUser(u)
+	w.PublishEvent(&EventUserActivated{User: u})
 	return result, nil
 }
 
@@ -240,6 +242,7 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 
 	p := &Provider{
 		ServerID:       res.ServerProviderID,
+		World:          w,
 		Region:         args.Region,
 		ChairDB:        concurrent.NewSimpleMap[ChairID, *Chair](),
 		RegisteredData: registeredData,
@@ -274,6 +277,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 
 	c := &Chair{
 		ServerID:          res.ServerUserID,
+		World:             w,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,
 		Location:          ChairLocation{Initial: args.InitialCoordinate},
@@ -307,4 +311,13 @@ func (w *World) handleTickError(err error) {
 
 func (w *World) RestTicker() {
 	w.timeoutTicker.Reset(w.tickTimeout)
+}
+
+func (w *World) PublishEvent(e Event) {
+	switch data := e.(type) {
+	case *EventRequestCompleted:
+		w.CompletedRequestChan <- data.Request
+	case *EventUserLeave:
+		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
+	}
 }
