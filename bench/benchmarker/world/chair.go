@@ -41,8 +41,6 @@ type Chair struct {
 	Request *Request
 	// RequestHistory 引き受けたリクエストの履歴
 	RequestHistory []*Request
-	// oldRequest Completedだが後処理されてないRequest
-	oldRequest *Request
 
 	// RegisteredData サーバーに登録されている椅子情報
 	RegisteredData RegisteredChairData
@@ -77,18 +75,6 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer c.tickDone.Done()
-
-	// 後処理ができていないリクエストがあれば対応する
-	if c.oldRequest != nil {
-		if c.oldRequest.Statuses.Chair == RequestStatusCompleted {
-			// 完了時間を記録
-			c.oldRequest.CompletedAt = ctx.CurrentTime()
-			ctx.world.CompletedRequestChan <- c.oldRequest
-			c.oldRequest = nil
-		} else {
-			panic("想定していないステータス")
-		}
-	}
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(c.notificationQueue) {
@@ -278,21 +264,8 @@ func (c *Chair) Tick(ctx *Context) error {
 
 func (c *Chair) AssignRequest(serverRequestID string) error {
 	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
-		if c.Request != nil && c.ServerRequestID.String == c.Request.ServerID {
-			request := c.Request
-			// 椅子が別のリクエストを保持している
-			switch {
-			case request.Statuses.Chair == RequestStatusCompleted:
-				// 既に完了状態の場合はベンチマーカーの処理が遅れているだけのため、アサインが可能
-				// 後処理を次のTickで完了させるために退避させる
-				c.oldRequest = request
-				c.Request = nil
-			default:
-				return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, request, serverRequestID))
-			}
-		} else {
-			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
-		}
+		// 椅子が別のリクエストを保持している
+		return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
 	}
 	c.ServerRequestID = null.StringFrom(serverRequestID)
 	return nil
@@ -442,7 +415,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 					return nil
 				}
 			}
-			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v (oldRequest: %v)", data.ServerRequestID, c.oldRequest))
+			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v, got: %v", data.ServerRequestID, RequestStatusCompleted))
 		}
 		if request.Statuses.Desired != RequestStatusCompleted {
 			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
