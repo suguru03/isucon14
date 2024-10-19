@@ -181,6 +181,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Provider:          provider,
 				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(provider.Region, provider.Rand),
+				Model:             world.ChairModelA,
 			})
 			if err != nil {
 				return err

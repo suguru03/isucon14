@@ -44,14 +44,13 @@ type World struct {
 	// ErrorCounter エラーカウンター
 	ErrorCounter *ErrorCounter
 
-	tickTimeout        time.Duration
-	timeoutTicker      *time.Ticker
-	prevTimeout        bool
-	criticalErrorCh    chan error
-	waitingTickCount   atomic.Int32
-	userIncrease       float64
-	chairIncreaseSales int64
-	increasingChairs   atomic.Int64
+	tickTimeout      time.Duration
+	timeoutTicker    *time.Ticker
+	prevTimeout      bool
+	criticalErrorCh  chan error
+	waitingTickCount atomic.Int32
+	userIncrease     float64
+	increasingChairs atomic.Int64
 
 	// contestantLogger 競技者向けに出力されるロガー
 	contestantLogger *slog.Logger
@@ -79,7 +78,6 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
 		userIncrease:         5,
-		chairIncreaseSales:   10000,
 		contestantLogger:     contestantLogger,
 	}
 }
@@ -101,30 +99,6 @@ func (w *World) Tick(ctx *Context) error {
 						}
 					}()
 				}
-			}
-		}
-	}
-
-	for _, p := range w.ProviderDB.Iter() {
-		increase := p.TotalSales.Load()/w.chairIncreaseSales - int64(p.ChairDB.Len()) + 10 - w.increasingChairs.Load()
-		if increase > 0 {
-			w.contestantLogger.Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
-			w.increasingChairs.Add(increase)
-			for range increase {
-				w.waitingTickCount.Add(1)
-				go func() {
-					defer func() {
-						w.waitingTickCount.Add(-1)
-						w.increasingChairs.Add(-1)
-					}()
-					_, err := w.CreateChair(ctx, &CreateChairArgs{
-						Provider:          p,
-						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-					})
-					if err != nil {
-						w.handleTickError(err)
-					}
-				}()
 			}
 		}
 	}
@@ -257,19 +231,19 @@ type CreateChairArgs struct {
 	Provider *Provider
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
+	// Model 椅子モデル
+	Model *ChairModel
 }
 
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
-	// TODO modelの決定
-	model := ChairModelA
 	registeredData := RegisteredChairData{
 		Name: random.GenerateChairName(),
 	}
 
 	res, err := args.Provider.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
 		Name:  registeredData.Name,
-		Model: model.Name,
+		Model: args.Model.Name,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -280,7 +254,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		World:             w,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,
-		Model:             model,
+		Model:             args.Model,
 		Location:          ChairLocation{Initial: args.InitialCoordinate},
 		State:             ChairStateInactive,
 		RegisteredData:    registeredData,

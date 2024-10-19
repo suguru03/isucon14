@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 	"sync/atomic"
 
@@ -53,10 +54,26 @@ func (p *Provider) Tick(ctx *Context) error {
 	}
 	defer p.tickDone.Done()
 
+	// TODO: 売り上げ取得で売上を確認してから椅子を増やすようにする
 	if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		_, err := p.Client.GetProviderSales(ctx, p)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
+		}
+	} else {
+		increase := p.TotalSales.Load()/10000 - int64(p.ChairDB.Len()) + 10
+		if increase > 0 {
+			ctx.ContestantLogger().Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int64("increase", increase))
+			for range increase {
+				_, err := p.World.CreateChair(ctx, &CreateChairArgs{
+					Provider:          p,
+					InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
+					Model:             ChairModelA,
+				})
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
