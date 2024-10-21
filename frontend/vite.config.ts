@@ -123,7 +123,7 @@ export const config = {
     customConsolePlugin,
   ],
   define: {
-    [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "/"}"`,
+    [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
   },
   server: {
     proxy: {
