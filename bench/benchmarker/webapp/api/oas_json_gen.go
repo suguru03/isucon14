@@ -2170,41 +2170,6 @@ func (s *OptCoordinate) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes int as json.
-func (o OptInt) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Int(int(o.Value))
-}
-
-// Decode decodes int from json.
-func (o *OptInt) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptInt to nil")
-	}
-	o.Set = true
-	v, err := d.Int()
-	if err != nil {
-		return err
-	}
-	o.Value = int(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptInt) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptInt) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes PostInitializeReq as json.
 func (o OptPostInitializeReq) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2300,41 +2265,6 @@ func (s OptRequestStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptRequestStatus) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes string as json.
-func (o OptString) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes string from json.
-func (o *OptString) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptString to nil")
-	}
-	o.Set = true
-	v, err := d.Str()
-	if err != nil {
-		return err
-	}
-	o.Value = string(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptString) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptString) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2739,22 +2669,16 @@ func (s *ProviderGetSalesOKChairsItem) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ProviderGetSalesOKChairsItem) encodeFields(e *jx.Encoder) {
 	{
-		if s.ID.Set {
-			e.FieldStart("id")
-			s.ID.Encode(e)
-		}
+		e.FieldStart("id")
+		e.Str(s.ID)
 	}
 	{
-		if s.Name.Set {
-			e.FieldStart("name")
-			s.Name.Encode(e)
-		}
+		e.FieldStart("name")
+		e.Str(s.Name)
 	}
 	{
-		if s.Sales.Set {
-			e.FieldStart("sales")
-			s.Sales.Encode(e)
-		}
+		e.FieldStart("sales")
+		e.Int(s.Sales)
 	}
 }
 
@@ -2769,13 +2693,16 @@ func (s *ProviderGetSalesOKChairsItem) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode ProviderGetSalesOKChairsItem to nil")
 	}
+	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
 		case "id":
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.ID.Reset()
-				if err := s.ID.Decode(d); err != nil {
+				v, err := d.Str()
+				s.ID = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -2783,9 +2710,11 @@ func (s *ProviderGetSalesOKChairsItem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
 		case "name":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Name.Reset()
-				if err := s.Name.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -2793,9 +2722,11 @@ func (s *ProviderGetSalesOKChairsItem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "sales":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				s.Sales.Reset()
-				if err := s.Sales.Decode(d); err != nil {
+				v, err := d.Int()
+				s.Sales = int(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -2808,6 +2739,38 @@ func (s *ProviderGetSalesOKChairsItem) Decode(d *jx.Decoder) error {
 		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode ProviderGetSalesOKChairsItem")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfProviderGetSalesOKChairsItem) {
+					name = jsonFieldsNameOfProviderGetSalesOKChairsItem[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
 	}
 
 	return nil
@@ -2836,16 +2799,12 @@ func (s *ProviderGetSalesOKModelsItem) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ProviderGetSalesOKModelsItem) encodeFields(e *jx.Encoder) {
 	{
-		if s.Model.Set {
-			e.FieldStart("model")
-			s.Model.Encode(e)
-		}
+		e.FieldStart("model")
+		e.Str(s.Model)
 	}
 	{
-		if s.Sales.Set {
-			e.FieldStart("sales")
-			s.Sales.Encode(e)
-		}
+		e.FieldStart("sales")
+		e.Int(s.Sales)
 	}
 }
 
@@ -2859,13 +2818,16 @@ func (s *ProviderGetSalesOKModelsItem) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode ProviderGetSalesOKModelsItem to nil")
 	}
+	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
 		case "model":
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Model.Reset()
-				if err := s.Model.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Model = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -2873,9 +2835,11 @@ func (s *ProviderGetSalesOKModelsItem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"model\"")
 			}
 		case "sales":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Sales.Reset()
-				if err := s.Sales.Decode(d); err != nil {
+				v, err := d.Int()
+				s.Sales = int(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -2888,6 +2852,38 @@ func (s *ProviderGetSalesOKModelsItem) Decode(d *jx.Decoder) error {
 		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode ProviderGetSalesOKModelsItem")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfProviderGetSalesOKModelsItem) {
+					name = jsonFieldsNameOfProviderGetSalesOKModelsItem[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
 	}
 
 	return nil

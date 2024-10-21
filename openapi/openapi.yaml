@@ -319,6 +319,10 @@ paths:
                         sales:
                           type: integer
                           description: 椅子ごとの売上
+                      required:
+                        - id
+                        - name
+                        - sales
                     description: 椅子ごとの売上情報
                   models:
                     type: array
@@ -331,6 +335,9 @@ paths:
                         sales:
                           type: integer
                           description: モデルごとの売上
+                      required:
+                        - model
+                        - sales
                     description: モデルごとの売上情報
                 required:
                   - total_sales
