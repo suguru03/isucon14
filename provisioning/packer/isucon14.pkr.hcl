@@ -22,7 +22,7 @@ variable "revision" {
 }
 
 locals {
-  name = "${var.commit_hash}-${formatdate("YYYYMMDD-hhmm", timestamp())}"
+  name = "isucon14_contestant-${var.commit_hash}-${formatdate("YYYYMMDD-hhmm", timestamp())}"
   ami_tags = {
     Project  = "isucon14"
     Family   = "isucon14"
@@ -32,20 +32,20 @@ locals {
   }
   run_tags = {
     Project = "isucon14"
-    Name    = "contestant-${local.name}"
+    Name    = "packer-${local.name}"
     Packer  = "1"
     Ignore  = "1"
   }
 }
 
-data "amazon-ami" "ubuntu-jammy" {
+data "amazon-ami" "base-image" {
   filters = {
-    name                = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
-    root-device-type    = "ebs"
-    virtualization-type = "hvm"
+    name          = "isucon14_baseimage-*"
+    "tag:Project" = "isucon14"
+    "tag:Family"  = "isucon14"
   }
   most_recent = true
-  owners      = ["099720109477"]
+  owners      = ["self"]
   region      = "ap-northeast-1"
 }
 
@@ -56,7 +56,7 @@ source "amazon-ebs" "isucon14" {
   tags          = local.ami_tags
   snapshot_tags = local.ami_tags
 
-  source_ami    = "${data.amazon-ami.ubuntu-jammy.id}"
+  source_ami    = "${data.amazon-ami.base-image.id}"
   region        = "ap-northeast-1"
   instance_type = "c5.4xlarge"
 

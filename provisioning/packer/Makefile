@@ -8,6 +8,12 @@ all:
 	make init
 	make build
 
+.PHONY: base-build
+base-build:
+	make echo-commit_hash
+	packer init -upgrade isucon14_base_image.pkr.hcl
+	packer build -var "commit_hash=$$(git rev-parse HEAD)" isucon14_base_image.pkr.hcl
+
 .PHONY: echo-commit_hash
 echo-commit_hash:
 	git rev-parse HEAD
