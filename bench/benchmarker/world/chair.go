@@ -246,8 +246,6 @@ func (c *Chair) Tick(ctx *Context) error {
 			Time:  ctx.CurrentTime(),
 		})
 		c.State = ChairStateActive
-
-		// FIXME activateされてから座標が送信される前に最終出勤時の座標でマッチングされてしまう場合の対応
 	}
 
 	if c.Location.Dirty() {
