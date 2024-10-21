@@ -27,7 +27,7 @@ export const Avatar: FC<AvatarProps> = ({
   return (
     <div
       className={twMerge(
-        "border rounded-full bg-gray-400 flex items-center justify-center",
+        "border rounded-full bg-neutral-400 flex items-center justify-center",
         getSizeClass(size),
         className,
       )}

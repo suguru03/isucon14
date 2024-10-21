@@ -15,7 +15,7 @@ export const ButtonLink: FC<PropsWithChildren<ComponentProps<typeof Link>>> = ({
       {...props}
       to={to}
       className={twMerge(
-        "w-full py-2 text-center border border-gray-500 rounded-md bg-gray-200",
+        "w-full py-2 text-center border border-neutral-500 rounded-md bg-neutral-200",
         className,
       )}
     >
@@ -30,9 +30,9 @@ export const Button: FC<
   const variantClasses = useMemo(() => {
     switch (variant) {
       case "primary":
-        return "text-white bg-[#21517A] active:brightness-[85%] hover:brightness-[85%] focus:brightness-[85%]";
+        return "text-white bg-sky-700 active:brightness-90 hover:brightness-90 focus:brightness-90";
       case "danger":
-        return "text-white bg-[#C52E23] active:brightness-90 hover:brightness-90 focus:brightness-90";
+        return "text-white bg-rose-600 active:brightness-90 hover:brightness-90 focus:brightness-90";
       case "light":
       default:
         return "bg-[#F0EFED] active:brightness-90 hover:brightness-90 focus:brightness-90";
@@ -42,7 +42,7 @@ export const Button: FC<
     <button
       type="button"
       className={twMerge(
-        "rounded-md py-3 px-4 border border-transparent text-gray-700 text-center transition-all shadow-md shadow-gray-400 hover:shadow-lg focus:shadow-none active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none",
+        "rounded-md bg-neutral-800 py-3 px-4 border border-transparent text-center text-sm transition-all shadow-md hover:shadow-lg  disabled:opacity-50 disabled:shadow-none ml-2",
         variantClasses,
         className,
       )}

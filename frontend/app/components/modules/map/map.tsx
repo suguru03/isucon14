@@ -1,4 +1,5 @@
 import {
+  ComponentProps,
   FC,
   MouseEventHandler,
   TouchEventHandler,
@@ -12,6 +13,7 @@ import {
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
 import { ToIcon } from "~/components/icon/to";
+import { Button } from "~/components/primitives/button/button";
 import type { Coordinate, Pos } from "~/types";
 
 const GridDistance = 50;
@@ -19,10 +21,10 @@ const MapSize = GridDistance * 100;
 const PinSize = 40;
 
 const draw = (ctx: CanvasRenderingContext2D) => {
-  ctx.fillStyle = colors.gray[100];
+  ctx.fillStyle = colors.neutral[100];
   ctx.fillRect(0, 0, MapSize, MapSize);
 
-  ctx.strokeStyle = colors.gray[200];
+  ctx.strokeStyle = colors.neutral[200];
   ctx.lineWidth = 10;
   ctx.beginPath();
 
@@ -67,14 +69,18 @@ const centerPosFrom = (pos: Pos, outerRect: DOMRect): Pos => {
 const SelectorLayer: FC<{
   pinSize?: number;
   pos?: Pos;
-}> = ({ pinSize = 80, pos }) => {
+  updateViewLocation: (coordinate: Coordinate) => void;
+}> = ({ pinSize = 80, pos, updateViewLocation }) => {
   const loc = useMemo(() => pos && posToCoordinate(pos), [pos]);
+  const [isOpenCustomSelector, setIsOpenCustomSelector] = useState(false);
+  const inputLatitudeRef = useRef<HTMLInputElement>(null);
+  const inputLongitudeRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="flex items-center justify-center w-full h-full">
       <svg
-        className="absolute top-0 left-0 w-full h-full"
+        className="absolute top-0 left-0 w-full h-full opacity-10"
         xmlns="http://www.w3.org/2000/svg"
-        opacity={0.1}
       >
         <rect x="50%" y="0" width={2} height={"100%"} />
         <rect x="0" y="50%" width={"100%"} height={2} />
@@ -89,8 +95,65 @@ const SelectorLayer: FC<{
         }}
       />
       {loc && (
-        <div className="absolute right-6 bottom-4 text-gray-500 font-mono">
+        <div className="absolute right-6 bottom-5 text-neutral-500 font-mono">
           <span>{`${loc.latitude}, ${loc.longitude}`}</span>
+        </div>
+      )}
+      <Button
+        className="py-2 px-3 absolute left-4 bottom-4"
+        onClick={() => setIsOpenCustomSelector(true)}
+      >
+        Custom
+      </Button>
+      {isOpenCustomSelector && loc && (
+        <div className="p-4 bg-neutral-50 bg-opacity-80 absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col">
+          <div className="flex space-x-4 w-full">
+            <div className="mb-3 flex-1">
+              <label htmlFor="latitude" className="block text-neutral-600 mb-1">
+                Latitude:
+              </label>
+              <input
+                type="number"
+                id="latitude"
+                min={0}
+                max={MapSize}
+                defaultValue={loc.latitude}
+                placeholder="latitude"
+                className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                ref={inputLatitudeRef}
+              />
+            </div>
+            <div className="mb-3 flex-1">
+              <label
+                htmlFor="longtiude"
+                className="block text-neutral-600 mb-1"
+              >
+                Longitude:
+              </label>
+              <input
+                type="number"
+                id="longtiude"
+                min={0}
+                max={MapSize}
+                defaultValue={loc.longitude}
+                placeholder="longitude"
+                className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                ref={inputLongitudeRef}
+              />
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              const inputLoc = {
+                latitude: Number(inputLatitudeRef.current?.value ?? 0),
+                longitude: Number(inputLongitudeRef.current?.value ?? 0),
+              };
+              updateViewLocation(inputLoc);
+              setIsOpenCustomSelector(false);
+            }}
+          >
+            位置をセット
+          </Button>
         </div>
       )}
     </div>
@@ -104,7 +167,7 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
     <div className="flex w-full h-full absolute top-0 left-0">
       {fromPos && (
         <ToIcon
-          className="absolute top-0 left-0"
+          className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
           color={colors.black}
           width={PinSize}
           height={PinSize}
@@ -115,7 +178,7 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
       )}
       {toPos && (
         <ToIcon
-          className="absolute"
+          className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
           color={colors.red[500]}
           width={PinSize}
           height={PinSize}
@@ -128,7 +191,7 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
   );
 };
 
-type MapProps = {
+type MapProps = ComponentProps<"div"> & {
   onMove?: (coordinate: Coordinate) => void;
   selectable?: boolean;
   from?: Coordinate;
@@ -142,6 +205,7 @@ export const Map: FC<MapProps> = ({
   from,
   to,
   initialCoordinate,
+  className,
 }) => {
   const onMoveRef = useRef(onMove);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -155,13 +219,13 @@ export const Map: FC<MapProps> = ({
   });
   const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
 
-  useLayoutEffect(() => {
+  const updateViewLocation = useCallback((loc: Coordinate) => {
     if (!outerRef.current) {
       return;
     }
     const rect = outerRef.current.getBoundingClientRect();
-    if (initialCoordinate) {
-      const pos = coordinateToPos(initialCoordinate);
+    if (loc) {
+      const pos = coordinateToPos(loc);
       const initalPos = {
         x: pos.x + rect.width / 2,
         y: pos.y + rect.height / 2,
@@ -176,7 +240,11 @@ export const Map: FC<MapProps> = ({
     };
     setPos(mapCenterPos);
     onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
-  }, [initialCoordinate]);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (initialCoordinate) updateViewLocation(initialCoordinate);
+  }, [initialCoordinate, updateViewLocation]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -270,6 +338,7 @@ export const Map: FC<MapProps> = ({
       className={twMerge(
         "w-full h-full relative overflow-hidden",
         isDrag && "cursor-grab",
+        className,
       )}
       ref={outerRef}
       onMouseDown={onMouseDown}
@@ -278,7 +347,10 @@ export const Map: FC<MapProps> = ({
       tabIndex={0}
     >
       <div
-        className="absolute top-0 left-0"
+        className={twMerge(
+          "absolute top-0 left-0",
+          !isDrag && "transition-transform duration-200 ease-in-out",
+        )}
         style={{
           transform: `translate(${x}px, ${y}px)`,
           width: MapSize,
@@ -289,7 +361,10 @@ export const Map: FC<MapProps> = ({
         <PinLayer from={from} to={to} />
       </div>
       {selectable && outerRect && (
-        <SelectorLayer pos={centerPosFrom({ x, y }, outerRect)} />
+        <SelectorLayer
+          pos={centerPosFrom({ x, y }, outerRect)}
+          updateViewLocation={updateViewLocation}
+        />
       )}
     </div>
   );

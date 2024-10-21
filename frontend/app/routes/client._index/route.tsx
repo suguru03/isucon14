@@ -90,7 +90,7 @@ export default function Index() {
             handleOpenModal("from");
           }}
           placeholder="現在地を選択する"
-          label="from"
+          label="現在地"
         />
         <Text size="xl">↓</Text>
         <LocationButton
@@ -100,7 +100,7 @@ export default function Index() {
             handleOpenModal("to");
           }}
           placeholder="目的地を選択する"
-          label="to"
+          label="目的地"
         />
         <Button
           variant="primary"
@@ -123,6 +123,7 @@ export default function Index() {
                   action === "from" ? currentLocation : destLocation
                 }
                 selectable
+                className="rounded-2xl"
               />
             </div>
             <p className="font-bold mb-4 text-base">

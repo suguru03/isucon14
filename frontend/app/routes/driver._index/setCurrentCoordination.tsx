@@ -32,13 +32,13 @@ function LocationInput() {
   };
 
   return (
-    <div className="p-4 bg-gray-100 shadow-md rounded-md">
-      <h1 className="text-lg font-medium mb-2 text-center text-gray-700">
+    <div className="p-4 bg-neutral-100 shadow-md rounded-md">
+      <h1 className="text-lg font-medium mb-2 text-center text-neutral-700">
         Enter Location
       </h1>
 
       <div className="mb-3">
-        <label htmlFor="latitude" className="block text-gray-600 mb-1">
+        <label htmlFor="latitude" className="block text-neutral-600 mb-1">
           Latitude:
         </label>
         <input
@@ -47,12 +47,12 @@ function LocationInput() {
           value={coordinates.latitude}
           onChange={handleNumberChange("latitude")}
           placeholder="Enter latitude"
-          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="w-full px-2 py-1 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
         />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="longtiude" className="block text-gray-600 mb-1">
+        <label htmlFor="longtiude" className="block text-neutral-600 mb-1">
           Longitude:
         </label>
         <input
@@ -61,13 +61,13 @@ function LocationInput() {
           value={coordinates.longitude}
           onChange={handleNumberChange("longitude")}
           placeholder="Enter longitude"
-          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="w-full px-2 py-1 border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
         />
       </div>
 
       <button
         onClick={handleConfirm}
-        className="w-full bg-gray-500 text-white py-1 rounded hover:bg-gray-600 transition duration-200"
+        className="w-full bg-neutral-500 text-white py-1 rounded hover:bg-neutral-600 transition duration-200"
       >
         決定
       </button>
