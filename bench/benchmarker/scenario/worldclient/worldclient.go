@@ -10,6 +10,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
+	"github.com/samber/lo"
 )
 
 type userClient struct {
@@ -112,7 +113,22 @@ func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetPro
 		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 	}
 
-	return &world.GetProviderSalesResponse{Total: response.TotalSales}, nil
+	return &world.GetProviderSalesResponse{
+		Total: response.TotalSales,
+		Chairs: lo.Map(response.Chairs, func(v api.ProviderGetSalesOKChairsItem, _ int) *world.ChairSales {
+			return &world.ChairSales{
+				ID:    v.ID,
+				Name:  v.Name,
+				Sales: v.Sales,
+			}
+		}),
+		Models: lo.Map(response.Models, func(v api.ProviderGetSalesOKModelsItem, _ int) *world.ChairSalesPerModel {
+			return &world.ChairSalesPerModel{
+				Model: v.Model,
+				Sales: v.Sales,
+			}
+		}),
+	}, nil
 }
 
 func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {

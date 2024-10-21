@@ -863,52 +863,6 @@ func (o OptCoordinate) Or(d Coordinate) Coordinate {
 	return d
 }
 
-// NewOptInt returns new OptInt with value set to v.
-func NewOptInt(v int) OptInt {
-	return OptInt{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptInt is optional int.
-type OptInt struct {
-	Value int
-	Set   bool
-}
-
-// IsSet returns true if OptInt was set.
-func (o OptInt) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptInt) Reset() {
-	var v int
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptInt) SetTo(v int) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptInt) Get() (v int, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptInt) Or(d int) int {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptPostInitializeReq returns new OptPostInitializeReq with value set to v.
 func NewOptPostInitializeReq(v PostInitializeReq) OptPostInitializeReq {
 	return OptPostInitializeReq{
@@ -1241,67 +1195,67 @@ func (s *ProviderGetSalesOK) SetModels(val []ProviderGetSalesOKModelsItem) {
 
 type ProviderGetSalesOKChairsItem struct {
 	// 椅子ID.
-	ID OptString `json:"id"`
+	ID string `json:"id"`
 	// 椅子名.
-	Name OptString `json:"name"`
+	Name string `json:"name"`
 	// 椅子ごとの売上.
-	Sales OptInt `json:"sales"`
+	Sales int `json:"sales"`
 }
 
 // GetID returns the value of ID.
-func (s *ProviderGetSalesOKChairsItem) GetID() OptString {
+func (s *ProviderGetSalesOKChairsItem) GetID() string {
 	return s.ID
 }
 
 // GetName returns the value of Name.
-func (s *ProviderGetSalesOKChairsItem) GetName() OptString {
+func (s *ProviderGetSalesOKChairsItem) GetName() string {
 	return s.Name
 }
 
 // GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) GetSales() OptInt {
+func (s *ProviderGetSalesOKChairsItem) GetSales() int {
 	return s.Sales
 }
 
 // SetID sets the value of ID.
-func (s *ProviderGetSalesOKChairsItem) SetID(val OptString) {
+func (s *ProviderGetSalesOKChairsItem) SetID(val string) {
 	s.ID = val
 }
 
 // SetName sets the value of Name.
-func (s *ProviderGetSalesOKChairsItem) SetName(val OptString) {
+func (s *ProviderGetSalesOKChairsItem) SetName(val string) {
 	s.Name = val
 }
 
 // SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) SetSales(val OptInt) {
+func (s *ProviderGetSalesOKChairsItem) SetSales(val int) {
 	s.Sales = val
 }
 
 type ProviderGetSalesOKModelsItem struct {
 	// 椅子モデル.
-	Model OptString `json:"model"`
+	Model string `json:"model"`
 	// モデルごとの売上.
-	Sales OptInt `json:"sales"`
+	Sales int `json:"sales"`
 }
 
 // GetModel returns the value of Model.
-func (s *ProviderGetSalesOKModelsItem) GetModel() OptString {
+func (s *ProviderGetSalesOKModelsItem) GetModel() string {
 	return s.Model
 }
 
 // GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) GetSales() OptInt {
+func (s *ProviderGetSalesOKModelsItem) GetSales() int {
 	return s.Sales
 }
 
 // SetModel sets the value of Model.
-func (s *ProviderGetSalesOKModelsItem) SetModel(val OptString) {
+func (s *ProviderGetSalesOKModelsItem) SetModel(val string) {
 	s.Model = val
 }
 
 // SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) SetSales(val OptInt) {
+func (s *ProviderGetSalesOKModelsItem) SetSales(val int) {
 	s.Sales = val
 }
 

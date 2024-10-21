@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"sync/atomic"
+	"time"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/samber/lo"
@@ -70,10 +71,9 @@ func (p *Provider) Tick(ctx *Context) error {
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
 			}
-			if expected := lo.SumBy(lo.Filter(p.CompletedRequest.ToSlice(), func(r *Request, _ int) bool { return !r.ServerCompletedAt.After(last.ServerCompletedAt) }), func(r *Request) int { return r.Fare() }); expected != res.Total {
-				return WrapCodeError(ErrorCodeSalesMismatched, fmt.Errorf("売り上げ情報がズレています (got: %d, expected: %d)", res.Total, expected))
+			if err := p.ValidateSales(last.ServerCompletedAt, res); err != nil {
+				return WrapCodeError(ErrorCodeSalesMismatched, err)
 			}
-
 			if increase := res.Total/15000 - p.createChairTryCount; increase > 0 {
 				ctx.ContestantLogger().Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
 				for range increase {
@@ -97,4 +97,75 @@ func (p *Provider) Tick(ctx *Context) error {
 func (p *Provider) AddChair(c *Chair) {
 	p.ChairDB.Set(c.ID, c)
 	p.chairCountPerModel[c.Model]++
+}
+
+func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesResponse) error {
+	totals := 0
+	perChairs := lo.Associate(p.ChairDB.ToSlice(), func(c *Chair) (string, *ChairSales) {
+		return c.ServerID, &ChairSales{
+			ID:    c.ServerID,
+			Name:  c.RegisteredData.Name,
+			Sales: 0,
+		}
+	})
+	perModels := lo.MapEntries(p.chairCountPerModel, func(m *ChairModel, _ int) (string, *ChairSalesPerModel) {
+		return m.Name, &ChairSalesPerModel{Model: m.Name}
+	})
+	for _, r := range p.CompletedRequest.Iter() {
+		if r.ServerCompletedAt.After(until) {
+			continue
+		}
+
+		cs, ok := perChairs[r.Chair.ServerID]
+		if !ok {
+			panic("unexpected")
+		}
+		cspm, ok := perModels[r.Chair.Model.Name]
+		if !ok {
+			panic("unexpected")
+		}
+
+		fare := r.Fare()
+		cs.Sales += fare
+		cspm.Sales += fare
+		totals += fare
+	}
+
+	// 椅子毎の売り上げ検証
+	if p.ChairDB.Len() != len(serverSide.Chairs) {
+		return fmt.Errorf("椅子ごとの売り上げ情報が足りていません")
+	}
+	for _, chair := range serverSide.Chairs {
+		sales, ok := perChairs[chair.ID]
+		if !ok {
+			return fmt.Errorf("期待していない椅子による売り上げが存在します (id: %s)", chair.ID)
+		}
+		if sales.Name != chair.Name {
+			return fmt.Errorf("nameが一致しないデータがあります (id: %s, got: %s, want: %s)", chair.ID, chair.Name, sales.Name)
+		}
+		if sales.Sales != chair.Sales {
+			return fmt.Errorf("salesがずれているデータがあります (id: %s, got: %d, want: %d)", chair.ID, sales.Sales, chair.Sales)
+		}
+	}
+
+	// モデル毎の売り上げ検証
+	if len(perModels) != len(serverSide.Models) {
+		return fmt.Errorf("モデルごとの売り上げ情報が足りていません")
+	}
+	for _, model := range serverSide.Models {
+		sales, ok := perModels[model.Model]
+		if !ok {
+			return fmt.Errorf("期待していない椅子モデルによる売り上げが存在します (id: %s)", model.Model)
+		}
+		if sales.Sales != model.Sales {
+			return fmt.Errorf("salesがずれているデータがあります (model: %s, got: %d, want: %d)", model.Model, sales.Sales, model.Sales)
+		}
+	}
+
+	// Totalの検証
+	if totals != serverSide.Total {
+		return fmt.Errorf("total_salesがズレています (got: %d, want: %d)", serverSide.Total, totals)
+	}
+
+	return nil
 }

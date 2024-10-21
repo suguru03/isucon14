@@ -58,7 +58,20 @@ type GetProviderSalesRequest struct {
 }
 
 type GetProviderSalesResponse struct {
-	Total int
+	Total  int
+	Chairs []*ChairSales
+	Models []*ChairSalesPerModel
+}
+
+type ChairSales struct {
+	ID    string
+	Name  string
+	Sales int
+}
+
+type ChairSalesPerModel struct {
+	Model string
+	Sales int
 }
 
 type SendEvaluationResponse struct {
