@@ -343,6 +343,41 @@ paths:
                   - total_sales
                   - chairs
                   - models
+  /provider/chairs:
+    get:
+      tags:
+        - provider
+      summary: 椅子プロバイダーが管理している椅子の一覧を取得する
+      operationId: provider-get-chairs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: 椅子ID
+                  name:
+                    type: string
+                    description: 椅子の名前
+                  model:
+                    type: string
+                    description: 椅子のモデル
+                  active:
+                    type: boolean
+                    description: 稼働中かどうか
+                  registeredAt:
+                    type: string
+                    description: 登録日時
+                required:
+                  - id
+                  - name
+                  - model
+                  - active
+                  - registeredAt
   /chair/register:
     post:
       tags:

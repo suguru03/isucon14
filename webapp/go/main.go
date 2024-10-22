@@ -64,6 +64,8 @@ func setup() http.Handler {
 		panic(err)
 	}
 	db = _db
+	db.SetMaxOpenConns(128)
+	db.SetMaxIdleConns(128)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
@@ -79,8 +81,8 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /app/requests", appPostRequests)
 		authedMux.HandleFunc("GET /app/requests/{request_id}", appGetRequest)
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
-		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
-		authedMux.HandleFunc("GET /app/notification", appGetNotification)
+		authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
+		//authedMux.HandleFunc("GET /app/notification", appGetNotification)
 	}
 
 	// provider handlers
@@ -89,6 +91,7 @@ func setup() http.Handler {
 
 		authedMux := mux.With(providerAuthMiddleware)
 		authedMux.HandleFunc("GET /provider/sales", providerGetSales)
+		authedMux.HandleFunc("GET /provider/chairs", providerGetChairs)
 	}
 
 	// chair handlers
@@ -100,8 +103,8 @@ func setup() http.Handler {
 		authedMux2.HandleFunc("POST /chair/activate", chairPostActivate)
 		authedMux2.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
 		authedMux2.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
-		//authedMux2.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
-		authedMux2.HandleFunc("GET /chair/notification", chairGetNotification)
+		authedMux2.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
+		//authedMux2.HandleFunc("GET /chair/notification", chairGetNotification)
 		authedMux2.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
 		authedMux2.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
 		authedMux2.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
