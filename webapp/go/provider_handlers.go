@@ -146,3 +146,33 @@ func calculateSale(req RideRequest) int {
 	lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
 	return initialFare + farePerDistance*(latDiff+lonDiff)
 }
+
+type getProviderChairResponse struct {
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Model        string    `json:"model"`
+	Active       bool      `json:"active"`
+	RegisteredAt time.Time `json:"registered_at"`
+}
+
+func providerGetChairs(w http.ResponseWriter, r *http.Request) {
+	provider := r.Context().Value("provider").(*Provider)
+
+	chairs := []Chair{}
+	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	res := []getProviderChairResponse{}
+	for _, chair := range chairs {
+		res = append(res, getProviderChairResponse{
+			ID:           chair.ID,
+			Name:         chair.Name,
+			Model:        chair.Model,
+			Active:       chair.IsActive,
+			RegisteredAt: chair.CreatedAt,
+		})
+	}
+	writeJSON(w, http.StatusOK, res)
+}

@@ -112,6 +112,12 @@ type Invoker interface {
 	//
 	// POST /initialize
 	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
+	// ProviderGetChairs invokes provider-get-chairs operation.
+	//
+	// 椅子プロバイダーが管理している椅子の一覧を取得する.
+	//
+	// GET /provider/chairs
+	ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error)
 	// ProviderGetSales invokes provider-get-sales operation.
 	//
 	// 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
@@ -878,6 +884,42 @@ func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitiali
 	defer resp.Body.Close()
 
 	result, err := decodePostInitializeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ProviderGetChairs invokes provider-get-chairs operation.
+//
+// 椅子プロバイダーが管理している椅子の一覧を取得する.
+//
+// GET /provider/chairs
+func (c *Client) ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error) {
+	res, err := c.sendProviderGetChairs(ctx)
+	return res, err
+}
+
+func (c *Client) sendProviderGetChairs(ctx context.Context) (res *ProviderGetChairsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/provider/chairs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeProviderGetChairsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
