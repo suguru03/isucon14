@@ -3,7 +3,10 @@ package payment
 import (
 	"encoding/json"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
+
+	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type PostPaymentRequest struct {
@@ -52,16 +55,50 @@ func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 決済処理
 	// キューに入れて完了を待つ(ブロッキング)
-	s.queue <- p
-	<-p.processChan
-	p.locked.Store(false)
+	if concurrent.TrySend(s.queue, p) {
+		<-p.processChan
+		p.locked.Store(false)
 
-	select {
-	case <-r.Context().Done():
-		// クライアントが既に切断している
+		select {
+		case <-r.Context().Done():
+			// クライアントが既に切断している
+			return
+		default:
+			writeResponse(w, p.Status)
+		}
 		return
-	default:
-		writeResponse(w, p.Status)
+	}
+
+	// キューが詰まっていても確率で成功させる
+	if rand.IntN(5) == 0 {
+		s.queue <- p
+		<-p.processChan
+		p.locked.Store(false)
+
+		select {
+		case <-r.Context().Done():
+			// クライアントが既に切断している
+			return
+		default:
+			writeResponse(w, p.Status)
+		}
+		return
+	}
+
+	// 不安定なエラーを再現
+	go func() {
+		s.queue <- p
+		<-p.processChan
+		p.locked.Store(false)
+	}()
+
+	switch rand.IntN(3) {
+	case 0:
+		w.WriteHeader(http.StatusInternalServerError)
+	case 1:
+		w.WriteHeader(http.StatusBadGateway)
+	case 2:
+		w.WriteHeader(http.StatusGatewayTimeout)
 	}
 }
 
