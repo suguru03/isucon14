@@ -1154,6 +1154,69 @@ func (s *PostInitializeReq) SetPaymentServer(val string) {
 	s.PaymentServer = val
 }
 
+type ProviderGetChairDetailOK struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 稼働中かどうか.
+	Active bool `json:"active"`
+	// 登録日時.
+	RegisteredAt string `json:"registered_at"`
+}
+
+// GetID returns the value of ID.
+func (s *ProviderGetChairDetailOK) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *ProviderGetChairDetailOK) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *ProviderGetChairDetailOK) GetModel() string {
+	return s.Model
+}
+
+// GetActive returns the value of Active.
+func (s *ProviderGetChairDetailOK) GetActive() bool {
+	return s.Active
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *ProviderGetChairDetailOK) GetRegisteredAt() string {
+	return s.RegisteredAt
+}
+
+// SetID sets the value of ID.
+func (s *ProviderGetChairDetailOK) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *ProviderGetChairDetailOK) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *ProviderGetChairDetailOK) SetModel(val string) {
+	s.Model = val
+}
+
+// SetActive sets the value of Active.
+func (s *ProviderGetChairDetailOK) SetActive(val bool) {
+	s.Active = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *ProviderGetChairDetailOK) SetRegisteredAt(val string) {
+	s.RegisteredAt = val
+}
+
 type ProviderGetChairsOK struct {
 	Chairs []ProviderGetChairsOKChairsItem `json:"chairs"`
 }

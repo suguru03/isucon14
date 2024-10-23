@@ -112,6 +112,12 @@ type Invoker interface {
 	//
 	// POST /initialize
 	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
+	// ProviderGetChairDetail invokes provider-get-chair-detail operation.
+	//
+	// 管理している椅子の詳細を取得する.
+	//
+	// GET /provider/chairs/{chair_id}
+	ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error)
 	// ProviderGetChairs invokes provider-get-chairs operation.
 	//
 	// 椅子プロバイダーが管理している椅子の一覧を取得する.
@@ -884,6 +890,60 @@ func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitiali
 	defer resp.Body.Close()
 
 	result, err := decodePostInitializeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ProviderGetChairDetail invokes provider-get-chair-detail operation.
+//
+// 管理している椅子の詳細を取得する.
+//
+// GET /provider/chairs/{chair_id}
+func (c *Client) ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error) {
+	res, err := c.sendProviderGetChairDetail(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (res *ProviderGetChairDetailOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/provider/chairs/"
+	{
+		// Encode "chair_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "chair_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ChairID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeProviderGetChairDetailResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
