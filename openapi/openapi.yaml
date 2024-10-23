@@ -357,27 +357,34 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: string
-                    description: 椅子ID
-                  name:
-                    type: string
-                    description: 椅子の名前
-                  model:
-                    type: string
-                    description: 椅子のモデル
-                  active:
-                    type: boolean
-                    description: 稼働中かどうか
-                  registeredAt:
-                    type: string
-                    description: 登録日時
+                  chairs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 椅子ID
+                        name:
+                          type: string
+                          description: 椅子の名前
+                        model:
+                          type: string
+                          description: 椅子のモデル
+                        active:
+                          type: boolean
+                          description: 稼働中かどうか
+                        registered_at:
+                          type: string
+                          description: 登録日時
+                      required:
+                        - id
+                        - name
+                        - model
+                        - active
+                        - registered_at
                 required:
-                  - id
-                  - name
-                  - model
-                  - active
-                  - registeredAt
+                  - chairs
   /chair/register:
     post:
       tags:
