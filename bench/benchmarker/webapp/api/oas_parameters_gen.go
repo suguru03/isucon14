@@ -38,6 +38,12 @@ type ChairPostRequestDepartParams struct {
 	RequestID string
 }
 
+// ProviderGetChairDetailParams is parameters of provider-get-chair-detail operation.
+type ProviderGetChairDetailParams struct {
+	// 椅子ID.
+	ChairID string
+}
+
 // ProviderGetSalesParams is parameters of provider-get-sales operation.
 type ProviderGetSalesParams struct {
 	// 開始日時（含む）.

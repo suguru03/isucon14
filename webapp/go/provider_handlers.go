@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 	"time"
@@ -179,4 +180,35 @@ func providerGetChairs(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	writeJSON(w, http.StatusOK, res)
+}
+
+type providerChairDetail struct {
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Model        string    `json:"model"`
+	Active       bool      `json:"active"`
+	RegisteredAt time.Time `json:"registered_at"`
+}
+
+func providerGetChairDetail(w http.ResponseWriter, r *http.Request) {
+	provider := r.Context().Value("provider").(*Provider)
+	chairID := r.PathValue("chair_id")
+
+	chair := Chair{}
+	if err := db.Get(&chair, "SELECT * FROM chairs WHERE provider_id = ? AND id = ?", provider.ID, chairID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, errors.New("chair not found"))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, providerChairDetail{
+		ID:           chair.ID,
+		Name:         chair.Name,
+		Model:        chair.Model,
+		Active:       chair.IsActive,
+		RegisteredAt: chair.CreatedAt,
+	})
 }

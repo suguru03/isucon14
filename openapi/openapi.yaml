@@ -385,6 +385,48 @@ paths:
                         - registered_at
                 required:
                   - chairs
+  /provider/chairs/{chair_id}:
+    get:
+      tags:
+        - provider
+      summary: 管理している椅子の詳細を取得する
+      operationId: provider-get-chair-detail
+      parameters:
+        - name: chair_id
+          in: path
+          description: 椅子ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: 椅子ID
+                  name:
+                    type: string
+                    description: 椅子の名前
+                  model:
+                    type: string
+                    description: 椅子のモデル
+                  active:
+                    type: boolean
+                    description: 稼働中かどうか
+                  registered_at:
+                    type: string
+                    description: 登録日時
+                required:
+                  - id
+                  - name
+                  - model
+                  - active
+                  - registered_at
   /chair/register:
     post:
       tags:
