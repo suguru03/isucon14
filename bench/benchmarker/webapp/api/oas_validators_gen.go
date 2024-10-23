@@ -159,6 +159,29 @@ func (s PostInitializeOKLanguage) Validate() error {
 	}
 }
 
+func (s *ProviderGetChairsOK) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Chairs == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "chairs",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *ProviderGetSalesOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer

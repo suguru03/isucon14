@@ -148,6 +148,10 @@ func calculateSale(req RideRequest) int {
 }
 
 type getProviderChairResponse struct {
+	Chairs []providerChair `json:"chairs"`
+}
+
+type providerChair struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
 	Model        string    `json:"model"`
@@ -164,9 +168,9 @@ func providerGetChairs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := []getProviderChairResponse{}
+	res := getProviderChairResponse{}
 	for _, chair := range chairs {
-		res = append(res, getProviderChairResponse{
+		res.Chairs = append(res.Chairs, providerChair{
 			ID:           chair.ID,
 			Name:         chair.Name,
 			Model:        chair.Model,

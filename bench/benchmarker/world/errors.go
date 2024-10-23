@@ -60,6 +60,10 @@ const (
 	ErrorCodeIncorrectAmountOfFareCharged
 	// ErrorCodeSalesMismatched 取得したプロバイダーの売り上げ情報が想定しているものとズレています
 	ErrorCodeSalesMismatched
+	// ErrorCodeFailedToGetProviderChairs プロバイダーの椅子一覧の取得に失敗した
+	ErrorCodeFailedToGetProviderChairs
+	// ErrorCodeIncorrectProviderChairsData 取得したプロバイダーの椅子一覧の情報が合ってない
+	ErrorCodeIncorrectProviderChairsData
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{

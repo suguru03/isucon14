@@ -131,6 +131,24 @@ func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetPro
 	}, nil
 }
 
+func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetProviderChairsRequest) (*world.GetProviderChairsResponse, error) {
+	response, err := c.client.ProviderGetChairs(c.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.ProviderGetChairsOKChairsItem, _ int) *world.ProviderChair {
+		registeredAt, _ := time.Parse(time.RFC3339Nano, v.RegisteredAt)
+		return &world.ProviderChair{
+			ID:           v.ID,
+			Name:         v.Name,
+			Model:        v.Model,
+			Active:       v.Active,
+			RegisteredAt: registeredAt,
+		}
+	})}, nil
+}
+
 func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
 	response, err := c.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
 		Name:  data.Name,

@@ -26,8 +26,12 @@ type eventEntry struct {
 }
 
 type chairState struct {
+	ProviderID      string
 	ServerID        string
+	Name            string
+	Model           string
 	Active          bool
+	RegisteredAt    time.Time
 	AssignedRequest *requestEntry
 	sync.RWMutex
 }
@@ -46,9 +50,26 @@ func (pc *providerClient) GetProviderSales(ctx *Context, args *GetProviderSalesR
 	}, nil
 }
 
+func (pc *providerClient) GetProviderChairs(ctx *Context, args *GetProviderChairsRequest) (*GetProviderChairsResponse, error) {
+	time.Sleep(pc.fs.latency)
+	return &GetProviderChairsResponse{
+		Chairs: lo.Map(lo.Filter(pc.fs.chairDB.ToSlice(), func(c *chairState, _ int) bool {
+			return c.ProviderID == pc.serverProviderID
+		}), func(c *chairState, _ int) *ProviderChair {
+			return &ProviderChair{
+				ID:           c.ServerID,
+				Name:         c.Name,
+				Model:        c.Model,
+				Active:       c.Active,
+				RegisteredAt: c.RegisteredAt,
+			}
+		}),
+	}, nil
+}
+
 func (pc *providerClient) RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error) {
 	time.Sleep(pc.fs.latency)
-	c := &chairState{ServerID: ulid.Make().String(), Active: false}
+	c := &chairState{ProviderID: provider.ServerID, ServerID: ulid.Make().String(), Name: data.Name, Model: data.Model, Active: false, RegisteredAt: time.Now()}
 	pc.fs.chairDB.Set(c.ServerID, c)
 	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID, Client: pc.fs}, nil
 }
