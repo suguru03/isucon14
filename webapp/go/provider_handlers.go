@@ -195,7 +195,7 @@ func providerGetChairDetail(w http.ResponseWriter, r *http.Request) {
 	chairID := r.PathValue("chair_id")
 
 	chair := Chair{}
-	if err := db.Get(&chair, "SELECT * FROM chairs WHERE provider_id = ? AND chair_id = ?", provider.ID, chairID); err != nil {
+	if err := db.Get(&chair, "SELECT * FROM chairs WHERE provider_id = ? AND id = ?", provider.ID, chairID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, errors.New("chair not found"))
 			return
