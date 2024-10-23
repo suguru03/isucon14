@@ -79,3 +79,31 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.ProviderGetSa
 
 	return resBody, nil
 }
+
+func (c *Client) ProviderGetChairs(ctx context.Context) (*api.ProviderGetChairsOK, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, "/provider/chairs", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
+	resp, err := c.agent.Do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("GET /provider/chairs のリクエストが失敗しました: %w", err)
+	}
+	defer closeBody(resp)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET /provider/chairs へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+	}
+
+	resBody := &api.ProviderGetChairsOK{}
+	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
+		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+	}
+
+	return resBody, nil
+}

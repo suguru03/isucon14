@@ -62,7 +62,15 @@ func (p *Provider) Tick(ctx *Context) error {
 	}
 	defer p.tickDone.Done()
 
-	if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
+	if ctx.CurrentTime()%LengthOfHour == LengthOfHour/2 {
+		res, err := p.Client.GetProviderChairs(ctx, &GetProviderChairsRequest{})
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToGetProviderChairs, err)
+		}
+		if err := p.ValidateChairs(res); err != nil {
+			return WrapCodeError(ErrorCodeIncorrectProviderChairsData, err)
+		}
+	} else if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		last := lo.MaxBy(p.CompletedRequest.ToSlice(), func(a *Request, b *Request) bool { return a.ServerCompletedAt.After(b.ServerCompletedAt) })
 		if last != nil {
 			res, err := p.Client.GetProviderSales(ctx, &GetProviderSalesRequest{
@@ -167,5 +175,29 @@ func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesRe
 		return fmt.Errorf("total_salesがズレています (got: %d, want: %d)", serverSide.Total, totals)
 	}
 
+	return nil
+}
+
+func (p *Provider) ValidateChairs(serverSide *GetProviderChairsResponse) error {
+	if p.ChairDB.Len() != len(serverSide.Chairs) {
+		return fmt.Errorf("プロバイダーの椅子の数が一致していません")
+	}
+	mapped := lo.Associate(serverSide.Chairs, func(c *ProviderChair) (string, *ProviderChair) { return c.ID, c })
+	for _, chair := range p.ChairDB.Iter() {
+		data, ok := mapped[chair.ServerID]
+		if !ok {
+			return fmt.Errorf("椅子一覧レスポンスに含まれていない椅子があります (id: %s)", chair.ServerID)
+		}
+		if data.Name != chair.RegisteredData.Name {
+			return fmt.Errorf("nameが一致しないデータがあります (id: %s, got: %s, want: %s)", chair.ServerID, data.Name, chair.RegisteredData.Name)
+		}
+		if data.Model != chair.Model.Name {
+			return fmt.Errorf("modelが一致しないデータがあります (id: %s, got: %s, want: %s)", chair.ServerID, data.Model, chair.Model.Name)
+		}
+		if (data.Active && chair.State != ChairStateActive) || (!data.Active && chair.State != ChairStateInactive) {
+			return fmt.Errorf("activeが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.Active, !data.Active)
+		}
+		// TODO: RegisteredAtの検証
+	}
 	return nil
 }
