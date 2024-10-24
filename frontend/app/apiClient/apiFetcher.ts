@@ -1,6 +1,6 @@
 import { ApiContext } from "./apiContext";
 
-const baseUrl = "http://localhost:3000/api";
+const baseUrl = __API_BASE_URL__;
 
 export type ErrorWrapper<TError> =
   | TError

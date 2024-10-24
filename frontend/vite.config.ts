@@ -1,5 +1,6 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import { alternativeURLExpression } from "./api-url.mjs";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
@@ -121,12 +122,14 @@ export const config = {
     tsconfigPaths(),
     customConsolePlugin,
   ],
+  define: {
+    [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
+  },
   server: {
     proxy: {
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
     host: DEFAULT_HOSTNAME,
