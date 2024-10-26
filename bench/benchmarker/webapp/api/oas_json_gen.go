@@ -118,18 +118,13 @@ func (s *AppPostRegisterOK) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *AppPostRegisterOK) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("access_token")
-		e.Str(s.AccessToken)
-	}
-	{
 		e.FieldStart("id")
 		e.Str(s.ID)
 	}
 }
 
-var jsonFieldsNameOfAppPostRegisterOK = [2]string{
-	0: "access_token",
-	1: "id",
+var jsonFieldsNameOfAppPostRegisterOK = [1]string{
+	0: "id",
 }
 
 // Decode decodes AppPostRegisterOK from json.
@@ -141,20 +136,8 @@ func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "access_token":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.AccessToken = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"access_token\"")
-			}
 		case "id":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.ID = string(v)
@@ -175,7 +158,7 @@ func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -3346,18 +3329,13 @@ func (s *ProviderPostRegisterCreated) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ProviderPostRegisterCreated) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("access_token")
-		e.Str(s.AccessToken)
-	}
-	{
 		e.FieldStart("id")
 		e.Str(s.ID)
 	}
 }
 
-var jsonFieldsNameOfProviderPostRegisterCreated = [2]string{
-	0: "access_token",
-	1: "id",
+var jsonFieldsNameOfProviderPostRegisterCreated = [1]string{
+	0: "id",
 }
 
 // Decode decodes ProviderPostRegisterCreated from json.
@@ -3369,20 +3347,8 @@ func (s *ProviderPostRegisterCreated) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "access_token":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.AccessToken = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"access_token\"")
-			}
 		case "id":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.ID = string(v)
@@ -3403,7 +3369,7 @@ func (s *ProviderPostRegisterCreated) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

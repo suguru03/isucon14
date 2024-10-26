@@ -52,6 +52,10 @@ func (c *Client) AddRequestModifier(modifier func(*http.Request)) {
 	c.requestModifiers = append(c.requestModifiers, modifier)
 }
 
+func (c *Client) SetCookie(cookie *http.Cookie) {
+	c.agent.HttpClient.Jar.SetCookies(c.agent.BaseURL, []*http.Cookie{cookie})
+}
+
 func closeBody(resp *http.Response) {
 	if resp.Body != nil {
 		_, _ = io.Copy(io.Discard, resp.Body)

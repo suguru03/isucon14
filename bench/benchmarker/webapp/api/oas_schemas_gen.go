@@ -30,25 +30,13 @@ func (s *AppPostPaymentMethodsReq) SetToken(val string) {
 }
 
 type AppPostRegisterOK struct {
-	// アクセストークン.
-	AccessToken string `json:"access_token"`
 	// ユーザーID.
 	ID string `json:"id"`
-}
-
-// GetAccessToken returns the value of AccessToken.
-func (s *AppPostRegisterOK) GetAccessToken() string {
-	return s.AccessToken
 }
 
 // GetID returns the value of ID.
 func (s *AppPostRegisterOK) GetID() string {
 	return s.ID
-}
-
-// SetAccessToken sets the value of AccessToken.
-func (s *AppPostRegisterOK) SetAccessToken(val string) {
-	s.AccessToken = val
 }
 
 // SetID sets the value of ID.
@@ -1400,25 +1388,13 @@ func (s *ProviderGetSalesOKModelsItem) SetSales(val int) {
 }
 
 type ProviderPostRegisterCreated struct {
-	// アクセストークン.
-	AccessToken string `json:"access_token"`
 	// プロバイダーID.
 	ID string `json:"id"`
-}
-
-// GetAccessToken returns the value of AccessToken.
-func (s *ProviderPostRegisterCreated) GetAccessToken() string {
-	return s.AccessToken
 }
 
 // GetID returns the value of ID.
 func (s *ProviderPostRegisterCreated) GetID() string {
 	return s.ID
-}
-
-// SetAccessToken sets the value of AccessToken.
-func (s *ProviderPostRegisterCreated) SetAccessToken(val string) {
-	s.AccessToken = val
 }
 
 // SetID sets the value of ID.

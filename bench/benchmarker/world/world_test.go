@@ -204,7 +204,7 @@ func (s *FastServerStub) GetRequestByChair(ctx *Context, chair *Chair, serverReq
 
 func (s *FastServerStub) RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error) {
 	time.Sleep(s.latency)
-	return &RegisterUserResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: ulid.Make().String(), Client: s}, nil
+	return &RegisterUserResponse{ServerUserID: ulid.Make().String(), Client: s}, nil
 }
 
 func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error) {
@@ -217,7 +217,7 @@ func (s *FastServerStub) RegisterProvider(ctx *Context, data *RegisterProviderRe
 		completedRequests: concurrent.NewSimpleSlice[*Request](),
 	}
 	s.providerDB.Set(client.serverProviderID, client)
-	return &RegisterProviderResponse{AccessToken: gofakeit.LetterN(30), ServerProviderID: id, Client: client}, nil
+	return &RegisterProviderResponse{ServerProviderID: id, Client: client}, nil
 }
 
 func (s *FastServerStub) RegisterPaymentMethods(ctx *Context, user *User) error {

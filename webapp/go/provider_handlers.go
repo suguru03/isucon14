@@ -14,8 +14,7 @@ type postProviderRegisterRequest struct {
 }
 
 type postProviderRegisterResponse struct {
-	AccessToken string `json:"access_token"`
-	ID          string `json:"id"`
+	ID string `json:"id"`
 }
 
 func providerPostRegister(w http.ResponseWriter, r *http.Request) {
@@ -42,9 +41,15 @@ func providerPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Path:     "/",
+		Name:     "provider_session",
+		Value:    accessToken,
+		HttpOnly: true,
+	})
+
 	writeJSON(w, http.StatusCreated, &postProviderRegisterResponse{
-		AccessToken: accessToken,
-		ID:          providerID,
+		ID: providerID,
 	})
 }
 

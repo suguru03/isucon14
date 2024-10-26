@@ -82,14 +82,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token:
-                    type: string
-                    description: アクセストークン
                   id:
                     type: string
                     description: ユーザーID
                 required:
-                  - access_token
                   - id
         "400":
           description: Bad Request
@@ -268,14 +264,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token:
-                    type: string
-                    description: アクセストークン
                   id:
                     type: string
                     description: プロバイダーID
                 required:
-                  - access_token
                   - id
   /provider/sales:
     get:
