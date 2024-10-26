@@ -57,13 +57,8 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
-	client.AddRequestModifier(func(req *http.Request) {
-		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
-	})
-
 	return &world.RegisterUserResponse{
 		ServerUserID: response.ID,
-		AccessToken:  response.AccessToken,
 		Client: &userClient{
 			ctx:    c.ctx,
 			client: client,
@@ -84,13 +79,8 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
 	}
 
-	client.AddRequestModifier(func(req *http.Request) {
-		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
-	})
-
 	return &world.RegisterProviderResponse{
 		ServerProviderID: response.ID,
-		AccessToken:      response.AccessToken,
 		Client: &providerClient{
 			ctx:                c.ctx,
 			client:             client,
@@ -163,13 +153,10 @@ func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provi
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	client.AddRequestModifier(func(req *http.Request) {
-		req.Header.Set("Authorization", "Bearer "+response.AccessToken)
-	})
+	client.SetCookie(&http.Cookie{Name: "chair_session", Value: response.AccessToken})
 
 	return &world.RegisterChairResponse{
 		ServerUserID: response.ID,
-		AccessToken:  response.AccessToken,
 		Client: &chairClient{
 			ctx:    c.ctx,
 			client: client,
@@ -277,7 +264,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				}
 			}
 			if event == nil {
-				// TODO: 意図しない通知の種類の減点
+				// 意図しない通知の種類は無視する
 				continue
 			}
 			receiver(event)
@@ -375,7 +362,7 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				}
 			}
 			if event == nil {
-				// TODO: 意図しない通知の種類の減点
+				// 意図しない通知の種類は無視する
 				continue
 			}
 			receiver(event)

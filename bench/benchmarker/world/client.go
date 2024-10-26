@@ -104,7 +104,6 @@ type RegisterUserRequest struct {
 
 type RegisterUserResponse struct {
 	ServerUserID string
-	AccessToken  string
 
 	Client UserClient
 }
@@ -115,7 +114,6 @@ type RegisterProviderRequest struct {
 
 type RegisterProviderResponse struct {
 	ServerProviderID string
-	AccessToken      string
 
 	Client ProviderClient
 }

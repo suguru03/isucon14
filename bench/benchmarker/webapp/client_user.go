@@ -185,8 +185,10 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 	}
 
 	httpClient := &http.Client{
-		Transport: c.agent.HttpClient.Transport,
-		Timeout:   60 * time.Second,
+		Transport:     c.agent.HttpClient.Transport,
+		CheckRedirect: c.agent.HttpClient.CheckRedirect,
+		Jar:           c.agent.HttpClient.Jar,
+		Timeout:       60 * time.Second,
 	}
 
 	resp, err := httpClient.Do(req.WithContext(ctx))

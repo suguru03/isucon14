@@ -17,8 +17,7 @@ type postAppRegisterRequest struct {
 }
 
 type postAppRegisterResponse struct {
-	AccessToken string `json:"access_token"`
-	ID          string `json:"id"`
+	ID string `json:"id"`
 }
 
 func appPostRegister(w http.ResponseWriter, r *http.Request) {
@@ -44,9 +43,15 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Path:     "/",
+		Name:     "app_session",
+		Value:    accessToken,
+		HttpOnly: true,
+	})
+
 	writeJSON(w, http.StatusCreated, &postAppRegisterResponse{
-		AccessToken: accessToken,
-		ID:          userID,
+		ID: userID,
 	})
 }
 
