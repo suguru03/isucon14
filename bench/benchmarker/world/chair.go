@@ -250,11 +250,11 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	if c.Location.Dirty() {
 		// 動いた場合に自身の座標をサーバーに送信
-		err := c.Client.SendChairCoordinate(ctx, c)
+		res, err := c.Client.SendChairCoordinate(ctx, c)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
 		}
-		// c.Location.SetServerTime()
+		c.Location.SetServerTime(res.RecordedAt)
 		c.Location.ResetDirtyFlag()
 	}
 	return nil

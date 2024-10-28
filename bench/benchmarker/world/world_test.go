@@ -87,7 +87,7 @@ type FastServerStub struct {
 	eventQueue                   chan *eventEntry
 }
 
-func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
+func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) (*SendChairCoordinateResponse, error) {
 	time.Sleep(s.latency)
 	req := chair.Request
 	if req != nil {
@@ -102,7 +102,7 @@ func (s *FastServerStub) SendChairCoordinate(ctx *Context, chair *Chair) error {
 			}
 		}
 	}
-	return nil
+	return &SendChairCoordinateResponse{RecordedAt: time.Now()}, nil
 }
 
 func (s *FastServerStub) SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error {

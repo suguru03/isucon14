@@ -31,7 +31,7 @@ type ProviderClient interface {
 
 type ChairClient interface {
 	// SendChairCoordinate サーバーに椅子の座標を送信する
-	SendChairCoordinate(ctx *Context, chair *Chair) error
+	SendChairCoordinate(ctx *Context, chair *Chair) (*SendChairCoordinateResponse, error)
 	// SendAcceptRequest サーバーに配椅子要求を受理することを報告する
 	SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error
 	// SendDenyRequest サーバーに配椅子要求を受理することを報告する
@@ -88,6 +88,10 @@ type ProviderChair struct {
 	Model        string
 	Active       bool
 	RegisteredAt time.Time
+}
+
+type SendChairCoordinateResponse struct {
+	RecordedAt time.Time
 }
 
 type SendEvaluationResponse struct {

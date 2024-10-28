@@ -164,16 +164,21 @@ func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provi
 	}, nil
 }
 
-func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) error {
-	_, err := c.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
+func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) (*world.SendChairCoordinateResponse, error) {
+	response, err := c.client.ChairPostCoordinate(c.ctx, &api.Coordinate{
 		Latitude:  chair.Location.Current().X,
 		Longitude: chair.Location.Current().Y,
 	})
 	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
+		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	return nil
+	recordedAt, err := time.Parse(time.RFC3339Nano, response.Datetime)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
+	}
+
+	return &world.SendChairCoordinateResponse{RecordedAt: recordedAt}, nil
 }
 
 func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
