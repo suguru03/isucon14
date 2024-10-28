@@ -1,3 +1,5 @@
+//go:build windows
+
 package benchrun
 
 import (
@@ -61,7 +63,7 @@ func (rep *FDReporter) Report(result *resources.BenchmarkResult) error {
 }
 
 func NewFDReporter(fd int) (*FDReporter, error) {
-	syscall.CloseOnExec(fd)
+	syscall.CloseOnExec(syscall.Handle(fd))
 	io := os.NewFile(uintptr(fd), "ISUXBENCH_REPORT_FD")
 
 	bufWriter := bufio.NewWriter(io)
