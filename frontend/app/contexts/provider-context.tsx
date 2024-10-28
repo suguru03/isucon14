@@ -7,14 +7,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ProviderGetSalesResponse, fetchProviderGetSales } from "~/apiClient/apiComponents";
+import {
+  ProviderGetSalesResponse,
+  fetchProviderGetSales,
+} from "~/apiClient/apiComponents";
 
-type ProviderChair = {id:string, name:string};
+type ProviderChair = { id: string; name: string };
 
 type ClientProviderRequest = {
   payload?: Partial<{
-   chairs: ProviderChair[],
-   sales: ProviderGetSalesResponse
+    chairs: ProviderChair[];
+    sales: ProviderGetSalesResponse;
   }>;
   provider?: {
     id?: string;
@@ -33,10 +36,9 @@ const DUMMY_DATA = {
   ],
 } as const satisfies ProviderGetSalesResponse;
 
-
 const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
 
-export const ProviderProvider = ({ children }: { children: ReactNode}) => {
+export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
 
@@ -47,45 +49,52 @@ export const ProviderProvider = ({ children }: { children: ReactNode}) => {
   const isDummy = useMemo(() => {
     try {
       const isDummy = sessionStorage.getItem("is-dummy-for-provider");
-      return isDummy === "true"
-    } catch(e) {
-      console.error(`CONSOLE ERROR: ${e}`)
-      return false
+      return isDummy === "true";
+    } catch (e) {
+      console.error(`CONSOLE ERROR: ${e}`);
+      return false;
     }
-  },[]);
+  }, []);
 
-  const [sales, setSales] =
-  useState<ProviderGetSalesResponse>();
+  const [sales, setSales] = useState<ProviderGetSalesResponse>();
 
-useEffect(() => {
-  if (isDummy) {
-    setSales({
-      total_sales: DUMMY_DATA.total_sales,
-      chairs: DUMMY_DATA.chairs,
-      models: DUMMY_DATA.models
-    });
-  } else {
-    const abortController = new AbortController();
-    (async() => {
-      setSales(await fetchProviderGetSales({queryParams: {since, until}},abortController.signal))
-    })()
-    return () => {
-      abortController.abort();
+  useEffect(() => {
+    if (isDummy) {
+      setSales({
+        total_sales: DUMMY_DATA.total_sales,
+        chairs: DUMMY_DATA.chairs,
+        models: DUMMY_DATA.models,
+      });
+    } else {
+      const abortController = new AbortController();
+      (async () => {
+        setSales(
+          await fetchProviderGetSales(
+            { queryParams: { since, until } },
+            abortController.signal,
+          ),
+        );
+      })();
+      return () => {
+        abortController.abort();
+      };
     }
-  }
-},[setSales, since, until, isDummy])
+  }, [setSales, since, until, isDummy]);
 
-const responseClientProvider = useMemo<ClientProviderRequest>(() => {
-  return {
-    payload: {
-      sales,
-      chairs: sales?.chairs?.map(chair => ({id: chair.id, name: chair.name}))
-    },
-    provider: {
-      id,
-    },
-  };
-}, [sales]);
+  const responseClientProvider = useMemo<ClientProviderRequest>(() => {
+    return {
+      payload: {
+        sales,
+        chairs: sales?.chairs?.map((chair) => ({
+          id: chair.id,
+          name: chair.name,
+        })),
+      },
+      provider: {
+        id,
+      },
+    };
+  }, [sales]);
 
   return (
     <ClientProviderContext.Provider value={responseClientProvider}>
@@ -94,5 +103,4 @@ const responseClientProvider = useMemo<ClientProviderRequest>(() => {
   );
 };
 
-export const useClientProviderContext = () =>
-  useContext(ClientProviderContext);
+export const useClientProviderContext = () => useContext(ClientProviderContext);

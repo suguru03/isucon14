@@ -16,20 +16,20 @@ export default function Index() {
 
   type Tab = (typeof tabs)[number]["key"];
   const [tab, setTab] = useState<Tab>("chair");
-  
-  const {payload} = useClientProviderContext()
+
+  const { payload } = useClientProviderContext();
 
   const items = useMemo(() => {
     return tab === "chair"
-    ? (payload?.sales?.chairs?.map((item) => ({
-      name: item.name ?? "",
-      sales: item.sales ?? 0,
-    })) ?? [])
-    : (payload?.sales?.models?.map((item) => ({
-      name: item.model ?? "",
-      sales: item.sales ?? 0,
-    })) ?? [])
-  }, [payload, tab])
+      ? (payload?.sales?.chairs?.map((item) => ({
+          name: item.name ?? "",
+          sales: item.sales ?? 0,
+        })) ?? [])
+      : (payload?.sales?.models?.map((item) => ({
+          name: item.model ?? "",
+          sales: item.sales ?? 0,
+        })) ?? []);
+  }, [payload, tab]);
 
   const switchTab = (tab: Tab) => {
     setTab(tab);
