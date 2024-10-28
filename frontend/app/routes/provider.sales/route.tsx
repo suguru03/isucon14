@@ -1,6 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useMemo, useState } from "react";
-import { ProviderGetSalesResponse } from "~/apiClient/apiComponents";
 import { Tab } from "~/components/primitives/tab/tab";
 import { useClientProviderContext } from "~/contexts/provider-context";
 

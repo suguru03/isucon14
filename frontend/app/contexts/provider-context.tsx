@@ -51,7 +51,9 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
       const isDummy = sessionStorage.getItem("is-dummy-for-provider");
       return isDummy === "true";
     } catch (e) {
-      console.error(`CONSOLE ERROR: ${e}`);
+      if (typeof e === "string") {
+        console.error(`CONSOLE ERROR: ${e}`);
+      }
       return false;
     }
   }, []);
@@ -74,7 +76,11 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
             abortController.signal,
           ),
         );
-      })();
+      })().catch((reason) => {
+        if (typeof reason === "string") {
+          console.error(`CONSOLE PROMISE ERROR: ${reason}`);
+        }
+      });
       return () => {
         abortController.abort();
       };
@@ -94,7 +100,7 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
         id,
       },
     };
-  }, [sales]);
+  }, [sales, id]);
 
   return (
     <ClientProviderContext.Provider value={responseClientProvider}>
