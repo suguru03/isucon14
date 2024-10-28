@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { CircleIcon } from "~/components/icon/circle";
 import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
-import { DriverProvider } from "../../contexts/driver-context";
+import { ProviderProvider } from "~/contexts/provider-context";
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,10 +11,10 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function DriverLayout() {
+export default function ProviderLayout() {
   return (
     // TODO: Use provider-context
-    <DriverProvider>
+    <ProviderProvider>
       <Outlet />
       <FooterNavigation
         navigationMenus={[
@@ -22,6 +22,6 @@ export default function DriverLayout() {
           { icon: CircleIcon, link: "/provider/sales", label: "SALES" },
         ]}
       />
-    </DriverProvider>
+    </ProviderProvider>
   );
 }

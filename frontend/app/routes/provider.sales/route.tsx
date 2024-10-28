@@ -1,19 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ProviderGetSalesResponse } from "~/apiClient/apiComponents";
 import { Tab } from "~/components/primitives/tab/tab";
-
-const DUMMY_DATA: ProviderGetSalesResponse = {
-  total_sales: 8087,
-  chairs: [
-    { id: "chair-a", name: "椅子A", sales: 999 },
-    { id: "chair-b", name: "椅子B", sales: 999 },
-  ],
-  models: [
-    { model: "モデルA", sales: 999 },
-    { model: "モデルB", sales: 999 },
-  ],
-};
+import { useClientProviderContext } from "~/contexts/provider-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -27,28 +16,23 @@ export default function Index() {
 
   type Tab = (typeof tabs)[number]["key"];
   const [tab, setTab] = useState<Tab>("chair");
+  
+  const {payload} = useClientProviderContext()
 
-  // dummy data
-  const [items, setItems] = useState<{ name: string; sales: number }[]>(
-    DUMMY_DATA.chairs?.map((item) => ({
+  const items = useMemo(() => {
+    return tab === "chair"
+    ? (payload?.sales?.chairs?.map((item) => ({
       name: item.name ?? "",
       sales: item.sales ?? 0,
-    })) ?? [],
-  );
+    })) ?? [])
+    : (payload?.sales?.models?.map((item) => ({
+      name: item.model ?? "",
+      sales: item.sales ?? 0,
+    })) ?? [])
+  }, [payload, tab])
 
   const switchTab = (tab: Tab) => {
     setTab(tab);
-    setItems(
-      tab === "chair"
-        ? (DUMMY_DATA.chairs?.map((item) => ({
-            name: item.name ?? "",
-            sales: item.sales ?? 0,
-          })) ?? [])
-        : (DUMMY_DATA.models?.map((item) => ({
-            name: item.model ?? "",
-            sales: item.sales ?? 0,
-          })) ?? []),
-    );
   };
 
   return (
