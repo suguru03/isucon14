@@ -75,7 +75,7 @@ type Invoker interface {
 	// 椅子が位置情報を送信する.
 	//
 	// POST /chair/coordinate
-	ChairPostCoordinate(ctx context.Context, request OptCoordinate) error
+	ChairPostCoordinate(ctx context.Context, request OptCoordinate) (*ChairPostCoordinateOK, error)
 	// ChairPostDeactivate invokes chair-post-deactivate operation.
 	//
 	// 椅子が配車受付を停止する.
@@ -581,12 +581,12 @@ func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostAc
 // 椅子が位置情報を送信する.
 //
 // POST /chair/coordinate
-func (c *Client) ChairPostCoordinate(ctx context.Context, request OptCoordinate) error {
-	_, err := c.sendChairPostCoordinate(ctx, request)
-	return err
+func (c *Client) ChairPostCoordinate(ctx context.Context, request OptCoordinate) (*ChairPostCoordinateOK, error) {
+	res, err := c.sendChairPostCoordinate(ctx, request)
+	return res, err
 }
 
-func (c *Client) sendChairPostCoordinate(ctx context.Context, request OptCoordinate) (res *ChairPostCoordinateNoContent, err error) {
+func (c *Client) sendChairPostCoordinate(ctx context.Context, request OptCoordinate) (res *ChairPostCoordinateOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string

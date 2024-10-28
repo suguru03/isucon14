@@ -330,8 +330,20 @@ type ChairPostActivateNoContent struct{}
 
 type ChairPostActivateReq struct{}
 
-// ChairPostCoordinateNoContent is response for ChairPostCoordinate operation.
-type ChairPostCoordinateNoContent struct{}
+type ChairPostCoordinateOK struct {
+	// 記録日時.
+	Datetime string `json:"datetime"`
+}
+
+// GetDatetime returns the value of Datetime.
+func (s *ChairPostCoordinateOK) GetDatetime() string {
+	return s.Datetime
+}
+
+// SetDatetime sets the value of Datetime.
+func (s *ChairPostCoordinateOK) SetDatetime(val string) {
+	s.Datetime = val
+}
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.
 type ChairPostDeactivateNoContent struct{}
