@@ -26,6 +26,11 @@ export default function Index() {
             Chair Simulator
           </Link>
         </li>
+        <li>
+          <Link to="/provider" className="text-blue-600 hover:underline">
+            Provider Application
+          </Link>
+        </li>
       </ul>
     </main>
   );
