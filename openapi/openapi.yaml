@@ -499,8 +499,18 @@ paths:
             schema:
               $ref: "#/components/schemas/Coordinate"
       responses:
-        "204":
+        "200":
           description: サービスが椅子の座標を認識した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datetime:
+                    type: string
+                    description: 記録日時
+                required:
+                  - datetime
   "/chair/requests/{request_id}":
     get:
       tags:

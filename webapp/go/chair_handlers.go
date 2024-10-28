@@ -100,6 +100,12 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	location := &ChairLocation{}
+	if err := tx.Get(location, `SELECT * FROM chair_locations WHERE id = ?`, chairLocationID); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	rideRequest := &RideRequest{}
 	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, chair.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -127,7 +133,9 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"datetime": location.CreatedAt,
+	})
 }
 
 func chairGetNotification(w http.ResponseWriter, r *http.Request) {

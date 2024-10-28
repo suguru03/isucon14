@@ -95,7 +95,7 @@ func (c *Client) ChairPostDeactivate(ctx context.Context) (*api.ChairPostDeactiv
 	return resBody, nil
 }
 
-func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinate) (*api.ChairPostCoordinateNoContent, error) {
+func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinate) (*api.ChairPostCoordinateOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -116,11 +116,15 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 	}
 	defer closeBody(resp)
 
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /chair/coordinate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("POST /chair/coordinate へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.ChairPostCoordinateNoContent{}
+	resBody := &api.ChairPostCoordinateOK{}
+	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
+		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+	}
+
 	return resBody, nil
 }
 
