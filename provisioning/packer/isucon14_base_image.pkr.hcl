@@ -11,31 +11,36 @@ packer {
   }
 }
 
+variable "commit_hash" {
+  type    = string
+  default = "example-hash"
+}
+
 variable "revision" {
   type    = string
   default = "unknown"
 }
 
 locals {
-  name = "isucon14_baseimage-${formatdate("YYYYMMDD-hhmm", timestamp())}"
+  name = "isucon14_baseimage-${var.commit_hash}-${formatdate("YYYYMMDD-hhmm", timestamp())}"
   ami_tags = {
-    Project  = "14"
-    Family   = "14"
+    Project  = "isucon14"
+    Family   = "isucon14"
     Name     = "${local.name}"
     Revision = "${var.revision}"
     Packer   = "1"
   }
   run_tags = {
-    Project = "14"
+    Project = "isucon14"
     Name    = "packer-${local.name}"
     Packer  = "1"
     Ignore  = "1"
   }
 }
 
-data "amazon-ami" "ubuntu-jammy" {
+data "amazon-ami" "ubuntu-noble" {
   filters = {
-    name                = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+    name                = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
     root-device-type    = "ebs"
     virtualization-type = "hvm"
   }
@@ -51,7 +56,7 @@ source "amazon-ebs" "isucon14" {
   tags          = local.ami_tags
   snapshot_tags = local.ami_tags
 
-  source_ami    = "${data.amazon-ami.ubuntu-jammy.id}"
+  source_ami    = "${data.amazon-ami.ubuntu-noble.id}"
   region        = "ap-northeast-1"
   instance_type = "c5.4xlarge"
 
