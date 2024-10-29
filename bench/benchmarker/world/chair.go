@@ -220,7 +220,6 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 未稼働
 	case c.State == ChairStateInactive:
-		// TODO: 稼働開始タイミング
 		if c.notificationConn == nil {
 			// 先に通知コネクションを繋いでおく
 			conn, err := c.Client.ConnectChairNotificationStream(ctx, c, func(event NotificationEvent) {
@@ -254,7 +253,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
 		}
-		c.Location.SetServerTime(res.RecordedAt)
+		c.Location.SetServerTime(res.RecordedAt) // FIXME: ここの反映(ロック)が遅れて、総移動距離の計算が１つずれる場合がある
 		c.Location.ResetDirtyFlag()
 	}
 	return nil

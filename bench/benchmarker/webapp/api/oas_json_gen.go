@@ -2348,6 +2348,41 @@ func (s *OptRequestStatus) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes string as json.
+func (o OptString) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes string from json.
+func (o *OptString) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptString to nil")
+	}
+	o.Set = true
+	v, err := d.Str()
+	if err != nil {
+		return err
+	}
+	o.Value = string(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptString) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptString) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *PostInitializeOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -2617,14 +2652,26 @@ func (s *ProviderGetChairDetailOK) encodeFields(e *jx.Encoder) {
 		e.FieldStart("registered_at")
 		e.Str(s.RegisteredAt)
 	}
+	{
+		e.FieldStart("total_distance")
+		e.Int(s.TotalDistance)
+	}
+	{
+		if s.TotalDistanceUpdatedAt.Set {
+			e.FieldStart("total_distance_updated_at")
+			s.TotalDistanceUpdatedAt.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfProviderGetChairDetailOK = [5]string{
+var jsonFieldsNameOfProviderGetChairDetailOK = [7]string{
 	0: "id",
 	1: "name",
 	2: "model",
 	3: "active",
 	4: "registered_at",
+	5: "total_distance",
+	6: "total_distance_updated_at",
 }
 
 // Decode decodes ProviderGetChairDetailOK from json.
@@ -2696,6 +2743,28 @@ func (s *ProviderGetChairDetailOK) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"registered_at\"")
 			}
+		case "total_distance":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalDistance = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_distance\"")
+			}
+		case "total_distance_updated_at":
+			if err := func() error {
+				s.TotalDistanceUpdatedAt.Reset()
+				if err := s.TotalDistanceUpdatedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_distance_updated_at\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -2706,7 +2775,7 @@ func (s *ProviderGetChairDetailOK) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00011111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2887,14 +2956,26 @@ func (s *ProviderGetChairsOKChairsItem) encodeFields(e *jx.Encoder) {
 		e.FieldStart("registered_at")
 		e.Str(s.RegisteredAt)
 	}
+	{
+		e.FieldStart("total_distance")
+		e.Int(s.TotalDistance)
+	}
+	{
+		if s.TotalDistanceUpdatedAt.Set {
+			e.FieldStart("total_distance_updated_at")
+			s.TotalDistanceUpdatedAt.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfProviderGetChairsOKChairsItem = [5]string{
+var jsonFieldsNameOfProviderGetChairsOKChairsItem = [7]string{
 	0: "id",
 	1: "name",
 	2: "model",
 	3: "active",
 	4: "registered_at",
+	5: "total_distance",
+	6: "total_distance_updated_at",
 }
 
 // Decode decodes ProviderGetChairsOKChairsItem from json.
@@ -2966,6 +3047,28 @@ func (s *ProviderGetChairsOKChairsItem) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"registered_at\"")
 			}
+		case "total_distance":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalDistance = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_distance\"")
+			}
+		case "total_distance_updated_at":
+			if err := func() error {
+				s.TotalDistanceUpdatedAt.Reset()
+				if err := s.TotalDistanceUpdatedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_distance_updated_at\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -2976,7 +3079,7 @@ func (s *ProviderGetChairsOKChairsItem) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00011111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
