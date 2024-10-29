@@ -1,6 +1,10 @@
 package world
 
-import "time"
+import (
+	"time"
+
+	"github.com/guregu/null/v5"
+)
 
 type WorldClient interface {
 	// RegisterUser サーバーにユーザーを登録する
@@ -83,11 +87,13 @@ type GetProviderChairsResponse struct {
 }
 
 type ProviderChair struct {
-	ID           string
-	Name         string
-	Model        string
-	Active       bool
-	RegisteredAt time.Time
+	ID                     string
+	Name                   string
+	Model                  string
+	Active                 bool
+	RegisteredAt           time.Time
+	TotalDistance          int
+	TotalDistanceUpdatedAt null.Time
 }
 
 type SendChairCoordinateResponse struct {
