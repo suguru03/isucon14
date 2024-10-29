@@ -153,54 +153,117 @@ func calculateSale(req RideRequest) int {
 	return initialFare + farePerDistance*(latDiff+lonDiff)
 }
 
+type ChairWithDetail struct {
+	ID                     string       `db:"id"`
+	ProviderID             string       `db:"provider_id"`
+	Name                   string       `db:"name"`
+	AccessToken            string       `db:"access_token"`
+	Model                  string       `db:"model"`
+	IsActive               bool         `db:"is_active"`
+	CreatedAt              time.Time    `db:"created_at"`
+	UpdatedAt              time.Time    `db:"updated_at"`
+	TotalDistance          int          `db:"total_distance"`
+	TotalDistanceUpdatedAt sql.NullTime `db:"total_distance_updated_at"`
+}
+
 type getProviderChairResponse struct {
 	Chairs []providerChair `json:"chairs"`
 }
 
 type providerChair struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Model        string    `json:"model"`
-	Active       bool      `json:"active"`
-	RegisteredAt time.Time `json:"registered_at"`
+	ID                     string     `json:"id"`
+	Name                   string     `json:"name"`
+	Model                  string     `json:"model"`
+	Active                 bool       `json:"active"`
+	RegisteredAt           time.Time  `json:"registered_at"`
+	TotalDistance          int        `json:"total_distance"`
+	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at"`
 }
 
 func providerGetChairs(w http.ResponseWriter, r *http.Request) {
 	provider := r.Context().Value("provider").(*Provider)
 
-	chairs := []Chair{}
-	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
+	chairs := []ChairWithDetail{}
+	if err := db.Select(&chairs, `SELECT id,
+       provider_id,
+       name,
+       access_token,
+       model,
+       is_active,
+       created_at,
+       updated_at,
+       IFNULL(total_distance, 0) AS total_distance,
+       total_distance_updated_at
+FROM chairs
+       LEFT JOIN (SELECT chair_id,
+                          SUM(IFNULL(distance, 0)) AS total_distance,
+                          MAX(created_at)          AS total_distance_updated_at
+                   FROM (SELECT chair_id,
+                                created_at,
+                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
+                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
+                         FROM chair_locations) tmp
+                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
+WHERE provider_id = ?
+`, provider.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	res := getProviderChairResponse{}
 	for _, chair := range chairs {
-		res.Chairs = append(res.Chairs, providerChair{
-			ID:           chair.ID,
-			Name:         chair.Name,
-			Model:        chair.Model,
-			Active:       chair.IsActive,
-			RegisteredAt: chair.CreatedAt,
-		})
+		c := providerChair{
+			ID:            chair.ID,
+			Name:          chair.Name,
+			Model:         chair.Model,
+			Active:        chair.IsActive,
+			RegisteredAt:  chair.CreatedAt,
+			TotalDistance: chair.TotalDistance,
+		}
+		if chair.TotalDistanceUpdatedAt.Valid {
+			c.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+		}
+		res.Chairs = append(res.Chairs, c)
 	}
 	writeJSON(w, http.StatusOK, res)
 }
 
 type providerChairDetail struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Model        string    `json:"model"`
-	Active       bool      `json:"active"`
-	RegisteredAt time.Time `json:"registered_at"`
+	ID                     string     `json:"id"`
+	Name                   string     `json:"name"`
+	Model                  string     `json:"model"`
+	Active                 bool       `json:"active"`
+	RegisteredAt           time.Time  `json:"registered_at"`
+	TotalDistance          int        `json:"total_distance"`
+	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at"`
 }
 
 func providerGetChairDetail(w http.ResponseWriter, r *http.Request) {
 	provider := r.Context().Value("provider").(*Provider)
 	chairID := r.PathValue("chair_id")
 
-	chair := Chair{}
-	if err := db.Get(&chair, "SELECT * FROM chairs WHERE provider_id = ? AND id = ?", provider.ID, chairID); err != nil {
+	chair := ChairWithDetail{}
+	if err := db.Get(&chair, `SELECT id,
+       provider_id,
+       name,
+       access_token,
+       model,
+       is_active,
+       created_at,
+       updated_at,
+       IFNULL(total_distance, 0) AS total_distance,
+       total_distance_updated_at
+FROM chairs
+       LEFT JOIN (SELECT chair_id,
+                          SUM(IFNULL(distance, 0)) AS total_distance,
+                          MAX(created_at)          AS total_distance_updated_at
+                   FROM (SELECT chair_id,
+                                created_at,
+                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
+                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
+                         FROM chair_locations) tmp
+                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
+WHERE provider_id = ? AND id = ?`, provider.ID, chairID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, errors.New("chair not found"))
 			return
@@ -209,11 +272,16 @@ func providerGetChairDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, providerChairDetail{
-		ID:           chair.ID,
-		Name:         chair.Name,
-		Model:        chair.Model,
-		Active:       chair.IsActive,
-		RegisteredAt: chair.CreatedAt,
-	})
+	resp := providerChairDetail{
+		ID:            chair.ID,
+		Name:          chair.Name,
+		Model:         chair.Model,
+		Active:        chair.IsActive,
+		RegisteredAt:  chair.CreatedAt,
+		TotalDistance: chair.TotalDistance,
+	}
+	if chair.TotalDistanceUpdatedAt.Valid {
+		resp.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+	}
+	writeJSON(w, http.StatusOK, resp)
 }

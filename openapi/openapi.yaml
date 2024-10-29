@@ -369,12 +369,19 @@ paths:
                         registered_at:
                           type: string
                           description: 登録日時
+                        total_distance:
+                          type: integer
+                          description: 総移動距離
+                        total_distance_updated_at:
+                          type: string
+                          description: 総移動距離の更新日時
                       required:
                         - id
                         - name
                         - model
                         - active
                         - registered_at
+                        - total_distance
                 required:
                   - chairs
   /provider/chairs/{chair_id}:
@@ -413,12 +420,19 @@ paths:
                   registered_at:
                     type: string
                     description: 登録日時
+                  total_distance:
+                    type: integer
+                    description: 総移動距離
+                  total_distance_updated_at:
+                    type: string
+                    description: 総移動距離の更新日時
                 required:
                   - id
                   - name
                   - model
                   - active
                   - registered_at
+                  - total_distance
   /chair/register:
     post:
       tags:

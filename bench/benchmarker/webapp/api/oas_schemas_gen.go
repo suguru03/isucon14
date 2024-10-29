@@ -1165,6 +1165,10 @@ type ProviderGetChairDetailOK struct {
 	Active bool `json:"active"`
 	// 登録日時.
 	RegisteredAt string `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -1192,6 +1196,16 @@ func (s *ProviderGetChairDetailOK) GetRegisteredAt() string {
 	return s.RegisteredAt
 }
 
+// GetTotalDistance returns the value of TotalDistance.
+func (s *ProviderGetChairDetailOK) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *ProviderGetChairDetailOK) GetTotalDistanceUpdatedAt() OptString {
+	return s.TotalDistanceUpdatedAt
+}
+
 // SetID sets the value of ID.
 func (s *ProviderGetChairDetailOK) SetID(val string) {
 	s.ID = val
@@ -1215,6 +1229,16 @@ func (s *ProviderGetChairDetailOK) SetActive(val bool) {
 // SetRegisteredAt sets the value of RegisteredAt.
 func (s *ProviderGetChairDetailOK) SetRegisteredAt(val string) {
 	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *ProviderGetChairDetailOK) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *ProviderGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptString) {
+	s.TotalDistanceUpdatedAt = val
 }
 
 type ProviderGetChairsOK struct {
@@ -1242,6 +1266,10 @@ type ProviderGetChairsOKChairsItem struct {
 	Active bool `json:"active"`
 	// 登録日時.
 	RegisteredAt string `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -1269,6 +1297,16 @@ func (s *ProviderGetChairsOKChairsItem) GetRegisteredAt() string {
 	return s.RegisteredAt
 }
 
+// GetTotalDistance returns the value of TotalDistance.
+func (s *ProviderGetChairsOKChairsItem) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *ProviderGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptString {
+	return s.TotalDistanceUpdatedAt
+}
+
 // SetID sets the value of ID.
 func (s *ProviderGetChairsOKChairsItem) SetID(val string) {
 	s.ID = val
@@ -1292,6 +1330,16 @@ func (s *ProviderGetChairsOKChairsItem) SetActive(val bool) {
 // SetRegisteredAt sets the value of RegisteredAt.
 func (s *ProviderGetChairsOKChairsItem) SetRegisteredAt(val string) {
 	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *ProviderGetChairsOKChairsItem) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *ProviderGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptString) {
+	s.TotalDistanceUpdatedAt = val
 }
 
 type ProviderGetSalesOK struct {
