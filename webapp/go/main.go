@@ -47,7 +47,7 @@ func setup() http.Handler {
 	}
 	dbname := os.Getenv("DB_NAME")
 	if dbname == "" {
-		dbname = "isucon"
+		dbname = "isuride"
 	}
 
 	dbConfig := &mysql.Config{

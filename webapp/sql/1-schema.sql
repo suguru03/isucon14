@@ -1,4 +1,4 @@
-USE isucon;
+USE isuride;
 
 create table chair_models
 (

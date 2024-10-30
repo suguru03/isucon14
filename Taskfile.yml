@@ -19,7 +19,7 @@ tasks:
     dir: ./development
   migrate:
     cmds:
-      - sed /^USE\ isucon\;/d < webapp/sql/1-schema.sql | mysqldef -p isucon isucon
+      - sed /^USE\ isuride\;/d < webapp/sql/1-schema.sql | mysqldef -p isucon isuride
     sources:
       - webapp/sql/1-schema.sql
     deps:
