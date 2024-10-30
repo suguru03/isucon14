@@ -75,8 +75,14 @@ paths:
                 - lastname
                 - date_of_birth
       responses:
-        "200":
+        "201":
           description: ユーザー登録が完了した
+          headers:
+            Set-Cookie:
+              description: 'サーバーから返却される Cookie'
+              schema:
+                type: string
+                example: 'app_session=<access_token>; Path=/; HttpOnly;'
           content:
             application/json:
               schema:
@@ -259,6 +265,12 @@ paths:
       responses:
         "201":
           description: 椅子プロバイダー登録が完了した
+          headers:
+            Set-Cookie:
+              description: 'サーバーから返却される Cookie'
+              schema:
+                type: string
+                example: 'provider_session=<access_token>; Path=/; HttpOnly;'
           content:
             application/json:
               schema:
