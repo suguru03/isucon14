@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useNavigate, useSearchParams } from "@remix-run/react";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import {
   createContext,
@@ -18,6 +18,7 @@ import type {
 import type { ClientAppRequest } from "~/types";
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
     useState<Omit<ClientAppRequest, "auth" | "user">>();
@@ -127,10 +128,13 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
+        if (e.stack["message"].includes("app_session cookie is required")) {
+          navigate("/client/register");
+        }
         console.error(`ERROR: ${e}`);
       });
     }
-  }, [accessToken, setClientAppPayloadWithStatus, isSSE]);
+  }, [accessToken, setClientAppPayloadWithStatus, isSSE, navigate]);
 
   const responseClientAppRequest = useMemo<ClientAppRequest | undefined>(() => {
     const debugStatus =
