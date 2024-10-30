@@ -71,10 +71,6 @@ export type AppPostRegisterError = Fetcher.ErrorWrapper<{
 
 export type AppPostRegisterResponse = {
   /**
-   * アクセストークン
-   */
-  access_token: string;
-  /**
    * ユーザーID
    */
   id: string;
@@ -313,6 +309,17 @@ export type AppPostRequestEvaluateError = Fetcher.ErrorWrapper<
     }
 >;
 
+export type AppPostRequestEvaluateResponse = {
+  /**
+   * 運賃
+   */
+  fare: number;
+  /**
+   * 完了日時
+   */
+  completed_at: string;
+};
+
 export type AppPostRequestEvaluateRequestBody = {
   /**
    * 椅子の評価
@@ -333,7 +340,7 @@ export const fetchAppPostRequestEvaluate = (
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    undefined,
+    AppPostRequestEvaluateResponse,
     AppPostRequestEvaluateError,
     AppPostRequestEvaluateRequestBody,
     {},
@@ -349,7 +356,7 @@ export const fetchAppPostRequestEvaluate = (
 export const useAppPostRequestEvaluate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      undefined,
+      AppPostRequestEvaluateResponse,
       AppPostRequestEvaluateError,
       AppPostRequestEvaluateVariables
     >,
@@ -358,7 +365,7 @@ export const useAppPostRequestEvaluate = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    undefined,
+    AppPostRequestEvaluateResponse,
     AppPostRequestEvaluateError,
     AppPostRequestEvaluateVariables
   >({
@@ -422,10 +429,6 @@ export type ProviderPostRegisterError = Fetcher.ErrorWrapper<undefined>;
 
 export type ProviderPostRegisterResponse = {
   /**
-   * アクセストークン
-   */
-  access_token: string;
-  /**
    * プロバイダーID
    */
   id: string;
@@ -479,13 +482,13 @@ export const useProviderPostRegister = (
 
 export type ProviderGetSalesQueryParams = {
   /**
-   * 開始日（含む）
+   * 開始日時（含む）
    */
-  since: string;
+  since?: string;
   /**
-   * 終了日（含む）
+   * 終了日時（含む）
    */
-  until: string;
+  until?: string;
 };
 
 export type ProviderGetSalesError = Fetcher.ErrorWrapper<undefined>;
@@ -494,41 +497,41 @@ export type ProviderGetSalesResponse = {
   /**
    * プロバイダー全体の売上
    */
-  total_sales?: number;
+  total_sales: number;
   /**
    * 椅子ごとの売上情報
    */
-  chairs?: {
+  chairs: {
     /**
      * 椅子ID
      */
-    id?: string;
+    id: string;
     /**
      * 椅子名
      */
-    name?: string;
+    name: string;
     /**
      * 椅子ごとの売上
      */
-    sales?: number;
+    sales: number;
   }[];
   /**
    * モデルごとの売上情報
    */
-  models?: {
+  models: {
     /**
      * 椅子モデル
      */
-    model?: string;
+    model: string;
     /**
      * モデルごとの売上
      */
-    sales?: number;
+    sales: number;
   }[];
 };
 
 export type ProviderGetSalesVariables = {
-  queryParams: ProviderGetSalesQueryParams;
+  queryParams?: ProviderGetSalesQueryParams;
 } & ApiContext["fetcherOptions"];
 
 export const fetchProviderGetSales = (
@@ -568,6 +571,173 @@ export const useProviderGetSales = <TData = ProviderGetSalesResponse,>(
     }),
     queryFn: ({ signal }) =>
       fetchProviderGetSales({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
+export type ProviderGetChairsError = Fetcher.ErrorWrapper<undefined>;
+
+export type ProviderGetChairsResponse = {
+  chairs: {
+    /**
+     * 椅子ID
+     */
+    id: string;
+    /**
+     * 椅子の名前
+     */
+    name: string;
+    /**
+     * 椅子のモデル
+     */
+    model: string;
+    /**
+     * 稼働中かどうか
+     */
+    active: boolean;
+    /**
+     * 登録日時
+     */
+    registered_at: string;
+    /**
+     * 総移動距離
+     */
+    total_distance: number;
+    /**
+     * 総移動距離の更新日時
+     */
+    total_distance_updated_at?: string;
+  }[];
+};
+
+export type ProviderGetChairsVariables = ApiContext["fetcherOptions"];
+
+export const fetchProviderGetChairs = (
+  variables: ProviderGetChairsVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    ProviderGetChairsResponse,
+    ProviderGetChairsError,
+    undefined,
+    {},
+    {},
+    {}
+  >({ url: "/provider/chairs", method: "get", ...variables, signal });
+
+export const useProviderGetChairs = <TData = ProviderGetChairsResponse,>(
+  variables: ProviderGetChairsVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      ProviderGetChairsResponse,
+      ProviderGetChairsError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<
+    ProviderGetChairsResponse,
+    ProviderGetChairsError,
+    TData
+  >({
+    queryKey: queryKeyFn({
+      path: "/provider/chairs",
+      operationId: "providerGetChairs",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchProviderGetChairs({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
+export type ProviderGetChairDetailPathParams = {
+  /**
+   * 椅子ID
+   */
+  chairId: string;
+};
+
+export type ProviderGetChairDetailError = Fetcher.ErrorWrapper<undefined>;
+
+export type ProviderGetChairDetailResponse = {
+  /**
+   * 椅子ID
+   */
+  id: string;
+  /**
+   * 椅子の名前
+   */
+  name: string;
+  /**
+   * 椅子のモデル
+   */
+  model: string;
+  /**
+   * 稼働中かどうか
+   */
+  active: boolean;
+  /**
+   * 登録日時
+   */
+  registered_at: string;
+  /**
+   * 総移動距離
+   */
+  total_distance: number;
+  /**
+   * 総移動距離の更新日時
+   */
+  total_distance_updated_at?: string;
+};
+
+export type ProviderGetChairDetailVariables = {
+  pathParams: ProviderGetChairDetailPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchProviderGetChairDetail = (
+  variables: ProviderGetChairDetailVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    ProviderGetChairDetailResponse,
+    ProviderGetChairDetailError,
+    undefined,
+    {},
+    {},
+    ProviderGetChairDetailPathParams
+  >({ url: "/provider/chairs/{chairId}", method: "get", ...variables, signal });
+
+export const useProviderGetChairDetail = <
+  TData = ProviderGetChairDetailResponse,
+>(
+  variables: ProviderGetChairDetailVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      ProviderGetChairDetailResponse,
+      ProviderGetChairDetailError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<
+    ProviderGetChairDetailResponse,
+    ProviderGetChairDetailError,
+    TData
+  >({
+    queryKey: queryKeyFn({
+      path: "/provider/chairs/{chairId}",
+      operationId: "providerGetChairDetail",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchProviderGetChairDetail({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
@@ -718,6 +888,13 @@ export const useChairPostDeactivate = (
 
 export type ChairPostCoordinateError = Fetcher.ErrorWrapper<undefined>;
 
+export type ChairPostCoordinateResponse = {
+  /**
+   * 記録日時
+   */
+  datetime: string;
+};
+
 export type ChairPostCoordinateVariables = {
   body: Schemas.Coordinate;
 } & ApiContext["fetcherOptions"];
@@ -726,14 +903,19 @@ export const fetchChairPostCoordinate = (
   variables: ChairPostCoordinateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, ChairPostCoordinateError, Schemas.Coordinate, {}, {}, {}>(
-    { url: "/chair/coordinate", method: "post", ...variables, signal },
-  );
+  apiFetch<
+    ChairPostCoordinateResponse,
+    ChairPostCoordinateError,
+    Schemas.Coordinate,
+    {},
+    {},
+    {}
+  >({ url: "/chair/coordinate", method: "post", ...variables, signal });
 
 export const useChairPostCoordinate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      undefined,
+      ChairPostCoordinateResponse,
       ChairPostCoordinateError,
       ChairPostCoordinateVariables
     >,
@@ -742,7 +924,7 @@ export const useChairPostCoordinate = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    undefined,
+    ChairPostCoordinateResponse,
     ChairPostCoordinateError,
     ChairPostCoordinateVariables
   >({
@@ -1060,6 +1242,16 @@ export type QueryOperation =
       path: "/provider/sales";
       operationId: "providerGetSales";
       variables: ProviderGetSalesVariables;
+    }
+  | {
+      path: "/provider/chairs";
+      operationId: "providerGetChairs";
+      variables: ProviderGetChairsVariables;
+    }
+  | {
+      path: "/provider/chairs/{chairId}";
+      operationId: "providerGetChairDetail";
+      variables: ProviderGetChairDetailVariables;
     }
   | {
       path: "/chair/requests/{requestId}";
