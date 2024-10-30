@@ -17,9 +17,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       name: String(formData.get("provider_name")) ?? "",
     },
   });
-  return redirect(
-    `/provider?id=${provider.id}`,
-  );
+  return redirect(`/provider?id=${provider.id}`);
 };
 
 export default function DriverRegister() {
