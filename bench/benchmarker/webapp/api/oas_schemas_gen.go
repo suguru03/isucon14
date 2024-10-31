@@ -177,6 +177,164 @@ type AppGetNotificationNoContent struct{}
 
 func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
+type AppGetRequestsOKItem struct {
+	// 配車要求ID.
+	RequestID             string                       `json:"request_id"`
+	PickupCoordinate      Coordinate                   `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate                   `json:"destination_coordinate"`
+	Status                RequestStatus                `json:"status"`
+	Chair                 OptAppGetRequestsOKItemChair `json:"chair"`
+	// 運賃.
+	Fare OptInt `json:"fare"`
+	// 椅子の評価.
+	Evaluation OptInt `json:"evaluation"`
+	// 配車要求日時.
+	RequestedAt float64 `json:"requested_at"`
+	// 到着日時.
+	ArrivedAt OptFloat64 `json:"arrived_at"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AppGetRequestsOKItem) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppGetRequestsOKItem) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppGetRequestsOKItem) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *AppGetRequestsOKItem) GetStatus() RequestStatus {
+	return s.Status
+}
+
+// GetChair returns the value of Chair.
+func (s *AppGetRequestsOKItem) GetChair() OptAppGetRequestsOKItemChair {
+	return s.Chair
+}
+
+// GetFare returns the value of Fare.
+func (s *AppGetRequestsOKItem) GetFare() OptInt {
+	return s.Fare
+}
+
+// GetEvaluation returns the value of Evaluation.
+func (s *AppGetRequestsOKItem) GetEvaluation() OptInt {
+	return s.Evaluation
+}
+
+// GetRequestedAt returns the value of RequestedAt.
+func (s *AppGetRequestsOKItem) GetRequestedAt() float64 {
+	return s.RequestedAt
+}
+
+// GetArrivedAt returns the value of ArrivedAt.
+func (s *AppGetRequestsOKItem) GetArrivedAt() OptFloat64 {
+	return s.ArrivedAt
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AppGetRequestsOKItem) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppGetRequestsOKItem) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppGetRequestsOKItem) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AppGetRequestsOKItem) SetStatus(val RequestStatus) {
+	s.Status = val
+}
+
+// SetChair sets the value of Chair.
+func (s *AppGetRequestsOKItem) SetChair(val OptAppGetRequestsOKItemChair) {
+	s.Chair = val
+}
+
+// SetFare sets the value of Fare.
+func (s *AppGetRequestsOKItem) SetFare(val OptInt) {
+	s.Fare = val
+}
+
+// SetEvaluation sets the value of Evaluation.
+func (s *AppGetRequestsOKItem) SetEvaluation(val OptInt) {
+	s.Evaluation = val
+}
+
+// SetRequestedAt sets the value of RequestedAt.
+func (s *AppGetRequestsOKItem) SetRequestedAt(val float64) {
+	s.RequestedAt = val
+}
+
+// SetArrivedAt sets the value of ArrivedAt.
+func (s *AppGetRequestsOKItem) SetArrivedAt(val OptFloat64) {
+	s.ArrivedAt = val
+}
+
+type AppGetRequestsOKItemChair struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// プロバイダー名.
+	Provider string `json:"provider"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+}
+
+// GetID returns the value of ID.
+func (s *AppGetRequestsOKItemChair) GetID() string {
+	return s.ID
+}
+
+// GetProvider returns the value of Provider.
+func (s *AppGetRequestsOKItemChair) GetProvider() string {
+	return s.Provider
+}
+
+// GetName returns the value of Name.
+func (s *AppGetRequestsOKItemChair) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *AppGetRequestsOKItemChair) GetModel() string {
+	return s.Model
+}
+
+// SetID sets the value of ID.
+func (s *AppGetRequestsOKItemChair) SetID(val string) {
+	s.ID = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *AppGetRequestsOKItemChair) SetProvider(val string) {
+	s.Provider = val
+}
+
+// SetName sets the value of Name.
+func (s *AppGetRequestsOKItemChair) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *AppGetRequestsOKItemChair) SetModel(val string) {
+	s.Model = val
+}
+
 // AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
 type AppPostPaymentMethodsNoContent struct{}
 
@@ -712,6 +870,52 @@ func (o OptAppChair) Or(d AppChair) AppChair {
 	return d
 }
 
+// NewOptAppGetRequestsOKItemChair returns new OptAppGetRequestsOKItemChair with value set to v.
+func NewOptAppGetRequestsOKItemChair(v AppGetRequestsOKItemChair) OptAppGetRequestsOKItemChair {
+	return OptAppGetRequestsOKItemChair{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppGetRequestsOKItemChair is optional AppGetRequestsOKItemChair.
+type OptAppGetRequestsOKItemChair struct {
+	Value AppGetRequestsOKItemChair
+	Set   bool
+}
+
+// IsSet returns true if OptAppGetRequestsOKItemChair was set.
+func (o OptAppGetRequestsOKItemChair) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppGetRequestsOKItemChair) Reset() {
+	var v AppGetRequestsOKItemChair
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppGetRequestsOKItemChair) SetTo(v AppGetRequestsOKItemChair) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppGetRequestsOKItemChair) Get() (v AppGetRequestsOKItemChair, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppGetRequestsOKItemChair) Or(d AppGetRequestsOKItemChair) AppGetRequestsOKItemChair {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
 func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {
 	return OptAppPostPaymentMethodsReq{
@@ -982,6 +1186,98 @@ func (o OptCoordinate) Get() (v Coordinate, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptCoordinate) Or(d Coordinate) Coordinate {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFloat64 returns new OptFloat64 with value set to v.
+func NewOptFloat64(v float64) OptFloat64 {
+	return OptFloat64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFloat64 is optional float64.
+type OptFloat64 struct {
+	Value float64
+	Set   bool
+}
+
+// IsSet returns true if OptFloat64 was set.
+func (o OptFloat64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFloat64) Reset() {
+	var v float64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFloat64) SetTo(v float64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFloat64) Get() (v float64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
 	if v, ok := o.Get(); ok {
 		return v
 	}
