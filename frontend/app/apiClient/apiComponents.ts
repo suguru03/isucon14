@@ -600,6 +600,14 @@ export type ProviderGetChairsResponse = {
      * 登録日時
      */
     registered_at: string;
+    /**
+     * 総移動距離
+     */
+    total_distance: number;
+    /**
+     * 総移動距離の更新日時
+     */
+    total_distance_updated_at?: string;
   }[];
 };
 
@@ -677,6 +685,14 @@ export type ProviderGetChairDetailResponse = {
    * 登録日時
    */
   registered_at: string;
+  /**
+   * 総移動距離
+   */
+  total_distance: number;
+  /**
+   * 総移動距離の更新日時
+   */
+  total_distance_updated_at?: string;
 };
 
 export type ProviderGetChairDetailVariables = {
@@ -872,6 +888,13 @@ export const useChairPostDeactivate = (
 
 export type ChairPostCoordinateError = Fetcher.ErrorWrapper<undefined>;
 
+export type ChairPostCoordinateResponse = {
+  /**
+   * 記録日時
+   */
+  datetime: string;
+};
+
 export type ChairPostCoordinateVariables = {
   body: Schemas.Coordinate;
 } & ApiContext["fetcherOptions"];
@@ -880,14 +903,19 @@ export const fetchChairPostCoordinate = (
   variables: ChairPostCoordinateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, ChairPostCoordinateError, Schemas.Coordinate, {}, {}, {}>(
-    { url: "/chair/coordinate", method: "post", ...variables, signal },
-  );
+  apiFetch<
+    ChairPostCoordinateResponse,
+    ChairPostCoordinateError,
+    Schemas.Coordinate,
+    {},
+    {},
+    {}
+  >({ url: "/chair/coordinate", method: "post", ...variables, signal });
 
 export const useChairPostCoordinate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      undefined,
+      ChairPostCoordinateResponse,
       ChairPostCoordinateError,
       ChairPostCoordinateVariables
     >,
@@ -896,7 +924,7 @@ export const useChairPostCoordinate = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    undefined,
+    ChairPostCoordinateResponse,
     ChairPostCoordinateError,
     ChairPostCoordinateVariables
   >({
