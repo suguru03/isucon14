@@ -19,7 +19,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       lastname: String(formData.get("lastname")),
     },
   });
-  return redirect(`/client?access_token=${data.access_token}&id=${data.id}`);
+  return redirect(`/client?id=${data.id}`);
 };
 
 export default function ClientRegister() {

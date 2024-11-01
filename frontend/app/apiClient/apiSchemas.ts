@@ -26,7 +26,6 @@ export type Coordinate = {
  * CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
  * ARRIVED: 目的地に到着した
  * COMPLETED: ユーザーの決済・椅子評価が完了した
- * CANCELED: 何らかの理由により途中でキャンセルされた(一定時間待ったが椅子を割り当てられなかった場合などを想定)
  */
 export type RequestStatus =
   | "MATCHING"
@@ -34,8 +33,7 @@ export type RequestStatus =
   | "DISPATCHED"
   | "CARRYING"
   | "ARRIVED"
-  | "COMPLETED"
-  | "CANCELED";
+  | "COMPLETED";
 
 /**
  * 簡易椅子情報
