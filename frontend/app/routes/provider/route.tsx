@@ -13,7 +13,6 @@ export const meta: MetaFunction = () => {
 
 export default function ProviderLayout() {
   return (
-    // TODO: Use provider-context
     <ProviderProvider>
       <Outlet />
       <FooterNavigation
