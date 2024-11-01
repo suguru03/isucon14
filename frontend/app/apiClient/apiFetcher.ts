@@ -1,6 +1,6 @@
 import { ApiContext } from "./apiContext";
 
-const baseUrl = "__API_BASE_URL__";
+const baseUrl = __API_BASE_URL__;
 
 export type ErrorWrapper<TError> =
   | TError

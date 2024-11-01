@@ -53,16 +53,6 @@ export default defineConfig({
       });
 
       /**
-       * viteのdefineで探索可能にする
-       */
-      await rewriteFileInTargetDir(outputDir, (content) =>
-        content.replace(
-          `"${alternativeAPIURLString}"`,
-          alternativeURLExpression,
-        ),
-      );
-
-      /**
        * fetch.responseのstatusを内包させる
        */
       await rewriteFile("./app/apiClient/apiFetcher.ts", (content) => {
@@ -72,6 +62,15 @@ export default defineConfig({
         );
       });
 
+      /**
+       * viteのdefineで探索可能にする
+       */
+      await rewriteFileInTargetDir(outputDir, (content) =>
+        content.replace(
+          `"${alternativeAPIURLString}"`,
+          alternativeURLExpression,
+        ),
+      );
       /**
        * SSE通信などでは、自動生成のfetcherを利用しないため
        */
