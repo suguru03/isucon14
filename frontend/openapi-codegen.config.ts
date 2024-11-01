@@ -1,14 +1,14 @@
+import { defineConfig } from "@openapi-codegen/cli";
+import {
+  generateReactQueryComponents,
+  generateSchemaTypes,
+} from "@openapi-codegen/typescript";
+import { readFile, readdir, writeFile } from "fs/promises";
+import { join as pathJoin } from "path";
 import {
   alternativeAPIURLString,
   alternativeURLExpression,
 } from "./api-url.mjs";
-import {
-  generateSchemaTypes,
-  generateReactQueryComponents,
-} from "@openapi-codegen/typescript";
-import { defineConfig } from "@openapi-codegen/cli";
-import { writeFile, readdir, readFile } from "fs/promises";
-import { join as pathJoin } from "path";
 
 const outputDir = "./app/apiClient";
 
@@ -101,7 +101,7 @@ async function rewriteFileInTargetDir(
         continue;
       }
       if (file.isFile()) {
-        rewriteFile(filePath, rewriteFn);
+        await rewriteFile(filePath, rewriteFn);
       }
     }
   } catch (err) {
