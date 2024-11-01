@@ -332,6 +332,77 @@ func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User
 	return nil
 }
 
+func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse, error) {
+	res, err := c.client.AppGetRequests(c.ctx)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
+	}
+
+	requests := make([]*world.RequestHistory, len(res.Requests))
+	for i, r := range res.Requests {
+		var status world.RequestStatus
+		switch r.Status {
+		case api.RequestStatusMATCHING:
+			status = world.RequestStatusMatching
+		case api.RequestStatusDISPATCHING:
+			status = world.RequestStatusDispatching
+		case api.RequestStatusDISPATCHED:
+			status = world.RequestStatusDispatched
+		case api.RequestStatusCARRYING:
+			status = world.RequestStatusCarrying
+		case api.RequestStatusARRIVED:
+			status = world.RequestStatusArrived
+		case api.RequestStatusCOMPLETED:
+			status = world.RequestStatusCompleted
+		}
+
+		requestedAt, err := time.Parse(time.RFC3339Nano, r.RequestedAt)
+		if err != nil {
+			return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
+		}
+
+		requests[i] = &world.RequestHistory{
+			ID: r.RequestID,
+			PickupCoordinate: world.Coordinate{
+				X: r.PickupCoordinate.Latitude,
+				Y: r.PickupCoordinate.Longitude,
+			},
+			DestinationCoordinate: world.Coordinate{
+				X: r.DestinationCoordinate.Latitude,
+				Y: r.DestinationCoordinate.Longitude,
+			},
+			Status:      status,
+			Fare:        r.Fare,
+			RequestedAt: requestedAt,
+		}
+
+		if r.Chair.Set {
+			requests[i].Chair = &world.RequestHistoryChair{
+				ID:       r.Chair.Value.ID,
+				Provider: r.Chair.Value.Provider,
+				Name:     r.Chair.Value.Name,
+				Model:    r.Chair.Value.Model,
+			}
+		}
+
+		if r.Evaluation.Set {
+			requests[i].Evaluation = &r.Evaluation.Value
+		}
+
+		if r.CompletedAt.Set {
+			completedAt, err := time.Parse(time.RFC3339Nano, r.CompletedAt.Value)
+			if err != nil {
+				return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
+			}
+			requests[i].CompletedAt = null.TimeFrom(completedAt)
+		}
+	}
+
+	return &world.GetRequestsResponse{
+		Requests: requests,
+	}, nil
+}
+
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
 

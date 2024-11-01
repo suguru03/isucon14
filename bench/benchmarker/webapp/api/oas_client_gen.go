@@ -33,7 +33,7 @@ type Invoker interface {
 	// ユーザーが配車要求一覧を取得する.
 	//
 	// GET /app/requests
-	AppGetRequests(ctx context.Context) ([]AppGetRequestsOKItem, error)
+	AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error)
 	// AppPostPaymentMethods invokes app-post-payment-methods operation.
 	//
 	// 決済トークンの登録.
@@ -283,12 +283,12 @@ func (c *Client) sendAppGetRequest(ctx context.Context, params AppGetRequestPara
 // ユーザーが配車要求一覧を取得する.
 //
 // GET /app/requests
-func (c *Client) AppGetRequests(ctx context.Context) ([]AppGetRequestsOKItem, error) {
+func (c *Client) AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error) {
 	res, err := c.sendAppGetRequests(ctx)
 	return res, err
 }
 
-func (c *Client) sendAppGetRequests(ctx context.Context) (res []AppGetRequestsOKItem, err error) {
+func (c *Client) sendAppGetRequests(ctx context.Context) (res *AppGetRequestsOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string

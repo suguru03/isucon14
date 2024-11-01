@@ -82,21 +82,27 @@ func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+type getAppRequestsResponse struct {
+	Requests []getAppRequestsResponseItem `json:"requests"`
+}
+
 type getAppRequestsResponseItem struct {
 	RequestID             string     `json:"request_id"`
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	Status                string     `json:"status"`
-	Chair                 struct {
-		ID       string `json:"id"`
-		Provider string `json:"provider"`
-		Name     string `json:"name"`
-		Model    string `json:"model"`
-	}
+	Chair                 *getAppRequestResponseItemChair
 	Fare        int   `json:"fare"`
 	Evaluation  *int  `json:"evaluation"`
 	RequestedAt int64 `json:"requested_at"`
-	ArrivedAt   int64 `json:"arrived_at"`
+	CompletedAt *int64 `json:"completed_at"`
+}
+
+type getAppRequestResponseItemChair struct {
+	ID       string `json:"id"`
+	Provider string `json:"provider"`
+	Name     string `json:"name"`
+	Model    string `json:"model"`
 }
 
 func appGetRequests(w http.ResponseWriter, r *http.Request) {
@@ -112,17 +118,20 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []getAppRequestsResponseItem{}
+	requests := []getAppRequestsResponseItem{}
 	for _, rideRequest := range rideRequests {
 		item := getAppRequestsResponseItem{
 			RequestID:             rideRequest.ID,
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 			Status:                rideRequest.Status,
+			Fare:                  calculateSale(rideRequest),
 			RequestedAt:           rideRequest.RequestedAt.Unix(),
 		}
 
 		if rideRequest.ChairID.Valid {
+			item.Chair = &getAppRequestResponseItemChair{}
+
 			chair := &Chair{}
 			if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
 				writeError(w, http.StatusInternalServerError, err)
@@ -141,15 +150,17 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if rideRequest.Status == "COMPLETED" {
-			item.Fare = calculateSale(rideRequest)
 			item.Evaluation = rideRequest.Evaluation
-			item.ArrivedAt = rideRequest.ArrivedAt.Unix()
+			completedAt := rideRequest.UpdatedAt.Unix()
+			item.CompletedAt = &completedAt
 		}
 
-		response = append(response, item)
+		requests = append(requests, item)
 	}
 
-	writeJSON(w, http.StatusOK, response)
+	writeJSON(w, http.StatusOK, &getAppRequestsResponse{
+		Requests: requests,
+	})
 }
 
 type postAppRequestsRequest struct {

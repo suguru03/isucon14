@@ -3,7 +3,6 @@
 package api
 
 import (
-	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -153,7 +152,7 @@ func decodeAppGetRequestResponse(resp *http.Response) (res AppGetRequestRes, _ e
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeAppGetRequestsResponse(resp *http.Response) (res []AppGetRequestsOKItem, _ error) {
+func decodeAppGetRequestsResponse(resp *http.Response) (res *AppGetRequestsOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -169,17 +168,9 @@ func decodeAppGetRequestsResponse(resp *http.Response) (res []AppGetRequestsOKIt
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response []AppGetRequestsOKItem
+			var response AppGetRequestsOK
 			if err := func() error {
-				response = make([]AppGetRequestsOKItem, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem AppGetRequestsOKItem
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					response = append(response, elem)
-					return nil
-				}); err != nil {
+				if err := response.Decode(d); err != nil {
 					return err
 				}
 				if err := d.Skip(); err != io.EOF {
@@ -196,31 +187,14 @@ func decodeAppGetRequestsResponse(resp *http.Response) (res []AppGetRequestsOKIt
 			}
 			// Validate response.
 			if err := func() error {
-				if response == nil {
-					return errors.New("nil is invalid value")
-				}
-				var failures []validate.FieldError
-				for i, elem := range response {
-					if err := func() error {
-						if err := elem.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						failures = append(failures, validate.FieldError{
-							Name:  fmt.Sprintf("[%d]", i),
-							Error: err,
-						})
-					}
-				}
-				if len(failures) > 0 {
-					return &validate.Error{Fields: failures}
+				if err := response.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {
 				return res, errors.Wrap(err, "validate")
 			}
-			return response, nil
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}

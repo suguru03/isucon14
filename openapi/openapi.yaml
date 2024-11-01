@@ -114,6 +114,140 @@ paths:
         "204":
           description: 決済トークンの登録に成功した
   /app/requests:
+<<<<<<< HEAD
+||||||| parent of 2e07bd2 (impl bench client)
+    get:
+      tags:
+        - app
+      summary: ユーザーが配車要求一覧を取得する
+      operationId: app-get-requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      description: 配車要求ID
+                    pickup_coordinate:
+                      $ref: "#/components/schemas/Coordinate"
+                    destination_coordinate:
+                      $ref: "#/components/schemas/Coordinate"
+                    status:
+                      $ref: "#/components/schemas/RequestStatus"
+                    chair:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 椅子ID
+                        provider:
+                          type: string
+                          description: プロバイダー名
+                        name:
+                          type: string
+                          description: 椅子の名前
+                        model:
+                          type: string
+                          description: 椅子のモデル
+                      required:
+                        - id
+                        - provider
+                        - name
+                        - model
+                    fare:
+                      type: integer
+                      description: 運賃
+                    evaluation:
+                      type: integer
+                      description: 椅子の評価
+                    requested_at:
+                      type: number
+                      description: 配車要求日時
+                    arrived_at:
+                      type: number
+                      description: 到着日時
+                  required:
+                    - request_id
+                    - pickup_coordinate
+                    - destination_coordinate
+                    - status
+                    - requested_at
+=======
+    get:
+      tags:
+        - app
+      summary: ユーザーが配車要求一覧を取得する
+      operationId: app-get-requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        request_id:
+                          type: string
+                          description: 配車要求ID
+                        pickup_coordinate:
+                          $ref: "#/components/schemas/Coordinate"
+                        destination_coordinate:
+                          $ref: "#/components/schemas/Coordinate"
+                        status:
+                          $ref: "#/components/schemas/RequestStatus"
+                        chair:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 椅子ID
+                            provider:
+                              type: string
+                              description: プロバイダー名
+                            name:
+                              type: string
+                              description: 椅子の名前
+                            model:
+                              type: string
+                              description: 椅子のモデル
+                          required:
+                            - id
+                            - provider
+                            - name
+                            - model
+                        fare:
+                          type: integer
+                          description: 運賃
+                        evaluation:
+                          type: integer
+                          description: 椅子の評価
+                        requested_at:
+                          type: string
+                          description: 配車要求日時
+                        completed_at:
+                          type: string
+                          description: 評価まで完了した日時
+                      required:
+                        - request_id
+                        - pickup_coordinate
+                        - destination_coordinate
+                        - status
+                        - fare
+                        - requested_at
+                required:
+                  - requests
+>>>>>>> 2e07bd2 (impl bench client)
     post:
       tags:
         - app
