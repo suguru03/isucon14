@@ -14,15 +14,13 @@ import {
 
 type ProviderChair = { id: string; name: string };
 
-type ClientProviderRequest = {
-  payload?: Partial<{
-    chairs: ProviderChair[];
-    sales: ProviderGetSalesResponse;
-  }>;
-  provider?: {
+type ClientProviderRequest = Partial<{
+  chairs: ProviderChair[];
+  sales: ProviderGetSalesResponse;
+  provider: {
     id?: string;
   };
-};
+}>;
 
 const DUMMY_DATA = {
   total_sales: 8087,
@@ -89,17 +87,15 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
 
   const responseClientProvider = useMemo<ClientProviderRequest>(() => {
     return {
-      payload: {
-        sales,
-        chairs: sales?.chairs?.map((chair) => ({
-          id: chair.id,
-          name: chair.name,
-        })),
-      },
+      sales,
+      chairs: sales?.chairs?.map((chair) => ({
+        id: chair.id,
+        name: chair.name,
+      })),
       provider: {
         id,
       },
-    };
+    } satisfies ClientProviderRequest;
   }, [sales, id]);
 
   return (
