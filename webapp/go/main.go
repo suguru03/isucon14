@@ -84,19 +84,19 @@ func setup() http.Handler {
 		authedMux.HandleFunc("GET /app/nearby-chairs", appGetNearbyChairs)
 	}
 
-	// provider handlers
+	// owner handlers
 	{
-		mux.HandleFunc("POST /provider/register", providerPostRegister)
+		mux.HandleFunc("POST /owner/register", ownerPostRegister)
 
-		authedMux := mux.With(providerAuthMiddleware)
-		authedMux.HandleFunc("GET /provider/sales", providerGetSales)
-		authedMux.HandleFunc("GET /provider/chairs", providerGetChairs)
-		authedMux.HandleFunc("GET /provider/chairs/{chair_id}", providerGetChairDetail)
+		authedMux := mux.With(ownerAuthMiddleware)
+		authedMux.HandleFunc("GET /owner/sales", ownerGetSales)
+		authedMux.HandleFunc("GET /owner/chairs", ownerGetChairs)
+		authedMux.HandleFunc("GET /owner/chairs/{chair_id}", ownerGetChairDetail)
 	}
 
 	// chair handlers
 	{
-		authedMux1 := mux.With(providerAuthMiddleware)
+		authedMux1 := mux.With(ownerAuthMiddleware)
 		authedMux1.HandleFunc("POST /chair/register", chairPostRegister)
 
 		authedMux2 := mux.With(chairAuthMiddleware)
@@ -131,7 +131,7 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 		"payment_tokens",
 		"users",
 		"chairs",
-		"providers",
+		"owners",
 	}
 	tx, err := db.Beginx()
 	if err != nil {
