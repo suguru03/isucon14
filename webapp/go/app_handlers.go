@@ -393,7 +393,13 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
 		Amount: calculateSale(*rideRequest),
 	}
-	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest); err != nil {
+	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest, func() ([]RideRequest, error) {
+		rideRequests := []RideRequest{}
+		if err := tx.Select(&rideRequests, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at ASC`, rideRequest.UserID); err != nil {
+			return nil, err
+		}
+		return rideRequests, nil
+	}); err != nil {
 		if errors.Is(err, erroredUpstream) {
 			writeError(w, http.StatusBadGateway, err)
 			return
