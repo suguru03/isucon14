@@ -71,10 +71,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusSuccess)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -92,10 +92,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusInvalidAmount)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -114,10 +114,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusInvalidToken)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -140,10 +140,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Status:         StatusSuccess,
 				})
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -163,10 +163,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Status:         StatusInvalidAmount,
 				})
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -186,10 +186,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Amount:         amount,
 					Status:         StatusInvalidToken,
 				})
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -209,10 +209,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Amount:         10001,
 					Status:         StatusSuccess,
 				})
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -236,10 +236,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 			p.locked.Store(true)
 
 			server.knownKeys.Set(idk, p)
-			e.POST("/payment").
+			e.POST("/payments").
 				WithHeader(IdempotencyKeyHeader, idk).
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -260,9 +260,9 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusSuccess)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -280,9 +280,9 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusInvalidAmount)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -301,9 +301,9 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusInvalidToken)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
