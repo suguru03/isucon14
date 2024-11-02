@@ -7,8 +7,6 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"strings"
-
-	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type PostPaymentRequest struct {
@@ -71,7 +69,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 決済処理
 	// キューに入れて完了を待つ(ブロッキング)
-	if concurrent.TrySend(s.queue, p) {
+	if s.queue.tryProcess(p) {
 		<-p.processChan
 		p.locked.Store(false)
 
@@ -87,7 +85,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// キューが詰まっていても確率で成功させる
 	if rand.IntN(5) == 0 {
-		s.queue <- p
+		s.queue.process(p)
 		<-p.processChan
 		p.locked.Store(false)
 
@@ -104,7 +102,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	// エラーを返した場合でもキューに入る場合がある
 	if rand.IntN(5) == 0 {
 		go func() {
-			s.queue <- p
+			s.queue.process(p)
 			<-p.processChan
 			p.locked.Store(false)
 		}()
@@ -140,14 +138,10 @@ func (s *Server) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payments, ok := s.acceptedPayments.Get(token)
-	if !ok {
-		writeJSON(w, http.StatusOK, []ResponsePayment{})
-		return
-	}
+	payments := s.queue.getAllAcceptedPayments(token)
 
 	res := []ResponsePayment{}
-	for _, p := range payments.ToSlice() {
+	for _, p := range payments {
 		res = append(res, NewResponsePayment(p))
 	}
 	writeJSON(w, http.StatusOK, res)
