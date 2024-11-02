@@ -9,8 +9,6 @@ const (
 	StatusSuccess
 	StatusInvalidAmount
 	StatusInvalidToken
-	StatusRequestNotFound
-	StatusAlreadyCommitted
 )
 
 type Payment struct {

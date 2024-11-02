@@ -8,32 +8,25 @@ import (
 
 type PaymentDB struct {
 	PaymentTokens     *concurrent.SimpleMap[string, *User]
-	CommittedPayments *concurrent.SimpleMap[RequestID, *payment.Payment]
+	CommittedPayments *concurrent.SimpleSlice[*payment.Payment]
 }
 
 func NewPaymentDB() *PaymentDB {
 	return &PaymentDB{
 		PaymentTokens:     concurrent.NewSimpleMap[string, *User](),
-		CommittedPayments: concurrent.NewSimpleMap[RequestID, *payment.Payment](),
+		CommittedPayments: concurrent.NewSimpleSlice[*payment.Payment](),
 	}
 }
 
 func (db *PaymentDB) Verify(p *payment.Payment) payment.Status {
-	user, ok := db.PaymentTokens.Get(p.Token)
+	_, ok := db.PaymentTokens.Get(p.Token)
 	if !ok {
 		return payment.StatusInvalidToken
 	}
-	req := user.Request
-	if req == nil {
-		return payment.StatusRequestNotFound
-	}
-	if req.Fare() != p.Amount {
+	if p.Amount <= 0 && p.Amount > 1_000_000 {
 		return payment.StatusInvalidAmount
 	}
-	_, set := db.CommittedPayments.GetOrSetDefault(req.ID, func() *payment.Payment { return p })
-	if !set {
-		return payment.StatusAlreadyCommitted
-	}
+	db.CommittedPayments.Append(p)
 	return payment.StatusSuccess
 }
 
