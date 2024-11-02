@@ -20,19 +20,19 @@ func TestPostPaymentRequest_IsSamePayload(t *testing.T) {
 		expect bool
 	}{
 		{
-			token:	"t1",
+			token:  "t1",
 			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: true,
 		},
 		{
-			token:	"t2",
+			token:  "t2",
 			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
 		},
 		{
-			token:	"t1",
+			token:  "t1",
 			req:    PostPaymentRequest{Amount: 10000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
@@ -79,6 +79,16 @@ func TestServer_PaymentHandler(t *testing.T) {
 					}).
 					Expect().
 					Status(http.StatusNoContent)
+				e.GET("/payments").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+					Expect().
+					Status(http.StatusOK).
+					JSON().
+					Array().
+					IsEqual([]ResponsePayment{{
+						Amount: amount,
+						Status: StatusSuccess.String(),
+					}})
 			})
 			t.Run("Status = StatusInvalidAmount", func(t *testing.T) {
 				_, verifier, e := prepare(t)
@@ -310,5 +320,149 @@ func TestServer_PaymentHandler(t *testing.T) {
 				Status(http.StatusBadRequest).
 				JSON().Object().IsEqual(map[string]string{"message": "決済トークンが無効です"})
 		})
+	})
+}
+
+func TestServer_GetPaymentsHandler(t *testing.T) {
+	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
+		mockCtrl := gomock.NewController(t)
+		verifier := NewMockVerifier(mockCtrl)
+		server := NewServer(verifier, 1*time.Millisecond, 1)
+		httpServer := httptest.NewServer(server)
+		t.Cleanup(httpServer.Close)
+		e := httpexpect.Default(t, httpServer.URL)
+
+		return server, verifier, e
+	}
+
+	t.Run("そのトークンによる決済が存在する", func(t *testing.T) {
+		_, verifier, e := prepare(t)
+
+		token := "token1"
+		token2 := "token2"
+		validTokens := []string{token, token2}
+		invalidAmount := 0
+		initialStatusAmount := 500
+
+		payments := []*Payment{{
+			Token:  token,
+			Amount: 1000,
+			Status: StatusSuccess,
+		}, {
+			Token:  token,
+			Amount: 0,
+			Status: StatusInvalidAmount,
+		}, {
+			Token:  token,
+			Amount: 500,
+			Status: StatusInitial,
+		}, {
+			Token:  "invalid token",
+			Amount: 1000,
+			Status: StatusInvalidToken,
+		}, {
+			Token:  token2,
+			Amount: 1000,
+			Status: StatusSuccess,
+		}}
+		expectedResponse := []ResponsePayment{}
+		for _, p := range payments {
+			if p.Token != token {
+				continue
+			}
+			expectedResponse = append(expectedResponse, NewResponsePayment(p))
+		}
+
+		verifier.EXPECT().
+			Verify(gomock.Cond(func(x *Payment) bool {
+				return true
+			})).
+			DoAndReturn(func(p *Payment) Status {
+				isValidToken := false
+				for _, t := range validTokens {
+					if p.Token == t {
+						isValidToken = true
+						break
+					}
+				}
+				if !isValidToken {
+					return StatusInvalidToken
+				}
+				switch p.Amount {
+				case invalidAmount:
+					return StatusInvalidAmount
+				case initialStatusAmount:
+					return StatusInitial
+				}
+				return StatusSuccess
+			})
+
+		for _, p := range payments {
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+				WithJSON(map[string]any{
+					"amount": p.Amount,
+				}).
+				Expect().
+				Status(http.StatusNoContent)
+		}
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEqual(expectedResponse)
+	})
+	t.Run("そのトークンによる決済が存在しない", func(t *testing.T) {
+		_, verifier, e := prepare(t)
+
+		token := "token1"
+
+		p := Payment{
+			Token:  "token2",
+			Amount: 1000,
+			Status: StatusSuccess,
+		}
+
+		verifier.EXPECT().
+			Verify(gomock.Cond(func(x *Payment) bool {
+				return p.Token == x.Token && p.Amount == x.Amount
+			}))
+
+		e.POST("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			WithJSON(map[string]any{
+				"amount": p.Amount,
+			}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEmpty()
+	})
+	t.Run("決済が存在しない", func(t *testing.T) {
+		_, verifier, e := prepare(t)
+
+		token := "token1"
+
+		verifier.EXPECT().
+			Verify(gomock.Cond(func(x *Payment) bool {
+				return false
+			}))
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEmpty()
 	})
 }
