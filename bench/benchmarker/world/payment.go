@@ -1,6 +1,8 @@
 package world
 
 import (
+	"log/slog"
+
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/payment"
 	"github.com/samber/lo"
@@ -55,12 +57,18 @@ func (db *PaymentDB) Verify(p *payment.Payment) payment.Status {
 	req := user.Request
 	if req == nil {
 		db.invalidPayments.Append(&invalidPayment{Payment: p, Reason: invalidPaymentReasonNoRequest})
+		// TODO: ロギング
+		slog.Debug("invalid payment", "payment", p, "reason", invalidPaymentReasonNoRequest)
 	}
 	if _, alreadyPaid := db.alreadyPaidRequest.Get(req); alreadyPaid {
 		db.invalidPayments.Append(&invalidPayment{Payment: p, Request: req, Reason: invalidPaymentReasonAlreadyPaid})
+		// TODO: ロギング
+		slog.Debug("invalid payment", "payment", p, "request", req, "reason", invalidPaymentReasonAlreadyPaid)
 	}
 	if p.Amount != req.Fare() {
 		db.invalidPayments.Append(&invalidPayment{Payment: p, Request: req, Reason: invalidPaymentReasonInvalidAmount})
+		// TODO: ロギング
+		slog.Debug("invalid payment", "payment", p, "request", req, "reason", invalidPaymentReasonInvalidAmount)
 	}
 
 	db.CommittedPayments.Append(p)
