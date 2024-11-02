@@ -391,10 +391,9 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
-		Token:  paymentToken.Token,
 		Amount: calculateSale(*rideRequest),
 	}
-	if err := requestPaymentGatewayPostPayment(paymentGatewayRequest); err != nil {
+	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest); err != nil {
 		if errors.Is(err, erroredUpstream) {
 			writeError(w, http.StatusBadGateway, err)
 			return
