@@ -85,13 +85,16 @@ func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 不安定なエラーを再現
-	go func() {
-		s.queue <- p
-		<-p.processChan
-		p.locked.Store(false)
-	}()
+	// エラーを返した場合でもキューに入る場合がある
+	if rand.IntN(5) == 0 {
+		go func() {
+			s.queue <- p
+			<-p.processChan
+			p.locked.Store(false)
+		}()
+	}
 
+	// 不安定なエラーを再現
 	switch rand.IntN(3) {
 	case 0:
 		w.WriteHeader(http.StatusInternalServerError)
