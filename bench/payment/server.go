@@ -14,16 +14,15 @@ const AuthorizationHeaderPrefix = "Bearer "
 type Server struct {
 	mux       *http.ServeMux
 	knownKeys *concurrent.SimpleMap[string, *Payment]
-	queue     paymentQueue
+	queue     *paymentQueue
 	closed    bool
-	done      chan struct{}
 }
 
 func NewServer(verifier Verifier, processTime time.Duration, queueSize int) *Server {
 	s := &Server{
 		mux:       http.NewServeMux(),
 		knownKeys: concurrent.NewSimpleMap[string, *Payment](),
-		queue:     *newPaymentQueue(queueSize, verifier, processTime),
+		queue:     newPaymentQueue(queueSize, verifier, processTime),
 	}
 	s.mux.HandleFunc("GET /payments", s.GetPaymentsHandler)
 	s.mux.HandleFunc("POST /payments", s.PostPaymentsHandler)

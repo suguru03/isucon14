@@ -76,7 +76,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-r.Context().Done():
 			// クライアントが既に切断している
-			return
+			w.WriteHeader(http.StatusGatewayTimeout)
 		default:
 			writeResponse(w, p.Status)
 		}
@@ -85,14 +85,14 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// キューが詰まっていても確率で成功させる
 	if rand.IntN(5) == 0 {
-		s.queue.process(p)
+		go s.queue.process(p)
 		<-p.processChan
 		p.locked.Store(false)
 
 		select {
 		case <-r.Context().Done():
 			// クライアントが既に切断している
-			return
+			w.WriteHeader(http.StatusGatewayTimeout)
 		default:
 			writeResponse(w, p.Status)
 		}
@@ -101,8 +101,9 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// エラーを返した場合でもキューに入る場合がある
 	if rand.IntN(5) == 0 {
+		go s.queue.process(p)
+		// 処理の終了を待たない
 		go func() {
-			s.queue.process(p)
 			<-p.processChan
 			p.locked.Store(false)
 		}()
@@ -157,6 +158,8 @@ func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 
 func writeResponse(w http.ResponseWriter, paymentStatus Status) {
 	switch paymentStatus {
+	case StatusInitial:
+		w.WriteHeader(http.StatusNoContent)
 	case StatusSuccess:
 		w.WriteHeader(http.StatusNoContent)
 	case StatusInvalidAmount:

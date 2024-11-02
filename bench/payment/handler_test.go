@@ -357,10 +357,6 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 			Amount: 500,
 			Status: StatusInitial,
 		}, {
-			Token:  "invalid token",
-			Amount: 1000,
-			Status: StatusInvalidToken,
-		}, {
 			Token:  token2,
 			Amount: 1000,
 			Status: StatusSuccess,
@@ -374,9 +370,8 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 		}
 
 		verifier.EXPECT().
-			Verify(gomock.Cond(func(x *Payment) bool {
-				return true
-			})).
+			Verify(gomock.Any()).
+			Times(len(payments)).
 			DoAndReturn(func(p *Payment) Status {
 				isValidToken := false
 				for _, t := range validTokens {
@@ -398,13 +393,17 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 			})
 
 		for _, p := range payments {
+			status := http.StatusNoContent
+			if p.Status != StatusSuccess && p.Status != StatusInitial {
+				status = http.StatusBadRequest
+			}
 			e.POST("/payments").
-				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
 				WithJSON(map[string]any{
 					"amount": p.Amount,
 				}).
 				Expect().
-				Status(http.StatusNoContent)
+				Status(status)
 		}
 
 		e.GET("/payments").
@@ -429,10 +428,11 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 		verifier.EXPECT().
 			Verify(gomock.Cond(func(x *Payment) bool {
 				return p.Token == x.Token && p.Amount == x.Amount
-			}))
+			})).
+			Return(StatusSuccess)
 
 		e.POST("/payments").
-			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
 			WithJSON(map[string]any{
 				"amount": p.Amount,
 			}).
@@ -448,14 +448,9 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 			IsEmpty()
 	})
 	t.Run("決済が存在しない", func(t *testing.T) {
-		_, verifier, e := prepare(t)
+		_, _, e := prepare(t)
 
 		token := "token1"
-
-		verifier.EXPECT().
-			Verify(gomock.Cond(func(x *Payment) bool {
-				return false
-			}))
 
 		e.GET("/payments").
 			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).

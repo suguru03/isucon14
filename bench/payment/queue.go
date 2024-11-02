@@ -36,10 +36,12 @@ func (q *paymentQueue) tryProcess(p *Payment) bool {
 	if !q.semaphore.TryAcquire(1) {
 		return false
 	}
-	defer q.semaphore.Release(1)
-
 	q.appendAcceptedPayments(p)
-	go q.execute(p)
+
+	go func() {
+		defer q.semaphore.Release(1)
+		q.execute(p)
+	}()
 	return true
 }
 
