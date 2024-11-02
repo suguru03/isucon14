@@ -11,7 +11,7 @@ create table chair_models
 create table chairs
 (
   id           varchar(26)  not null comment '椅子ID',
-  provider_id  varchar(26)  not null comment 'プロバイダーID',
+  owner_id     varchar(26)  not null comment 'プロバイダーID',
   name         varchar(30)  not null comment '椅子の名前',
   model        text         not null comment '椅子のモデル',
   is_active    tinyint(1)   not null comment '配椅子受付中かどうか',
@@ -81,8 +81,8 @@ create table ride_requests
 
 create table providers
 (
-  id           varchar(26)  not null comment 'プロバイダーID',
-  name         varchar(30)  not null comment 'プロバイダー名',
+  id           varchar(26)  not null comment 'オーナーID',
+  name         varchar(30)  not null comment 'オーナー名',
   access_token varchar(255) not null comment 'アクセストークン',
   created_at   datetime(6)  not null comment '登録日時',
   updated_at   datetime(6)  not null comment '更新日時',
@@ -90,4 +90,4 @@ create table providers
   unique (name),
   unique (access_token)
 )
-  comment = '椅子プロバイダー情報テーブル';
+  comment = '椅子のオーナー情報テーブル';

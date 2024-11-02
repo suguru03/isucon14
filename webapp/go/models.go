@@ -24,7 +24,7 @@ type PaymentToken struct {
 
 type Chair struct {
 	ID          string    `db:"id"`
-	ProviderID  string    `db:"provider_id"`
+	OwnerID     string    `db:"owner_id"`
 	Name        string    `db:"name"`
 	AccessToken string    `db:"access_token"`
 	Model       string    `db:"model"`
@@ -65,7 +65,7 @@ type ChairLocation struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
-type Provider struct {
+type Owner struct {
 	ID          string    `db:"id"`
 	Name        string    `db:"name"`
 	AccessToken string    `db:"access_token"`

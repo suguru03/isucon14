@@ -1060,6 +1060,52 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
+// NewOptOwnerPostRegisterReq returns new OptOwnerPostRegisterReq with value set to v.
+func NewOptOwnerPostRegisterReq(v OwnerPostRegisterReq) OptOwnerPostRegisterReq {
+	return OptOwnerPostRegisterReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOwnerPostRegisterReq is optional OwnerPostRegisterReq.
+type OptOwnerPostRegisterReq struct {
+	Value OwnerPostRegisterReq
+	Set   bool
+}
+
+// IsSet returns true if OptOwnerPostRegisterReq was set.
+func (o OptOwnerPostRegisterReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOwnerPostRegisterReq) Reset() {
+	var v OwnerPostRegisterReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOwnerPostRegisterReq) SetTo(v OwnerPostRegisterReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOwnerPostRegisterReq) Get() (v OwnerPostRegisterReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOwnerPostRegisterReq) Or(d OwnerPostRegisterReq) OwnerPostRegisterReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptPostInitializeReq returns new OptPostInitializeReq with value set to v.
 func NewOptPostInitializeReq(v PostInitializeReq) OptPostInitializeReq {
 	return OptPostInitializeReq{
@@ -1100,52 +1146,6 @@ func (o OptPostInitializeReq) Get() (v PostInitializeReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostInitializeReq) Or(d PostInitializeReq) PostInitializeReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptProviderPostRegisterReq returns new OptProviderPostRegisterReq with value set to v.
-func NewOptProviderPostRegisterReq(v ProviderPostRegisterReq) OptProviderPostRegisterReq {
-	return OptProviderPostRegisterReq{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptProviderPostRegisterReq is optional ProviderPostRegisterReq.
-type OptProviderPostRegisterReq struct {
-	Value ProviderPostRegisterReq
-	Set   bool
-}
-
-// IsSet returns true if OptProviderPostRegisterReq was set.
-func (o OptProviderPostRegisterReq) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptProviderPostRegisterReq) Reset() {
-	var v ProviderPostRegisterReq
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptProviderPostRegisterReq) SetTo(v ProviderPostRegisterReq) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptProviderPostRegisterReq) Get() (v ProviderPostRegisterReq, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptProviderPostRegisterReq) Or(d ProviderPostRegisterReq) ProviderPostRegisterReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1242,6 +1242,329 @@ func (o OptString) Or(d string) string {
 		return v
 	}
 	return d
+}
+
+type OwnerGetChairDetailOK struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 稼働中かどうか.
+	Active bool `json:"active"`
+	// 登録日時.
+	RegisteredAt string `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetChairDetailOK) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetChairDetailOK) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetChairDetailOK) GetModel() string {
+	return s.Model
+}
+
+// GetActive returns the value of Active.
+func (s *OwnerGetChairDetailOK) GetActive() bool {
+	return s.Active
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *OwnerGetChairDetailOK) GetRegisteredAt() string {
+	return s.RegisteredAt
+}
+
+// GetTotalDistance returns the value of TotalDistance.
+func (s *OwnerGetChairDetailOK) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairDetailOK) GetTotalDistanceUpdatedAt() OptString {
+	return s.TotalDistanceUpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetChairDetailOK) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetChairDetailOK) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetChairDetailOK) SetModel(val string) {
+	s.Model = val
+}
+
+// SetActive sets the value of Active.
+func (s *OwnerGetChairDetailOK) SetActive(val bool) {
+	s.Active = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *OwnerGetChairDetailOK) SetRegisteredAt(val string) {
+	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *OwnerGetChairDetailOK) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptString) {
+	s.TotalDistanceUpdatedAt = val
+}
+
+type OwnerGetChairsOK struct {
+	Chairs []OwnerGetChairsOKChairsItem `json:"chairs"`
+}
+
+// GetChairs returns the value of Chairs.
+func (s *OwnerGetChairsOK) GetChairs() []OwnerGetChairsOKChairsItem {
+	return s.Chairs
+}
+
+// SetChairs sets the value of Chairs.
+func (s *OwnerGetChairsOK) SetChairs(val []OwnerGetChairsOKChairsItem) {
+	s.Chairs = val
+}
+
+type OwnerGetChairsOKChairsItem struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 稼働中かどうか.
+	Active bool `json:"active"`
+	// 登録日時.
+	RegisteredAt string `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetChairsOKChairsItem) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetChairsOKChairsItem) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetChairsOKChairsItem) GetModel() string {
+	return s.Model
+}
+
+// GetActive returns the value of Active.
+func (s *OwnerGetChairsOKChairsItem) GetActive() bool {
+	return s.Active
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *OwnerGetChairsOKChairsItem) GetRegisteredAt() string {
+	return s.RegisteredAt
+}
+
+// GetTotalDistance returns the value of TotalDistance.
+func (s *OwnerGetChairsOKChairsItem) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptString {
+	return s.TotalDistanceUpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetChairsOKChairsItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetChairsOKChairsItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetChairsOKChairsItem) SetModel(val string) {
+	s.Model = val
+}
+
+// SetActive sets the value of Active.
+func (s *OwnerGetChairsOKChairsItem) SetActive(val bool) {
+	s.Active = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *OwnerGetChairsOKChairsItem) SetRegisteredAt(val string) {
+	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *OwnerGetChairsOKChairsItem) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptString) {
+	s.TotalDistanceUpdatedAt = val
+}
+
+type OwnerGetSalesOK struct {
+	// オーナーが管理する椅子全体の売上.
+	TotalSales int `json:"total_sales"`
+	// 椅子ごとの売上情報.
+	Chairs []OwnerGetSalesOKChairsItem `json:"chairs"`
+	// モデルごとの売上情報.
+	Models []OwnerGetSalesOKModelsItem `json:"models"`
+}
+
+// GetTotalSales returns the value of TotalSales.
+func (s *OwnerGetSalesOK) GetTotalSales() int {
+	return s.TotalSales
+}
+
+// GetChairs returns the value of Chairs.
+func (s *OwnerGetSalesOK) GetChairs() []OwnerGetSalesOKChairsItem {
+	return s.Chairs
+}
+
+// GetModels returns the value of Models.
+func (s *OwnerGetSalesOK) GetModels() []OwnerGetSalesOKModelsItem {
+	return s.Models
+}
+
+// SetTotalSales sets the value of TotalSales.
+func (s *OwnerGetSalesOK) SetTotalSales(val int) {
+	s.TotalSales = val
+}
+
+// SetChairs sets the value of Chairs.
+func (s *OwnerGetSalesOK) SetChairs(val []OwnerGetSalesOKChairsItem) {
+	s.Chairs = val
+}
+
+// SetModels sets the value of Models.
+func (s *OwnerGetSalesOK) SetModels(val []OwnerGetSalesOKModelsItem) {
+	s.Models = val
+}
+
+type OwnerGetSalesOKChairsItem struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子名.
+	Name string `json:"name"`
+	// 椅子ごとの売上.
+	Sales int `json:"sales"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetSalesOKChairsItem) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetSalesOKChairsItem) GetName() string {
+	return s.Name
+}
+
+// GetSales returns the value of Sales.
+func (s *OwnerGetSalesOKChairsItem) GetSales() int {
+	return s.Sales
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetSalesOKChairsItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetSalesOKChairsItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetSales sets the value of Sales.
+func (s *OwnerGetSalesOKChairsItem) SetSales(val int) {
+	s.Sales = val
+}
+
+type OwnerGetSalesOKModelsItem struct {
+	// 椅子モデル.
+	Model string `json:"model"`
+	// モデルごとの売上.
+	Sales int `json:"sales"`
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetSalesOKModelsItem) GetModel() string {
+	return s.Model
+}
+
+// GetSales returns the value of Sales.
+func (s *OwnerGetSalesOKModelsItem) GetSales() int {
+	return s.Sales
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetSalesOKModelsItem) SetModel(val string) {
+	s.Model = val
+}
+
+// SetSales sets the value of Sales.
+func (s *OwnerGetSalesOKModelsItem) SetSales(val int) {
+	s.Sales = val
+}
+
+type OwnerPostRegisterCreated struct {
+	// オーナーID.
+	ID string `json:"id"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerPostRegisterCreated) GetID() string {
+	return s.ID
+}
+
+// SetID sets the value of ID.
+func (s *OwnerPostRegisterCreated) SetID(val string) {
+	s.ID = val
+}
+
+type OwnerPostRegisterReq struct {
+	// オーナー名.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *OwnerPostRegisterReq) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *OwnerPostRegisterReq) SetName(val string) {
+	s.Name = val
 }
 
 type PostInitializeOK struct {
@@ -1349,329 +1672,6 @@ func (s *PostInitializeReq) GetPaymentServer() string {
 // SetPaymentServer sets the value of PaymentServer.
 func (s *PostInitializeReq) SetPaymentServer(val string) {
 	s.PaymentServer = val
-}
-
-type ProviderGetChairDetailOK struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 稼働中かどうか.
-	Active bool `json:"active"`
-	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
-	// 総移動距離.
-	TotalDistance int `json:"total_distance"`
-	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetChairDetailOK) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetChairDetailOK) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetChairDetailOK) GetModel() string {
-	return s.Model
-}
-
-// GetActive returns the value of Active.
-func (s *ProviderGetChairDetailOK) GetActive() bool {
-	return s.Active
-}
-
-// GetRegisteredAt returns the value of RegisteredAt.
-func (s *ProviderGetChairDetailOK) GetRegisteredAt() string {
-	return s.RegisteredAt
-}
-
-// GetTotalDistance returns the value of TotalDistance.
-func (s *ProviderGetChairDetailOK) GetTotalDistance() int {
-	return s.TotalDistance
-}
-
-// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairDetailOK) GetTotalDistanceUpdatedAt() OptString {
-	return s.TotalDistanceUpdatedAt
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetChairDetailOK) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetChairDetailOK) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetChairDetailOK) SetModel(val string) {
-	s.Model = val
-}
-
-// SetActive sets the value of Active.
-func (s *ProviderGetChairDetailOK) SetActive(val bool) {
-	s.Active = val
-}
-
-// SetRegisteredAt sets the value of RegisteredAt.
-func (s *ProviderGetChairDetailOK) SetRegisteredAt(val string) {
-	s.RegisteredAt = val
-}
-
-// SetTotalDistance sets the value of TotalDistance.
-func (s *ProviderGetChairDetailOK) SetTotalDistance(val int) {
-	s.TotalDistance = val
-}
-
-// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptString) {
-	s.TotalDistanceUpdatedAt = val
-}
-
-type ProviderGetChairsOK struct {
-	Chairs []ProviderGetChairsOKChairsItem `json:"chairs"`
-}
-
-// GetChairs returns the value of Chairs.
-func (s *ProviderGetChairsOK) GetChairs() []ProviderGetChairsOKChairsItem {
-	return s.Chairs
-}
-
-// SetChairs sets the value of Chairs.
-func (s *ProviderGetChairsOK) SetChairs(val []ProviderGetChairsOKChairsItem) {
-	s.Chairs = val
-}
-
-type ProviderGetChairsOKChairsItem struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 稼働中かどうか.
-	Active bool `json:"active"`
-	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
-	// 総移動距離.
-	TotalDistance int `json:"total_distance"`
-	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetChairsOKChairsItem) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetChairsOKChairsItem) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetChairsOKChairsItem) GetModel() string {
-	return s.Model
-}
-
-// GetActive returns the value of Active.
-func (s *ProviderGetChairsOKChairsItem) GetActive() bool {
-	return s.Active
-}
-
-// GetRegisteredAt returns the value of RegisteredAt.
-func (s *ProviderGetChairsOKChairsItem) GetRegisteredAt() string {
-	return s.RegisteredAt
-}
-
-// GetTotalDistance returns the value of TotalDistance.
-func (s *ProviderGetChairsOKChairsItem) GetTotalDistance() int {
-	return s.TotalDistance
-}
-
-// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptString {
-	return s.TotalDistanceUpdatedAt
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetChairsOKChairsItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetChairsOKChairsItem) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetChairsOKChairsItem) SetModel(val string) {
-	s.Model = val
-}
-
-// SetActive sets the value of Active.
-func (s *ProviderGetChairsOKChairsItem) SetActive(val bool) {
-	s.Active = val
-}
-
-// SetRegisteredAt sets the value of RegisteredAt.
-func (s *ProviderGetChairsOKChairsItem) SetRegisteredAt(val string) {
-	s.RegisteredAt = val
-}
-
-// SetTotalDistance sets the value of TotalDistance.
-func (s *ProviderGetChairsOKChairsItem) SetTotalDistance(val int) {
-	s.TotalDistance = val
-}
-
-// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptString) {
-	s.TotalDistanceUpdatedAt = val
-}
-
-type ProviderGetSalesOK struct {
-	// プロバイダー全体の売上.
-	TotalSales int `json:"total_sales"`
-	// 椅子ごとの売上情報.
-	Chairs []ProviderGetSalesOKChairsItem `json:"chairs"`
-	// モデルごとの売上情報.
-	Models []ProviderGetSalesOKModelsItem `json:"models"`
-}
-
-// GetTotalSales returns the value of TotalSales.
-func (s *ProviderGetSalesOK) GetTotalSales() int {
-	return s.TotalSales
-}
-
-// GetChairs returns the value of Chairs.
-func (s *ProviderGetSalesOK) GetChairs() []ProviderGetSalesOKChairsItem {
-	return s.Chairs
-}
-
-// GetModels returns the value of Models.
-func (s *ProviderGetSalesOK) GetModels() []ProviderGetSalesOKModelsItem {
-	return s.Models
-}
-
-// SetTotalSales sets the value of TotalSales.
-func (s *ProviderGetSalesOK) SetTotalSales(val int) {
-	s.TotalSales = val
-}
-
-// SetChairs sets the value of Chairs.
-func (s *ProviderGetSalesOK) SetChairs(val []ProviderGetSalesOKChairsItem) {
-	s.Chairs = val
-}
-
-// SetModels sets the value of Models.
-func (s *ProviderGetSalesOK) SetModels(val []ProviderGetSalesOKModelsItem) {
-	s.Models = val
-}
-
-type ProviderGetSalesOKChairsItem struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子名.
-	Name string `json:"name"`
-	// 椅子ごとの売上.
-	Sales int `json:"sales"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetSalesOKChairsItem) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetSalesOKChairsItem) GetName() string {
-	return s.Name
-}
-
-// GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) GetSales() int {
-	return s.Sales
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetSalesOKChairsItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetSalesOKChairsItem) SetName(val string) {
-	s.Name = val
-}
-
-// SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) SetSales(val int) {
-	s.Sales = val
-}
-
-type ProviderGetSalesOKModelsItem struct {
-	// 椅子モデル.
-	Model string `json:"model"`
-	// モデルごとの売上.
-	Sales int `json:"sales"`
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetSalesOKModelsItem) GetModel() string {
-	return s.Model
-}
-
-// GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) GetSales() int {
-	return s.Sales
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetSalesOKModelsItem) SetModel(val string) {
-	s.Model = val
-}
-
-// SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) SetSales(val int) {
-	s.Sales = val
-}
-
-type ProviderPostRegisterCreated struct {
-	// プロバイダーID.
-	ID string `json:"id"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderPostRegisterCreated) GetID() string {
-	return s.ID
-}
-
-// SetID sets the value of ID.
-func (s *ProviderPostRegisterCreated) SetID(val string) {
-	s.ID = val
-}
-
-type ProviderPostRegisterReq struct {
-	// プロバイダー名.
-	Name string `json:"name"`
-}
-
-// GetName returns the value of Name.
-func (s *ProviderPostRegisterReq) GetName() string {
-	return s.Name
-}
-
-// SetName sets the value of Name.
-func (s *ProviderPostRegisterReq) SetName(val string) {
-	s.Name = val
 }
 
 // 配車要求ステータス

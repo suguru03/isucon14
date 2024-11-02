@@ -48,14 +48,14 @@ type ChairPostRequestDepartParams struct {
 	RequestID string
 }
 
-// ProviderGetChairDetailParams is parameters of provider-get-chair-detail operation.
-type ProviderGetChairDetailParams struct {
+// OwnerGetChairDetailParams is parameters of owner-get-chair-detail operation.
+type OwnerGetChairDetailParams struct {
 	// 椅子ID.
 	ChairID string
 }
 
-// ProviderGetSalesParams is parameters of provider-get-sales operation.
-type ProviderGetSalesParams struct {
+// OwnerGetSalesParams is parameters of owner-get-sales operation.
+type OwnerGetSalesParams struct {
 	// 開始日時（含む）.
 	Since OptString
 	// 終了日時（含む）.
