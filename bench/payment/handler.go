@@ -12,7 +12,7 @@ import (
 )
 
 type PostPaymentRequest struct {
-	Amount int    `json:"amount"`
+	Amount int `json:"amount"`
 }
 
 func (r *PostPaymentRequest) IsSamePayload(token string, p *Payment) bool {
@@ -119,6 +119,38 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	case 2:
 		w.WriteHeader(http.StatusGatewayTimeout)
 	}
+}
+
+type ResponsePayment struct {
+	Amount int    `json:"amount"`
+	Status string `json:"status"`
+}
+
+func NewResponsePayment(p *Payment) ResponsePayment {
+	return ResponsePayment{
+		Amount: p.Amount,
+		Status: p.Status.String(),
+	}
+}
+
+func (s *Server) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := getTokenFromAuthorizationHeader(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
+		return
+	}
+
+	payments, ok := s.acceptedPayments.Get(token)
+	if !ok {
+		writeJSON(w, http.StatusOK, []ResponsePayment{})
+		return
+	}
+
+	res := []ResponsePayment{}
+	for _, p := range payments.ToSlice() {
+		res = append(res, NewResponsePayment(p))
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
