@@ -177,7 +177,7 @@ type providerChair struct {
 	Active                 bool       `json:"active"`
 	RegisteredAt           time.Time  `json:"registered_at"`
 	TotalDistance          int        `json:"total_distance"`
-	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at"`
+	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at,omitempty"`
 }
 
 func providerGetChairs(w http.ResponseWriter, r *http.Request) {
