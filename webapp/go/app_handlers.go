@@ -536,7 +536,8 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 }
 
 type appGetNearbyChairsResponse struct {
-	Chairs []appChair `json:"chairs"`
+	Chairs      []appChair `json:"chairs"`
+	RetrievedAt int64      `json:"retrieved_at"`
 }
 
 func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
@@ -638,7 +639,18 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	retrievedAt := &time.Time{}
+	err = tx.Get(
+		retrievedAt,
+		`SELECT isu_now()`,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	writeJSON(w, http.StatusOK, &appGetNearbyChairsResponse{
-		Chairs: nearbyChairs,
+		Chairs:      nearbyChairs,
+		RetrievedAt: retrievedAt.Unix(),
 	})
 }

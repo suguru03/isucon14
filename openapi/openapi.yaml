@@ -275,8 +275,12 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/AppChair"
+                  retrieved_at:
+                    type: string
+                    description: 取得日時
                 required:
                   - chairs
+                  - retrieved_at
   /provider/register:
     post:
       tags:
