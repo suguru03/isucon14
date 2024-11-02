@@ -144,10 +144,10 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 type appChair struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Model string `json:"model"`
-	Stats appChairStats
+	ID    string        `json:"id"`
+	Name  string        `json:"name"`
+	Model string        `json:"model"`
+	Stats appChairStats `json:"stats"`
 }
 
 type appChairStats struct {
@@ -155,7 +155,7 @@ type appChairStats struct {
 	RecentRides []recentRide `json:"recent_rides"`
 
 	// 累計の情報
-	TotalRidesCount    int     `json:"total_rides"`
+	TotalRidesCount    int     `json:"total_rides_count"`
 	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
 }
 
@@ -173,7 +173,7 @@ type getAppRequestResponse struct {
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	Status                string     `json:"status"`
-	Chair                 appChair   `json:"chair"`
+	Chair                 *appChair  `json:"chair,omitempty"`
 	CreatedAt             int64      `json:"created_at"`
 	UpdateAt              int64      `json:"updated_at"`
 }
@@ -229,7 +229,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response.Chair = appChair{
+		response.Chair = &appChair{
 			ID:    chair.ID,
 			Name:  chair.Name,
 			Model: chair.Model,
@@ -241,7 +241,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
-	stats := appChairStats{}
+	stats := appChairStats{RecentRides: make([]recentRide, 0)}
 
 	// 最近の乗車履歴
 	rideRequests := []RideRequest{}
@@ -299,7 +299,9 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 	}
 
 	stats.TotalRidesCount = totalRideCount
-	stats.TotalEvaluationAvg = totalEvaluation / float64(totalRideCount)
+	if totalRideCount > 0 {
+		stats.TotalEvaluationAvg = totalEvaluation / float64(totalRideCount)
+	}
 
 	return stats, nil
 }
@@ -459,7 +461,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response.Chair = appChair{
+		response.Chair = &appChair{
 			ID:    chair.ID,
 			Name:  chair.Name,
 			Model: chair.Model,
@@ -519,7 +521,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					Longitude: rideRequest.DestinationLongitude,
 				},
 				Status: rideRequest.Status,
-				Chair: appChair{
+				Chair: &appChair{
 					ID:    chair.ID,
 					Name:  chair.Name,
 					Model: chair.Model,
