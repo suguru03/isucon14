@@ -1,5 +1,4 @@
-USE isuride;
-
+DROP TABLE IF EXISTS chair_models;
 create table chair_models
 (
   name  varchar(30) not null comment '椅子モデル名',
@@ -8,6 +7,7 @@ create table chair_models
 )
   comment = '椅子モデルテーブル';
 
+DROP TABLE IF EXISTS chairs;
 create table chairs
 (
   id           varchar(26)  not null comment '椅子ID',
@@ -22,6 +22,7 @@ create table chairs
 )
   comment = '椅子情報テーブル';
 
+DROP TABLE IF EXISTS chair_locations;
 create table chair_locations
 (
   id         varchar(26) not null,
@@ -33,6 +34,7 @@ create table chair_locations
 )
   comment = '椅子の現在位置情報テーブル';
 
+DROP TABLE IF EXISTS users;
 create table users
 (
   id            varchar(26)  not null comment 'ユーザーID',
@@ -49,6 +51,7 @@ create table users
 )
   comment = '利用者情報テーブル';
 
+DROP TABLE IF EXISTS payment_tokens;
 create table payment_tokens
 (
   user_id    varchar(26)  not null comment 'ユーザーID',
@@ -58,6 +61,7 @@ create table payment_tokens
 )
   comment = '決済トークンテーブル';
 
+DROP TABLE IF EXISTS ride_requests;
 create table ride_requests
 (
   id                    varchar(26)                                                                        not null comment '配車/乗車リクエストID',
@@ -79,6 +83,7 @@ create table ride_requests
 )
   comment = '配車/乗車リクエスト情報テーブル';
 
+DROP TABLE IF EXISTS owners;
 create table owners
 (
   id           varchar(26)  not null comment 'オーナーID',

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -25,11 +26,11 @@ func main() {
 }
 
 func setup() http.Handler {
-	host := os.Getenv("DB_HOST")
+	host := os.Getenv("ISUCON_DB_HOST")
 	if host == "" {
 		host = "localhost"
 	}
-	port := os.Getenv("DB_PORT")
+	port := os.Getenv("ISUCON_DB_PORT")
 	if port == "" {
 		port = "3306"
 	}
@@ -37,15 +38,15 @@ func setup() http.Handler {
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert DB port number from DB_PORT environment variable into int: %v", err))
 	}
-	user := os.Getenv("DB_USER")
+	user := os.Getenv("ISUCON_DB_USER")
 	if user == "" {
 		user = "isucon"
 	}
-	password := os.Getenv("DB_PASSWORD")
+	password := os.Getenv("ISUCON_DB_PASSWORD")
 	if password == "" {
 		password = "isucon"
 	}
-	dbname := os.Getenv("DB_NAME")
+	dbname := os.Getenv("ISUCON_DB_NAME")
 	if dbname == "" {
 		dbname = "isuride"
 	}
@@ -125,36 +126,12 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tables := []string{
-		"chair_locations",
-		"ride_requests",
-		"payment_tokens",
-		"users",
-		"chairs",
-		"owners",
-	}
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
+	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Errorf("failed to initialize: %s: %w", string(out), err))
 		return
 	}
-	defer tx.Rollback()
 
-	tx.MustExec("SET FOREIGN_KEY_CHECKS = 0")
-	for _, table := range tables {
-		_, err := tx.Exec("TRUNCATE TABLE " + table)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-	}
-	tx.MustExec("SET FOREIGN_KEY_CHECKS = 1")
-	if err := tx.Commit(); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	paymentURL = req.PaymentServer
-
 	writeJSON(w, http.StatusOK, map[string]string{"language": "go"})
 }
 
