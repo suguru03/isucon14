@@ -487,52 +487,70 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			rideRequest := &RideRequest{}
-			err := db.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
+			err := func() error {
+				tx, err := db.Beginx()
+				if err != nil {
+					return err
+				}
+				defer tx.Rollback()
+
+				rideRequest := &RideRequest{}
+				err = tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID)
+				if err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						time.Sleep(100 * time.Millisecond)
+						return nil
+					}
+					return err
+				}
+				if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
 					time.Sleep(100 * time.Millisecond)
-					continue
+					return nil
 				}
+
+				chair := &Chair{}
+				stats := appChairStats{}
+				if rideRequest.ChairID.Valid {
+					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+						return err
+					}
+					stats, err = getChairStats(tx, chair.ID)
+					if err != nil {
+						return err
+					}
+				}
+
+				if err := writeSSE(w, "matched", &getAppRequestResponse{
+					RequestID: rideRequest.ID,
+					PickupCoordinate: Coordinate{
+						Latitude:  rideRequest.PickupLatitude,
+						Longitude: rideRequest.PickupLongitude,
+					},
+					DestinationCoordinate: Coordinate{
+						Latitude:  rideRequest.DestinationLatitude,
+						Longitude: rideRequest.DestinationLongitude,
+					},
+					Status: rideRequest.Status,
+					Chair: &appChair{
+						ID:    chair.ID,
+						Name:  chair.Name,
+						Model: chair.Model,
+						Stats: stats,
+					},
+					CreatedAt: rideRequest.RequestedAt.Unix(),
+					UpdateAt:  rideRequest.UpdatedAt.Unix(),
+				}); err != nil {
+					return err
+				}
+				lastRideRequest = rideRequest
+
+				return nil
+			}()
+			if err != nil {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
-			if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
 
-			chair := &Chair{}
-			if rideRequest.ChairID.Valid {
-				if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
-					writeError(w, http.StatusInternalServerError, err)
-					return
-				}
-			}
-
-			if err := writeSSE(w, "matched", &getAppRequestResponse{
-				RequestID: rideRequest.ID,
-				PickupCoordinate: Coordinate{
-					Latitude:  rideRequest.PickupLatitude,
-					Longitude: rideRequest.PickupLongitude,
-				},
-				DestinationCoordinate: Coordinate{
-					Latitude:  rideRequest.DestinationLatitude,
-					Longitude: rideRequest.DestinationLongitude,
-				},
-				Status: rideRequest.Status,
-				Chair: &appChair{
-					ID:    chair.ID,
-					Name:  chair.Name,
-					Model: chair.Model,
-				},
-				CreatedAt: rideRequest.RequestedAt.Unix(),
-				UpdateAt:  rideRequest.UpdatedAt.Unix(),
-			}); err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-			lastRideRequest = rideRequest
 		}
 	}
 }
