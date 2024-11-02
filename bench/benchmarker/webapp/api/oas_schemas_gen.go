@@ -172,6 +172,20 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 	s.Evaluation = val
 }
 
+type AppGetNearbyChairsOK struct {
+	Chairs []AppChair `json:"chairs"`
+}
+
+// GetChairs returns the value of Chairs.
+func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
+	return s.Chairs
+}
+
+// SetChairs sets the value of Chairs.
+func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
+	s.Chairs = val
+}
+
 // AppGetNotificationNoContent is response for AppGetNotification operation.
 type AppGetNotificationNoContent struct{}
 
@@ -982,6 +996,52 @@ func (o OptCoordinate) Get() (v Coordinate, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptCoordinate) Or(d Coordinate) Coordinate {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
 	if v, ok := o.Get(); ok {
 		return v
 	}

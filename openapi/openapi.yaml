@@ -239,6 +239,48 @@ paths:
                 $ref: "#/components/schemas/AppRequest"
         "204":
           description: 対象となる配車要求が存在しない場合
+  /app/nearby-chairs:
+    get:
+      tags:
+        - app
+      summary: ユーザーの近くにいる椅子を取得する
+      operationId: app-get-nearby-chairs
+      parameters:
+        - name: latitude
+          in: query
+          description: 緯度
+          required: true
+          schema:
+            type: integer
+        - name: longitude
+          in: query
+          description: 経度
+          required: true
+          schema:
+            type: integer
+        - name: distance
+          in: query
+          description: 検索距離
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chairs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AppChair"
+                  retrieved_at:
+                    type: string
+                    description: 取得日時
+                required:
+                  - chairs
+                  - retrieved_at
   /provider/register:
     post:
       tags:

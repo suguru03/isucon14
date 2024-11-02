@@ -2,6 +2,16 @@
 
 package api
 
+// AppGetNearbyChairsParams is parameters of app-get-nearby-chairs operation.
+type AppGetNearbyChairsParams struct {
+	// 緯度.
+	Latitude int
+	// 経度.
+	Longitude int
+	// 検索距離.
+	Distance OptInt
+}
+
 // AppGetRequestParams is parameters of app-get-request operation.
 type AppGetRequestParams struct {
 	// 配車要求ID.
