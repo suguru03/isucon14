@@ -174,6 +174,8 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 
 type AppGetNearbyChairsOK struct {
 	Chairs []AppChair `json:"chairs"`
+	// 取得日時.
+	RetrievedAt string `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
@@ -181,9 +183,19 @@ func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
 	return s.Chairs
 }
 
+// GetRetrievedAt returns the value of RetrievedAt.
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() string {
+	return s.RetrievedAt
+}
+
 // SetChairs sets the value of Chairs.
 func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
 	s.Chairs = val
+}
+
+// SetRetrievedAt sets the value of RetrievedAt.
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val string) {
+	s.RetrievedAt = val
 }
 
 // AppGetNotificationNoContent is response for AppGetNotification operation.
