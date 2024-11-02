@@ -81,6 +81,7 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
 		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /app/notification", appGetNotification)
+		authedMux.HandleFunc("GET /app/nearby-chairs", appGetNearbyChairs)
 	}
 
 	// provider handlers

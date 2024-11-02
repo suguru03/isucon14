@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -532,4 +533,112 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 			lastRideRequest = rideRequest
 		}
 	}
+}
+
+type appGetNearbyChairsResponse struct {
+	Chairs []appChair `json:"chairs"`
+}
+
+func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
+	latStr := r.URL.Query().Get("latitude")
+	lonStr := r.URL.Query().Get("longitude")
+	distanceStr := r.URL.Query().Get("distance")
+	if latStr == "" || lonStr == "" {
+		writeError(w, http.StatusBadRequest, errors.New("latitude or longitude is empty"))
+		return
+	}
+
+	lat, err := strconv.Atoi(latStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, errors.New("latitude is invalid"))
+		return
+	}
+
+	lon, err := strconv.Atoi(lonStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, errors.New("longitude is invalid"))
+		return
+	}
+
+	distance := 50
+	if distanceStr != "" {
+		distance, err = strconv.Atoi(distanceStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, errors.New("distance is invalid"))
+			return
+		}
+	}
+
+	coordinate := Coordinate{Latitude: lat, Longitude: lon}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	chairs := []Chair{}
+	err = tx.Select(
+		&chairs,
+		`SELECT * FROM chairs`,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	nearbyChairs := []appChair{}
+	for _, chair := range chairs {
+		// 現在進行中のリクエストがある場合はスキップ
+		rideRequest := &RideRequest{}
+		err := tx.Get(
+			rideRequest,
+			`SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY requested_at DESC LIMIT 1`,
+			chair.ID,
+		)
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+		if rideRequest.Status != "COMPLETED" {
+			continue
+		}
+
+		// 5分以内に更新されている最新の位置情報を取得
+		chairLocation := &ChairLocation{}
+		err = tx.Get(
+			chairLocation,
+			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(isu_now(), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1`,
+			chair.ID,
+		)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		if calculateDistance(coordinate.Latitude, coordinate.Longitude, chairLocation.Latitude, chairLocation.Longitude) <= distance {
+			stats, err := getChairStats(tx, chair.ID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+
+			nearbyChairs = append(nearbyChairs, appChair{
+				ID:    chair.ID,
+				Name:  chair.Name,
+				Model: chair.Model,
+				Stats: stats,
+			})
+		}
+	}
+
+	writeJSON(w, http.StatusOK, &appGetNearbyChairsResponse{
+		Chairs: nearbyChairs,
+	})
 }

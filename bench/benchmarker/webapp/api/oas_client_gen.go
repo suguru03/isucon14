@@ -16,6 +16,12 @@ import (
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
+	// AppGetNearbyChairs invokes app-get-nearby-chairs operation.
+	//
+	// ユーザーの近くにいる椅子を取得する.
+	//
+	// GET /app/nearby-chairs
+	AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error)
 	// AppGetNotification invokes app-get-notification operation.
 	//
 	// 最新の自分の配車要求を取得します。.
@@ -180,6 +186,90 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 		return c.serverURL
 	}
 	return u
+}
+
+// AppGetNearbyChairs invokes app-get-nearby-chairs operation.
+//
+// ユーザーの近くにいる椅子を取得する.
+//
+// GET /app/nearby-chairs
+func (c *Client) AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error) {
+	res, err := c.sendAppGetNearbyChairs(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendAppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (res *AppGetNearbyChairsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/nearby-chairs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "latitude" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "latitude",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.IntToString(params.Latitude))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "longitude" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "longitude",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.IntToString(params.Longitude))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "distance" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "distance",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Distance.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppGetNearbyChairsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
 }
 
 // AppGetNotification invokes app-get-notification operation.
