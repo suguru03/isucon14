@@ -79,7 +79,7 @@ create table ride_requests
 )
   comment = '配車/乗車リクエスト情報テーブル';
 
-create table providers
+create table owners
 (
   id           varchar(26)  not null comment 'オーナーID',
   name         varchar(30)  not null comment 'オーナー名',
