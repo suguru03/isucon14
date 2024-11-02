@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/guregu/null/v5"
+	"github.com/samber/lo"
+
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
-	"github.com/samber/lo"
 )
 
 type userClient struct {
@@ -73,7 +74,7 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.ProviderPostRegister(c.ctx, &api.ProviderPostRegisterReq{
+	response, err := client.ProviderPostRegister(c.ctx, &api.OwnerPostRegisterReq{
 		Name: data.Name,
 	})
 	if err != nil {
@@ -91,7 +92,7 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 }
 
 func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
-	params := api.ProviderGetSalesParams{}
+	params := api.OwnerGetSalesParams{}
 	if !args.Since.IsZero() {
 		params.Since.SetTo(args.Since.Format(time.RFC3339Nano))
 	}
@@ -106,14 +107,14 @@ func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetPro
 
 	return &world.GetProviderSalesResponse{
 		Total: response.TotalSales,
-		Chairs: lo.Map(response.Chairs, func(v api.ProviderGetSalesOKChairsItem, _ int) *world.ChairSales {
+		Chairs: lo.Map(response.Chairs, func(v api.OwnerGetSalesOKChairsItem, _ int) *world.ChairSales {
 			return &world.ChairSales{
 				ID:    v.ID,
 				Name:  v.Name,
 				Sales: v.Sales,
 			}
 		}),
-		Models: lo.Map(response.Models, func(v api.ProviderGetSalesOKModelsItem, _ int) *world.ChairSalesPerModel {
+		Models: lo.Map(response.Models, func(v api.OwnerGetSalesOKModelsItem, _ int) *world.ChairSalesPerModel {
 			return &world.ChairSalesPerModel{
 				Model: v.Model,
 				Sales: v.Sales,
@@ -128,7 +129,7 @@ func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetPr
 		return nil, err
 	}
 
-	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.ProviderGetChairsOKChairsItem, _ int) *world.ProviderChair {
+	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.ProviderChair {
 		registeredAt, _ := time.Parse(time.RFC3339Nano, v.RegisteredAt)
 		totalDistanceUpdatedAt, _ := time.Parse(time.RFC3339Nano, v.TotalDistanceUpdatedAt.Value)
 		return &world.ProviderChair{

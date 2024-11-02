@@ -112,36 +112,36 @@ type Invoker interface {
 	//
 	// POST /chair/requests/{request_id}/depart
 	ChairPostRequestDepart(ctx context.Context, params ChairPostRequestDepartParams) (ChairPostRequestDepartRes, error)
+	// OwnerGetChairDetail invokes owner-get-chair-detail operation.
+	//
+	// 管理している椅子の詳細を取得する.
+	//
+	// GET /owner/chairs/{chair_id}
+	OwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (*OwnerGetChairDetailOK, error)
+	// OwnerGetChairs invokes owner-get-chairs operation.
+	//
+	// 椅子のオーナーが管理している椅子の一覧を取得する.
+	//
+	// GET /owner/chairs
+	OwnerGetChairs(ctx context.Context) (*OwnerGetChairsOK, error)
+	// OwnerGetSales invokes owner-get-sales operation.
+	//
+	// 椅子のオーナーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
+	//
+	// GET /owner/sales
+	OwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (*OwnerGetSalesOK, error)
+	// OwnerPostRegister invokes owner-post-register operation.
+	//
+	// 椅子のオーナー自身が登録を行う.
+	//
+	// POST /owner/register
+	OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (*OwnerPostRegisterCreated, error)
 	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
 	//
 	// POST /initialize
 	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
-	// ProviderGetChairDetail invokes provider-get-chair-detail operation.
-	//
-	// 管理している椅子の詳細を取得する.
-	//
-	// GET /provider/chairs/{chair_id}
-	ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error)
-	// ProviderGetChairs invokes provider-get-chairs operation.
-	//
-	// 椅子プロバイダーが管理している椅子の一覧を取得する.
-	//
-	// GET /provider/chairs
-	ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error)
-	// ProviderGetSales invokes provider-get-sales operation.
-	//
-	// 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
-	//
-	// GET /provider/sales
-	ProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (*ProviderGetSalesOK, error)
-	// ProviderPostRegister invokes provider-post-register operation.
-	//
-	// 椅子プロバイダーが登録を行う.
-	//
-	// POST /provider/register
-	ProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (*ProviderPostRegisterCreated, error)
 }
 
 // Client implements OAS client.
@@ -948,60 +948,21 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 	return result, nil
 }
 
-// PostInitialize invokes post-initialize operation.
-//
-// サービスを初期化する.
-//
-// POST /initialize
-func (c *Client) PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error) {
-	res, err := c.sendPostInitialize(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitializeReq) (res *PostInitializeOK, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/initialize"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodePostInitializeRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodePostInitializeResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProviderGetChairDetail invokes provider-get-chair-detail operation.
+// OwnerGetChairDetail invokes owner-get-chair-detail operation.
 //
 // 管理している椅子の詳細を取得する.
 //
-// GET /provider/chairs/{chair_id}
-func (c *Client) ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error) {
-	res, err := c.sendProviderGetChairDetail(ctx, params)
+// GET /owner/chairs/{chair_id}
+func (c *Client) OwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (*OwnerGetChairDetailOK, error) {
+	res, err := c.sendOwnerGetChairDetail(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (res *ProviderGetChairDetailOK, err error) {
+func (c *Client) sendOwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (res *OwnerGetChairDetailOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [2]string
-	pathParts[0] = "/provider/chairs/"
+	pathParts[0] = "/owner/chairs/"
 	{
 		// Encode "chair_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -1033,7 +994,7 @@ func (c *Client) sendProviderGetChairDetail(ctx context.Context, params Provider
 	}
 	defer resp.Body.Close()
 
-	result, err := decodeProviderGetChairDetailResponse(resp)
+	result, err := decodeOwnerGetChairDetailResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1041,21 +1002,21 @@ func (c *Client) sendProviderGetChairDetail(ctx context.Context, params Provider
 	return result, nil
 }
 
-// ProviderGetChairs invokes provider-get-chairs operation.
+// OwnerGetChairs invokes owner-get-chairs operation.
 //
-// 椅子プロバイダーが管理している椅子の一覧を取得する.
+// 椅子のオーナーが管理している椅子の一覧を取得する.
 //
-// GET /provider/chairs
-func (c *Client) ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error) {
-	res, err := c.sendProviderGetChairs(ctx)
+// GET /owner/chairs
+func (c *Client) OwnerGetChairs(ctx context.Context) (*OwnerGetChairsOK, error) {
+	res, err := c.sendOwnerGetChairs(ctx)
 	return res, err
 }
 
-func (c *Client) sendProviderGetChairs(ctx context.Context) (res *ProviderGetChairsOK, err error) {
+func (c *Client) sendOwnerGetChairs(ctx context.Context) (res *OwnerGetChairsOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/provider/chairs"
+	pathParts[0] = "/owner/chairs"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "GET", u)
@@ -1069,7 +1030,7 @@ func (c *Client) sendProviderGetChairs(ctx context.Context) (res *ProviderGetCha
 	}
 	defer resp.Body.Close()
 
-	result, err := decodeProviderGetChairsResponse(resp)
+	result, err := decodeOwnerGetChairsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1077,21 +1038,21 @@ func (c *Client) sendProviderGetChairs(ctx context.Context) (res *ProviderGetCha
 	return result, nil
 }
 
-// ProviderGetSales invokes provider-get-sales operation.
+// OwnerGetSales invokes owner-get-sales operation.
 //
-// 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
+// 椅子のオーナーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
 //
-// GET /provider/sales
-func (c *Client) ProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (*ProviderGetSalesOK, error) {
-	res, err := c.sendProviderGetSales(ctx, params)
+// GET /owner/sales
+func (c *Client) OwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (*OwnerGetSalesOK, error) {
+	res, err := c.sendOwnerGetSales(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (res *ProviderGetSalesOK, err error) {
+func (c *Client) sendOwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (res *OwnerGetSalesOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/provider/sales"
+	pathParts[0] = "/owner/sales"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	q := uri.NewQueryEncoder()
@@ -1142,7 +1103,7 @@ func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSal
 	}
 	defer resp.Body.Close()
 
-	result, err := decodeProviderGetSalesResponse(resp)
+	result, err := decodeOwnerGetSalesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1150,28 +1111,28 @@ func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSal
 	return result, nil
 }
 
-// ProviderPostRegister invokes provider-post-register operation.
+// OwnerPostRegister invokes owner-post-register operation.
 //
-// 椅子プロバイダーが登録を行う.
+// 椅子のオーナー自身が登録を行う.
 //
-// POST /provider/register
-func (c *Client) ProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (*ProviderPostRegisterCreated, error) {
-	res, err := c.sendProviderPostRegister(ctx, request)
+// POST /owner/register
+func (c *Client) OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (*OwnerPostRegisterCreated, error) {
+	res, err := c.sendOwnerPostRegister(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (res *ProviderPostRegisterCreated, err error) {
+func (c *Client) sendOwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (res *OwnerPostRegisterCreated, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/provider/register"
+	pathParts[0] = "/owner/register"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeProviderPostRegisterRequest(request, r); err != nil {
+	if err := encodeOwnerPostRegisterRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -1181,7 +1142,46 @@ func (c *Client) sendProviderPostRegister(ctx context.Context, request OptProvid
 	}
 	defer resp.Body.Close()
 
-	result, err := decodeProviderPostRegisterResponse(resp)
+	result, err := decodeOwnerPostRegisterResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// PostInitialize invokes post-initialize operation.
+//
+// サービスを初期化する.
+//
+// POST /initialize
+func (c *Client) PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error) {
+	res, err := c.sendPostInitialize(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitializeReq) (res *PostInitializeOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/initialize"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodePostInitializeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodePostInitializeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

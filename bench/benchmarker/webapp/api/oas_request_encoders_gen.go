@@ -163,8 +163,8 @@ func encodeChairPostRegisterRequest(
 	return nil
 }
 
-func encodePostInitializeRequest(
-	req OptPostInitializeReq,
+func encodeOwnerPostRegisterRequest(
+	req OptOwnerPostRegisterReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -183,8 +183,8 @@ func encodePostInitializeRequest(
 	return nil
 }
 
-func encodeProviderPostRegisterRequest(
-	req OptProviderPostRegisterReq,
+func encodePostInitializeRequest(
+	req OptPostInitializeReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
