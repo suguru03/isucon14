@@ -14,29 +14,33 @@ import (
 
 func TestPostPaymentRequest_IsSamePayload(t *testing.T) {
 	tests := []struct {
+		token  string
 		req    PostPaymentRequest
 		p      *Payment
 		expect bool
 	}{
 		{
-			req:    PostPaymentRequest{Token: "t1", Amount: 1000},
+			token:	"t1",
+			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: true,
 		},
 		{
-			req:    PostPaymentRequest{Token: "t2", Amount: 1000},
+			token:	"t2",
+			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
 		},
 		{
-			req:    PostPaymentRequest{Token: "t1", Amount: 10000},
+			token:	"t1",
+			req:    PostPaymentRequest{Amount: 10000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
 		},
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			assert.Equal(t, tt.expect, tt.req.IsSamePayload(tt.p))
+			assert.Equal(t, tt.expect, tt.req.IsSamePayload(tt.token, tt.p))
 		})
 	}
 }

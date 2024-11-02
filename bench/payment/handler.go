@@ -2,23 +2,33 @@ package payment
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"math/rand/v2"
 	"net/http"
+	"strings"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
 
 type PostPaymentRequest struct {
-	Token  string `json:"token"`
 	Amount int    `json:"amount"`
 }
 
-func (r *PostPaymentRequest) IsSamePayload(p *Payment) bool {
-	return r.Token == p.Token && r.Amount == p.Amount
+func (r *PostPaymentRequest) IsSamePayload(token string, p *Payment) bool {
+	return token == p.Token && r.Amount == p.Amount
 }
 
-func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
+func getTokenFromAuthorizationHeader(r *http.Request) (string, error) {
+	auth := r.Header.Get(AuthorizationHeader)
+	prefix := AuthorizationHeaderPrefix
+	if !strings.HasPrefix(auth, prefix) {
+		return "", fmt.Errorf("不正な値がAuthorization headerにセットされています。expected: Bearer ${token}. got: %s", auth)
+	}
+	return auth[len(prefix):], nil
+}
+
+func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		p          *Payment
 		newPayment bool
@@ -36,20 +46,26 @@ func (s *Server) PaymentHandler(w http.ResponseWriter, r *http.Request) {
 		newPayment = true
 	}
 
+	token, err := getTokenFromAuthorizationHeader(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
+		return
+	}
+
 	var req PostPaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "不正なリクエスト形式です"})
 		return
 	}
 	if !newPayment {
-		if !req.IsSamePayload(p) {
+		if !req.IsSamePayload(token, p) {
 			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"message": "リクエストペイロードがサーバーに記録されているものと異なります"})
 			return
 		}
 		writeResponse(w, p.Status)
 		return
 	} else {
-		p.Token = req.Token
+		p.Token = token
 		p.Amount = req.Amount
 	}
 

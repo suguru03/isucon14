@@ -8,6 +8,8 @@ import (
 )
 
 const IdempotencyKeyHeader = "Idempotency-Key"
+const AuthorizationHeader = "Authorization"
+const AuthorizationHeaderPrefix = "Bearer "
 
 type Server struct {
 	mux         *http.ServeMux
@@ -27,7 +29,7 @@ func NewServer(verifier Verifier, processTime time.Duration, queueSize int) *Ser
 		verifier:    verifier,
 		processTime: processTime,
 	}
-	s.mux.HandleFunc("POST /payment", s.PaymentHandler)
+	s.mux.HandleFunc("POST /payments", s.PostPaymentsHandler)
 	go s.processPaymentLoop()
 	return s
 }
