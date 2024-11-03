@@ -17,7 +17,7 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/owner/register", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/owner/register", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -28,12 +28,12 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /owner/register のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/owner/registerのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /owner/register へのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/owner/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
 	resBody := &api.OwnerPostRegisterCreated{}
@@ -64,12 +64,12 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("GET /owner/sales のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/salesのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /owner/sales へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /api/owner/salesへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
 	resBody := &api.OwnerGetSalesOK{}
@@ -81,7 +81,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 }
 
 func (c *Client) ProviderGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, "/owner/chairs", nil)
+	req, err := c.agent.NewRequest(http.MethodGet, "/api/owner/chairs", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -92,12 +92,12 @@ func (c *Client) ProviderGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, 
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("GET /owner/chairs のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/chairsのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /owner/chairs へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /api/owner/chairsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
 	resBody := &api.OwnerGetChairsOK{}

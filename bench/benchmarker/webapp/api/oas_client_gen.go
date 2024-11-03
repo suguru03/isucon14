@@ -551,7 +551,7 @@ func (c *Client) sendChairGetNotification(ctx context.Context) (res ChairGetNoti
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/chair/notification"
+	pathParts[0] = "/api/chair/notification"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "GET", u)
@@ -587,7 +587,7 @@ func (c *Client) sendChairGetRequest(ctx context.Context, params ChairGetRequest
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [2]string
-	pathParts[0] = "/chair/requests/"
+	pathParts[0] = "/api/chair/requests/"
 	{
 		// Encode "request_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -641,7 +641,7 @@ func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostAc
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/chair/activate"
+	pathParts[0] = "/api/chair/activate"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "POST", u)
@@ -680,7 +680,7 @@ func (c *Client) sendChairPostCoordinate(ctx context.Context, request OptCoordin
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/chair/coordinate"
+	pathParts[0] = "/api/chair/coordinate"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "POST", u)
@@ -719,7 +719,7 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPost
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/chair/deactivate"
+	pathParts[0] = "/api/chair/deactivate"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "POST", u)
@@ -758,7 +758,7 @@ func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPost
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/chair/register"
+	pathParts[0] = "/api/chair/register"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	r, err := ht.NewRequest(ctx, "POST", u)
@@ -797,7 +797,7 @@ func (c *Client) sendChairPostRequestAccept(ctx context.Context, params ChairPos
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/chair/requests/"
+	pathParts[0] = "/api/chair/requests/"
 	{
 		// Encode "request_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -852,7 +852,7 @@ func (c *Client) sendChairPostRequestDeny(ctx context.Context, params ChairPostR
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/chair/requests/"
+	pathParts[0] = "/api/chair/requests/"
 	{
 		// Encode "request_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -907,7 +907,7 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/chair/requests/"
+	pathParts[0] = "/api/chair/requests/"
 	{
 		// Encode "request_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
