@@ -69,8 +69,11 @@ var runCmd = &cobra.Command{
 		b.AddScenario(s)
 
 		contestantLogger.Info("負荷走行を開始します")
-		b.Start(context.Background())
-		contestantLogger.Info("負荷走行が終了しました", slog.Int64("score", s.Score()))
+		result := b.Start(context.Background())
+		contestantLogger.Info("負荷走行が終了しました",
+			slog.Int64("score", s.Score()),
+			slog.Any("errors", result.Errors.All()),
+		)
 		return nil
 	},
 }
