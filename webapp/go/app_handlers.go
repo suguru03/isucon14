@@ -147,12 +147,12 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 type recentRide struct {
-	ID                    string        `json:"id"`
-	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
-	Distance              int           `json:"distance"`
-	Duration              time.Duration `json:"duration"`
-	Evaluation            int           `json:"evaluation"`
+	ID                    string     `json:"id"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+	Distance              int        `json:"distance"`
+	Duration              int64      `json:"duration"`
+	Evaluation            int        `json:"evaluation"`
 }
 
 type appChairStats struct {
@@ -289,7 +289,7 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 			Distance:              distance,
-			Duration:              rideRequest.ArrivedAt.Sub(*rideRequest.RodeAt),
+			Duration:              rideRequest.ArrivedAt.Sub(*rideRequest.RodeAt).Milliseconds(),
 			Evaluation:            *rideRequest.Evaluation,
 		})
 
