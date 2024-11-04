@@ -6,7 +6,9 @@
     "monolog/monolog": "^3.7",
     "slim/psr7": "^1.5",
     "slim/slim": "^4.10",
-    "symfony/uid": "^7.1"
+    "symfony/uid": "^7.1",
+    "ybelenko/openapi-data-mocker": "^1.0",
+    "ybelenko/openapi-data-mocker-server-middleware": "^1.2"
   },
   "require-dev": {
     "jangregor/phpstan-prophecy": "^1.0.0",
@@ -27,5 +29,10 @@
     "psr-4": {
       "IsuRide\\": "src/"
     }
+  },
+  "scripts": {
+    "generate": [
+      "openapi-generator generate -i ../../openapi/openapi.yaml -g php-slim4 -o ./ --config config.yaml"
+    ]
   }
 }
