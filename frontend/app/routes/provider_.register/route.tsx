@@ -13,9 +13,6 @@ export const meta: MetaFunction = () => {
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
   const provider = await fetchProviderPostRegister({
-    headers: {
-      Authorization: `Bearer ${String(formData.get("provide_access_token")) ?? ""}`,
-    },
     body: {
       name: String(formData.get("provider_name")) ?? "",
     },
@@ -31,12 +28,6 @@ export default function DriverRegister() {
         method="POST"
       >
         <div>
-          <TextInput
-            id="provide_access_token"
-            name="provide_access_token"
-            label="provide_access_token:"
-            required
-          />
           <TextInput
             id="provider_name"
             name="provider_name"
