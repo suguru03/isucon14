@@ -70,7 +70,9 @@ export type AppChair = {
        */
       distance: number;
       /**
-       * 移動時間
+       * 移動時間 (ミリ秒)
+       *
+       * @format int64
        */
       duration: number;
       /**
@@ -117,10 +119,14 @@ export type AppRequest = {
   chair?: AppChair;
   /**
    * 配車要求日時
+   *
+   * @format int64
    */
   created_at: number;
   /**
    * 配車要求更新日時
+   *
+   * @format int64
    */
   updated_at: number;
 };
