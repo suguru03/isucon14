@@ -17,6 +17,10 @@ type AppPostRegisterRes interface {
 	appPostRegisterRes()
 }
 
+type AppPostRequestEstimateRes interface {
+	appPostRequestEstimateRes()
+}
+
 type AppPostRequestEvaluateRes interface {
 	appPostRequestEvaluateRes()
 }
@@ -43,4 +47,8 @@ type ChairPostRequestDenyRes interface {
 
 type ChairPostRequestDepartRes interface {
 	chairPostRequestDepartRes()
+}
+
+type OwnerPostRegisterRes interface {
+	ownerPostRegisterRes()
 }

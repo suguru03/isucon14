@@ -155,9 +155,7 @@ func sumSales(requests []RideRequest) int {
 }
 
 func calculateSale(req RideRequest) int {
-	latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
-	lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
-	return initialFare + farePerDistance*(latDiff+lonDiff)
+	return calculateFare(req.PickupLatitude, req.PickupLongitude, req.DestinationLatitude, req.DestinationLongitude)
 }
 
 type ChairWithDetail struct {

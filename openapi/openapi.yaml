@@ -151,8 +151,12 @@ paths:
                   request_id:
                     type: string
                     description: 配車要求ID
+                  fare:
+                    type: integer
+                    description: 割引後運賃
                 required:
                   - request_id
+                  - fare
         "400":
           description: Bad Request
           content:
@@ -161,6 +165,50 @@ paths:
                 $ref: "#/components/schemas/Error"
         "409":
           description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /app/requests/estimate:
+    post:
+      tags:
+        - app
+      summary: リクエストの運賃を見積もる
+      operationId: app-post-request-estimate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pickup_coordinate:
+                  $ref: "#/components/schemas/Coordinate"
+                  description: 配車位置
+                destination_coordinate:
+                  $ref: "#/components/schemas/Coordinate"
+                  description: 目的地
+              required:
+                - pickup_coordinate
+                - destination_coordinate
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fare:
+                    type: integer
+                    description: 割引後運賃
+                  discount:
+                    type: integer
+                    description: 割引額
+                required:
+                  - fare
+                  - discount
+        "400":
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -222,7 +270,7 @@ paths:
                 properties:
                   fare:
                     type: integer
-                    description: 運賃
+                    description: 割引後運賃
                   completed_at:
                     type: string
                     description: 完了日時
