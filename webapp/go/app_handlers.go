@@ -316,8 +316,8 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 		DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 		Status:                rideRequest.Status,
-		CreatedAt:             rideRequest.RequestedAt.Unix(),
-		UpdateAt:              rideRequest.UpdatedAt.Unix(),
+		CreatedAt:             rideRequest.RequestedAt.UnixMilli(),
+		UpdateAt:              rideRequest.UpdatedAt.UnixMilli(),
 	}
 
 	if rideRequest.ChairID.Valid {
@@ -578,8 +578,8 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Longitude: rideRequest.DestinationLongitude,
 		},
 		Status:    rideRequest.Status,
-		CreatedAt: rideRequest.RequestedAt.Unix(),
-		UpdateAt:  rideRequest.UpdatedAt.Unix(),
+		CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+		UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 	}
 
 	if rideRequest.ChairID.Valid {
@@ -671,8 +671,8 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						Model: chair.Model,
 						Stats: stats,
 					},
-					CreatedAt: rideRequest.RequestedAt.Unix(),
-					UpdateAt:  rideRequest.UpdatedAt.Unix(),
+					CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+					UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 				}); err != nil {
 					return err
 				}

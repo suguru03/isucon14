@@ -211,9 +211,9 @@ type AppGetNotificationOK struct {
 	Status                RequestStatus `json:"status"`
 	Chair                 OptAppChair   `json:"chair"`
 	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
+	UpdatedAt int64 `json:"updated_at"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
 	RetryAfterMs OptInt `json:"retry_after_ms"`
 }
@@ -244,12 +244,12 @@ func (s *AppGetNotificationOK) GetChair() OptAppChair {
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *AppGetNotificationOK) GetCreatedAt() float64 {
+func (s *AppGetNotificationOK) GetCreatedAt() int64 {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppGetNotificationOK) GetUpdatedAt() float64 {
+func (s *AppGetNotificationOK) GetUpdatedAt() int64 {
 	return s.UpdatedAt
 }
 
@@ -284,12 +284,12 @@ func (s *AppGetNotificationOK) SetChair(val OptAppChair) {
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *AppGetNotificationOK) SetCreatedAt(val float64) {
+func (s *AppGetNotificationOK) SetCreatedAt(val int64) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppGetNotificationOK) SetUpdatedAt(val float64) {
+func (s *AppGetNotificationOK) SetUpdatedAt(val int64) {
 	s.UpdatedAt = val
 }
 
@@ -570,9 +570,9 @@ type AppRequest struct {
 	Status                RequestStatus `json:"status"`
 	Chair                 OptAppChair   `json:"chair"`
 	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
+	UpdatedAt int64 `json:"updated_at"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -601,12 +601,12 @@ func (s *AppRequest) GetChair() OptAppChair {
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *AppRequest) GetCreatedAt() float64 {
+func (s *AppRequest) GetCreatedAt() int64 {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppRequest) GetUpdatedAt() float64 {
+func (s *AppRequest) GetUpdatedAt() int64 {
 	return s.UpdatedAt
 }
 
@@ -636,12 +636,12 @@ func (s *AppRequest) SetChair(val OptAppChair) {
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *AppRequest) SetCreatedAt(val float64) {
+func (s *AppRequest) SetCreatedAt(val int64) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppRequest) SetUpdatedAt(val float64) {
+func (s *AppRequest) SetUpdatedAt(val int64) {
 	s.UpdatedAt = val
 }
 

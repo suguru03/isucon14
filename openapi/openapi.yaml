@@ -317,10 +317,12 @@ paths:
                   chair:
                     $ref: "#/components/schemas/AppChair"
                   created_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 配車要求日時
                   updated_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 配車要求更新日時
                   retry_after_ms:
                     type: integer
@@ -926,10 +928,12 @@ components:
         chair:
           $ref: "#/components/schemas/AppChair"
         created_at:
-          type: number
+          type: integer
+          format: int64
           description: 配車要求日時
         updated_at:
-          type: number
+          type: integer
+          format: int64
           description: 配車要求更新日時
       required:
         - request_id

@@ -630,11 +630,11 @@ func (s *AppGetNotificationOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("created_at")
-		e.Float64(s.CreatedAt)
+		e.Int64(s.CreatedAt)
 	}
 	{
 		e.FieldStart("updated_at")
-		e.Float64(s.UpdatedAt)
+		e.Int64(s.UpdatedAt)
 	}
 	{
 		if s.RetryAfterMs.Set {
@@ -719,8 +719,8 @@ func (s *AppGetNotificationOK) Decode(d *jx.Decoder) error {
 		case "created_at":
 			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
-				v, err := d.Float64()
-				s.CreatedAt = float64(v)
+				v, err := d.Int64()
+				s.CreatedAt = int64(v)
 				if err != nil {
 					return err
 				}
@@ -731,8 +731,8 @@ func (s *AppGetNotificationOK) Decode(d *jx.Decoder) error {
 		case "updated_at":
 			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
-				v, err := d.Float64()
-				s.UpdatedAt = float64(v)
+				v, err := d.Int64()
+				s.UpdatedAt = int64(v)
 				if err != nil {
 					return err
 				}
@@ -1983,11 +1983,11 @@ func (s *AppRequest) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("created_at")
-		e.Float64(s.CreatedAt)
+		e.Int64(s.CreatedAt)
 	}
 	{
 		e.FieldStart("updated_at")
-		e.Float64(s.UpdatedAt)
+		e.Int64(s.UpdatedAt)
 	}
 }
 
@@ -2065,8 +2065,8 @@ func (s *AppRequest) Decode(d *jx.Decoder) error {
 		case "created_at":
 			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
-				v, err := d.Float64()
-				s.CreatedAt = float64(v)
+				v, err := d.Int64()
+				s.CreatedAt = int64(v)
 				if err != nil {
 					return err
 				}
@@ -2077,8 +2077,8 @@ func (s *AppRequest) Decode(d *jx.Decoder) error {
 		case "updated_at":
 			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
-				v, err := d.Float64()
-				s.UpdatedAt = float64(v)
+				v, err := d.Int64()
+				s.UpdatedAt = int64(v)
 				if err != nil {
 					return err
 				}
