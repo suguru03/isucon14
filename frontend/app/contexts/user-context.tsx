@@ -127,7 +127,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
-        console.error(`ERROR: ${e}`);
+        console.error(`ERROR: ${JSON.stringify(e)}`);
       });
     }
   }, [accessToken, setClientAppPayloadWithStatus, isSSE]);

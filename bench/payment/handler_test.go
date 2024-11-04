@@ -14,29 +14,33 @@ import (
 
 func TestPostPaymentRequest_IsSamePayload(t *testing.T) {
 	tests := []struct {
+		token  string
 		req    PostPaymentRequest
 		p      *Payment
 		expect bool
 	}{
 		{
-			req:    PostPaymentRequest{Token: "t1", Amount: 1000},
+			token:  "t1",
+			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: true,
 		},
 		{
-			req:    PostPaymentRequest{Token: "t2", Amount: 1000},
+			token:  "t2",
+			req:    PostPaymentRequest{Amount: 1000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
 		},
 		{
-			req:    PostPaymentRequest{Token: "t1", Amount: 10000},
+			token:  "t1",
+			req:    PostPaymentRequest{Amount: 10000},
 			p:      &Payment{Token: "t1", Amount: 1000},
 			expect: false,
 		},
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			assert.Equal(t, tt.expect, tt.req.IsSamePayload(tt.p))
+			assert.Equal(t, tt.expect, tt.req.IsSamePayload(tt.token, tt.p))
 		})
 	}
 }
@@ -67,14 +71,24 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusSuccess)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
 					Status(http.StatusNoContent)
+				e.GET("/payments").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+					Expect().
+					Status(http.StatusOK).
+					JSON().
+					Array().
+					IsEqual([]ResponsePayment{{
+						Amount: amount,
+						Status: StatusSuccess.String(),
+					}})
 			})
 			t.Run("Status = StatusInvalidAmount", func(t *testing.T) {
 				_, verifier, e := prepare(t)
@@ -88,10 +102,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusInvalidAmount)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -110,10 +124,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					})).
 					Return(StatusInvalidToken)
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -136,10 +150,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Status:         StatusSuccess,
 				})
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -159,10 +173,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Status:         StatusInvalidAmount,
 				})
 
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -182,10 +196,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Amount:         amount,
 					Status:         StatusInvalidToken,
 				})
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -205,10 +219,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Amount:         10001,
 					Status:         StatusSuccess,
 				})
-				e.POST("/payment").
+				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
+					WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 					WithJSON(map[string]any{
-						"token":  token,
 						"amount": amount,
 					}).
 					Expect().
@@ -232,10 +246,10 @@ func TestServer_PaymentHandler(t *testing.T) {
 			p.locked.Store(true)
 
 			server.knownKeys.Set(idk, p)
-			e.POST("/payment").
+			e.POST("/payments").
 				WithHeader(IdempotencyKeyHeader, idk).
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -256,9 +270,9 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusSuccess)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -276,9 +290,9 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusInvalidAmount)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
@@ -297,14 +311,153 @@ func TestServer_PaymentHandler(t *testing.T) {
 				})).
 				Return(StatusInvalidToken)
 
-			e.POST("/payment").
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
 				WithJSON(map[string]any{
-					"token":  token,
 					"amount": amount,
 				}).
 				Expect().
 				Status(http.StatusBadRequest).
 				JSON().Object().IsEqual(map[string]string{"message": "決済トークンが無効です"})
 		})
+	})
+}
+
+func TestServer_GetPaymentsHandler(t *testing.T) {
+	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
+		mockCtrl := gomock.NewController(t)
+		verifier := NewMockVerifier(mockCtrl)
+		server := NewServer(verifier, 1*time.Millisecond, 1)
+		httpServer := httptest.NewServer(server)
+		t.Cleanup(httpServer.Close)
+		e := httpexpect.Default(t, httpServer.URL)
+
+		return server, verifier, e
+	}
+
+	t.Run("そのトークンによる決済が存在する", func(t *testing.T) {
+		_, verifier, e := prepare(t)
+
+		token := "token1"
+		token2 := "token2"
+		validTokens := []string{token, token2}
+		invalidAmount := 0
+		initialStatusAmount := 500
+
+		payments := []*Payment{{
+			Token:  token,
+			Amount: 1000,
+			Status: StatusSuccess,
+		}, {
+			Token:  token,
+			Amount: 0,
+			Status: StatusInvalidAmount,
+		}, {
+			Token:  token,
+			Amount: 500,
+			Status: StatusInitial,
+		}, {
+			Token:  token2,
+			Amount: 1000,
+			Status: StatusSuccess,
+		}}
+		expectedResponse := []ResponsePayment{}
+		for _, p := range payments {
+			if p.Token != token {
+				continue
+			}
+			expectedResponse = append(expectedResponse, NewResponsePayment(p))
+		}
+
+		verifier.EXPECT().
+			Verify(gomock.Any()).
+			Times(len(payments)).
+			DoAndReturn(func(p *Payment) Status {
+				isValidToken := false
+				for _, t := range validTokens {
+					if p.Token == t {
+						isValidToken = true
+						break
+					}
+				}
+				if !isValidToken {
+					return StatusInvalidToken
+				}
+				switch p.Amount {
+				case invalidAmount:
+					return StatusInvalidAmount
+				case initialStatusAmount:
+					return StatusInitial
+				}
+				return StatusSuccess
+			})
+
+		for _, p := range payments {
+			status := http.StatusNoContent
+			if p.Status != StatusSuccess && p.Status != StatusInitial {
+				status = http.StatusBadRequest
+			}
+			e.POST("/payments").
+				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
+				WithJSON(map[string]any{
+					"amount": p.Amount,
+				}).
+				Expect().
+				Status(status)
+		}
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEqual(expectedResponse)
+	})
+	t.Run("そのトークンによる決済が存在しない", func(t *testing.T) {
+		_, verifier, e := prepare(t)
+
+		token := "token1"
+
+		p := Payment{
+			Token:  "token2",
+			Amount: 1000,
+			Status: StatusSuccess,
+		}
+
+		verifier.EXPECT().
+			Verify(gomock.Cond(func(x *Payment) bool {
+				return p.Token == x.Token && p.Amount == x.Amount
+			})).
+			Return(StatusSuccess)
+
+		e.POST("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
+			WithJSON(map[string]any{
+				"amount": p.Amount,
+			}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEmpty()
+	})
+	t.Run("決済が存在しない", func(t *testing.T) {
+		_, _, e := prepare(t)
+
+		token := "token1"
+
+		e.GET("/payments").
+			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			IsEmpty()
 	})
 }

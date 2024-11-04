@@ -59,6 +59,8 @@ type Request struct {
 	PickupPoint Coordinate
 	// DestinationPoint 目的地
 	DestinationPoint Coordinate
+	// Discount 最大割引額
+	Discount int
 
 	// Chair 割り当てられた椅子。割り当てられるまでnil
 	Chair *Chair
@@ -101,9 +103,19 @@ func (r *Request) SetID(id RequestID) {
 	r.ID = id
 }
 
-// Fare 料金
-func (r *Request) Fare() int {
+// Sales 売り上げ
+func (r *Request) Sales() int {
 	return InitialFare + r.PickupPoint.DistanceTo(r.DestinationPoint)*FarePerDistance
+}
+
+// Fare ユーザーが支払う料金
+func (r *Request) Fare() int {
+	return InitialFare + max(r.PickupPoint.DistanceTo(r.DestinationPoint)*FarePerDistance-r.Discount, 0)
+}
+
+// ActualDiscount 実際に割り引いた価格
+func (r *Request) ActualDiscount() int {
+	return r.Sales() - r.Fare()
 }
 
 // CalculateEvaluation 送迎の評価値を計算する
