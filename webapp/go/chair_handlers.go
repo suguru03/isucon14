@@ -38,7 +38,7 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO chairs (id, owner_id, name, model, is_active, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
+		"INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
 		chairID, owner.ID, req.Name, req.Model, false, accessToken,
 	)
 	if err != nil {
@@ -55,7 +55,7 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 func chairPostActivate(w http.ResponseWriter, r *http.Request) {
 	chair := r.Context().Value("chair").(*Chair)
 
-	_, err := db.Exec("UPDATE chairs SET is_active = ?, updated_at = isu_now() WHERE id = ?", true, chair.ID)
+	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", true, chair.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -67,7 +67,7 @@ func chairPostActivate(w http.ResponseWriter, r *http.Request) {
 func chairPostDeactivate(w http.ResponseWriter, r *http.Request) {
 	chair := r.Context().Value("chair").(*Chair)
 
-	_, err := db.Exec("UPDATE chairs SET is_active = ?, updated_at = isu_now() WHERE id = ?", false, chair.ID)
+	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", false, chair.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -93,7 +93,7 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 	chairLocationID := ulid.Make().String()
 	if _, err := tx.Exec(
-		`INSERT INTO chair_locations (id, chair_id, latitude, longitude, created_at) VALUES (?, ?, ?, ?, isu_now())`,
+		`INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)`,
 		chairLocationID, chair.ID, req.Latitude, req.Longitude,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -114,14 +114,14 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if req.Latitude == rideRequest.PickupLatitude && req.Longitude == rideRequest.PickupLongitude {
-			if _, err := tx.Exec("UPDATE ride_requests SET status = 'DISPATCHED', dispatched_at = isu_now(), updated_at = isu_now() WHERE id = ? AND status = 'DISPATCHING'", rideRequest.ID); err != nil {
+			if _, err := tx.Exec("UPDATE ride_requests SET status = 'DISPATCHED', dispatched_at = CURRENT_TIMESTAMP(6) WHERE id = ? AND status = 'DISPATCHING'", rideRequest.ID); err != nil {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 		}
 
 		if req.Latitude == rideRequest.DestinationLatitude && req.Longitude == rideRequest.DestinationLongitude {
-			if _, err := tx.Exec("UPDATE ride_requests SET status = 'ARRIVED', arrived_at = isu_now(), updated_at = isu_now() WHERE id = ? AND status = 'CARRYING'", rideRequest.ID); err != nil {
+			if _, err := tx.Exec("UPDATE ride_requests SET status = 'ARRIVED', arrived_at = CURRENT_TIMESTAMP(6) WHERE id = ? AND status = 'CARRYING'", rideRequest.ID); err != nil {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
@@ -176,7 +176,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ?, matched_at = isu_now(), updated_at = isu_now() WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+		if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ?, matched_at = CURRENT_TIMESTAMP(6) WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -263,7 +263,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						return err
 					}
 
-					if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ?, matched_at = isu_now(), updated_at = isu_now() WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+					if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ?, matched_at = CURRENT_TIMESTAMP(6) WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
 						return err
 					}
 
@@ -408,7 +408,7 @@ func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := tx.Exec("UPDATE ride_requests SET status = ?, updated_at = isu_now() WHERE id = ?", "DISPATCHING", requestID); err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET status = ? WHERE id = ?", "DISPATCHING", requestID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -448,7 +448,7 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, status = 'MATCHING', matched_at = NULL, updated_at = isu_now() WHERE id = ?", requestID); err != nil {
+	if _, err := tx.Exec("UPDATE ride_requests SET chair_id = NULL, status = 'MATCHING', matched_at = NULL WHERE id = ?", requestID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -492,7 +492,7 @@ func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = tx.Exec("UPDATE ride_requests SET status = ?, rode_at = isu_now(), updated_at = isu_now() WHERE id = ?", "CARRYING", requestID); err != nil {
+	if _, err = tx.Exec("UPDATE ride_requests SET status = ?, rode_at = CURRENT_TIMESTAMP(6) WHERE id = ?", "CARRYING", requestID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
