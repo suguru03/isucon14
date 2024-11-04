@@ -106,8 +106,8 @@ type AppChairStatsRecentRidesItem struct {
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	// 移動距離.
 	Distance int `json:"distance"`
-	// 移動時間 (ナノ秒).
-	Duration int `json:"duration"`
+	// 移動時間 (ミリ秒).
+	Duration int64 `json:"duration"`
 	// 評価.
 	Evaluation int `json:"evaluation"`
 }
@@ -133,7 +133,7 @@ func (s *AppChairStatsRecentRidesItem) GetDistance() int {
 }
 
 // GetDuration returns the value of Duration.
-func (s *AppChairStatsRecentRidesItem) GetDuration() int {
+func (s *AppChairStatsRecentRidesItem) GetDuration() int64 {
 	return s.Duration
 }
 
@@ -163,7 +163,7 @@ func (s *AppChairStatsRecentRidesItem) SetDistance(val int) {
 }
 
 // SetDuration sets the value of Duration.
-func (s *AppChairStatsRecentRidesItem) SetDuration(val int) {
+func (s *AppChairStatsRecentRidesItem) SetDuration(val int64) {
 	s.Duration = val
 }
 
@@ -413,6 +413,62 @@ type AppPostRequestConflict Error
 
 func (*AppPostRequestConflict) appPostRequestRes() {}
 
+type AppPostRequestEstimateOK struct {
+	// 割引後料金.
+	Fare int `json:"fare"`
+	// 割引額.
+	Discount int `json:"discount"`
+}
+
+// GetFare returns the value of Fare.
+func (s *AppPostRequestEstimateOK) GetFare() int {
+	return s.Fare
+}
+
+// GetDiscount returns the value of Discount.
+func (s *AppPostRequestEstimateOK) GetDiscount() int {
+	return s.Discount
+}
+
+// SetFare sets the value of Fare.
+func (s *AppPostRequestEstimateOK) SetFare(val int) {
+	s.Fare = val
+}
+
+// SetDiscount sets the value of Discount.
+func (s *AppPostRequestEstimateOK) SetDiscount(val int) {
+	s.Discount = val
+}
+
+func (*AppPostRequestEstimateOK) appPostRequestEstimateRes() {}
+
+type AppPostRequestEstimateReq struct {
+	// 配車位置.
+	PickupCoordinate Coordinate `json:"pickup_coordinate"`
+	// 目的地.
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppPostRequestEstimateReq) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppPostRequestEstimateReq) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppPostRequestEstimateReq) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppPostRequestEstimateReq) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
 type AppPostRequestEvaluateBadRequest Error
 
 func (*AppPostRequestEvaluateBadRequest) appPostRequestEvaluateRes() {}
@@ -660,8 +716,6 @@ func (*ChairGetNotificationOK) chairGetNotificationRes() {}
 // ChairPostActivateNoContent is response for ChairPostActivate operation.
 type ChairPostActivateNoContent struct{}
 
-type ChairPostActivateReq struct{}
-
 type ChairPostCoordinateOK struct {
 	// 記録日時.
 	Datetime string `json:"datetime"`
@@ -679,8 +733,6 @@ func (s *ChairPostCoordinateOK) SetDatetime(val string) {
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.
 type ChairPostDeactivateNoContent struct{}
-
-type ChairPostDeactivateReq struct{}
 
 type ChairPostRegisterCreated struct {
 	// 椅子ID.
@@ -881,9 +933,11 @@ func (s *Error) SetMessage(val string) {
 func (*Error) appGetRequestRes()          {}
 func (*Error) appPostPaymentMethodsRes()  {}
 func (*Error) appPostRegisterRes()        {}
+func (*Error) appPostRequestEstimateRes() {}
 func (*Error) chairGetRequestRes()        {}
 func (*Error) chairPostRequestAcceptRes() {}
 func (*Error) chairPostRequestDenyRes()   {}
+func (*Error) ownerPostRegisterRes()      {}
 
 // NewOptAppChair returns new OptAppChair with value set to v.
 func NewOptAppChair(v AppChair) OptAppChair {
@@ -1017,6 +1071,52 @@ func (o OptAppPostRegisterReq) Get() (v AppPostRegisterReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAppPostRegisterReq) Or(d AppPostRegisterReq) AppPostRegisterReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAppPostRequestEstimateReq returns new OptAppPostRequestEstimateReq with value set to v.
+func NewOptAppPostRequestEstimateReq(v AppPostRequestEstimateReq) OptAppPostRequestEstimateReq {
+	return OptAppPostRequestEstimateReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppPostRequestEstimateReq is optional AppPostRequestEstimateReq.
+type OptAppPostRequestEstimateReq struct {
+	Value AppPostRequestEstimateReq
+	Set   bool
+}
+
+// IsSet returns true if OptAppPostRequestEstimateReq was set.
+func (o OptAppPostRequestEstimateReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppPostRequestEstimateReq) Reset() {
+	var v AppPostRequestEstimateReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppPostRequestEstimateReq) SetTo(v AppPostRequestEstimateReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppPostRequestEstimateReq) Get() (v AppPostRequestEstimateReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppPostRequestEstimateReq) Or(d AppPostRequestEstimateReq) AppPostRequestEstimateReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1756,6 +1856,8 @@ func (s *OwnerPostRegisterCreated) SetID(val string) {
 func (s *OwnerPostRegisterCreated) SetChairRegisterToken(val string) {
 	s.ChairRegisterToken = val
 }
+
+func (*OwnerPostRegisterCreated) ownerPostRegisterRes() {}
 
 type OwnerPostRegisterReq struct {
 	// オーナー名.

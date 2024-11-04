@@ -187,7 +187,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fare, err := calculateFare(tx, user.ID, &rideRequest, req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude)
+	fare, err := calculateDiscountedFare(tx, user.ID, &rideRequest, req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -201,6 +201,53 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, &appPostRequestsResponse{
 		RequestID: requestID,
 		Fare:      fare,
+	})
+}
+
+type appPostRequestEstimateRequest struct {
+	PickupCoordinate      *Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate *Coordinate `json:"destination_coordinate"`
+}
+
+type appPostRequestEstimateResponse struct {
+	Fare     int `json:"fare"`
+	Discount int `json:"discount"`
+}
+
+func appPostRequestEstimate(w http.ResponseWriter, r *http.Request) {
+	req := &appPostRequestEstimateRequest{}
+	if err := bindJSON(r, req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if req.PickupCoordinate == nil || req.DestinationCoordinate == nil {
+		writeError(w, http.StatusBadRequest, errors.New("required fields(pickup_coordinate, destination_coordinate) are empty"))
+		return
+	}
+
+	user := r.Context().Value("user").(*User)
+
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	discounted, err := calculateDiscountedFare(tx, user.ID, nil, req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	writeJSON(w, http.StatusAccepted, &appPostRequestEstimateResponse{
+		Fare:     discounted,
+		Discount: calculateFare(req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude) - discounted,
 	})
 }
 
@@ -456,7 +503,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fare, err := calculateFare(tx, rideRequest.UserID, rideRequest, rideRequest.PickupLatitude, rideRequest.PickupLongitude, rideRequest.DestinationLatitude, rideRequest.DestinationLongitude)
+	fare, err := calculateDiscountedFare(tx, rideRequest.UserID, rideRequest, rideRequest.PickupLatitude, rideRequest.PickupLongitude, rideRequest.DestinationLatitude, rideRequest.DestinationLongitude)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -762,7 +809,14 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func calculateFare(tx *sqlx.Tx, userID string, req *RideRequest, pickupLatitude, pickupLongitude, destLatitude, destLongitude int) (int, error) {
+func calculateFare(pickupLatitude, pickupLongitude, destLatitude, destLongitude int) int {
+	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
+	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
+	meteredFare := farePerDistance * (latDiff + lonDiff)
+	return initialFare + meteredFare
+}
+
+func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *RideRequest, pickupLatitude, pickupLongitude, destLatitude, destLongitude int) (int, error) {
 	var coupon Coupon
 	discount := 0
 	if req != nil {

@@ -165,6 +165,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /app/requests/estimate:
+    post:
+      tags:
+        - app
+      summary: リクエストの料金を見積もる
+      operationId: app-post-request-estimate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pickup_coordinate:
+                  $ref: "#/components/schemas/Coordinate"
+                  description: 配車位置
+                destination_coordinate:
+                  $ref: "#/components/schemas/Coordinate"
+                  description: 目的地
+              required:
+                - pickup_coordinate
+                - destination_coordinate
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fare:
+                    type: integer
+                    description: 割引後料金
+                  discount:
+                    type: integer
+                    description: 割引額
+                required:
+                  - fare
+                  - discount
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   "/app/requests/{request_id}":
     get:
       tags:
