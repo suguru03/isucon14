@@ -316,8 +316,8 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 		DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 		Status:                rideRequest.Status,
-		CreatedAt:             rideRequest.RequestedAt.Unix(),
-		UpdateAt:              rideRequest.UpdatedAt.Unix(),
+		CreatedAt:             rideRequest.RequestedAt.UnixMilli(),
+		UpdateAt:              rideRequest.UpdatedAt.UnixMilli(),
 	}
 
 	if rideRequest.ChairID.Valid {
@@ -430,8 +430,8 @@ type appPostEvaluateRequest struct {
 }
 
 type appPostEvaluateResponse struct {
-	Fare        int       `json:"fare"`
-	CompletedAt time.Time `json:"completed_at"`
+	Fare        int   `json:"fare"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
@@ -533,7 +533,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, &appPostEvaluateResponse{
 		Fare:        fare,
-		CompletedAt: rideRequest.UpdatedAt,
+		CompletedAt: rideRequest.UpdatedAt.UnixMilli(),
 	})
 }
 
@@ -578,8 +578,8 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Longitude: rideRequest.DestinationLongitude,
 		},
 		Status:    rideRequest.Status,
-		CreatedAt: rideRequest.RequestedAt.Unix(),
-		UpdateAt:  rideRequest.UpdatedAt.Unix(),
+		CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+		UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 	}
 
 	if rideRequest.ChairID.Valid {
@@ -671,8 +671,8 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						Model: chair.Model,
 						Stats: stats,
 					},
-					CreatedAt: rideRequest.RequestedAt.Unix(),
-					UpdateAt:  rideRequest.UpdatedAt.Unix(),
+					CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+					UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 				}); err != nil {
 					return err
 				}
@@ -805,7 +805,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, &appGetNearbyChairsResponse{
 		Chairs:      nearbyChairs,
-		RetrievedAt: retrievedAt.Unix(),
+		RetrievedAt: retrievedAt.UnixMilli(),
 	})
 }
 

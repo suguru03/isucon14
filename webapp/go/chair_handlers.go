@@ -92,7 +92,7 @@ func chairPostDeactivate(w http.ResponseWriter, r *http.Request) {
 }
 
 type chairPostCoordinateResponse struct {
-	Datetime time.Time `json:"datetime"`
+	RecordedAt int64 `json:"recorded_at"`
 }
 
 func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +154,7 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &chairPostCoordinateResponse{
-		Datetime: location.CreatedAt,
+		RecordedAt: location.CreatedAt.UnixMilli(),
 	})
 }
 

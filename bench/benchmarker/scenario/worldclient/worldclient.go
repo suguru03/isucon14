@@ -119,10 +119,10 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
 	params := api.OwnerGetSalesParams{}
 	if !args.Since.IsZero() {
-		params.Since.SetTo(args.Since.Format(time.RFC3339Nano))
+		params.Since.SetTo(args.Since.UnixMilli())
 	}
 	if !args.Until.IsZero() {
-		params.Until.SetTo(args.Until.Format(time.RFC3339Nano))
+		params.Until.SetTo(args.Until.UnixMilli())
 	}
 
 	response, err := c.client.ProviderGetSales(c.ctx, &params)
@@ -155,16 +155,14 @@ func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetPr
 	}
 
 	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.ProviderChair {
-		registeredAt, _ := time.Parse(time.RFC3339Nano, v.RegisteredAt)
-		totalDistanceUpdatedAt, _ := time.Parse(time.RFC3339Nano, v.TotalDistanceUpdatedAt.Value)
 		return &world.ProviderChair{
 			ID:                     v.ID,
 			Name:                   v.Name,
 			Model:                  v.Model,
 			Active:                 v.Active,
-			RegisteredAt:           registeredAt,
+			RegisteredAt:           time.UnixMilli(v.RegisteredAt),
 			TotalDistance:          v.TotalDistance,
-			TotalDistanceUpdatedAt: null.NewTime(totalDistanceUpdatedAt, v.TotalDistanceUpdatedAt.Set),
+			TotalDistanceUpdatedAt: null.NewTime(time.UnixMilli(v.TotalDistanceUpdatedAt.Value), v.TotalDistanceUpdatedAt.Set),
 		}
 	})}, nil
 }
@@ -178,12 +176,7 @@ func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	recordedAt, err := time.Parse(time.RFC3339Nano, response.Datetime)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
-	}
-
-	return &world.SendChairCoordinateResponse{RecordedAt: recordedAt}, nil
+	return &world.SendChairCoordinateResponse{RecordedAt: time.UnixMilli(response.RecordedAt)}, nil
 }
 
 func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
@@ -294,14 +287,9 @@ func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, scor
 		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
-	completedAt, err := time.Parse(time.RFC3339Nano, res.CompletedAt)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
-	}
-
 	return &world.SendEvaluationResponse{
 		Fare:        res.Fare,
-		CompletedAt: completedAt,
+		CompletedAt: time.UnixMilli(res.CompletedAt),
 	}, nil
 }
 

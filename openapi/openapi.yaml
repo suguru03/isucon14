@@ -272,7 +272,8 @@ paths:
                     type: integer
                     description: 割引後運賃
                   completed_at:
-                    type: string
+                    type: integer
+                    format: int64
                     description: 完了日時
                 required:
                   - fare
@@ -316,10 +317,12 @@ paths:
                   chair:
                     $ref: "#/components/schemas/AppChair"
                   created_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 配車要求日時
                   updated_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 配車要求更新日時
                   retry_after_ms:
                     type: integer
@@ -370,7 +373,8 @@ paths:
                     items:
                       $ref: "#/components/schemas/AppChair"
                   retrieved_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 取得日時
                 required:
                   - chairs
@@ -426,12 +430,14 @@ paths:
           in: query
           description: 開始日時（含む）
           schema:
-            type: string
+            type: integer
+            format: int64
         - name: until
           in: query
           description: 終了日時（含む）
           schema:
-            type: string
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
@@ -513,13 +519,15 @@ paths:
                           type: boolean
                           description: 稼働中かどうか
                         registered_at:
-                          type: string
+                          type: integer
+                          format: int64
                           description: 登録日時
                         total_distance:
                           type: integer
                           description: 総移動距離
                         total_distance_updated_at:
-                          type: string
+                          type: integer
+                          format: int64
                           description: 総移動距離の更新日時
                       required:
                         - id
@@ -564,13 +572,15 @@ paths:
                     type: boolean
                     description: 稼働中かどうか
                   registered_at:
-                    type: string
+                    type: integer
+                    format: int64
                     description: 登録日時
                   total_distance:
                     type: integer
                     description: 総移動距離
                   total_distance_updated_at:
-                    type: string
+                    type: integer
+                    format: int64
                     description: 総移動距離の更新日時
                 required:
                   - id
@@ -660,11 +670,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  datetime:
-                    type: string
+                  recorded_at:
+                    type: integer
+                    format: int64
                     description: 記録日時
                 required:
-                  - datetime
+                  - recorded_at
   /chair/notification:
     get:
       tags:
@@ -923,10 +934,12 @@ components:
         chair:
           $ref: "#/components/schemas/AppChair"
         created_at:
-          type: number
+          type: integer
+          format: int64
           description: 配車要求日時
         updated_at:
-          type: number
+          type: integer
+          format: int64
           description: 配車要求更新日時
       required:
         - request_id

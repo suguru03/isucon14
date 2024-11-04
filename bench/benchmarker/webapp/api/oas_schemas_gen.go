@@ -175,7 +175,7 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 type AppGetNearbyChairsOK struct {
 	Chairs []AppChair `json:"chairs"`
 	// 取得日時.
-	RetrievedAt float64 `json:"retrieved_at"`
+	RetrievedAt int64 `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
@@ -184,7 +184,7 @@ func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
 }
 
 // GetRetrievedAt returns the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) GetRetrievedAt() float64 {
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() int64 {
 	return s.RetrievedAt
 }
 
@@ -194,7 +194,7 @@ func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
 }
 
 // SetRetrievedAt sets the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) SetRetrievedAt(val float64) {
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val int64) {
 	s.RetrievedAt = val
 }
 
@@ -211,9 +211,9 @@ type AppGetNotificationOK struct {
 	Status                RequestStatus `json:"status"`
 	Chair                 OptAppChair   `json:"chair"`
 	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
+	UpdatedAt int64 `json:"updated_at"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
 	RetryAfterMs OptInt `json:"retry_after_ms"`
 }
@@ -244,12 +244,12 @@ func (s *AppGetNotificationOK) GetChair() OptAppChair {
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *AppGetNotificationOK) GetCreatedAt() float64 {
+func (s *AppGetNotificationOK) GetCreatedAt() int64 {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppGetNotificationOK) GetUpdatedAt() float64 {
+func (s *AppGetNotificationOK) GetUpdatedAt() int64 {
 	return s.UpdatedAt
 }
 
@@ -284,12 +284,12 @@ func (s *AppGetNotificationOK) SetChair(val OptAppChair) {
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *AppGetNotificationOK) SetCreatedAt(val float64) {
+func (s *AppGetNotificationOK) SetCreatedAt(val int64) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppGetNotificationOK) SetUpdatedAt(val float64) {
+func (s *AppGetNotificationOK) SetUpdatedAt(val int64) {
 	s.UpdatedAt = val
 }
 
@@ -493,7 +493,7 @@ type AppPostRequestEvaluateOK struct {
 	// 割引後運賃.
 	Fare int `json:"fare"`
 	// 完了日時.
-	CompletedAt string `json:"completed_at"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 // GetFare returns the value of Fare.
@@ -502,7 +502,7 @@ func (s *AppPostRequestEvaluateOK) GetFare() int {
 }
 
 // GetCompletedAt returns the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) GetCompletedAt() string {
+func (s *AppPostRequestEvaluateOK) GetCompletedAt() int64 {
 	return s.CompletedAt
 }
 
@@ -512,7 +512,7 @@ func (s *AppPostRequestEvaluateOK) SetFare(val int) {
 }
 
 // SetCompletedAt sets the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) SetCompletedAt(val string) {
+func (s *AppPostRequestEvaluateOK) SetCompletedAt(val int64) {
 	s.CompletedAt = val
 }
 
@@ -570,9 +570,9 @@ type AppRequest struct {
 	Status                RequestStatus `json:"status"`
 	Chair                 OptAppChair   `json:"chair"`
 	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
+	UpdatedAt int64 `json:"updated_at"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -601,12 +601,12 @@ func (s *AppRequest) GetChair() OptAppChair {
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *AppRequest) GetCreatedAt() float64 {
+func (s *AppRequest) GetCreatedAt() int64 {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppRequest) GetUpdatedAt() float64 {
+func (s *AppRequest) GetUpdatedAt() int64 {
 	return s.UpdatedAt
 }
 
@@ -636,12 +636,12 @@ func (s *AppRequest) SetChair(val OptAppChair) {
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *AppRequest) SetCreatedAt(val float64) {
+func (s *AppRequest) SetCreatedAt(val int64) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppRequest) SetUpdatedAt(val float64) {
+func (s *AppRequest) SetUpdatedAt(val int64) {
 	s.UpdatedAt = val
 }
 
@@ -730,17 +730,17 @@ type ChairPostActivateNoContent struct{}
 
 type ChairPostCoordinateOK struct {
 	// 記録日時.
-	Datetime string `json:"datetime"`
+	RecordedAt int64 `json:"recorded_at"`
 }
 
-// GetDatetime returns the value of Datetime.
-func (s *ChairPostCoordinateOK) GetDatetime() string {
-	return s.Datetime
+// GetRecordedAt returns the value of RecordedAt.
+func (s *ChairPostCoordinateOK) GetRecordedAt() int64 {
+	return s.RecordedAt
 }
 
-// SetDatetime sets the value of Datetime.
-func (s *ChairPostCoordinateOK) SetDatetime(val string) {
-	s.Datetime = val
+// SetRecordedAt sets the value of RecordedAt.
+func (s *ChairPostCoordinateOK) SetRecordedAt(val int64) {
+	s.RecordedAt = val
 }
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.
@@ -1365,6 +1365,52 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptOwnerPostRegisterReq returns new OptOwnerPostRegisterReq with value set to v.
 func NewOptOwnerPostRegisterReq(v OwnerPostRegisterReq) OptOwnerPostRegisterReq {
 	return OptOwnerPostRegisterReq{
@@ -1503,52 +1549,6 @@ func (o OptRequestStatus) Or(d RequestStatus) RequestStatus {
 	return d
 }
 
-// NewOptString returns new OptString with value set to v.
-func NewOptString(v string) OptString {
-	return OptString{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptString is optional string.
-type OptString struct {
-	Value string
-	Set   bool
-}
-
-// IsSet returns true if OptString was set.
-func (o OptString) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptString) Reset() {
-	var v string
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptString) SetTo(v string) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptString) Get() (v string, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptString) Or(d string) string {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 type OwnerGetChairDetailOK struct {
 	// 椅子ID.
 	ID string `json:"id"`
@@ -1559,11 +1559,11 @@ type OwnerGetChairDetailOK struct {
 	// 稼働中かどうか.
 	Active bool `json:"active"`
 	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
+	RegisteredAt int64 `json:"registered_at"`
 	// 総移動距離.
 	TotalDistance int `json:"total_distance"`
 	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
+	TotalDistanceUpdatedAt OptInt64 `json:"total_distance_updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -1587,7 +1587,7 @@ func (s *OwnerGetChairDetailOK) GetActive() bool {
 }
 
 // GetRegisteredAt returns the value of RegisteredAt.
-func (s *OwnerGetChairDetailOK) GetRegisteredAt() string {
+func (s *OwnerGetChairDetailOK) GetRegisteredAt() int64 {
 	return s.RegisteredAt
 }
 
@@ -1597,7 +1597,7 @@ func (s *OwnerGetChairDetailOK) GetTotalDistance() int {
 }
 
 // GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairDetailOK) GetTotalDistanceUpdatedAt() OptString {
+func (s *OwnerGetChairDetailOK) GetTotalDistanceUpdatedAt() OptInt64 {
 	return s.TotalDistanceUpdatedAt
 }
 
@@ -1622,7 +1622,7 @@ func (s *OwnerGetChairDetailOK) SetActive(val bool) {
 }
 
 // SetRegisteredAt sets the value of RegisteredAt.
-func (s *OwnerGetChairDetailOK) SetRegisteredAt(val string) {
+func (s *OwnerGetChairDetailOK) SetRegisteredAt(val int64) {
 	s.RegisteredAt = val
 }
 
@@ -1632,7 +1632,7 @@ func (s *OwnerGetChairDetailOK) SetTotalDistance(val int) {
 }
 
 // SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptString) {
+func (s *OwnerGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptInt64) {
 	s.TotalDistanceUpdatedAt = val
 }
 
@@ -1660,11 +1660,11 @@ type OwnerGetChairsOKChairsItem struct {
 	// 稼働中かどうか.
 	Active bool `json:"active"`
 	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
+	RegisteredAt int64 `json:"registered_at"`
 	// 総移動距離.
 	TotalDistance int `json:"total_distance"`
 	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
+	TotalDistanceUpdatedAt OptInt64 `json:"total_distance_updated_at"`
 }
 
 // GetID returns the value of ID.
@@ -1688,7 +1688,7 @@ func (s *OwnerGetChairsOKChairsItem) GetActive() bool {
 }
 
 // GetRegisteredAt returns the value of RegisteredAt.
-func (s *OwnerGetChairsOKChairsItem) GetRegisteredAt() string {
+func (s *OwnerGetChairsOKChairsItem) GetRegisteredAt() int64 {
 	return s.RegisteredAt
 }
 
@@ -1698,7 +1698,7 @@ func (s *OwnerGetChairsOKChairsItem) GetTotalDistance() int {
 }
 
 // GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptString {
+func (s *OwnerGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptInt64 {
 	return s.TotalDistanceUpdatedAt
 }
 
@@ -1723,7 +1723,7 @@ func (s *OwnerGetChairsOKChairsItem) SetActive(val bool) {
 }
 
 // SetRegisteredAt sets the value of RegisteredAt.
-func (s *OwnerGetChairsOKChairsItem) SetRegisteredAt(val string) {
+func (s *OwnerGetChairsOKChairsItem) SetRegisteredAt(val int64) {
 	s.RegisteredAt = val
 }
 
@@ -1733,7 +1733,7 @@ func (s *OwnerGetChairsOKChairsItem) SetTotalDistance(val int) {
 }
 
 // SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptString) {
+func (s *OwnerGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptInt64) {
 	s.TotalDistanceUpdatedAt = val
 }
 
