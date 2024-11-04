@@ -85,13 +85,18 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 
 	chair := r.Context().Value("chair").(*Chair)
 
+	fmt.Printf("[POST /coordinate] id: %v, req: %+v\n", chair.ID, req)
+
 	tx, err := db.Beginx()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	defer tx.Rollback()
 	chairLocationID := ulid.Make().String()
+	defer func() {
+		tx.Rollback()
+		fmt.Printf("[POST /coordinate] DEFER id: %v, req: %+v, chairLocationID: %v\n", chair.ID, req, chairLocationID)
+	}()
 	if _, err := tx.Exec(
 		`INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)`,
 		chairLocationID, chair.ID, req.Latitude, req.Longitude,

@@ -105,7 +105,7 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
-		if err := db.Select(&reqs, "SELECT * FROM ride_requests JOIN ride_request_statuses ON ride_requests.id = ride_request.statuses.ride_request_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
+		if err := db.Select(&reqs, "SELECT ride_requests.* FROM ride_requests JOIN ride_request_statuses ON ride_requests.id = ride_request_statuses.ride_request_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
