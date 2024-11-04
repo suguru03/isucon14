@@ -33,7 +33,7 @@ func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO owners (id, name, access_token, created_at, updated_at) VALUES (?, ?, ?, isu_now(), isu_now())",
+		"INSERT INTO owners (id, name, access_token) VALUES (?, ?, ?)",
 		ownerID, req.Name, accessToken,
 	)
 	if err != nil {

@@ -37,7 +37,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	accessToken := secureRandomStr(32)
 	_, err := db.Exec(
-		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, isu_now(), isu_now())",
+		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token) VALUES (?, ?, ?, ?, ?, ?)",
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
@@ -71,7 +71,7 @@ func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
 
 	_, err := db.Exec(
-		`INSERT INTO payment_tokens (user_id, token, created_at) VALUES (?, ?, isu_now())`,
+		`INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)`,
 		user.ID,
 		req.Token,
 	)
@@ -125,8 +125,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude, requested_at, updated_at)
-				  VALUES (?, ?, ?, ?, ?, ?, ?, isu_now(), isu_now())`,
+		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
+				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -357,7 +357,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := tx.Exec(
-		`UPDATE ride_requests SET evaluation = ?, status = ?, updated_at = isu_now() WHERE id = ?`,
+		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
 		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -637,7 +637,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		chairLocation := &ChairLocation{}
 		err = tx.Get(
 			chairLocation,
-			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(isu_now(), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1`,
+			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1`,
 			chair.ID,
 		)
 		if err != nil {
@@ -667,7 +667,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 	retrievedAt := &time.Time{}
 	err = tx.Get(
 		retrievedAt,
-		`SELECT isu_now()`,
+		`SELECT CURRENT_TIMESTAMP(6)`,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
