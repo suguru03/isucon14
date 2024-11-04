@@ -357,6 +357,12 @@ paths:
                     description: オーナーID
                 required:
                   - id
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /owner/sales:
     get:
       tags:
