@@ -203,6 +203,103 @@ type AppGetNotificationNoContent struct{}
 
 func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
+type AppGetNotificationOK struct {
+	// 配車要求ID.
+	RequestID             string        `json:"request_id"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
+	Chair                 OptAppChair   `json:"chair"`
+	// 配車要求日時.
+	CreatedAt float64 `json:"created_at"`
+	// 配車要求更新日時.
+	UpdatedAt float64 `json:"updated_at"`
+	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
+	RetryAfterMs OptInt `json:"retry_after_ms"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AppGetNotificationOK) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppGetNotificationOK) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppGetNotificationOK) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *AppGetNotificationOK) GetStatus() RequestStatus {
+	return s.Status
+}
+
+// GetChair returns the value of Chair.
+func (s *AppGetNotificationOK) GetChair() OptAppChair {
+	return s.Chair
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AppGetNotificationOK) GetCreatedAt() float64 {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *AppGetNotificationOK) GetUpdatedAt() float64 {
+	return s.UpdatedAt
+}
+
+// GetRetryAfterMs returns the value of RetryAfterMs.
+func (s *AppGetNotificationOK) GetRetryAfterMs() OptInt {
+	return s.RetryAfterMs
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AppGetNotificationOK) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppGetNotificationOK) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AppGetNotificationOK) SetStatus(val RequestStatus) {
+	s.Status = val
+}
+
+// SetChair sets the value of Chair.
+func (s *AppGetNotificationOK) SetChair(val OptAppChair) {
+	s.Chair = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AppGetNotificationOK) SetCreatedAt(val float64) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *AppGetNotificationOK) SetUpdatedAt(val float64) {
+	s.UpdatedAt = val
+}
+
+// SetRetryAfterMs sets the value of RetryAfterMs.
+func (s *AppGetNotificationOK) SetRetryAfterMs(val OptInt) {
+	s.RetryAfterMs = val
+}
+
+func (*AppGetNotificationOK) appGetNotificationRes() {}
+
 // AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
 type AppPostPaymentMethodsNoContent struct{}
 
@@ -468,13 +565,85 @@ func (s *AppRequest) SetUpdatedAt(val float64) {
 	s.UpdatedAt = val
 }
 
-func (*AppRequest) appGetNotificationRes() {}
-func (*AppRequest) appGetRequestRes()      {}
+func (*AppRequest) appGetRequestRes() {}
 
 // ChairGetNotificationNoContent is response for ChairGetNotification operation.
 type ChairGetNotificationNoContent struct{}
 
 func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
+
+type ChairGetNotificationOK struct {
+	// 配車要求ID.
+	RequestID             string           `json:"request_id"`
+	User                  User             `json:"user"`
+	PickupCoordinate      OptCoordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
+	Status                OptRequestStatus `json:"status"`
+	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
+	RetryAfterMs OptInt `json:"retry_after_ms"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *ChairGetNotificationOK) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetUser returns the value of User.
+func (s *ChairGetNotificationOK) GetUser() User {
+	return s.User
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *ChairGetNotificationOK) GetPickupCoordinate() OptCoordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *ChairGetNotificationOK) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *ChairGetNotificationOK) GetStatus() OptRequestStatus {
+	return s.Status
+}
+
+// GetRetryAfterMs returns the value of RetryAfterMs.
+func (s *ChairGetNotificationOK) GetRetryAfterMs() OptInt {
+	return s.RetryAfterMs
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *ChairGetNotificationOK) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetUser sets the value of User.
+func (s *ChairGetNotificationOK) SetUser(val User) {
+	s.User = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *ChairGetNotificationOK) SetPickupCoordinate(val OptCoordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *ChairGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ChairGetNotificationOK) SetStatus(val OptRequestStatus) {
+	s.Status = val
+}
+
+// SetRetryAfterMs sets the value of RetryAfterMs.
+func (s *ChairGetNotificationOK) SetRetryAfterMs(val OptInt) {
+	s.RetryAfterMs = val
+}
+
+func (*ChairGetNotificationOK) chairGetNotificationRes() {}
 
 // ChairPostActivateNoContent is response for ChairPostActivate operation.
 type ChairPostActivateNoContent struct{}
@@ -639,8 +808,7 @@ func (s *ChairRequest) SetStatus(val OptRequestStatus) {
 	s.Status = val
 }
 
-func (*ChairRequest) chairGetNotificationRes() {}
-func (*ChairRequest) chairGetRequestRes()      {}
+func (*ChairRequest) chairGetRequestRes() {}
 
 // 座標情報.
 // Ref: #/components/schemas/Coordinate

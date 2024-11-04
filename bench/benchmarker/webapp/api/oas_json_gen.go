@@ -598,6 +598,215 @@ func (s *AppGetNearbyChairsOK) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *AppGetNotificationOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AppGetNotificationOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("request_id")
+		e.Str(s.RequestID)
+	}
+	{
+		e.FieldStart("pickup_coordinate")
+		s.PickupCoordinate.Encode(e)
+	}
+	{
+		e.FieldStart("destination_coordinate")
+		s.DestinationCoordinate.Encode(e)
+	}
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.Chair.Set {
+			e.FieldStart("chair")
+			s.Chair.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("created_at")
+		e.Float64(s.CreatedAt)
+	}
+	{
+		e.FieldStart("updated_at")
+		e.Float64(s.UpdatedAt)
+	}
+	{
+		if s.RetryAfterMs.Set {
+			e.FieldStart("retry_after_ms")
+			s.RetryAfterMs.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfAppGetNotificationOK = [8]string{
+	0: "request_id",
+	1: "pickup_coordinate",
+	2: "destination_coordinate",
+	3: "status",
+	4: "chair",
+	5: "created_at",
+	6: "updated_at",
+	7: "retry_after_ms",
+}
+
+// Decode decodes AppGetNotificationOK from json.
+func (s *AppGetNotificationOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AppGetNotificationOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "request_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.RequestID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"request_id\"")
+			}
+		case "pickup_coordinate":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.PickupCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pickup_coordinate\"")
+			}
+		case "destination_coordinate":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.DestinationCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"destination_coordinate\"")
+			}
+		case "status":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "chair":
+			if err := func() error {
+				s.Chair.Reset()
+				if err := s.Chair.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"chair\"")
+			}
+		case "created_at":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Float64()
+				s.CreatedAt = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_at\"")
+			}
+		case "updated_at":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Float64()
+				s.UpdatedAt = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"updated_at\"")
+			}
+		case "retry_after_ms":
+			if err := func() error {
+				s.RetryAfterMs.Reset()
+				if err := s.RetryAfterMs.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retry_after_ms\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AppGetNotificationOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b01101111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAppGetNotificationOK) {
+					name = jsonFieldsNameOfAppGetNotificationOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AppGetNotificationOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AppGetNotificationOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *AppPostPaymentMethodsReq) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -1614,6 +1823,183 @@ func (s *AppRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *AppRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ChairGetNotificationOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ChairGetNotificationOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("request_id")
+		e.Str(s.RequestID)
+	}
+	{
+		e.FieldStart("user")
+		s.User.Encode(e)
+	}
+	{
+		if s.PickupCoordinate.Set {
+			e.FieldStart("pickup_coordinate")
+			s.PickupCoordinate.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("destination_coordinate")
+		s.DestinationCoordinate.Encode(e)
+	}
+	{
+		if s.Status.Set {
+			e.FieldStart("status")
+			s.Status.Encode(e)
+		}
+	}
+	{
+		if s.RetryAfterMs.Set {
+			e.FieldStart("retry_after_ms")
+			s.RetryAfterMs.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfChairGetNotificationOK = [6]string{
+	0: "request_id",
+	1: "user",
+	2: "pickup_coordinate",
+	3: "destination_coordinate",
+	4: "status",
+	5: "retry_after_ms",
+}
+
+// Decode decodes ChairGetNotificationOK from json.
+func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ChairGetNotificationOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "request_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.RequestID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"request_id\"")
+			}
+		case "user":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.User.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"user\"")
+			}
+		case "pickup_coordinate":
+			if err := func() error {
+				s.PickupCoordinate.Reset()
+				if err := s.PickupCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pickup_coordinate\"")
+			}
+		case "destination_coordinate":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.DestinationCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"destination_coordinate\"")
+			}
+		case "status":
+			if err := func() error {
+				s.Status.Reset()
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "retry_after_ms":
+			if err := func() error {
+				s.RetryAfterMs.Reset()
+				if err := s.RetryAfterMs.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retry_after_ms\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ChairGetNotificationOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfChairGetNotificationOK) {
+					name = jsonFieldsNameOfChairGetNotificationOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ChairGetNotificationOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ChairGetNotificationOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2700,6 +3086,41 @@ func (s OptCoordinate) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptCoordinate) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes int as json.
+func (o OptInt) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Int(int(o.Value))
+}
+
+// Decode decodes int from json.
+func (o *OptInt) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptInt to nil")
+	}
+	o.Set = true
+	v, err := d.Int()
+	if err != nil {
+		return err
+	}
+	o.Value = int(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptInt) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptInt) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
