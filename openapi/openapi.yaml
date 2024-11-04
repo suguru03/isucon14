@@ -355,8 +355,12 @@ paths:
                   id:
                     type: string
                     description: オーナーID
+                  chair_register_token:
+                    type: string
+                    description: 椅子をオーナーに紐づけるための椅子登録トークン
                 required:
                   - id
+                  - chair_register_token
   /owner/sales:
     get:
       tags:
@@ -539,9 +543,13 @@ paths:
                 model:
                   type: string
                   description: 椅子のモデル
+                chair_register_token:
+                  type: string
+                  description: 椅子をオーナーに紐づけるための椅子登録トークン
               required:
                 - name
                 - model
+                - chair_register_token
       responses:
         "201":
           description: 椅子登録が完了した
@@ -550,15 +558,15 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token:
-                    type: string
-                    description: アクセストークン
                   id:
                     type: string
                     description: 椅子ID
+                  owner_id:
+                    type: string
+                    description: オーナーID
                 required:
-                  - access_token
                   - id
+                  - owner_id
   /chair/activate:
     post:
       tags:

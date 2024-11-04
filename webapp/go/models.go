@@ -65,9 +65,10 @@ type RideRequest struct {
 }
 
 type Owner struct {
-	ID          string    `db:"id"`
-	Name        string    `db:"name"`
-	AccessToken string    `db:"access_token"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID                 string    `db:"id"`
+	Name               string    `db:"name"`
+	AccessToken        string    `db:"access_token"`
+	ChairRegisterToken string    `db:"chair_register_token"`
+	CreatedAt          time.Time `db:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at"`
 }

@@ -106,7 +106,7 @@ type AppChairStatsRecentRidesItem struct {
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	// 移動距離.
 	Distance int `json:"distance"`
-	// 移動時間.
+	// 移動時間 (ナノ秒).
 	Duration int `json:"duration"`
 	// 評価.
 	Evaluation int `json:"evaluation"`
@@ -303,6 +303,8 @@ func (*AppGetNotificationOK) appGetNotificationRes() {}
 // AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
 type AppPostPaymentMethodsNoContent struct{}
 
+func (*AppPostPaymentMethodsNoContent) appPostPaymentMethodsRes() {}
+
 type AppPostPaymentMethodsReq struct {
 	// 決済トークン.
 	Token string `json:"token"`
@@ -400,6 +402,16 @@ func (s *AppPostRequestAccepted) GetRequestID() string {
 func (s *AppPostRequestAccepted) SetRequestID(val string) {
 	s.RequestID = val
 }
+
+func (*AppPostRequestAccepted) appPostRequestRes() {}
+
+type AppPostRequestBadRequest Error
+
+func (*AppPostRequestBadRequest) appPostRequestRes() {}
+
+type AppPostRequestConflict Error
+
+func (*AppPostRequestConflict) appPostRequestRes() {}
 
 type AppPostRequestEvaluateBadRequest Error
 
@@ -671,15 +683,10 @@ type ChairPostDeactivateNoContent struct{}
 type ChairPostDeactivateReq struct{}
 
 type ChairPostRegisterCreated struct {
-	// アクセストークン.
-	AccessToken string `json:"access_token"`
 	// 椅子ID.
 	ID string `json:"id"`
-}
-
-// GetAccessToken returns the value of AccessToken.
-func (s *ChairPostRegisterCreated) GetAccessToken() string {
-	return s.AccessToken
+	// オーナーID.
+	OwnerID string `json:"owner_id"`
 }
 
 // GetID returns the value of ID.
@@ -687,9 +694,9 @@ func (s *ChairPostRegisterCreated) GetID() string {
 	return s.ID
 }
 
-// SetAccessToken sets the value of AccessToken.
-func (s *ChairPostRegisterCreated) SetAccessToken(val string) {
-	s.AccessToken = val
+// GetOwnerID returns the value of OwnerID.
+func (s *ChairPostRegisterCreated) GetOwnerID() string {
+	return s.OwnerID
 }
 
 // SetID sets the value of ID.
@@ -697,11 +704,18 @@ func (s *ChairPostRegisterCreated) SetID(val string) {
 	s.ID = val
 }
 
+// SetOwnerID sets the value of OwnerID.
+func (s *ChairPostRegisterCreated) SetOwnerID(val string) {
+	s.OwnerID = val
+}
+
 type ChairPostRegisterReq struct {
 	// 椅子の名前.
 	Name string `json:"name"`
 	// 椅子のモデル.
 	Model string `json:"model"`
+	// 椅子をオーナーに紐づけるための椅子登録トークン.
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
 // GetName returns the value of Name.
@@ -714,6 +728,11 @@ func (s *ChairPostRegisterReq) GetModel() string {
 	return s.Model
 }
 
+// GetChairRegisterToken returns the value of ChairRegisterToken.
+func (s *ChairPostRegisterReq) GetChairRegisterToken() string {
+	return s.ChairRegisterToken
+}
+
 // SetName sets the value of Name.
 func (s *ChairPostRegisterReq) SetName(val string) {
 	s.Name = val
@@ -722,6 +741,11 @@ func (s *ChairPostRegisterReq) SetName(val string) {
 // SetModel sets the value of Model.
 func (s *ChairPostRegisterReq) SetModel(val string) {
 	s.Model = val
+}
+
+// SetChairRegisterToken sets the value of ChairRegisterToken.
+func (s *ChairPostRegisterReq) SetChairRegisterToken(val string) {
+	s.ChairRegisterToken = val
 }
 
 // ChairPostRequestAcceptNoContent is response for ChairPostRequestAccept operation.
@@ -855,6 +879,7 @@ func (s *Error) SetMessage(val string) {
 }
 
 func (*Error) appGetRequestRes()          {}
+func (*Error) appPostPaymentMethodsRes()  {}
 func (*Error) appPostRegisterRes()        {}
 func (*Error) chairGetRequestRes()        {}
 func (*Error) chairPostRequestAcceptRes() {}
@@ -1708,6 +1733,8 @@ func (s *OwnerGetSalesOKModelsItem) SetSales(val int) {
 type OwnerPostRegisterCreated struct {
 	// オーナーID.
 	ID string `json:"id"`
+	// 椅子をオーナーに紐づけるための椅子登録トークン.
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
 // GetID returns the value of ID.
@@ -1715,9 +1742,19 @@ func (s *OwnerPostRegisterCreated) GetID() string {
 	return s.ID
 }
 
+// GetChairRegisterToken returns the value of ChairRegisterToken.
+func (s *OwnerPostRegisterCreated) GetChairRegisterToken() string {
+	return s.ChairRegisterToken
+}
+
 // SetID sets the value of ID.
 func (s *OwnerPostRegisterCreated) SetID(val string) {
 	s.ID = val
+}
+
+// SetChairRegisterToken sets the value of ChairRegisterToken.
+func (s *OwnerPostRegisterCreated) SetChairRegisterToken(val string) {
+	s.ChairRegisterToken = val
 }
 
 type OwnerPostRegisterReq struct {
@@ -1736,95 +1773,25 @@ func (s *OwnerPostRegisterReq) SetName(val string) {
 }
 
 type PostInitializeOK struct {
-	// 実装言語.
-	Language PostInitializeOKLanguage `json:"language"`
+	// 実装言語
+	// - go
+	// - perl
+	// - php
+	// - python
+	// - ruby
+	// - rust
+	// - node.
+	Language string `json:"language"`
 }
 
 // GetLanguage returns the value of Language.
-func (s *PostInitializeOK) GetLanguage() PostInitializeOKLanguage {
+func (s *PostInitializeOK) GetLanguage() string {
 	return s.Language
 }
 
 // SetLanguage sets the value of Language.
-func (s *PostInitializeOK) SetLanguage(val PostInitializeOKLanguage) {
+func (s *PostInitializeOK) SetLanguage(val string) {
 	s.Language = val
-}
-
-// 実装言語.
-type PostInitializeOKLanguage string
-
-const (
-	PostInitializeOKLanguageGo     PostInitializeOKLanguage = "go"
-	PostInitializeOKLanguagePerl   PostInitializeOKLanguage = "perl"
-	PostInitializeOKLanguagePhp    PostInitializeOKLanguage = "php"
-	PostInitializeOKLanguagePython PostInitializeOKLanguage = "python"
-	PostInitializeOKLanguageRuby   PostInitializeOKLanguage = "ruby"
-	PostInitializeOKLanguageRust   PostInitializeOKLanguage = "rust"
-	PostInitializeOKLanguageNode   PostInitializeOKLanguage = "node"
-)
-
-// AllValues returns all PostInitializeOKLanguage values.
-func (PostInitializeOKLanguage) AllValues() []PostInitializeOKLanguage {
-	return []PostInitializeOKLanguage{
-		PostInitializeOKLanguageGo,
-		PostInitializeOKLanguagePerl,
-		PostInitializeOKLanguagePhp,
-		PostInitializeOKLanguagePython,
-		PostInitializeOKLanguageRuby,
-		PostInitializeOKLanguageRust,
-		PostInitializeOKLanguageNode,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s PostInitializeOKLanguage) MarshalText() ([]byte, error) {
-	switch s {
-	case PostInitializeOKLanguageGo:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePerl:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePhp:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePython:
-		return []byte(s), nil
-	case PostInitializeOKLanguageRuby:
-		return []byte(s), nil
-	case PostInitializeOKLanguageRust:
-		return []byte(s), nil
-	case PostInitializeOKLanguageNode:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *PostInitializeOKLanguage) UnmarshalText(data []byte) error {
-	switch PostInitializeOKLanguage(data) {
-	case PostInitializeOKLanguageGo:
-		*s = PostInitializeOKLanguageGo
-		return nil
-	case PostInitializeOKLanguagePerl:
-		*s = PostInitializeOKLanguagePerl
-		return nil
-	case PostInitializeOKLanguagePhp:
-		*s = PostInitializeOKLanguagePhp
-		return nil
-	case PostInitializeOKLanguagePython:
-		*s = PostInitializeOKLanguagePython
-		return nil
-	case PostInitializeOKLanguageRuby:
-		*s = PostInitializeOKLanguageRuby
-		return nil
-	case PostInitializeOKLanguageRust:
-		*s = PostInitializeOKLanguageRust
-		return nil
-	case PostInitializeOKLanguageNode:
-		*s = PostInitializeOKLanguageNode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 type PostInitializeReq struct {

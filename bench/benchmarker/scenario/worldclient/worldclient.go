@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -82,11 +81,37 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 	}
 
 	return &world.RegisterProviderResponse{
-		ServerProviderID: response.ID,
+		ServerProviderID:     response.ID,
+		ChairRegisteredToken: response.ChairRegisterToken,
 		Client: &providerClient{
 			ctx:                c.ctx,
 			client:             client,
 			webappClientConfig: c.webappClientConfig,
+		},
+	}, nil
+}
+
+func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+	client, err := webapp.NewClient(c.webappClientConfig)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
+	}
+
+	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
+		Name:               data.Name,
+		Model:              data.Model,
+		ChairRegisterToken: provider.RegisteredData.ChairRegisterToken,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
+	}
+
+	return &world.RegisterChairResponse{
+		ServerChairID: response.ID,
+		ServerOwnerID: response.OwnerID,
+		Client: &chairClient{
+			ctx:    c.ctx,
+			client: client,
 		},
 	}, nil
 }
@@ -142,31 +167,6 @@ func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetPr
 			TotalDistanceUpdatedAt: null.NewTime(totalDistanceUpdatedAt, v.TotalDistanceUpdatedAt.Set),
 		}
 	})}, nil
-}
-
-func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
-	response, err := c.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
-		Name:  data.Name,
-		Model: data.Model,
-	})
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
-	}
-
-	client, err := webapp.NewClient(c.webappClientConfig)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
-	}
-
-	client.SetCookie(&http.Cookie{Name: "chair_session", Value: response.AccessToken})
-
-	return &world.RegisterChairResponse{
-		ServerUserID: response.ID,
-		Client: &chairClient{
-			ctx:    c.ctx,
-			client: client,
-		},
-	}, nil
 }
 
 func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) (*world.SendChairCoordinateResponse, error) {

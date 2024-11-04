@@ -382,50 +382,6 @@ func (s *OwnerGetSalesOK) Validate() error {
 	return nil
 }
 
-func (s *PostInitializeOK) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Language.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "language",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s PostInitializeOKLanguage) Validate() error {
-	switch s {
-	case "go":
-		return nil
-	case "perl":
-		return nil
-	case "php":
-		return nil
-	case "python":
-		return nil
-	case "ruby":
-		return nil
-	case "rust":
-		return nil
-	case "node":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s RequestStatus) Validate() error {
 	switch s {
 	case "MATCHING":
