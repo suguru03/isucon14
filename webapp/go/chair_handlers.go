@@ -199,9 +199,8 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 
 	if !found || rideRequest.Status == "COMPLETED" || rideRequest.Status == "CANCELED" {
 		matchRequest := &RideRequest{}
-		// TODO: いい感じに椅子とユーザーをマッチングさせる
-		// MEMO: 多分距離と椅子の移動速度が関係しそう
-		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY requested_at LIMIT 1 FOR UPDATE`); err != nil {
+		// MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
+		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE status = 'MATCHING' AND chair_id IS NULL ORDER BY requested_at DESC LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				w.WriteHeader(http.StatusNoContent)
 				return
