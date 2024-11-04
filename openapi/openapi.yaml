@@ -572,11 +572,6 @@ paths:
       summary: 椅子が配車受付を開始する
       description: ""
       operationId: chair-post-activate
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "204":
           description: サービスが椅子が配車受付を開始したことを了解した
@@ -587,11 +582,6 @@ paths:
       summary: 椅子が配車受付を停止する
       description: ""
       operationId: chair-post-deactivate
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "204":
           description: サービスが椅子が配車受付を停止したことを了解した
@@ -619,6 +609,41 @@ paths:
                     description: 記録日時
                 required:
                   - datetime
+  /chair/notification:
+    get:
+      tags:
+        - chair
+      summary: 椅子向け通知エンドポイント
+      description: 椅子に配車要求を通知するなどで使う想定
+      operationId: chair-get-notification
+      responses:
+        "200":
+          description: 自分に割り当てられた最新の配車要求
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: 配車要求ID
+                  user:
+                    $ref: "#/components/schemas/User"
+                  pickup_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  destination_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  status:
+                    $ref: "#/components/schemas/RequestStatus"
+                  retry_after_ms:
+                    type: integer
+                    description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+                required:
+                  - request_id
+                  - user
+                  - destination_coordinate
+        "204":
+          description: 割り当てられた配車要求が存在しない場合
   "/chair/requests/{request_id}":
     get:
       tags:
@@ -703,41 +728,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /chair/notification:
-    get:
-      tags:
-        - chair
-      summary: 椅子向け通知エンドポイント
-      description: 椅子に配車要求を通知するなどで使う想定
-      operationId: chair-get-notification
-      responses:
-        "200":
-          description: 自分に割り当てられた最新の配車要求
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  request_id:
-                    type: string
-                    description: 配車要求ID
-                  user:
-                    $ref: "#/components/schemas/User"
-                  pickup_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  destination_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  status:
-                    $ref: "#/components/schemas/RequestStatus"
-                  retry_after_ms:
-                    type: integer
-                    description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
-                required:
-                  - request_id
-                  - user
-                  - destination_coordinate
-        "204":
-          description: 割り当てられた配車要求が存在しない場合
 components:
   parameters:
     request_id:
