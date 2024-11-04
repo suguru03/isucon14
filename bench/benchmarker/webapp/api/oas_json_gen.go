@@ -3398,6 +3398,41 @@ func (s *OptInt) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes int64 as json.
+func (o OptInt64) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Int64(int64(o.Value))
+}
+
+// Decode decodes int64 from json.
+func (o *OptInt64) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptInt64 to nil")
+	}
+	o.Set = true
+	v, err := d.Int64()
+	if err != nil {
+		return err
+	}
+	o.Value = int64(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptInt64) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptInt64) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes OwnerPostRegisterReq as json.
 func (o OptOwnerPostRegisterReq) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -3497,41 +3532,6 @@ func (s *OptRequestStatus) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes string as json.
-func (o OptString) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes string from json.
-func (o *OptString) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptString to nil")
-	}
-	o.Set = true
-	v, err := d.Str()
-	if err != nil {
-		return err
-	}
-	o.Value = string(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptString) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptString) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode implements json.Marshaler.
 func (s *OwnerGetChairDetailOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -3559,7 +3559,7 @@ func (s *OwnerGetChairDetailOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("registered_at")
-		e.Str(s.RegisteredAt)
+		e.Int64(s.RegisteredAt)
 	}
 	{
 		e.FieldStart("total_distance")
@@ -3643,8 +3643,8 @@ func (s *OwnerGetChairDetailOK) Decode(d *jx.Decoder) error {
 		case "registered_at":
 			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Str()
-				s.RegisteredAt = string(v)
+				v, err := d.Int64()
+				s.RegisteredAt = int64(v)
 				if err != nil {
 					return err
 				}
@@ -3863,7 +3863,7 @@ func (s *OwnerGetChairsOKChairsItem) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("registered_at")
-		e.Str(s.RegisteredAt)
+		e.Int64(s.RegisteredAt)
 	}
 	{
 		e.FieldStart("total_distance")
@@ -3947,8 +3947,8 @@ func (s *OwnerGetChairsOKChairsItem) Decode(d *jx.Decoder) error {
 		case "registered_at":
 			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Str()
-				s.RegisteredAt = string(v)
+				v, err := d.Int64()
+				s.RegisteredAt = int64(v)
 				if err != nil {
 					return err
 				}

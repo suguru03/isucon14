@@ -155,16 +155,14 @@ func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetPr
 	}
 
 	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.ProviderChair {
-		registeredAt, _ := time.Parse(time.RFC3339Nano, v.RegisteredAt)
-		totalDistanceUpdatedAt, _ := time.Parse(time.RFC3339Nano, v.TotalDistanceUpdatedAt.Value)
 		return &world.ProviderChair{
 			ID:                     v.ID,
 			Name:                   v.Name,
 			Model:                  v.Model,
 			Active:                 v.Active,
-			RegisteredAt:           registeredAt,
+			RegisteredAt:           time.UnixMilli(v.RegisteredAt),
 			TotalDistance:          v.TotalDistance,
-			TotalDistanceUpdatedAt: null.NewTime(totalDistanceUpdatedAt, v.TotalDistanceUpdatedAt.Set),
+			TotalDistanceUpdatedAt: null.NewTime(time.UnixMilli(v.TotalDistanceUpdatedAt.Value), v.TotalDistanceUpdatedAt.Set),
 		}
 	})}, nil
 }

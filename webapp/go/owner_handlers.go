@@ -173,13 +173,13 @@ type ChairWithDetail struct {
 }
 
 type ownerChair struct {
-	ID                     string     `json:"id"`
-	Name                   string     `json:"name"`
-	Model                  string     `json:"model"`
-	Active                 bool       `json:"active"`
-	RegisteredAt           time.Time  `json:"registered_at"`
-	TotalDistance          int        `json:"total_distance"`
-	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at,omitempty"`
+	ID                     string `json:"id"`
+	Name                   string `json:"name"`
+	Model                  string `json:"model"`
+	Active                 bool   `json:"active"`
+	RegisteredAt           int64  `json:"registered_at"`
+	TotalDistance          int    `json:"total_distance"`
+	TotalDistanceUpdatedAt *int64 `json:"total_distance_updated_at,omitempty"`
 }
 
 type ownerGetChairResponse struct {
@@ -223,11 +223,12 @@ WHERE owner_id = ?
 			Name:          chair.Name,
 			Model:         chair.Model,
 			Active:        chair.IsActive,
-			RegisteredAt:  chair.CreatedAt,
+			RegisteredAt:  chair.CreatedAt.UnixMilli(),
 			TotalDistance: chair.TotalDistance,
 		}
 		if chair.TotalDistanceUpdatedAt.Valid {
-			c.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+			t := chair.TotalDistanceUpdatedAt.Time.UnixMilli()
+			c.TotalDistanceUpdatedAt = &t
 		}
 		res.Chairs = append(res.Chairs, c)
 	}
@@ -235,13 +236,13 @@ WHERE owner_id = ?
 }
 
 type ownerGetChairDetailResponse struct {
-	ID                     string     `json:"id"`
-	Name                   string     `json:"name"`
-	Model                  string     `json:"model"`
-	Active                 bool       `json:"active"`
-	RegisteredAt           time.Time  `json:"registered_at"`
-	TotalDistance          int        `json:"total_distance"`
-	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at,omitempty"`
+	ID                     string `json:"id"`
+	Name                   string `json:"name"`
+	Model                  string `json:"model"`
+	Active                 bool   `json:"active"`
+	RegisteredAt           int64  `json:"registered_at"`
+	TotalDistance          int    `json:"total_distance"`
+	TotalDistanceUpdatedAt *int64 `json:"total_distance_updated_at,omitempty"`
 }
 
 func ownerGetChairDetail(w http.ResponseWriter, r *http.Request) {
@@ -284,11 +285,12 @@ WHERE owner_id = ? AND id = ?`, owner.ID, chairID); err != nil {
 		Name:          chair.Name,
 		Model:         chair.Model,
 		Active:        chair.IsActive,
-		RegisteredAt:  chair.CreatedAt,
+		RegisteredAt:  chair.CreatedAt.UnixMilli(),
 		TotalDistance: chair.TotalDistance,
 	}
 	if chair.TotalDistanceUpdatedAt.Valid {
-		resp.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+		t := chair.TotalDistanceUpdatedAt.Time.UnixMilli()
+		resp.TotalDistanceUpdatedAt = &t
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
