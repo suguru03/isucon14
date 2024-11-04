@@ -106,8 +106,8 @@ type AppChairStatsRecentRidesItem struct {
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	// 移動距離.
 	Distance int `json:"distance"`
-	// 移動時間 (ナノ秒).
-	Duration int `json:"duration"`
+	// 移動時間 (ミリ秒).
+	Duration int64 `json:"duration"`
 	// 評価.
 	Evaluation int `json:"evaluation"`
 }
@@ -133,7 +133,7 @@ func (s *AppChairStatsRecentRidesItem) GetDistance() int {
 }
 
 // GetDuration returns the value of Duration.
-func (s *AppChairStatsRecentRidesItem) GetDuration() int {
+func (s *AppChairStatsRecentRidesItem) GetDuration() int64 {
 	return s.Duration
 }
 
@@ -163,7 +163,7 @@ func (s *AppChairStatsRecentRidesItem) SetDistance(val int) {
 }
 
 // SetDuration sets the value of Duration.
-func (s *AppChairStatsRecentRidesItem) SetDuration(val int) {
+func (s *AppChairStatsRecentRidesItem) SetDuration(val int64) {
 	s.Duration = val
 }
 
@@ -175,7 +175,7 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 type AppGetNearbyChairsOK struct {
 	Chairs []AppChair `json:"chairs"`
 	// 取得日時.
-	RetrievedAt string `json:"retrieved_at"`
+	RetrievedAt float64 `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
@@ -184,7 +184,7 @@ func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
 }
 
 // GetRetrievedAt returns the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) GetRetrievedAt() string {
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() float64 {
 	return s.RetrievedAt
 }
 
@@ -194,7 +194,7 @@ func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
 }
 
 // SetRetrievedAt sets the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) SetRetrievedAt(val string) {
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val float64) {
 	s.RetrievedAt = val
 }
 
@@ -586,11 +586,11 @@ func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
 
 type ChairGetNotificationOK struct {
 	// 配車要求ID.
-	RequestID             string           `json:"request_id"`
-	User                  User             `json:"user"`
-	PickupCoordinate      OptCoordinate    `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
-	Status                OptRequestStatus `json:"status"`
+	RequestID             string        `json:"request_id"`
+	User                  User          `json:"user"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
 	RetryAfterMs OptInt `json:"retry_after_ms"`
 }
@@ -606,7 +606,7 @@ func (s *ChairGetNotificationOK) GetUser() User {
 }
 
 // GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) GetPickupCoordinate() OptCoordinate {
+func (s *ChairGetNotificationOK) GetPickupCoordinate() Coordinate {
 	return s.PickupCoordinate
 }
 
@@ -616,7 +616,7 @@ func (s *ChairGetNotificationOK) GetDestinationCoordinate() Coordinate {
 }
 
 // GetStatus returns the value of Status.
-func (s *ChairGetNotificationOK) GetStatus() OptRequestStatus {
+func (s *ChairGetNotificationOK) GetStatus() RequestStatus {
 	return s.Status
 }
 
@@ -636,7 +636,7 @@ func (s *ChairGetNotificationOK) SetUser(val User) {
 }
 
 // SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) SetPickupCoordinate(val OptCoordinate) {
+func (s *ChairGetNotificationOK) SetPickupCoordinate(val Coordinate) {
 	s.PickupCoordinate = val
 }
 
@@ -646,7 +646,7 @@ func (s *ChairGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
 }
 
 // SetStatus sets the value of Status.
-func (s *ChairGetNotificationOK) SetStatus(val OptRequestStatus) {
+func (s *ChairGetNotificationOK) SetStatus(val RequestStatus) {
 	s.Status = val
 }
 
@@ -659,8 +659,6 @@ func (*ChairGetNotificationOK) chairGetNotificationRes() {}
 
 // ChairPostActivateNoContent is response for ChairPostActivate operation.
 type ChairPostActivateNoContent struct{}
-
-type ChairPostActivateReq struct{}
 
 type ChairPostCoordinateOK struct {
 	// 記録日時.
@@ -679,8 +677,6 @@ func (s *ChairPostCoordinateOK) SetDatetime(val string) {
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.
 type ChairPostDeactivateNoContent struct{}
-
-type ChairPostDeactivateReq struct{}
 
 type ChairPostRegisterCreated struct {
 	// 椅子ID.
@@ -884,6 +880,7 @@ func (*Error) appPostRegisterRes()        {}
 func (*Error) chairGetRequestRes()        {}
 func (*Error) chairPostRequestAcceptRes() {}
 func (*Error) chairPostRequestDenyRes()   {}
+func (*Error) ownerPostRegisterRes()      {}
 
 // NewOptAppChair returns new OptAppChair with value set to v.
 func NewOptAppChair(v AppChair) OptAppChair {
@@ -1756,6 +1753,8 @@ func (s *OwnerPostRegisterCreated) SetID(val string) {
 func (s *OwnerPostRegisterCreated) SetChairRegisterToken(val string) {
 	s.ChairRegisterToken = val
 }
+
+func (*OwnerPostRegisterCreated) ownerPostRegisterRes() {}
 
 type OwnerPostRegisterReq struct {
 	// オーナー名.

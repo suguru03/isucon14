@@ -44,3 +44,7 @@ type ChairPostRequestDenyRes interface {
 type ChairPostRequestDepartRes interface {
 	chairPostRequestDepartRes()
 }
+
+type OwnerPostRegisterRes interface {
+	ownerPostRegisterRes()
+}

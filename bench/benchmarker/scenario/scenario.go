@@ -160,7 +160,36 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
+	if err := s.prevalidation(ctx, client); err != nil {
+		return err
+	}
+
+	if !s.prepareOnly {
+		// バリデーション後にデータを初期化する
+		if err := s.initializeData(ctx, client); err != nil {
+			return err
+		}
+	}
+
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				if err := sendResult(s, false, false); err != nil {
+					// TODO: エラーをadmin側に出力する
+				}
+			case <-ctx.Done():
+				ticker.Stop()
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) error {
+	_, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
 	if err != nil {
 		return err
 	}
@@ -196,20 +225,6 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 			return err
 		}
 	}
-
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				if err := sendResult(s, false, false); err != nil {
-					// TODO: エラーをadmin側に出力する
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-			}
-		}
-	}()
 
 	return nil
 }

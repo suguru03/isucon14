@@ -91,22 +91,6 @@ func encodeAppPostRequestEvaluateRequest(
 	return nil
 }
 
-func encodeChairPostActivateRequest(
-	req *ChairPostActivateReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		if req != nil {
-			req.Encode(e)
-		}
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeChairPostCoordinateRequest(
 	req OptCoordinate,
 	r *http.Request,
@@ -119,22 +103,6 @@ func encodeChairPostCoordinateRequest(
 	e := new(jx.Encoder)
 	{
 		if req.Set {
-			req.Encode(e)
-		}
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeChairPostDeactivateRequest(
-	req *ChairPostDeactivateReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		if req != nil {
 			req.Encode(e)
 		}
 	}

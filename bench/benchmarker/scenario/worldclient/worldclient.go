@@ -255,7 +255,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 			}
 
 			var event world.NotificationEvent
-			switch r.Status.Value {
+			switch r.Status {
 			case api.RequestStatusMATCHING:
 				event = &world.ChairNotificationEventMatched{
 					ServerRequestID: r.RequestID,

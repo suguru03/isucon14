@@ -324,7 +324,7 @@ func (s *AppChairStatsRecentRidesItem) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("duration")
-		e.Int(s.Duration)
+		e.Int64(s.Duration)
 	}
 	{
 		e.FieldStart("evaluation")
@@ -397,8 +397,8 @@ func (s *AppChairStatsRecentRidesItem) Decode(d *jx.Decoder) error {
 		case "duration":
 			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Int()
-				s.Duration = int(v)
+				v, err := d.Int64()
+				s.Duration = int64(v)
 				if err != nil {
 					return err
 				}
@@ -493,7 +493,7 @@ func (s *AppGetNearbyChairsOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("retrieved_at")
-		e.Str(s.RetrievedAt)
+		e.Float64(s.RetrievedAt)
 	}
 }
 
@@ -532,8 +532,8 @@ func (s *AppGetNearbyChairsOK) Decode(d *jx.Decoder) error {
 		case "retrieved_at":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Str()
-				s.RetrievedAt = string(v)
+				v, err := d.Float64()
+				s.RetrievedAt = float64(v)
 				if err != nil {
 					return err
 				}
@@ -1921,20 +1921,16 @@ func (s *ChairGetNotificationOK) encodeFields(e *jx.Encoder) {
 		s.User.Encode(e)
 	}
 	{
-		if s.PickupCoordinate.Set {
-			e.FieldStart("pickup_coordinate")
-			s.PickupCoordinate.Encode(e)
-		}
+		e.FieldStart("pickup_coordinate")
+		s.PickupCoordinate.Encode(e)
 	}
 	{
 		e.FieldStart("destination_coordinate")
 		s.DestinationCoordinate.Encode(e)
 	}
 	{
-		if s.Status.Set {
-			e.FieldStart("status")
-			s.Status.Encode(e)
-		}
+		e.FieldStart("status")
+		s.Status.Encode(e)
 	}
 	{
 		if s.RetryAfterMs.Set {
@@ -1985,8 +1981,8 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"user\"")
 			}
 		case "pickup_coordinate":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				s.PickupCoordinate.Reset()
 				if err := s.PickupCoordinate.Decode(d); err != nil {
 					return err
 				}
@@ -2005,8 +2001,8 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"destination_coordinate\"")
 			}
 		case "status":
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				s.Status.Reset()
 				if err := s.Status.Decode(d); err != nil {
 					return err
 				}
@@ -2034,7 +2030,7 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001011,
+		0b00011111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2076,50 +2072,6 @@ func (s *ChairGetNotificationOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ChairGetNotificationOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ChairPostActivateReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ChairPostActivateReq) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfChairPostActivateReq = [0]string{}
-
-// Decode decodes ChairPostActivateReq from json.
-func (s *ChairPostActivateReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ChairPostActivateReq to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode ChairPostActivateReq")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ChairPostActivateReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ChairPostActivateReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2216,50 +2168,6 @@ func (s *ChairPostCoordinateOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ChairPostCoordinateOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ChairPostDeactivateReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ChairPostDeactivateReq) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfChairPostDeactivateReq = [0]string{}
-
-// Decode decodes ChairPostDeactivateReq from json.
-func (s *ChairPostDeactivateReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ChairPostDeactivateReq to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode ChairPostDeactivateReq")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ChairPostDeactivateReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ChairPostDeactivateReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
