@@ -85,8 +85,6 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 
 	chair := r.Context().Value("chair").(*Chair)
 
-	fmt.Printf("[POST /coordinate] id: %v, req: %+v\n", chair.ID, req)
-
 	tx, err := db.Beginx()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)

@@ -105,21 +105,12 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
-		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
+		if err := db.Select(&reqs, "SELECT * FROM ride_requests JOIN ride_request_statuses ON ride_requests.id = ride_request.statuses.ride_request_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		statusMap := map[string]string{}
-		for _, req := range reqs {
-			status, err := getLatestRideRequestStatus(db, req.ID)
-			if err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-			statusMap[req.ID] = status
-		}
 
-		chairSales := sumSales(reqs, statusMap)
+		chairSales := sumSales(reqs)
 		res.TotalSales += chairSales
 
 		res.Chairs = append(res.Chairs, ChairSales{
@@ -149,12 +140,9 @@ const (
 	farePerDistance = 100
 )
 
-func sumSales(requests []RideRequest, statusMap map[string]string) int {
+func sumSales(requests []RideRequest) int {
 	sale := 0
 	for _, req := range requests {
-		if statusMap[req.ID] != "COMPLETED" {
-			continue
-		}
 		sale += calculateSale(req)
 	}
 	return sale
