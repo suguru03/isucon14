@@ -100,3 +100,15 @@ CREATE TABLE owners
   UNIQUE (chair_register_token)
 )
   COMMENT = '椅子のオーナー情報テーブル';
+
+DROP TABLE IF EXISTS coupons;
+CREATE TABLE coupons
+(
+  user_id    VARCHAR(26)  NOT NULL COMMENT '所有しているユーザーのID',
+  code       VARCHAR(255) NOT NULL COMMENT 'クーポンコード',
+  discount   INTEGER      NOT NULL COMMENT '割引額',
+  created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '付与日時',
+  used_by    VARCHAR(26)  NULL COMMENT '使用したride_requestのID',
+  PRIMARY KEY (user_id, code)
+)
+  COMMENT 'クーポンテーブル';

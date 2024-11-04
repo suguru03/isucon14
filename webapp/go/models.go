@@ -72,3 +72,11 @@ type Owner struct {
 	CreatedAt          time.Time `db:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at"`
 }
+
+type Coupon struct {
+	UserID    string    `db:"user_id"`
+	Code      string    `db:"code"`
+	Discount  int       `db:"discount"`
+	CreatedAt time.Time `db:"created_at"`
+	UsedBy    *string   `db:"used_by"`
+}
