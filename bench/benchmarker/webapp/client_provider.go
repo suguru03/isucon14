@@ -53,7 +53,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 		q.Set("until", params.Until.Value)
 	}
 
-	req, err := c.agent.NewRequest(http.MethodGet, "/owner/sales?"+q.Encode(), nil)
+	req, err := c.agent.NewRequest(http.MethodGet, "/api/owner/sales?"+q.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}
