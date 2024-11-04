@@ -371,7 +371,8 @@ paths:
                     items:
                       $ref: "#/components/schemas/AppChair"
                   retrieved_at:
-                    type: number
+                    type: integer
+                    format: int64
                     description: 取得日時
                 required:
                   - chairs

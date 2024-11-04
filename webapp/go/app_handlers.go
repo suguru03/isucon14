@@ -805,7 +805,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, &appGetNearbyChairsResponse{
 		Chairs:      nearbyChairs,
-		RetrievedAt: retrievedAt.Unix(),
+		RetrievedAt: retrievedAt.UnixMilli(),
 	})
 }
 

@@ -175,7 +175,7 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 type AppGetNearbyChairsOK struct {
 	Chairs []AppChair `json:"chairs"`
 	// 取得日時.
-	RetrievedAt float64 `json:"retrieved_at"`
+	RetrievedAt int64 `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
@@ -184,7 +184,7 @@ func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
 }
 
 // GetRetrievedAt returns the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) GetRetrievedAt() float64 {
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() int64 {
 	return s.RetrievedAt
 }
 
@@ -194,7 +194,7 @@ func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
 }
 
 // SetRetrievedAt sets the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) SetRetrievedAt(val float64) {
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val int64) {
 	s.RetrievedAt = val
 }
 

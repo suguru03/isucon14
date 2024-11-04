@@ -493,7 +493,7 @@ func (s *AppGetNearbyChairsOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("retrieved_at")
-		e.Float64(s.RetrievedAt)
+		e.Int64(s.RetrievedAt)
 	}
 }
 
@@ -532,8 +532,8 @@ func (s *AppGetNearbyChairsOK) Decode(d *jx.Decoder) error {
 		case "retrieved_at":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Float64()
-				s.RetrievedAt = float64(v)
+				v, err := d.Int64()
+				s.RetrievedAt = int64(v)
 				if err != nil {
 					return err
 				}
