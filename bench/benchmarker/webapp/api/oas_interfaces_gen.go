@@ -9,12 +9,20 @@ type AppGetRequestRes interface {
 	appGetRequestRes()
 }
 
+type AppPostPaymentMethodsRes interface {
+	appPostPaymentMethodsRes()
+}
+
 type AppPostRegisterRes interface {
 	appPostRegisterRes()
 }
 
 type AppPostRequestEvaluateRes interface {
 	appPostRequestEvaluateRes()
+}
+
+type AppPostRequestRes interface {
+	appPostRequestRes()
 }
 
 type ChairGetNotificationRes interface {

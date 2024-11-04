@@ -96,19 +96,18 @@ func setup() http.Handler {
 
 	// chair handlers
 	{
-		authedMux1 := mux.With(ownerAuthMiddleware)
-		authedMux1.HandleFunc("POST /api/chair/register", chairPostRegister)
+		mux.HandleFunc("POST /api/chair/register", chairPostRegister)
 
-		authedMux2 := mux.With(chairAuthMiddleware)
-		authedMux2.HandleFunc("POST /api/chair/activate", chairPostActivate)
-		authedMux2.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
-		authedMux2.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
-		//authedMux2.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
-		authedMux2.HandleFunc("GET /api/chair/notification", chairGetNotification)
-		authedMux2.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux := mux.With(chairAuthMiddleware)
+		authedMux.HandleFunc("POST /api/chair/activate", chairPostActivate)
+		authedMux.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
+		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
+		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
+		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
+		authedMux.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}
 
 	return mux
