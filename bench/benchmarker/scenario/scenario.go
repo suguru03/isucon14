@@ -43,9 +43,10 @@ type Scenario struct {
 	step             *isucandar.BenchmarkStep
 	reporter         benchrun.Reporter
 	meter            metric.Meter
+	prepareOnly      bool
 }
 
-func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
+func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool) *Scenario {
 	completedRequestChan := make(chan *world.Request, 1000)
 	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
@@ -144,6 +145,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		paymentServer:    paymentServer,
 		reporter:         reporter,
 		meter:            meter,
+		prepareOnly:      prepareOnly,
 	}
 }
 
@@ -214,6 +216,10 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 
 // Load はシナリオのメイン処理を行う
 func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	if s.prepareOnly {
+		return nil
+	}
+
 	s.world.RestTicker()
 LOOP:
 	for {
