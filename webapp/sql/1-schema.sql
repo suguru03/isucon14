@@ -1,3 +1,5 @@
+USE isuride;
+
 DROP TABLE IF EXISTS chair_models;
 CREATE TABLE chair_models
 (

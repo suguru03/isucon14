@@ -80,7 +80,7 @@ func decodeAppGetNotificationResponse(resp *http.Response) (res AppGetNotificati
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response AppRequest
+			var response AppGetNotificationOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -455,7 +455,7 @@ func decodeChairGetNotificationResponse(resp *http.Response) (res ChairGetNotifi
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response ChairRequest
+			var response ChairGetNotificationOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err

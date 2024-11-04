@@ -232,11 +232,39 @@ paths:
       operationId: app-get-notification
       responses:
         "200":
-          description: Server Sent Eventsで通知レスポンスが送信されます
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AppRequest"
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: 配車要求ID
+                  pickup_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  destination_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  status:
+                    $ref: "#/components/schemas/RequestStatus"
+                  chair:
+                    $ref: "#/components/schemas/AppChair"
+                  created_at:
+                    type: number
+                    description: 配車要求日時
+                  updated_at:
+                    type: number
+                    description: 配車要求更新日時
+                  retry_after_ms:
+                    type: integer
+                    description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+                required:
+                  - request_id
+                  - pickup_coordinate
+                  - destination_coordinate
+                  - status
+                  - created_at
+                  - updated_at
         "204":
           description: 対象となる配車要求が存在しない場合
   /app/nearby-chairs:
@@ -664,7 +692,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChairRequest"
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: 配車要求ID
+                  user:
+                    $ref: "#/components/schemas/User"
+                  pickup_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  destination_coordinate:
+                    $ref: "#/components/schemas/Coordinate"
+                  status:
+                    $ref: "#/components/schemas/RequestStatus"
+                  retry_after_ms:
+                    type: integer
+                    description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+                required:
+                  - request_id
+                  - user
+                  - destination_coordinate
         "204":
           description: 割り当てられた配車要求が存在しない場合
 components:
