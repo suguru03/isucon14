@@ -51,14 +51,13 @@ func setup() http.Handler {
 		dbname = "isuride"
 	}
 
-	dbConfig := &mysql.Config{
-		User:      user,
-		Passwd:    password,
-		Net:       "tcp",
-		Addr:      net.JoinHostPort(host, port),
-		DBName:    dbname,
-		ParseTime: true,
-	}
+	dbConfig := mysql.NewConfig()
+	dbConfig.User = user
+	dbConfig.Passwd = password
+	dbConfig.Addr = net.JoinHostPort(host, port)
+	dbConfig.Net = "tcp"
+	dbConfig.DBName = dbname
+	dbConfig.ParseTime = true
 
 	_db, err := sqlx.Connect("mysql", dbConfig.FormatDSN())
 	if err != nil {
