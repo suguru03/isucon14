@@ -430,12 +430,14 @@ paths:
           in: query
           description: 開始日時（含む）
           schema:
-            type: string
+            type: integer
+            format: int64
         - name: until
           in: query
           description: 終了日時（含む）
           schema:
-            type: string
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK

@@ -119,10 +119,10 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
 	params := api.OwnerGetSalesParams{}
 	if !args.Since.IsZero() {
-		params.Since.SetTo(args.Since.Format(time.RFC3339Nano))
+		params.Since.SetTo(args.Since.UnixMilli())
 	}
 	if !args.Until.IsZero() {
-		params.Until.SetTo(args.Until.Format(time.RFC3339Nano))
+		params.Until.SetTo(args.Until.UnixMilli())
 	}
 
 	response, err := c.client.ProviderGetSales(c.ctx, &params)

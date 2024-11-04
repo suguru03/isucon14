@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -78,21 +79,21 @@ type ownerGetSalesResponse struct {
 }
 
 func ownerGetSales(w http.ResponseWriter, r *http.Request) {
-	since := time.Time{}
+	since := time.Unix(0, 0)
 	until := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 	if r.URL.Query().Get("since") != "" {
-		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("since"))
+		parsed, err := strconv.ParseInt(r.URL.Query().Get("since"), 10, 64)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err)
 		}
-		since = parsed
+		since = time.UnixMilli(parsed)
 	}
 	if r.URL.Query().Get("until") != "" {
-		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("until"))
+		parsed, err := strconv.ParseInt(r.URL.Query().Get("until"), 10, 64)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err)
 		}
-		until = parsed
+		until = time.UnixMilli(parsed)
 	}
 
 	owner := r.Context().Value("owner").(*Owner)
