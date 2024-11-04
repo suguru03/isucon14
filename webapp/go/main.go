@@ -66,7 +66,7 @@ func setup() http.Handler {
 	db = _db
 
 	mux := chi.NewRouter()
-	mux.Use(middleware.Logger)
+	// mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 	mux.HandleFunc("POST /api/initialize", postInitialize)
 
@@ -181,6 +181,7 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 }
 
 func writeError(w http.ResponseWriter, statusCode int, err error) {
+	fmt.Fprintln(os.Stderr, err)
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
 	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})

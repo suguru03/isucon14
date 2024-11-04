@@ -164,8 +164,8 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 	}
 
 	const (
-		initialProvidersNum         = 5
-		initialChairsNumPerProvider = 10
+		initialProvidersNum         = 1
+		initialChairsNumPerProvider = 1
 		initialUsersNum             = 10
 	)
 

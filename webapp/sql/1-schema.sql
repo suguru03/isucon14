@@ -66,24 +66,29 @@ CREATE TABLE payment_tokens
 DROP TABLE IF EXISTS ride_requests;
 CREATE TABLE ride_requests
 (
-  id                    VARCHAR(26)                                                                        NOT NULL COMMENT '配車/乗車リクエストID',
-  user_id               VARCHAR(26)                                                                        NOT NULL COMMENT 'ユーザーID',
-  chair_id              VARCHAR(26)                                                                        NULL COMMENT '割り当てられた椅子ID',
-  status                ENUM ('MATCHING', 'DISPATCHING', 'DISPATCHED', 'CARRYING', 'ARRIVED', 'COMPLETED') NOT NULL COMMENT '状態',
-  pickup_latitude       INTEGER                                                                            NOT NULL COMMENT '配車位置(経度)',
-  pickup_longitude      INTEGER                                                                            NOT NULL COMMENT '配車位置(緯度)',
-  destination_latitude  INTEGER                                                                            NOT NULL COMMENT '目的地(経度)',
-  destination_longitude INTEGER                                                                            NOT NULL COMMENT '目的地(緯度)',
-  evaluation            INTEGER                                                                            NULL COMMENT '評価',
-  requested_at          DATETIME(6)                                                                        NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '要求日時',
-  matched_at            DATETIME(6)                                                                        NULL COMMENT '椅子割り当て完了日時',
-  dispatched_at         DATETIME(6)                                                                        NULL COMMENT '配車到着日時',
-  rode_at               DATETIME(6)                                                                        NULL COMMENT '乗車日時',
-  arrived_at            DATETIME(6)                                                                        NULL COMMENT '目的地到着日時',
-  updated_at            DATETIME(6)                                                                        NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '状態更新日時',
+  id                    VARCHAR(26) NOT NULL COMMENT '配車/乗車リクエストID',
+  user_id               VARCHAR(26) NOT NULL COMMENT 'ユーザーID',
+  chair_id              VARCHAR(26) NULL     COMMENT '割り当てられた椅子ID',
+  pickup_latitude       INTEGER     NOT NULL COMMENT '配車位置(経度)',
+  pickup_longitude      INTEGER     NOT NULL COMMENT '配車位置(緯度)',
+  destination_latitude  INTEGER     NOT NULL COMMENT '目的地(経度)',
+  destination_longitude INTEGER     NOT NULL COMMENT '目的地(緯度)',
+  evaluation            INTEGER     NULL     COMMENT '評価',
+  created_at            DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '要求日時',
+  updated_at            DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '状態更新日時',
   PRIMARY KEY (id)
 )
   COMMENT = '配車/乗車リクエスト情報テーブル';
+
+DROP TABLE IF EXISTS ride_request_statuses;
+CREATE TABLE ride_request_statuses
+(
+  id              VARCHAR(26)                                                                        NOT NULL,
+  ride_request_id VARCHAR(26)                                                                        NOT NULL COMMENT '配車/乗車リクエストID',
+  status          ENUM ('MATCHING', 'DISPATCHING', 'DISPATCHED', 'CARRYING', 'ARRIVED', 'COMPLETED') NOT NULL COMMENT '状態',
+  created_at      DATETIME(6)                                                                        NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '状態変更日時'
+)
+  COMMENT = '配車/乗車リクエストの状態変更情報テーブル';
 
 DROP TABLE IF EXISTS owners;
 CREATE TABLE owners

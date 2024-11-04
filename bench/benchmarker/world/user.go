@@ -264,7 +264,7 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 			}
 			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		} else {
-			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v), respond server request id: %v", request.ServerID, request.Statuses.Desired, status, request.Statuses.User, serverRequestID))
 		}
 	}
 	request.Statuses.User = status

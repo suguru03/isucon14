@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -104,12 +105,21 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
-		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
+		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
+		statusMap := map[string]string{}
+		for _, req := range reqs {
+			status, err := getLatestRideRequestStatus(db, req.ID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+			statusMap[req.ID] = status
+		}
 
-		chairSales := sumSales(reqs)
+		chairSales := sumSales(reqs, statusMap)
 		res.TotalSales += chairSales
 
 		res.Chairs = append(res.Chairs, ChairSales{
@@ -139,9 +149,12 @@ const (
 	farePerDistance = 100
 )
 
-func sumSales(requests []RideRequest) int {
+func sumSales(requests []RideRequest, statusMap map[string]string) int {
 	sale := 0
 	for _, req := range requests {
+		if statusMap[req.ID] != "COMPLETED" {
+			continue
+		}
 		sale += calculateSale(req)
 	}
 	return sale
@@ -210,6 +223,10 @@ WHERE owner_id = ?
 		return
 	}
 
+	ids := []struct {
+		ID            string
+		TotalDistance int
+	}{}
 	res := getOwnerChairResponse{}
 	for _, chair := range chairs {
 		c := ownerChair{
@@ -220,11 +237,16 @@ WHERE owner_id = ?
 			RegisteredAt:  chair.CreatedAt,
 			TotalDistance: chair.TotalDistance,
 		}
+		ids = append(ids, struct {
+			ID            string
+			TotalDistance int
+		}{ID: chair.ID, TotalDistance: chair.TotalDistance})
 		if chair.TotalDistanceUpdatedAt.Valid {
 			c.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
 		}
 		res.Chairs = append(res.Chairs, c)
 	}
+	fmt.Printf("[GET /api/owner/chairs] ids: %v\n", ids)
 	writeJSON(w, http.StatusOK, res)
 }
 
