@@ -399,8 +399,8 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		if result.Fare != 500+20*100 {
-			return fmt.Errorf("POST /api/app/request/:requestID/evaluate の返却するfareが正しくありません (expected:%d, actual:%d)", 500+20*100, result.Fare)
+		if result.Fare != 500 {
+			return fmt.Errorf("POST /api/app/request/:requestID/evaluate の返却するfareが正しくありません (expected:%d, actual:%d)", 500, result.Fare)
 		}
 	}
 
