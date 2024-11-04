@@ -391,6 +391,8 @@ func (s *AppPostRegisterReq) SetDateOfBirth(val string) {
 type AppPostRequestAccepted struct {
 	// 配車要求ID.
 	RequestID string `json:"request_id"`
+	// 割引後運賃.
+	Fare int `json:"fare"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -398,9 +400,19 @@ func (s *AppPostRequestAccepted) GetRequestID() string {
 	return s.RequestID
 }
 
+// GetFare returns the value of Fare.
+func (s *AppPostRequestAccepted) GetFare() int {
+	return s.Fare
+}
+
 // SetRequestID sets the value of RequestID.
 func (s *AppPostRequestAccepted) SetRequestID(val string) {
 	s.RequestID = val
+}
+
+// SetFare sets the value of Fare.
+func (s *AppPostRequestAccepted) SetFare(val int) {
+	s.Fare = val
 }
 
 func (*AppPostRequestAccepted) appPostRequestRes() {}
@@ -414,7 +426,7 @@ type AppPostRequestConflict Error
 func (*AppPostRequestConflict) appPostRequestRes() {}
 
 type AppPostRequestEstimateOK struct {
-	// 割引後料金.
+	// 割引後運賃.
 	Fare int `json:"fare"`
 	// 割引額.
 	Discount int `json:"discount"`
@@ -478,7 +490,7 @@ type AppPostRequestEvaluateNotFound Error
 func (*AppPostRequestEvaluateNotFound) appPostRequestEvaluateRes() {}
 
 type AppPostRequestEvaluateOK struct {
-	// 運賃.
+	// 割引後運賃.
 	Fare int `json:"fare"`
 	// 完了日時.
 	CompletedAt string `json:"completed_at"`

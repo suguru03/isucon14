@@ -1158,10 +1158,15 @@ func (s *AppPostRequestAccepted) encodeFields(e *jx.Encoder) {
 		e.FieldStart("request_id")
 		e.Str(s.RequestID)
 	}
+	{
+		e.FieldStart("fare")
+		e.Int(s.Fare)
+	}
 }
 
-var jsonFieldsNameOfAppPostRequestAccepted = [1]string{
+var jsonFieldsNameOfAppPostRequestAccepted = [2]string{
 	0: "request_id",
+	1: "fare",
 }
 
 // Decode decodes AppPostRequestAccepted from json.
@@ -1185,6 +1190,18 @@ func (s *AppPostRequestAccepted) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"request_id\"")
 			}
+		case "fare":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.Fare = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fare\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -1195,7 +1212,7 @@ func (s *AppPostRequestAccepted) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

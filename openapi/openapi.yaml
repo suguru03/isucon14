@@ -151,8 +151,12 @@ paths:
                   request_id:
                     type: string
                     description: 配車要求ID
+                  fare:
+                    type: integer
+                    description: 割引後運賃
                 required:
                   - request_id
+                  - fare
         "400":
           description: Bad Request
           content:
@@ -169,7 +173,7 @@ paths:
     post:
       tags:
         - app
-      summary: リクエストの料金を見積もる
+      summary: リクエストの運賃を見積もる
       operationId: app-post-request-estimate
       requestBody:
         content:
@@ -196,7 +200,7 @@ paths:
                 properties:
                   fare:
                     type: integer
-                    description: 割引後料金
+                    description: 割引後運賃
                   discount:
                     type: integer
                     description: 割引額
@@ -266,7 +270,7 @@ paths:
                 properties:
                   fare:
                     type: integer
-                    description: 運賃
+                    description: 割引後運賃
                   completed_at:
                     type: string
                     description: 完了日時
