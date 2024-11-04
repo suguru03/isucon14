@@ -178,12 +178,7 @@ func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	recordedAt, err := time.Parse(time.RFC3339Nano, response.Datetime)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
-	}
-
-	return &world.SendChairCoordinateResponse{RecordedAt: recordedAt}, nil
+	return &world.SendChairCoordinateResponse{RecordedAt: time.UnixMilli(response.RecordedAt)}, nil
 }
 
 func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {

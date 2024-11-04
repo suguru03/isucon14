@@ -2325,13 +2325,13 @@ func (s *ChairPostCoordinateOK) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ChairPostCoordinateOK) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("datetime")
-		e.Str(s.Datetime)
+		e.FieldStart("recorded_at")
+		e.Int64(s.RecordedAt)
 	}
 }
 
 var jsonFieldsNameOfChairPostCoordinateOK = [1]string{
-	0: "datetime",
+	0: "recorded_at",
 }
 
 // Decode decodes ChairPostCoordinateOK from json.
@@ -2343,17 +2343,17 @@ func (s *ChairPostCoordinateOK) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "datetime":
+		case "recorded_at":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := d.Str()
-				s.Datetime = string(v)
+				v, err := d.Int64()
+				s.RecordedAt = int64(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"datetime\"")
+				return errors.Wrap(err, "decode field \"recorded_at\"")
 			}
 		default:
 			return d.Skip()

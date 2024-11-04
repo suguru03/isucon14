@@ -730,17 +730,17 @@ type ChairPostActivateNoContent struct{}
 
 type ChairPostCoordinateOK struct {
 	// 記録日時.
-	Datetime string `json:"datetime"`
+	RecordedAt int64 `json:"recorded_at"`
 }
 
-// GetDatetime returns the value of Datetime.
-func (s *ChairPostCoordinateOK) GetDatetime() string {
-	return s.Datetime
+// GetRecordedAt returns the value of RecordedAt.
+func (s *ChairPostCoordinateOK) GetRecordedAt() int64 {
+	return s.RecordedAt
 }
 
-// SetDatetime sets the value of Datetime.
-func (s *ChairPostCoordinateOK) SetDatetime(val string) {
-	s.Datetime = val
+// SetRecordedAt sets the value of RecordedAt.
+func (s *ChairPostCoordinateOK) SetRecordedAt(val int64) {
+	s.RecordedAt = val
 }
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.

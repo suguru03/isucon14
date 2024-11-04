@@ -660,11 +660,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  datetime:
-                    type: string
+                  recorded_at:
+                    type: integer
+                    format: int64
                     description: 記録日時
                 required:
-                  - datetime
+                  - recorded_at
   /chair/notification:
     get:
       tags:
