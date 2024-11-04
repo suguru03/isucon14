@@ -493,7 +493,7 @@ func (s *AppGetNearbyChairsOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("retrieved_at")
-		e.Str(s.RetrievedAt)
+		e.Float64(s.RetrievedAt)
 	}
 }
 
@@ -532,8 +532,8 @@ func (s *AppGetNearbyChairsOK) Decode(d *jx.Decoder) error {
 		case "retrieved_at":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Str()
-				s.RetrievedAt = string(v)
+				v, err := d.Float64()
+				s.RetrievedAt = float64(v)
 				if err != nil {
 					return err
 				}
@@ -2160,20 +2160,16 @@ func (s *ChairGetNotificationOK) encodeFields(e *jx.Encoder) {
 		s.User.Encode(e)
 	}
 	{
-		if s.PickupCoordinate.Set {
-			e.FieldStart("pickup_coordinate")
-			s.PickupCoordinate.Encode(e)
-		}
+		e.FieldStart("pickup_coordinate")
+		s.PickupCoordinate.Encode(e)
 	}
 	{
 		e.FieldStart("destination_coordinate")
 		s.DestinationCoordinate.Encode(e)
 	}
 	{
-		if s.Status.Set {
-			e.FieldStart("status")
-			s.Status.Encode(e)
-		}
+		e.FieldStart("status")
+		s.Status.Encode(e)
 	}
 	{
 		if s.RetryAfterMs.Set {
@@ -2224,8 +2220,8 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"user\"")
 			}
 		case "pickup_coordinate":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				s.PickupCoordinate.Reset()
 				if err := s.PickupCoordinate.Decode(d); err != nil {
 					return err
 				}
@@ -2244,8 +2240,8 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"destination_coordinate\"")
 			}
 		case "status":
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				s.Status.Reset()
 				if err := s.Status.Decode(d); err != nil {
 					return err
 				}
@@ -2273,7 +2269,7 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001011,
+		0b00011111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

@@ -101,6 +101,17 @@ func (s *AppGetNearbyChairsOK) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if err := (validate.Float{}).Validate(float64(s.RetrievedAt)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "retrieved_at",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -272,15 +283,8 @@ func (s *ChairGetNotificationOK) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if value, ok := s.Status.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
+		if err := s.Status.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {

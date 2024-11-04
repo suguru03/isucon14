@@ -175,7 +175,7 @@ func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
 type AppGetNearbyChairsOK struct {
 	Chairs []AppChair `json:"chairs"`
 	// 取得日時.
-	RetrievedAt string `json:"retrieved_at"`
+	RetrievedAt float64 `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
@@ -184,7 +184,7 @@ func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
 }
 
 // GetRetrievedAt returns the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) GetRetrievedAt() string {
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() float64 {
 	return s.RetrievedAt
 }
 
@@ -194,7 +194,7 @@ func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
 }
 
 // SetRetrievedAt sets the value of RetrievedAt.
-func (s *AppGetNearbyChairsOK) SetRetrievedAt(val string) {
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val float64) {
 	s.RetrievedAt = val
 }
 
@@ -654,11 +654,11 @@ func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
 
 type ChairGetNotificationOK struct {
 	// 配車要求ID.
-	RequestID             string           `json:"request_id"`
-	User                  User             `json:"user"`
-	PickupCoordinate      OptCoordinate    `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate       `json:"destination_coordinate"`
-	Status                OptRequestStatus `json:"status"`
+	RequestID             string        `json:"request_id"`
+	User                  User          `json:"user"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
 	RetryAfterMs OptInt `json:"retry_after_ms"`
 }
@@ -674,7 +674,7 @@ func (s *ChairGetNotificationOK) GetUser() User {
 }
 
 // GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) GetPickupCoordinate() OptCoordinate {
+func (s *ChairGetNotificationOK) GetPickupCoordinate() Coordinate {
 	return s.PickupCoordinate
 }
 
@@ -684,7 +684,7 @@ func (s *ChairGetNotificationOK) GetDestinationCoordinate() Coordinate {
 }
 
 // GetStatus returns the value of Status.
-func (s *ChairGetNotificationOK) GetStatus() OptRequestStatus {
+func (s *ChairGetNotificationOK) GetStatus() RequestStatus {
 	return s.Status
 }
 
@@ -704,7 +704,7 @@ func (s *ChairGetNotificationOK) SetUser(val User) {
 }
 
 // SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) SetPickupCoordinate(val OptCoordinate) {
+func (s *ChairGetNotificationOK) SetPickupCoordinate(val Coordinate) {
 	s.PickupCoordinate = val
 }
 
@@ -714,7 +714,7 @@ func (s *ChairGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
 }
 
 // SetStatus sets the value of Status.
-func (s *ChairGetNotificationOK) SetStatus(val OptRequestStatus) {
+func (s *ChairGetNotificationOK) SetStatus(val RequestStatus) {
 	s.Status = val
 }
 

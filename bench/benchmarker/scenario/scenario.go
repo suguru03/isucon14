@@ -43,9 +43,10 @@ type Scenario struct {
 	step             *isucandar.BenchmarkStep
 	reporter         benchrun.Reporter
 	meter            metric.Meter
+	prepareOnly      bool
 }
 
-func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter) *Scenario {
+func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool) *Scenario {
 	completedRequestChan := make(chan *world.Request, 1000)
 	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
@@ -144,6 +145,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		paymentServer:    paymentServer,
 		reporter:         reporter,
 		meter:            meter,
+		prepareOnly:      prepareOnly,
 	}
 }
 
@@ -158,7 +160,36 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	_, err = client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
+	if err := s.prevalidation(ctx, client); err != nil {
+		return err
+	}
+
+	if !s.prepareOnly {
+		// バリデーション後にデータを初期化する
+		if err := s.initializeData(ctx, client); err != nil {
+			return err
+		}
+	}
+
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				if err := sendResult(s, false, false); err != nil {
+					// TODO: エラーをadmin側に出力する
+				}
+			case <-ctx.Done():
+				ticker.Stop()
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) error {
+	_, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
 	if err != nil {
 		return err
 	}
@@ -195,25 +226,15 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		}
 	}
 
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				if err := sendResult(s, false, false); err != nil {
-					// TODO: エラーをadmin側に出力する
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-			}
-		}
-	}()
-
 	return nil
 }
 
 // Load はシナリオのメイン処理を行う
 func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	if s.prepareOnly {
+		return nil
+	}
+
 	s.world.RestTicker()
 LOOP:
 	for {

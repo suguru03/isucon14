@@ -370,7 +370,7 @@ paths:
                     items:
                       $ref: "#/components/schemas/AppChair"
                   retrieved_at:
-                    type: string
+                    type: number
                     description: 取得日時
                 required:
                   - chairs
@@ -697,7 +697,9 @@ paths:
                 required:
                   - request_id
                   - user
+                  - pickup_coordinate
                   - destination_coordinate
+                  - status
         "204":
           description: 割り当てられた配車要求が存在しない場合
   "/chair/requests/{request_id}":
