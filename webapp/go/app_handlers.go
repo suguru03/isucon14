@@ -430,8 +430,8 @@ type appPostEvaluateRequest struct {
 }
 
 type appPostEvaluateResponse struct {
-	Fare        int       `json:"fare"`
-	CompletedAt time.Time `json:"completed_at"`
+	Fare        int   `json:"fare"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
@@ -533,7 +533,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, &appPostEvaluateResponse{
 		Fare:        fare,
-		CompletedAt: rideRequest.UpdatedAt,
+		CompletedAt: rideRequest.UpdatedAt.UnixMilli(),
 	})
 }
 

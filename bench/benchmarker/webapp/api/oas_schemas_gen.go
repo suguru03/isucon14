@@ -493,7 +493,7 @@ type AppPostRequestEvaluateOK struct {
 	// 割引後運賃.
 	Fare int `json:"fare"`
 	// 完了日時.
-	CompletedAt string `json:"completed_at"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 // GetFare returns the value of Fare.
@@ -502,7 +502,7 @@ func (s *AppPostRequestEvaluateOK) GetFare() int {
 }
 
 // GetCompletedAt returns the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) GetCompletedAt() string {
+func (s *AppPostRequestEvaluateOK) GetCompletedAt() int64 {
 	return s.CompletedAt
 }
 
@@ -512,7 +512,7 @@ func (s *AppPostRequestEvaluateOK) SetFare(val int) {
 }
 
 // SetCompletedAt sets the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) SetCompletedAt(val string) {
+func (s *AppPostRequestEvaluateOK) SetCompletedAt(val int64) {
 	s.CompletedAt = val
 }
 

@@ -272,7 +272,8 @@ paths:
                     type: integer
                     description: 割引後運賃
                   completed_at:
-                    type: string
+                    type: integer
+                    format: int64
                     description: 完了日時
                 required:
                   - fare

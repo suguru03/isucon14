@@ -1647,7 +1647,7 @@ func (s *AppPostRequestEvaluateOK) encodeFields(e *jx.Encoder) {
 	}
 	{
 		e.FieldStart("completed_at")
-		e.Str(s.CompletedAt)
+		e.Int64(s.CompletedAt)
 	}
 }
 
@@ -1680,8 +1680,8 @@ func (s *AppPostRequestEvaluateOK) Decode(d *jx.Decoder) error {
 		case "completed_at":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Str()
-				s.CompletedAt = string(v)
+				v, err := d.Int64()
+				s.CompletedAt = int64(v)
 				if err != nil {
 					return err
 				}

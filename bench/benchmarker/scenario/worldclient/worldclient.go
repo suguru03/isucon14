@@ -289,14 +289,9 @@ func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, scor
 		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
-	completedAt, err := time.Parse(time.RFC3339Nano, res.CompletedAt)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
-	}
-
 	return &world.SendEvaluationResponse{
 		Fare:        res.Fare,
-		CompletedAt: completedAt,
+		CompletedAt: time.UnixMilli(res.CompletedAt),
 	}, nil
 }
 
