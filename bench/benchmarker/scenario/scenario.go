@@ -242,6 +242,16 @@ func (s *Scenario) Score() int64 {
 	return lo.SumBy(s.world.ProviderDB.ToSlice(), func(p *world.Provider) int64 { return p.TotalSales.Load() })
 }
 
+func (s *Scenario) TotalDiscount() int64 {
+	return lo.SumBy(s.world.RequestDB.ToSlice(), func(r *world.Request) int64 {
+		if r.Evaluated {
+			return int64(r.ActualDiscount())
+		} else {
+			return 0
+		}
+	})
+}
+
 func sendResult(s *Scenario, finished bool, passed bool) error {
 	rawScore := s.Score()
 	if err := s.reporter.Report(&resources.BenchmarkResult{

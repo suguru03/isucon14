@@ -36,11 +36,33 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	userID := ulid.Make().String()
 	accessToken := secureRandomStr(32)
 
-	_, err := db.Exec(
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(
 		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token) VALUES (?, ?, ?, ?, ?, ?)",
 		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
 	)
 	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// 初回登録キャンペーンのクーポンを付与
+	_, err = tx.Exec(
+		"INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
+		userID, "CP_NEW2024", 3000,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -94,6 +116,7 @@ type appPostRequestsRequest struct {
 
 type appPostRequestsResponse struct {
 	RequestID string `json:"request_id"`
+	Fare      int    `json:"fare"`
 }
 
 func appPostRequests(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +159,40 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 初回利用で、初回利用クーポンがあれば必ず使う
+	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? `, user.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if requestCount == 1 {
+		var coupon Coupon
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL", user.ID); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				writeError(w, http.StatusInternalServerError, err)
+			}
+		} else {
+			if _, err := tx.Exec(
+				"UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = 'CP_NEW2024'",
+				requestID, user.ID,
+			); err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+	}
+
+	rideRequest := RideRequest{}
+	if err := tx.Get(&rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	fare, err := calculateFare(tx, user.ID, &rideRequest, req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	if err := tx.Commit(); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -143,6 +200,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusAccepted, &appPostRequestsResponse{
 		RequestID: requestID,
+		Fare:      fare,
 	})
 }
 
@@ -398,8 +456,13 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fare, err := calculateFare(tx, rideRequest.UserID, rideRequest, rideRequest.PickupLatitude, rideRequest.PickupLongitude, rideRequest.DestinationLatitude, rideRequest.DestinationLongitude)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
 	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
-		Amount: calculateSale(*rideRequest),
+		Amount: fare,
 	}
 	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest, func() ([]RideRequest, error) {
 		rideRequests := []RideRequest{}
@@ -422,7 +485,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &appPostEvaluateResponse{
-		Fare:        calculateSale(*rideRequest),
+		Fare:        fare,
 		CompletedAt: rideRequest.UpdatedAt,
 	})
 }
@@ -697,4 +760,40 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		Chairs:      nearbyChairs,
 		RetrievedAt: retrievedAt.Unix(),
 	})
+}
+
+func calculateFare(tx *sqlx.Tx, userID string, req *RideRequest, pickupLatitude, pickupLongitude, destLatitude, destLongitude int) (int, error) {
+	var coupon Coupon
+	discount := 0
+	if req != nil {
+		destLatitude = req.DestinationLatitude
+		destLongitude = req.DestinationLongitude
+		pickupLatitude = req.PickupLatitude
+		pickupLongitude = req.PickupLongitude
+
+		// すでにクーポンが紐づいているならそれの割引額を参照
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE used_by = ?", req.ID); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return 0, err
+			}
+		} else {
+			discount = coupon.Discount
+		}
+	} else {
+		// 初回利用クーポンを最優先で使う
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL", userID); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return 0, err
+			}
+		} else {
+			discount = coupon.Discount
+		}
+	}
+
+	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
+	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
+	meteredFare := farePerDistance * (latDiff + lonDiff)
+	discountedMeteredFare := max(meteredFare-discount, 0)
+
+	return initialFare + discountedMeteredFare, nil
 }
