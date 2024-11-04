@@ -456,8 +456,13 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fare, err := calculateFare(tx, rideRequest.UserID, rideRequest, rideRequest.PickupLatitude, rideRequest.PickupLongitude, rideRequest.DestinationLatitude, rideRequest.DestinationLongitude)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
 	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
-		Amount: calculateSale(*rideRequest),
+		Amount: fare,
 	}
 	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest, func() ([]RideRequest, error) {
 		rideRequests := []RideRequest{}
@@ -480,7 +485,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &appPostEvaluateResponse{
-		Fare:        calculateSale(*rideRequest),
+		Fare:        fare,
 		CompletedAt: rideRequest.UpdatedAt,
 	})
 }

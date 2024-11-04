@@ -134,7 +134,7 @@ func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesRe
 			panic("unexpected")
 		}
 
-		fare := r.Fare()
+		fare := r.Sales()
 		cs.Sales += fare
 		cspm.Sales += fare
 		totals += fare
