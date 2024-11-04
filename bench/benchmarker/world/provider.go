@@ -45,7 +45,8 @@ type Provider struct {
 }
 
 type RegisteredProviderData struct {
-	Name string
+	Name               string
+	ChairRegisterToken string
 }
 
 func (p *Provider) String() string {

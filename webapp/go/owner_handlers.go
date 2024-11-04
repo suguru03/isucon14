@@ -19,7 +19,8 @@ type ownerPostRegisterRequest struct {
 }
 
 type ownerPostRegisterResponse struct {
-	ID string `json:"id"`
+	ID                 string `json:"id"`
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
 func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
@@ -35,10 +36,11 @@ func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	ownerID := ulid.Make().String()
 	accessToken := secureRandomStr(32)
+	chairRegisterToken := secureRandomStr(32)
 
 	_, err := db.Exec(
-		"INSERT INTO owners (id, name, access_token) VALUES (?, ?, ?)",
-		ownerID, req.Name, accessToken,
+		"INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)",
+		ownerID, req.Name, accessToken, chairRegisterToken,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -53,7 +55,8 @@ func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
 	})
 
 	writeJSON(w, http.StatusCreated, &ownerPostRegisterResponse{
-		ID: ownerID,
+		ID:                 ownerID,
+		ChairRegisterToken: chairRegisterToken,
 	})
 }
 

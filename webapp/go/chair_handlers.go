@@ -11,25 +11,34 @@ import (
 )
 
 type chairPostRegisterRequest struct {
-	Name  string `json:"name"`
-	Model string `json:"model"`
+	Name               string `json:"name"`
+	Model              string `json:"model"`
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
-type postChairRegisterResponse struct {
-	AccessToken string `json:"access_token"`
-	ID          string `json:"id"`
+type chairPostRegisterResponse struct {
+	ID      string `json:"id"`
+	OwnerID string `json:"owner_id"`
 }
 
 func chairPostRegister(w http.ResponseWriter, r *http.Request) {
-	owner := r.Context().Value("owner").(*Owner)
-
 	req := &chairPostRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if req.Name == "" || req.Model == "" {
-		writeError(w, http.StatusBadRequest, errors.New("some of required fields(name, model) are empty"))
+	if req.Name == "" || req.Model == "" || req.ChairRegisterToken == "" {
+		writeError(w, http.StatusBadRequest, errors.New("some of required fields(name, model, chair_register_token) are empty"))
+		return
+	}
+
+	owner := &Owner{}
+	if err := db.Get(owner, "SELECT * FROM owners WHERE chair_register_token = ?", req.ChairRegisterToken); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusUnauthorized, errors.New("invalid chair_register_token"))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -45,9 +54,16 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, &postChairRegisterResponse{
-		AccessToken: accessToken,
-		ID:          chairID,
+	http.SetCookie(w, &http.Cookie{
+		Path:     "/",
+		Name:     "chair_session",
+		Value:    accessToken,
+		HttpOnly: true,
+	})
+
+	writeJSON(w, http.StatusCreated, &chairPostRegisterResponse{
+		ID:      chairID,
+		OwnerID: owner.ID,
 	})
 }
 

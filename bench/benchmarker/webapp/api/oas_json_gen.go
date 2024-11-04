@@ -1241,6 +1241,82 @@ func (s *AppPostRequestAccepted) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes AppPostRequestBadRequest as json.
+func (s *AppPostRequestBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes AppPostRequestBadRequest from json.
+func (s *AppPostRequestBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AppPostRequestBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = AppPostRequestBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AppPostRequestBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AppPostRequestBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes AppPostRequestConflict as json.
+func (s *AppPostRequestConflict) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes AppPostRequestConflict from json.
+func (s *AppPostRequestConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AppPostRequestConflict to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = AppPostRequestConflict(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AppPostRequestConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AppPostRequestConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes AppPostRequestEvaluateBadRequest as json.
 func (s *AppPostRequestEvaluateBadRequest) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
@@ -2198,18 +2274,18 @@ func (s *ChairPostRegisterCreated) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ChairPostRegisterCreated) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("access_token")
-		e.Str(s.AccessToken)
-	}
-	{
 		e.FieldStart("id")
 		e.Str(s.ID)
+	}
+	{
+		e.FieldStart("owner_id")
+		e.Str(s.OwnerID)
 	}
 }
 
 var jsonFieldsNameOfChairPostRegisterCreated = [2]string{
-	0: "access_token",
-	1: "id",
+	0: "id",
+	1: "owner_id",
 }
 
 // Decode decodes ChairPostRegisterCreated from json.
@@ -2221,20 +2297,8 @@ func (s *ChairPostRegisterCreated) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "access_token":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.AccessToken = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"access_token\"")
-			}
 		case "id":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.ID = string(v)
@@ -2244,6 +2308,18 @@ func (s *ChairPostRegisterCreated) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "owner_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.OwnerID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"owner_id\"")
 			}
 		default:
 			return d.Skip()
@@ -2318,11 +2394,16 @@ func (s *ChairPostRegisterReq) encodeFields(e *jx.Encoder) {
 		e.FieldStart("model")
 		e.Str(s.Model)
 	}
+	{
+		e.FieldStart("chair_register_token")
+		e.Str(s.ChairRegisterToken)
+	}
 }
 
-var jsonFieldsNameOfChairPostRegisterReq = [2]string{
+var jsonFieldsNameOfChairPostRegisterReq = [3]string{
 	0: "name",
 	1: "model",
+	2: "chair_register_token",
 }
 
 // Decode decodes ChairPostRegisterReq from json.
@@ -2358,6 +2439,18 @@ func (s *ChairPostRegisterReq) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"model\"")
 			}
+		case "chair_register_token":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.ChairRegisterToken = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"chair_register_token\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -2368,7 +2461,7 @@ func (s *ChairPostRegisterReq) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4167,10 +4260,15 @@ func (s *OwnerPostRegisterCreated) encodeFields(e *jx.Encoder) {
 		e.FieldStart("id")
 		e.Str(s.ID)
 	}
+	{
+		e.FieldStart("chair_register_token")
+		e.Str(s.ChairRegisterToken)
+	}
 }
 
-var jsonFieldsNameOfOwnerPostRegisterCreated = [1]string{
+var jsonFieldsNameOfOwnerPostRegisterCreated = [2]string{
 	0: "id",
+	1: "chair_register_token",
 }
 
 // Decode decodes OwnerPostRegisterCreated from json.
@@ -4194,6 +4292,18 @@ func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
+		case "chair_register_token":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.ChairRegisterToken = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"chair_register_token\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -4204,7 +4314,7 @@ func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4357,7 +4467,7 @@ func (s *PostInitializeOK) Encode(e *jx.Encoder) {
 func (s *PostInitializeOK) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("language")
-		s.Language.Encode(e)
+		e.Str(s.Language)
 	}
 }
 
@@ -4377,7 +4487,9 @@ func (s *PostInitializeOK) Decode(d *jx.Decoder) error {
 		case "language":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				if err := s.Language.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Language = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -4436,56 +4548,6 @@ func (s *PostInitializeOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *PostInitializeOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes PostInitializeOKLanguage as json.
-func (s PostInitializeOKLanguage) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes PostInitializeOKLanguage from json.
-func (s *PostInitializeOKLanguage) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode PostInitializeOKLanguage to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch PostInitializeOKLanguage(v) {
-	case PostInitializeOKLanguageGo:
-		*s = PostInitializeOKLanguageGo
-	case PostInitializeOKLanguagePerl:
-		*s = PostInitializeOKLanguagePerl
-	case PostInitializeOKLanguagePhp:
-		*s = PostInitializeOKLanguagePhp
-	case PostInitializeOKLanguagePython:
-		*s = PostInitializeOKLanguagePython
-	case PostInitializeOKLanguageRuby:
-		*s = PostInitializeOKLanguageRuby
-	case PostInitializeOKLanguageRust:
-		*s = PostInitializeOKLanguageRust
-	case PostInitializeOKLanguageNode:
-		*s = PostInitializeOKLanguageNode
-	default:
-		*s = PostInitializeOKLanguage(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s PostInitializeOKLanguage) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *PostInitializeOKLanguage) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

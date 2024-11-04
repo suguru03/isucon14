@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/neilotoole/slogt"
 	"github.com/oklog/ulid/v2"
@@ -71,7 +70,7 @@ func (pc *providerClient) RegisterChair(ctx *Context, provider *Provider, data *
 	time.Sleep(pc.fs.latency)
 	c := &chairState{ProviderID: provider.ServerID, ServerID: ulid.Make().String(), Name: data.Name, Model: data.Model, Active: false, RegisteredAt: time.Now()}
 	pc.fs.chairDB.Set(c.ServerID, c)
-	return &RegisterChairResponse{AccessToken: gofakeit.LetterN(30), ServerUserID: c.ServerID, Client: pc.fs}, nil
+	return &RegisterChairResponse{ServerChairID: c.ServerID, Client: pc.fs}, nil
 }
 
 type FastServerStub struct {

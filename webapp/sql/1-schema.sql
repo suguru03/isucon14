@@ -88,13 +88,15 @@ CREATE TABLE ride_requests
 DROP TABLE IF EXISTS owners;
 CREATE TABLE owners
 (
-  id           VARCHAR(26)  NOT NULL COMMENT 'オーナーID',
-  name         VARCHAR(30)  NOT NULL COMMENT 'オーナー名',
-  access_token VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
-  created_at   DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
-  updated_at   DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
+  id                   VARCHAR(26)  NOT NULL COMMENT 'オーナーID',
+  name                 VARCHAR(30)  NOT NULL COMMENT 'オーナー名',
+  access_token         VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
+  chair_register_token VARCHAR(255) NOT NULL COMMENT '椅子登録トークン',
+  created_at           DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
+  updated_at           DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
   PRIMARY KEY (id),
   UNIQUE (name),
-  UNIQUE (access_token)
+  UNIQUE (access_token),
+  UNIQUE (chair_register_token)
 )
   COMMENT = '椅子のオーナー情報テーブル';
