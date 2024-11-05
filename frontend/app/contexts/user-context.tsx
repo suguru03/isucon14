@@ -10,7 +10,6 @@ import {
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchAppGetNotification } from "~/apiClient/apiComponents";
-import { ErrorWrapper } from "~/apiClient/apiFetcher";
 import type {
   AppRequest,
   Coordinate,
@@ -18,11 +17,29 @@ import type {
 } from "~/apiClient/apiSchemas";
 import type { ClientAppRequest } from "~/types";
 
-const isApiFetchError = (obj: any): obj is ErrorWrapper<{
-  status: number;
-  payload: string;
-}> => {
-  return obj && typeof obj === 'object' && 'status' in obj && 'payload' in obj;
+const isApiFetchError = (obj: object): obj is {
+  name: string,
+  message: string,
+  stack: {
+    status: number;
+    payload: string;
+  }
+} => {
+  if (typeof obj === 'object' && obj !== null &&
+          'name' in obj && typeof obj.name === 'string' &&
+          'message' in obj && typeof obj.message === 'string' &&
+          'stack' in obj && typeof obj.stack === 'object') {
+      const stack = obj.stack;
+      if (stack !== null &&
+          'status' in stack && typeof stack.status === 'number' &&
+          'payload' in stack && typeof stack.payload === 'string') {
+            return true;
+      } else {
+        return false;
+      }
+  } else {
+    return false;
+  }
 }
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
@@ -136,12 +153,16 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
-        if (e.stack && isApiFetchError(e.stack)) {
-          const err: ErrorWrapper<{
-            status: number;
-            payload: string;
-          }> = e.stack;
-          if (err.status === 401) {
+        if (typeof e === 'object' && isApiFetchError(e as object)) {
+          const apiError = e as {
+            name: string,
+            message: string,
+            stack: {
+              status: number;
+              payload: string;
+            }
+          };
+          if (apiError.stack.status === 401) {
             navigate("/client/register");
           }
         }
