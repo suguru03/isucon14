@@ -31,16 +31,16 @@ func appAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func providerAuthMiddleware(next http.Handler) http.Handler {
+func ownerAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie("provider_session")
+		c, err := r.Cookie("owner_session")
 		if errors.Is(err, http.ErrNoCookie) || c.Value == "" {
-			writeError(w, http.StatusUnauthorized, errors.New("provider_session cookie is required"))
+			writeError(w, http.StatusUnauthorized, errors.New("owner_session cookie is required"))
 			return
 		}
 		accessToken := c.Value
-		provider := &Provider{}
-		if err := db.Get(provider, "SELECT * FROM providers WHERE access_token = ?", accessToken); err != nil {
+		owner := &Owner{}
+		if err := db.Get(owner, "SELECT * FROM owners WHERE access_token = ?", accessToken); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				writeError(w, http.StatusUnauthorized, errors.New("invalid access token"))
 				return
@@ -49,7 +49,7 @@ func providerAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "provider", provider)
+		ctx := context.WithValue(r.Context(), "owner", owner)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

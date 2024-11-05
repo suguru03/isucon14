@@ -45,6 +45,11 @@ func NewClient(config ClientConfig) (*Client, error) {
 
 	return &Client{
 		agent: ag,
+		requestModifiers: []func(*http.Request){func(req *http.Request) {
+			if req.Method == http.MethodPost && req.Header.Get("Content-Type") == "" {
+				req.Header.Add("Content-Type", "application/json; charset=utf-8")
+			}
+		}},
 	}, nil
 }
 

@@ -144,7 +144,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 				u.TotalEvaluation += score
 				u.Request.Chair.Provider.CompletedRequest.Append(u.Request)
-				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
+				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Sales()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}
 
@@ -236,6 +236,12 @@ func (u *User) CreateRequest(ctx *Context) error {
 			User:    RequestStatusMatching,
 		},
 	}
+
+	// 初回利用の割引を適用
+	if len(u.RequestHistory) == 0 {
+		req.Discount = 3000
+	}
+
 	res, err := u.Client.SendCreateRequest(ctx, req)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)

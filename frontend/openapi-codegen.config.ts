@@ -1,14 +1,14 @@
+import { defineConfig } from "@openapi-codegen/cli";
+import {
+  generateReactQueryComponents,
+  generateSchemaTypes,
+} from "@openapi-codegen/typescript";
+import { readFile, readdir, writeFile } from "fs/promises";
+import { join as pathJoin } from "path";
 import {
   alternativeAPIURLString,
   alternativeURLExpression,
 } from "./api-url.mjs";
-import {
-  generateSchemaTypes,
-  generateReactQueryComponents,
-} from "@openapi-codegen/typescript";
-import { defineConfig } from "@openapi-codegen/cli";
-import { writeFile, readdir, readFile } from "fs/promises";
-import { join as pathJoin } from "path";
 
 const outputDir = "./app/apiClient";
 
@@ -53,6 +53,16 @@ export default defineConfig({
       });
 
       /**
+       * fetch.responseのstatusを内包させる
+       */
+      await rewriteFile("./app/apiClient/apiFetcher.ts", (content) => {
+        return content.replace(
+          "return await response.json();",
+          "return {...await response.json(), _responseStatus: response.status};",
+        );
+      });
+
+      /**
        * viteのdefineで探索可能にする
        */
       await rewriteFileInTargetDir(outputDir, (content) =>
@@ -61,7 +71,6 @@ export default defineConfig({
           alternativeURLExpression,
         ),
       );
-
       /**
        * SSE通信などでは、自動生成のfetcherを利用しないため
        */
@@ -73,12 +82,14 @@ export default defineConfig({
   },
 });
 
+type RewriteFn = (content: string) => string;
+
 /**
  * 指定されたディレクトリ配下のファイルコンテンツをrewriteFnで置き換える
  */
 async function rewriteFileInTargetDir(
   dirPath: string,
-  rewriteFn: (content: string) => string,
+  rewriteFn: RewriteFn,
 ): Promise<void> {
   try {
     const files = await readdir(dirPath, { withFileTypes: true });
@@ -89,9 +100,7 @@ async function rewriteFileInTargetDir(
         continue;
       }
       if (file.isFile()) {
-        const data = await readFile(filePath, "utf8");
-        const rewrittenContent = rewriteFn(data);
-        await writeFile(filePath, rewrittenContent);
+        await rewriteFile(filePath, rewriteFn);
       }
     }
   } catch (err) {
@@ -99,4 +108,10 @@ async function rewriteFileInTargetDir(
       console.error(`CONSOLE ERROR: ${err}`);
     }
   }
+}
+
+async function rewriteFile(filePath: string, rewriteFn: RewriteFn) {
+  const data = await readFile(filePath, "utf8");
+  const rewrittenContent = rewriteFn(data);
+  await writeFile(filePath, rewrittenContent);
 }

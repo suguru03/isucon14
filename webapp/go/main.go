@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -25,11 +26,11 @@ func main() {
 }
 
 func setup() http.Handler {
-	host := os.Getenv("DB_HOST")
+	host := os.Getenv("ISUCON_DB_HOST")
 	if host == "" {
 		host = "localhost"
 	}
-	port := os.Getenv("DB_PORT")
+	port := os.Getenv("ISUCON_DB_PORT")
 	if port == "" {
 		port = "3306"
 	}
@@ -37,27 +38,26 @@ func setup() http.Handler {
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert DB port number from DB_PORT environment variable into int: %v", err))
 	}
-	user := os.Getenv("DB_USER")
+	user := os.Getenv("ISUCON_DB_USER")
 	if user == "" {
 		user = "isucon"
 	}
-	password := os.Getenv("DB_PASSWORD")
+	password := os.Getenv("ISUCON_DB_PASSWORD")
 	if password == "" {
 		password = "isucon"
 	}
-	dbname := os.Getenv("DB_NAME")
+	dbname := os.Getenv("ISUCON_DB_NAME")
 	if dbname == "" {
 		dbname = "isuride"
 	}
 
-	dbConfig := &mysql.Config{
-		User:      user,
-		Passwd:    password,
-		Net:       "tcp",
-		Addr:      net.JoinHostPort(host, port),
-		DBName:    dbname,
-		ParseTime: true,
-	}
+	dbConfig := mysql.NewConfig()
+	dbConfig.User = user
+	dbConfig.Passwd = password
+	dbConfig.Addr = net.JoinHostPort(host, port)
+	dbConfig.Net = "tcp"
+	dbConfig.DBName = dbname
+	dbConfig.ParseTime = true
 
 	_db, err := sqlx.Connect("mysql", dbConfig.FormatDSN())
 	if err != nil {
@@ -72,43 +72,44 @@ func setup() http.Handler {
 
 	// app handlers
 	{
-		mux.HandleFunc("POST /app/register", appPostRegister)
+		mux.HandleFunc("POST /api/app/register", appPostRegister)
 
 		authedMux := mux.With(appAuthMiddleware)
-		authedMux.HandleFunc("POST /app/payment-methods", appPostPaymentMethods)
-		authedMux.HandleFunc("GET /app/requests", appGetRequests)
-		authedMux.HandleFunc("POST /app/requests", appPostRequests)
-		authedMux.HandleFunc("GET /app/requests/{request_id}", appGetRequest)
-		authedMux.HandleFunc("POST /app/requests/{request_id}/evaluate", appPostRequestEvaluate)
-		//authedMux.HandleFunc("GET /app/notification", appGetNotificationSSE)
-		authedMux.HandleFunc("GET /app/notification", appGetNotification)
+		authedMux.HandleFunc("POST /api/app/payment-methods", appPostPaymentMethods)
+		authedMux.HandleFunc("GET /api/app/requests", appGetRequests)
+		authedMux.HandleFunc("POST /api/app/requests", appPostRequests)
+		authedMux.HandleFunc("POST /api/app/requests/estimate", appPostRequestEstimate)
+		authedMux.HandleFunc("GET /api/app/requests/{request_id}", appGetRequest)
+		authedMux.HandleFunc("POST /api/app/requests/{request_id}/evaluate", appPostRequestEvaluate)
+		//authedMux.HandleFunc("GET /api/app/notification", appGetNotificationSSE)
+		authedMux.HandleFunc("GET /api/app/notification", appGetNotification)
+		authedMux.HandleFunc("GET /api/app/nearby-chairs", appGetNearbyChairs)
 	}
 
-	// provider handlers
+	// owner handlers
 	{
-		mux.HandleFunc("POST /provider/register", providerPostRegister)
+		mux.HandleFunc("POST /api/owner/register", ownerPostRegister)
 
-		authedMux := mux.With(providerAuthMiddleware)
-		authedMux.HandleFunc("GET /provider/sales", providerGetSales)
-		authedMux.HandleFunc("GET /provider/chairs", providerGetChairs)
-		authedMux.HandleFunc("GET /provider/chairs/{chair_id}", providerGetChairDetail)
+		authedMux := mux.With(ownerAuthMiddleware)
+		authedMux.HandleFunc("GET /api/owner/sales", ownerGetSales)
+		authedMux.HandleFunc("GET /api/owner/chairs", ownerGetChairs)
+		authedMux.HandleFunc("GET /api/owner/chairs/{chair_id}", ownerGetChairDetail)
 	}
 
 	// chair handlers
 	{
-		authedMux1 := mux.With(providerAuthMiddleware)
-		authedMux1.HandleFunc("POST /chair/register", chairPostRegister)
+		mux.HandleFunc("POST /api/chair/register", chairPostRegister)
 
-		authedMux2 := mux.With(chairAuthMiddleware)
-		authedMux2.HandleFunc("POST /chair/activate", chairPostActivate)
-		authedMux2.HandleFunc("POST /chair/deactivate", chairPostDeactivate)
-		authedMux2.HandleFunc("POST /chair/coordinate", chairPostCoordinate)
-		//authedMux2.HandleFunc("GET /chair/notification", chairGetNotificationSSE)
-		authedMux2.HandleFunc("GET /chair/notification", chairGetNotification)
-		authedMux2.HandleFunc("GET /chair/requests/{request_id}", chairGetRequest)
-		authedMux2.HandleFunc("POST /chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux2.HandleFunc("POST /chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux2.HandleFunc("POST /chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux := mux.With(chairAuthMiddleware)
+		authedMux.HandleFunc("POST /api/chair/activate", chairPostActivate)
+		authedMux.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
+		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
+		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
+		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
+		authedMux.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}
 
 	return mux
@@ -118,6 +119,10 @@ type postInitializeRequest struct {
 	PaymentServer string `json:"payment_server"`
 }
 
+type postInitializeResponse struct {
+	Language string `json:"language"`
+}
+
 func postInitialize(w http.ResponseWriter, r *http.Request) {
 	req := &postInitializeRequest{}
 	if err := bindJSON(r, req); err != nil {
@@ -125,37 +130,13 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tables := []string{
-		"chair_locations",
-		"ride_requests",
-		"payment_tokens",
-		"users",
-		"chairs",
-		"providers",
-	}
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
+	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Errorf("failed to initialize: %s: %w", string(out), err))
 		return
 	}
-	defer tx.Rollback()
 
-	tx.MustExec("SET FOREIGN_KEY_CHECKS = 0")
-	for _, table := range tables {
-		_, err := tx.Exec("TRUNCATE TABLE " + table)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-	}
-	tx.MustExec("SET FOREIGN_KEY_CHECKS = 1")
-	if err := tx.Commit(); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	paymentURL = req.PaymentServer
-
-	writeJSON(w, http.StatusOK, map[string]string{"language": "go"})
+	writeJSON(w, http.StatusOK, postInitializeResponse{Language: "go"})
 }
 
 type Coordinate struct {
@@ -168,13 +149,13 @@ func bindJSON(r *http.Request, v interface{}) error {
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
-	w.WriteHeader(statusCode)
 	buf, err := json.Marshal(v)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write(buf)
 }
 
