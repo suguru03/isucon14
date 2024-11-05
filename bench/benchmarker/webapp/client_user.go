@@ -193,7 +193,7 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/app/payment-methodsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/app/payment-methodsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
 	resBody := &api.AppPostPaymentMethodsNoContent{}
