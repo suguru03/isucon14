@@ -117,10 +117,9 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "app_session",
-		Value:    accessToken,
-		HttpOnly: true,
+		Path:  "/",
+		Name:  "app_session",
+		Value: accessToken,
 	})
 
 	writeJSON(w, http.StatusCreated, &appPostRegisterResponse{

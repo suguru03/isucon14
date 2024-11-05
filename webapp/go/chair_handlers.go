@@ -55,10 +55,9 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "chair_session",
-		Value:    accessToken,
-		HttpOnly: true,
+		Path:  "/",
+		Name:  "chair_session",
+		Value: accessToken,
 	})
 
 	writeJSON(w, http.StatusCreated, &chairPostRegisterResponse{
