@@ -340,23 +340,11 @@ func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse
 
 	requests := make([]*world.RequestHistory, len(res.Requests))
 	for i, r := range res.Requests {
-		var status world.RequestStatus
-		switch r.Status {
-		case api.RequestStatusMATCHING:
-			status = world.RequestStatusMatching
-		case api.RequestStatusDISPATCHING:
-			status = world.RequestStatusDispatching
-		case api.RequestStatusDISPATCHED:
-			status = world.RequestStatusDispatched
-		case api.RequestStatusCARRYING:
-			status = world.RequestStatusCarrying
-		case api.RequestStatusARRIVED:
-			status = world.RequestStatusArrived
-		case api.RequestStatusCOMPLETED:
-			status = world.RequestStatusCompleted
-		}
-
 		requestedAt, err := time.Parse(time.RFC3339Nano, r.RequestedAt)
+		if err != nil {
+			return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
+		}
+		completedAt, err := time.Parse(time.RFC3339Nano, r.CompletedAt)
 		if err != nil {
 			return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
 		}
@@ -371,30 +359,16 @@ func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse
 				X: r.DestinationCoordinate.Latitude,
 				Y: r.DestinationCoordinate.Longitude,
 			},
-			Status:      status,
+			Chair: world.RequestHistoryChair{
+				ID:       r.Chair.ID,
+				Provider: r.Chair.Provider,
+				Name:     r.Chair.Name,
+				Model:    r.Chair.Model,
+			},
 			Fare:        r.Fare,
+			Evaluation:  r.Evaluation,
 			RequestedAt: requestedAt,
-		}
-
-		if r.Chair.Set {
-			requests[i].Chair = &world.RequestHistoryChair{
-				ID:       r.Chair.Value.ID,
-				Provider: r.Chair.Value.Provider,
-				Name:     r.Chair.Value.Name,
-				Model:    r.Chair.Value.Model,
-			}
-		}
-
-		if r.Evaluation.Set {
-			requests[i].Evaluation = &r.Evaluation.Value
-		}
-
-		if r.CompletedAt.Set {
-			completedAt, err := time.Parse(time.RFC3339Nano, r.CompletedAt.Value)
-			if err != nil {
-				return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
-			}
-			requests[i].CompletedAt = null.TimeFrom(completedAt)
+			CompletedAt: completedAt,
 		}
 	}
 

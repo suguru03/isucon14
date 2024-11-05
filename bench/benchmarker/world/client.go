@@ -66,12 +66,11 @@ type RequestHistory struct {
 	ID                    string
 	PickupCoordinate      Coordinate
 	DestinationCoordinate Coordinate
-	Status                RequestStatus
-	Chair                 *RequestHistoryChair
+	Chair                 RequestHistoryChair
 	Fare                  int
-	Evaluation            *int
+	Evaluation            int
 	RequestedAt           time.Time
-	CompletedAt           null.Time
+	CompletedAt           time.Time
 }
 
 type RequestHistoryChair struct {

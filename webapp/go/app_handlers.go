@@ -90,12 +90,11 @@ type getAppRequestsResponseItem struct {
 	RequestID             string     `json:"request_id"`
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Status                string     `json:"status"`
-	Chair                 *getAppRequestResponseItemChair
+	Chair                 getAppRequestResponseItemChair
 	Fare        int   `json:"fare"`
-	Evaluation  *int  `json:"evaluation"`
+	Evaluation  int   `json:"evaluation"`
 	RequestedAt int64 `json:"requested_at"`
-	CompletedAt *int64 `json:"completed_at"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 type getAppRequestResponseItemChair struct {
@@ -111,7 +110,7 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 	rideRequests := []RideRequest{}
 	if err := db.Select(
 		&rideRequests,
-		`SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC`,
+		`SELECT * FROM ride_requests WHERE user_id = ? AND status = 'COMPLETED' ORDER BY requested_at DESC`,
 		user.ID,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -124,36 +123,29 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 			RequestID:             rideRequest.ID,
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
-			Status:                rideRequest.Status,
 			Fare:                  calculateSale(rideRequest),
+			Evaluation:            *rideRequest.Evaluation,
 			RequestedAt:           rideRequest.RequestedAt.Unix(),
+			CompletedAt:           rideRequest.UpdatedAt.Unix(),
 		}
 
-		if rideRequest.ChairID.Valid {
-			item.Chair = &getAppRequestResponseItemChair{}
+		item.Chair = getAppRequestResponseItemChair{}
 
-			chair := &Chair{}
-			if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-			item.Chair.ID = chair.ID
-			item.Chair.Name = chair.Name
-			item.Chair.Model = chair.Model
-
-			provider := &Provider{}
-			if err := db.Get(provider, `SELECT * FROM providers WHERE id = ?`, chair.ProviderID); err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-			item.Chair.Provider = provider.Name
+		chair := &Chair{}
+		if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
 		}
+		item.Chair.ID = chair.ID
+		item.Chair.Name = chair.Name
+		item.Chair.Model = chair.Model
 
-		if rideRequest.Status == "COMPLETED" {
-			item.Evaluation = rideRequest.Evaluation
-			completedAt := rideRequest.UpdatedAt.Unix()
-			item.CompletedAt = &completedAt
+		provider := &Provider{}
+		if err := db.Get(provider, `SELECT * FROM providers WHERE id = ?`, chair.ProviderID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
 		}
+		item.Chair.Provider = provider.Name
 
 		requests = append(requests, item)
 	}

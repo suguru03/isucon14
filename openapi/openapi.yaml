@@ -182,7 +182,7 @@ paths:
     get:
       tags:
         - app
-      summary: ユーザーが配車要求一覧を取得する
+      summary: ユーザーが完了済みの配車要求一覧を取得する
       operationId: app-get-requests
       responses:
         "200":
@@ -204,8 +204,6 @@ paths:
                           $ref: "#/components/schemas/Coordinate"
                         destination_coordinate:
                           $ref: "#/components/schemas/Coordinate"
-                        status:
-                          $ref: "#/components/schemas/RequestStatus"
                         chair:
                           type: object
                           properties:
@@ -242,9 +240,11 @@ paths:
                         - request_id
                         - pickup_coordinate
                         - destination_coordinate
-                        - status
+                        - chair
                         - fare
+                        - evaluation
                         - requested_at
+                        - completed_at
                 required:
                   - requests
 >>>>>>> 2e07bd2 (impl bench client)

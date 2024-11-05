@@ -30,7 +30,7 @@ type Invoker interface {
 	AppGetRequest(ctx context.Context, params AppGetRequestParams) (AppGetRequestRes, error)
 	// AppGetRequests invokes app-get-requests operation.
 	//
-	// ユーザーが配車要求一覧を取得する.
+	// ユーザーが完了済みの配車要求一覧を取得する.
 	//
 	// GET /app/requests
 	AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error)
@@ -280,7 +280,7 @@ func (c *Client) sendAppGetRequest(ctx context.Context, params AppGetRequestPara
 
 // AppGetRequests invokes app-get-requests operation.
 //
-// ユーザーが配車要求一覧を取得する.
+// ユーザーが完了済みの配車要求一覧を取得する.
 //
 // GET /app/requests
 func (c *Client) AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error) {

@@ -193,19 +193,18 @@ func (s *AppGetRequestsOK) SetRequests(val []AppGetRequestsOKRequestsItem) {
 
 type AppGetRequestsOKRequestsItem struct {
 	// 配車要求ID.
-	RequestID             string                               `json:"request_id"`
-	PickupCoordinate      Coordinate                           `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate                           `json:"destination_coordinate"`
-	Status                RequestStatus                        `json:"status"`
-	Chair                 OptAppGetRequestsOKRequestsItemChair `json:"chair"`
+	RequestID             string                            `json:"request_id"`
+	PickupCoordinate      Coordinate                        `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate                        `json:"destination_coordinate"`
+	Chair                 AppGetRequestsOKRequestsItemChair `json:"chair"`
 	// 運賃.
 	Fare int `json:"fare"`
 	// 椅子の評価.
-	Evaluation OptInt `json:"evaluation"`
+	Evaluation int `json:"evaluation"`
 	// 配車要求日時.
 	RequestedAt string `json:"requested_at"`
 	// 評価まで完了した日時.
-	CompletedAt OptString `json:"completed_at"`
+	CompletedAt string `json:"completed_at"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -223,13 +222,8 @@ func (s *AppGetRequestsOKRequestsItem) GetDestinationCoordinate() Coordinate {
 	return s.DestinationCoordinate
 }
 
-// GetStatus returns the value of Status.
-func (s *AppGetRequestsOKRequestsItem) GetStatus() RequestStatus {
-	return s.Status
-}
-
 // GetChair returns the value of Chair.
-func (s *AppGetRequestsOKRequestsItem) GetChair() OptAppGetRequestsOKRequestsItemChair {
+func (s *AppGetRequestsOKRequestsItem) GetChair() AppGetRequestsOKRequestsItemChair {
 	return s.Chair
 }
 
@@ -239,7 +233,7 @@ func (s *AppGetRequestsOKRequestsItem) GetFare() int {
 }
 
 // GetEvaluation returns the value of Evaluation.
-func (s *AppGetRequestsOKRequestsItem) GetEvaluation() OptInt {
+func (s *AppGetRequestsOKRequestsItem) GetEvaluation() int {
 	return s.Evaluation
 }
 
@@ -249,7 +243,7 @@ func (s *AppGetRequestsOKRequestsItem) GetRequestedAt() string {
 }
 
 // GetCompletedAt returns the value of CompletedAt.
-func (s *AppGetRequestsOKRequestsItem) GetCompletedAt() OptString {
+func (s *AppGetRequestsOKRequestsItem) GetCompletedAt() string {
 	return s.CompletedAt
 }
 
@@ -268,13 +262,8 @@ func (s *AppGetRequestsOKRequestsItem) SetDestinationCoordinate(val Coordinate) 
 	s.DestinationCoordinate = val
 }
 
-// SetStatus sets the value of Status.
-func (s *AppGetRequestsOKRequestsItem) SetStatus(val RequestStatus) {
-	s.Status = val
-}
-
 // SetChair sets the value of Chair.
-func (s *AppGetRequestsOKRequestsItem) SetChair(val OptAppGetRequestsOKRequestsItemChair) {
+func (s *AppGetRequestsOKRequestsItem) SetChair(val AppGetRequestsOKRequestsItemChair) {
 	s.Chair = val
 }
 
@@ -284,7 +273,7 @@ func (s *AppGetRequestsOKRequestsItem) SetFare(val int) {
 }
 
 // SetEvaluation sets the value of Evaluation.
-func (s *AppGetRequestsOKRequestsItem) SetEvaluation(val OptInt) {
+func (s *AppGetRequestsOKRequestsItem) SetEvaluation(val int) {
 	s.Evaluation = val
 }
 
@@ -294,7 +283,7 @@ func (s *AppGetRequestsOKRequestsItem) SetRequestedAt(val string) {
 }
 
 // SetCompletedAt sets the value of CompletedAt.
-func (s *AppGetRequestsOKRequestsItem) SetCompletedAt(val OptString) {
+func (s *AppGetRequestsOKRequestsItem) SetCompletedAt(val string) {
 	s.CompletedAt = val
 }
 
@@ -884,52 +873,6 @@ func (o OptAppChair) Or(d AppChair) AppChair {
 	return d
 }
 
-// NewOptAppGetRequestsOKRequestsItemChair returns new OptAppGetRequestsOKRequestsItemChair with value set to v.
-func NewOptAppGetRequestsOKRequestsItemChair(v AppGetRequestsOKRequestsItemChair) OptAppGetRequestsOKRequestsItemChair {
-	return OptAppGetRequestsOKRequestsItemChair{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAppGetRequestsOKRequestsItemChair is optional AppGetRequestsOKRequestsItemChair.
-type OptAppGetRequestsOKRequestsItemChair struct {
-	Value AppGetRequestsOKRequestsItemChair
-	Set   bool
-}
-
-// IsSet returns true if OptAppGetRequestsOKRequestsItemChair was set.
-func (o OptAppGetRequestsOKRequestsItemChair) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptAppGetRequestsOKRequestsItemChair) Reset() {
-	var v AppGetRequestsOKRequestsItemChair
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAppGetRequestsOKRequestsItemChair) SetTo(v AppGetRequestsOKRequestsItemChair) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAppGetRequestsOKRequestsItemChair) Get() (v AppGetRequestsOKRequestsItemChair, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAppGetRequestsOKRequestsItemChair) Or(d AppGetRequestsOKRequestsItemChair) AppGetRequestsOKRequestsItemChair {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
 func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {
 	return OptAppPostPaymentMethodsReq{
@@ -1200,52 +1143,6 @@ func (o OptCoordinate) Get() (v Coordinate, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptCoordinate) Or(d Coordinate) Coordinate {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptInt returns new OptInt with value set to v.
-func NewOptInt(v int) OptInt {
-	return OptInt{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptInt is optional int.
-type OptInt struct {
-	Value int
-	Set   bool
-}
-
-// IsSet returns true if OptInt was set.
-func (o OptInt) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptInt) Reset() {
-	var v int
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptInt) SetTo(v int) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptInt) Get() (v int, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptInt) Or(d int) int {
 	if v, ok := o.Get(); ok {
 		return v
 	}
