@@ -4,37 +4,44 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/oklog/ulid/v2"
 )
 
-type postProviderRegisterRequest struct {
+const (
+	initialFare     = 500
+	farePerDistance = 100
+)
+
+type ownerPostRegisterRequest struct {
 	Name string `json:"name"`
 }
 
-type postProviderRegisterResponse struct {
-	ID string `json:"id"`
+type ownerPostRegisterResponse struct {
+	ID                 string `json:"id"`
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
-func providerPostRegister(w http.ResponseWriter, r *http.Request) {
-	req := &postProviderRegisterRequest{}
+func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
+	req := &ownerPostRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-
-	providerID := ulid.Make().String()
-
 	if req.Name == "" {
 		writeError(w, http.StatusBadRequest, errors.New("some of required fields(name) are empty"))
 		return
 	}
 
+	ownerID := ulid.Make().String()
 	accessToken := secureRandomStr(32)
+	chairRegisterToken := secureRandomStr(32)
+
 	_, err := db.Exec(
-		"INSERT INTO providers (id, name, access_token, created_at, updated_at) VALUES (?, ?, ?, isu_now(), isu_now())",
-		providerID, req.Name, accessToken,
+		"INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)",
+		ownerID, req.Name, accessToken, chairRegisterToken,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -42,21 +49,15 @@ func providerPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "provider_session",
-		Value:    accessToken,
-		HttpOnly: true,
+		Path:  "/",
+		Name:  "owner_session",
+		Value: accessToken,
 	})
 
-	writeJSON(w, http.StatusCreated, &postProviderRegisterResponse{
-		ID: providerID,
+	writeJSON(w, http.StatusCreated, &ownerPostRegisterResponse{
+		ID:                 ownerID,
+		ChairRegisterToken: chairRegisterToken,
 	})
-}
-
-type getProviderSalesResponse struct {
-	TotalSales int          `json:"total_sales"`
-	Chairs     []ChairSales `json:"chairs"`
-	Models     []ModelSales `json:"models"`
 }
 
 type ChairSales struct {
@@ -70,41 +71,53 @@ type ModelSales struct {
 	Sales int    `json:"sales"`
 }
 
-func providerGetSales(w http.ResponseWriter, r *http.Request) {
-	provider := r.Context().Value("provider").(*Provider)
+type ownerGetSalesResponse struct {
+	TotalSales int          `json:"total_sales"`
+	Chairs     []ChairSales `json:"chairs"`
+	Models     []ModelSales `json:"models"`
+}
 
-	since := time.Time{}
+func ownerGetSales(w http.ResponseWriter, r *http.Request) {
+	since := time.Unix(0, 0)
 	until := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 	if r.URL.Query().Get("since") != "" {
-		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("since"))
+		parsed, err := strconv.ParseInt(r.URL.Query().Get("since"), 10, 64)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err)
 		}
-		since = parsed
+		since = time.UnixMilli(parsed)
 	}
 	if r.URL.Query().Get("until") != "" {
-		parsed, err := time.Parse(time.RFC3339Nano, r.URL.Query().Get("until"))
+		parsed, err := strconv.ParseInt(r.URL.Query().Get("until"), 10, 64)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err)
 		}
-		until = parsed
+		until = time.UnixMilli(parsed)
 	}
 
+	owner := r.Context().Value("owner").(*Owner)
+
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
 	chairs := []Chair{}
-	if err := db.Select(&chairs, "SELECT * FROM chairs WHERE provider_id = ?", provider.ID); err != nil {
+	if err := tx.Select(&chairs, "SELECT * FROM chairs WHERE owner_id = ?", owner.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	res := getProviderSalesResponse{
+	res := ownerGetSalesResponse{
 		TotalSales: 0,
 	}
 
 	modelSalesByModel := map[string]int{}
-
 	for _, chair := range chairs {
 		reqs := []RideRequest{}
-		if err := db.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
+		if err := tx.Select(&reqs, "SELECT * FROM ride_requests WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -128,16 +141,10 @@ func providerGetSales(w http.ResponseWriter, r *http.Request) {
 			Sales: sales,
 		})
 	}
-
 	res.Models = modelSales
 
 	writeJSON(w, http.StatusOK, res)
 }
-
-const (
-	initialFare     = 500
-	farePerDistance = 100
-)
 
 func sumSales(requests []RideRequest) int {
 	sale := 0
@@ -148,14 +155,12 @@ func sumSales(requests []RideRequest) int {
 }
 
 func calculateSale(req RideRequest) int {
-	latDiff := max(req.DestinationLatitude-req.PickupLatitude, req.PickupLatitude-req.DestinationLatitude)
-	lonDiff := max(req.DestinationLongitude-req.PickupLongitude, req.PickupLongitude-req.DestinationLongitude)
-	return initialFare + farePerDistance*(latDiff+lonDiff)
+	return calculateFare(req.PickupLatitude, req.PickupLongitude, req.DestinationLatitude, req.DestinationLongitude)
 }
 
 type ChairWithDetail struct {
 	ID                     string       `db:"id"`
-	ProviderID             string       `db:"provider_id"`
+	OwnerID                string       `db:"owner_id"`
 	Name                   string       `db:"name"`
 	AccessToken            string       `db:"access_token"`
 	Model                  string       `db:"model"`
@@ -166,26 +171,26 @@ type ChairWithDetail struct {
 	TotalDistanceUpdatedAt sql.NullTime `db:"total_distance_updated_at"`
 }
 
-type getProviderChairResponse struct {
-	Chairs []providerChair `json:"chairs"`
+type ownerChair struct {
+	ID                     string `json:"id"`
+	Name                   string `json:"name"`
+	Model                  string `json:"model"`
+	Active                 bool   `json:"active"`
+	RegisteredAt           int64  `json:"registered_at"`
+	TotalDistance          int    `json:"total_distance"`
+	TotalDistanceUpdatedAt *int64 `json:"total_distance_updated_at,omitempty"`
 }
 
-type providerChair struct {
-	ID                     string     `json:"id"`
-	Name                   string     `json:"name"`
-	Model                  string     `json:"model"`
-	Active                 bool       `json:"active"`
-	RegisteredAt           time.Time  `json:"registered_at"`
-	TotalDistance          int        `json:"total_distance"`
-	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at"`
+type ownerGetChairResponse struct {
+	Chairs []ownerChair `json:"chairs"`
 }
 
-func providerGetChairs(w http.ResponseWriter, r *http.Request) {
-	provider := r.Context().Value("provider").(*Provider)
+func ownerGetChairs(w http.ResponseWriter, r *http.Request) {
+	owner := r.Context().Value("owner").(*Owner)
 
 	chairs := []ChairWithDetail{}
 	if err := db.Select(&chairs, `SELECT id,
-       provider_id,
+       owner_id,
        name,
        access_token,
        model,
@@ -204,47 +209,49 @@ FROM chairs
                                 ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
                          FROM chair_locations) tmp
                    GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
-WHERE provider_id = ?
-`, provider.ID); err != nil {
+WHERE owner_id = ?
+`, owner.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	res := getProviderChairResponse{}
+	res := ownerGetChairResponse{}
 	for _, chair := range chairs {
-		c := providerChair{
+		c := ownerChair{
 			ID:            chair.ID,
 			Name:          chair.Name,
 			Model:         chair.Model,
 			Active:        chair.IsActive,
-			RegisteredAt:  chair.CreatedAt,
+			RegisteredAt:  chair.CreatedAt.UnixMilli(),
 			TotalDistance: chair.TotalDistance,
 		}
 		if chair.TotalDistanceUpdatedAt.Valid {
-			c.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+			t := chair.TotalDistanceUpdatedAt.Time.UnixMilli()
+			c.TotalDistanceUpdatedAt = &t
 		}
 		res.Chairs = append(res.Chairs, c)
 	}
 	writeJSON(w, http.StatusOK, res)
 }
 
-type providerChairDetail struct {
-	ID                     string     `json:"id"`
-	Name                   string     `json:"name"`
-	Model                  string     `json:"model"`
-	Active                 bool       `json:"active"`
-	RegisteredAt           time.Time  `json:"registered_at"`
-	TotalDistance          int        `json:"total_distance"`
-	TotalDistanceUpdatedAt *time.Time `json:"total_distance_updated_at"`
+type ownerGetChairDetailResponse struct {
+	ID                     string `json:"id"`
+	Name                   string `json:"name"`
+	Model                  string `json:"model"`
+	Active                 bool   `json:"active"`
+	RegisteredAt           int64  `json:"registered_at"`
+	TotalDistance          int    `json:"total_distance"`
+	TotalDistanceUpdatedAt *int64 `json:"total_distance_updated_at,omitempty"`
 }
 
-func providerGetChairDetail(w http.ResponseWriter, r *http.Request) {
-	provider := r.Context().Value("provider").(*Provider)
+func ownerGetChairDetail(w http.ResponseWriter, r *http.Request) {
 	chairID := r.PathValue("chair_id")
+
+	owner := r.Context().Value("owner").(*Owner)
 
 	chair := ChairWithDetail{}
 	if err := db.Get(&chair, `SELECT id,
-       provider_id,
+       owner_id,
        name,
        access_token,
        model,
@@ -263,7 +270,7 @@ FROM chairs
                                 ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
                          FROM chair_locations) tmp
                    GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
-WHERE provider_id = ? AND id = ?`, provider.ID, chairID); err != nil {
+WHERE owner_id = ? AND id = ?`, owner.ID, chairID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, errors.New("chair not found"))
 			return
@@ -272,16 +279,17 @@ WHERE provider_id = ? AND id = ?`, provider.ID, chairID); err != nil {
 		return
 	}
 
-	resp := providerChairDetail{
+	resp := ownerGetChairDetailResponse{
 		ID:            chair.ID,
 		Name:          chair.Name,
 		Model:         chair.Model,
 		Active:        chair.IsActive,
-		RegisteredAt:  chair.CreatedAt,
+		RegisteredAt:  chair.CreatedAt.UnixMilli(),
 		TotalDistance: chair.TotalDistance,
 	}
 	if chair.TotalDistanceUpdatedAt.Valid {
-		resp.TotalDistanceUpdatedAt = &chair.TotalDistanceUpdatedAt.Time
+		t := chair.TotalDistanceUpdatedAt.Time.UnixMilli()
+		resp.TotalDistanceUpdatedAt = &t
 	}
 	writeJSON(w, http.StatusOK, resp)
 }

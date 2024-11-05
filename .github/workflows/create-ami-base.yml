@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-ami:
-    runs-on: [isucon14-ci-packer-base]
+    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
     name: build isucon14 base image
 
     steps:

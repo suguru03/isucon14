@@ -71,8 +71,8 @@ func encodeAppPostRequestRequest(
 	return nil
 }
 
-func encodeAppPostRequestEvaluateRequest(
-	req OptAppPostRequestEvaluateReq,
+func encodeAppPostRequestEstimateRequest(
+	req OptAppPostRequestEstimateReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -91,14 +91,18 @@ func encodeAppPostRequestEvaluateRequest(
 	return nil
 }
 
-func encodeChairPostActivateRequest(
-	req *ChairPostActivateReq,
+func encodeAppPostRequestEvaluateRequest(
+	req OptAppPostRequestEvaluateReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
+	if !req.Set {
+		// Keep request with empty body if value is not set.
+		return nil
+	}
 	e := new(jx.Encoder)
 	{
-		if req != nil {
+		if req.Set {
 			req.Encode(e)
 		}
 	}
@@ -127,22 +131,6 @@ func encodeChairPostCoordinateRequest(
 	return nil
 }
 
-func encodeChairPostDeactivateRequest(
-	req *ChairPostDeactivateReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		if req != nil {
-			req.Encode(e)
-		}
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeChairPostRegisterRequest(
 	req OptChairPostRegisterReq,
 	r *http.Request,
@@ -163,8 +151,8 @@ func encodeChairPostRegisterRequest(
 	return nil
 }
 
-func encodePostInitializeRequest(
-	req OptPostInitializeReq,
+func encodeOwnerPostRegisterRequest(
+	req OptOwnerPostRegisterReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -183,8 +171,8 @@ func encodePostInitializeRequest(
 	return nil
 }
 
-func encodeProviderPostRegisterRequest(
-	req OptProviderPostRegisterReq,
+func encodePostInitializeRequest(
+	req OptPostInitializeReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

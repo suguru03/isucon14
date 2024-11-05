@@ -2,10 +2,10 @@ version: "3"
 
 tasks:
   build:
-    - go build -o isucon{{exeExt}} .
+    - go build -o isuride{{exeExt}} .
   sources:
     - ./*.go
     - go.mod
     - go.sum
   run:
-    - ./isucon{{exeExt}}
+    - ./isuride{{exeExt}}

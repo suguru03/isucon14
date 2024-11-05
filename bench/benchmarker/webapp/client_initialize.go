@@ -25,6 +25,10 @@ func (c *Client) PostInitialize(ctx context.Context, reqBody *api.PostInitialize
 		return nil, err
 	}
 
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("POST /api/initialize のリクエストが失敗しました: %w", err)

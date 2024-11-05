@@ -6,7 +6,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import {
   AppPostRegisterRequestBody,
   ChairPostRegisterRequestBody,
-  ProviderPostRegisterRequestBody,
+  OwnerPostRegisterRequestBody,
 } from "~/apiClient/apiComponents";
 
 const DEFAULT_HOSTNAME = "localhost";
@@ -68,7 +68,7 @@ const getLoggedInURLForDriver = async () => {
     {
       body: JSON.stringify({
         name: "isuconProvider",
-      } satisfies ProviderPostRegisterRequestBody),
+      } satisfies OwnerPostRegisterRequestBody),
       method: "POST",
     },
   );
@@ -77,12 +77,10 @@ const getLoggedInURLForDriver = async () => {
     string
   >;
   const response = await fetch("http://localhost:8080/chair/register", {
-    headers: {
-      Authorization: `Bearer ${providerJSON["access_token"]}`,
-    },
     body: JSON.stringify({
       name: "isuconChair001",
       model: "isuconChair",
+      chair_register_token: providerJSON["chair_register_token"],
     } satisfies ChairPostRegisterRequestBody),
     method: "POST",
   });

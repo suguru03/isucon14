@@ -11,6 +11,8 @@ type WorldClient interface {
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterProvider サーバーにプロバイダーを登録する
 	RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error)
+	// RegisterChair サーバーにユーザーを登録する
+	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 }
 
 type UserClient interface {
@@ -25,8 +27,6 @@ type UserClient interface {
 }
 
 type ProviderClient interface {
-	// RegisterChair サーバーにユーザーを登録する
-	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
 	GetProviderSales(ctx *Context, args *GetProviderSalesRequest) (*GetProviderSalesResponse, error)
 	// GetProviderChairs サーバーからプロバイダーの椅子一覧を取得する
@@ -123,7 +123,8 @@ type RegisterProviderRequest struct {
 }
 
 type RegisterProviderResponse struct {
-	ServerProviderID string
+	ServerProviderID     string
+	ChairRegisteredToken string
 
 	Client ProviderClient
 }
@@ -134,8 +135,8 @@ type RegisterChairRequest struct {
 }
 
 type RegisterChairResponse struct {
-	ServerUserID string
-	AccessToken  string
+	ServerChairID string
+	ServerOwnerID string
 
 	Client ChairClient
 }

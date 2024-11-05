@@ -16,6 +16,12 @@ import (
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
+	// AppGetNearbyChairs invokes app-get-nearby-chairs operation.
+	//
+	// ユーザーの近くにいる椅子を取得する.
+	//
+	// GET /app/nearby-chairs
+	AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error)
 	// AppGetNotification invokes app-get-notification operation.
 	//
 	// 最新の自分の配車要求を取得します。.
@@ -33,7 +39,7 @@ type Invoker interface {
 	// 決済トークンの登録.
 	//
 	// POST /app/payment-methods
-	AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error
+	AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (AppPostPaymentMethodsRes, error)
 	// AppPostRegister invokes app-post-register operation.
 	//
 	// ユーザーが会員登録を行う.
@@ -45,7 +51,13 @@ type Invoker interface {
 	// ユーザーが配車要求を行う.
 	//
 	// POST /app/requests
-	AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (*AppPostRequestAccepted, error)
+	AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (AppPostRequestRes, error)
+	// AppPostRequestEstimate invokes app-post-request-estimate operation.
+	//
+	// リクエストの運賃を見積もる.
+	//
+	// POST /app/requests/estimate
+	AppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (AppPostRequestEstimateRes, error)
 	// AppPostRequestEvaluate invokes app-post-request-evaluate operation.
 	//
 	// ユーザーが椅子を評価する.
@@ -69,7 +81,7 @@ type Invoker interface {
 	// 椅子が配車受付を開始する.
 	//
 	// POST /chair/activate
-	ChairPostActivate(ctx context.Context, request *ChairPostActivateReq) error
+	ChairPostActivate(ctx context.Context) error
 	// ChairPostCoordinate invokes chair-post-coordinate operation.
 	//
 	// 椅子が位置情報を送信する.
@@ -81,13 +93,13 @@ type Invoker interface {
 	// 椅子が配車受付を停止する.
 	//
 	// POST /chair/deactivate
-	ChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) error
+	ChairPostDeactivate(ctx context.Context) error
 	// ChairPostRegister invokes chair-post-register operation.
 	//
 	// 椅子登録を行う.
 	//
 	// POST /chair/register
-	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error)
+	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error)
 	// ChairPostRequestAccept invokes chair-post-request-accept operation.
 	//
 	// 椅子が配車要求を受理する.
@@ -106,36 +118,36 @@ type Invoker interface {
 	//
 	// POST /chair/requests/{request_id}/depart
 	ChairPostRequestDepart(ctx context.Context, params ChairPostRequestDepartParams) (ChairPostRequestDepartRes, error)
+	// OwnerGetChairDetail invokes owner-get-chair-detail operation.
+	//
+	// 管理している椅子の詳細を取得する.
+	//
+	// GET /owner/chairs/{chair_id}
+	OwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (*OwnerGetChairDetailOK, error)
+	// OwnerGetChairs invokes owner-get-chairs operation.
+	//
+	// 椅子のオーナーが管理している椅子の一覧を取得する.
+	//
+	// GET /owner/chairs
+	OwnerGetChairs(ctx context.Context) (*OwnerGetChairsOK, error)
+	// OwnerGetSales invokes owner-get-sales operation.
+	//
+	// 椅子のオーナーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
+	//
+	// GET /owner/sales
+	OwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (*OwnerGetSalesOK, error)
+	// OwnerPostRegister invokes owner-post-register operation.
+	//
+	// 椅子のオーナー自身が登録を行う.
+	//
+	// POST /owner/register
+	OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (OwnerPostRegisterRes, error)
 	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
 	//
 	// POST /initialize
 	PostInitialize(ctx context.Context, request OptPostInitializeReq) (*PostInitializeOK, error)
-	// ProviderGetChairDetail invokes provider-get-chair-detail operation.
-	//
-	// 管理している椅子の詳細を取得する.
-	//
-	// GET /provider/chairs/{chair_id}
-	ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error)
-	// ProviderGetChairs invokes provider-get-chairs operation.
-	//
-	// 椅子プロバイダーが管理している椅子の一覧を取得する.
-	//
-	// GET /provider/chairs
-	ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error)
-	// ProviderGetSales invokes provider-get-sales operation.
-	//
-	// 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
-	//
-	// GET /provider/sales
-	ProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (*ProviderGetSalesOK, error)
-	// ProviderPostRegister invokes provider-post-register operation.
-	//
-	// 椅子プロバイダーが登録を行う.
-	//
-	// POST /provider/register
-	ProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (*ProviderPostRegisterCreated, error)
 }
 
 // Client implements OAS client.
@@ -180,6 +192,90 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 		return c.serverURL
 	}
 	return u
+}
+
+// AppGetNearbyChairs invokes app-get-nearby-chairs operation.
+//
+// ユーザーの近くにいる椅子を取得する.
+//
+// GET /app/nearby-chairs
+func (c *Client) AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error) {
+	res, err := c.sendAppGetNearbyChairs(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendAppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (res *AppGetNearbyChairsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/nearby-chairs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "latitude" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "latitude",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.IntToString(params.Latitude))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "longitude" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "longitude",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.IntToString(params.Longitude))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "distance" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "distance",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Distance.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppGetNearbyChairsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
 }
 
 // AppGetNotification invokes app-get-notification operation.
@@ -277,12 +373,12 @@ func (c *Client) sendAppGetRequest(ctx context.Context, params AppGetRequestPara
 // 決済トークンの登録.
 //
 // POST /app/payment-methods
-func (c *Client) AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error {
-	_, err := c.sendAppPostPaymentMethods(ctx, request)
-	return err
+func (c *Client) AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (AppPostPaymentMethodsRes, error) {
+	res, err := c.sendAppPostPaymentMethods(ctx, request)
+	return res, err
 }
 
-func (c *Client) sendAppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (res *AppPostPaymentMethodsNoContent, err error) {
+func (c *Client) sendAppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (res AppPostPaymentMethodsRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -355,12 +451,12 @@ func (c *Client) sendAppPostRegister(ctx context.Context, request OptAppPostRegi
 // ユーザーが配車要求を行う.
 //
 // POST /app/requests
-func (c *Client) AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (*AppPostRequestAccepted, error) {
+func (c *Client) AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (AppPostRequestRes, error) {
 	res, err := c.sendAppPostRequest(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostRequestReq) (res *AppPostRequestAccepted, err error) {
+func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostRequestReq) (res AppPostRequestRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -382,6 +478,45 @@ func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostReque
 	defer resp.Body.Close()
 
 	result, err := decodeAppPostRequestResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// AppPostRequestEstimate invokes app-post-request-estimate operation.
+//
+// リクエストの運賃を見積もる.
+//
+// POST /app/requests/estimate
+func (c *Client) AppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (AppPostRequestEstimateRes, error) {
+	res, err := c.sendAppPostRequestEstimate(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendAppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (res AppPostRequestEstimateRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/requests/estimate"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAppPostRequestEstimateRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppPostRequestEstimateResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -542,12 +677,12 @@ func (c *Client) sendChairGetRequest(ctx context.Context, params ChairGetRequest
 // 椅子が配車受付を開始する.
 //
 // POST /chair/activate
-func (c *Client) ChairPostActivate(ctx context.Context, request *ChairPostActivateReq) error {
-	_, err := c.sendChairPostActivate(ctx, request)
+func (c *Client) ChairPostActivate(ctx context.Context) error {
+	_, err := c.sendChairPostActivate(ctx)
 	return err
 }
 
-func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostActivateReq) (res *ChairPostActivateNoContent, err error) {
+func (c *Client) sendChairPostActivate(ctx context.Context) (res *ChairPostActivateNoContent, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -557,9 +692,6 @@ func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostAc
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeChairPostActivateRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)
@@ -620,12 +752,12 @@ func (c *Client) sendChairPostCoordinate(ctx context.Context, request OptCoordin
 // 椅子が配車受付を停止する.
 //
 // POST /chair/deactivate
-func (c *Client) ChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) error {
-	_, err := c.sendChairPostDeactivate(ctx, request)
+func (c *Client) ChairPostDeactivate(ctx context.Context) error {
+	_, err := c.sendChairPostDeactivate(ctx)
 	return err
 }
 
-func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) (res *ChairPostDeactivateNoContent, err error) {
+func (c *Client) sendChairPostDeactivate(ctx context.Context) (res *ChairPostDeactivateNoContent, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -635,9 +767,6 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPost
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeChairPostDeactivateRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)
@@ -659,12 +788,12 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPost
 // 椅子登録を行う.
 //
 // POST /chair/register
-func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error) {
+func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error) {
 	res, err := c.sendChairPostRegister(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreated, err error) {
+func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreatedHeaders, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -858,6 +987,208 @@ func (c *Client) sendChairPostRequestDepart(ctx context.Context, params ChairPos
 	return result, nil
 }
 
+// OwnerGetChairDetail invokes owner-get-chair-detail operation.
+//
+// 管理している椅子の詳細を取得する.
+//
+// GET /owner/chairs/{chair_id}
+func (c *Client) OwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (*OwnerGetChairDetailOK, error) {
+	res, err := c.sendOwnerGetChairDetail(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendOwnerGetChairDetail(ctx context.Context, params OwnerGetChairDetailParams) (res *OwnerGetChairDetailOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/owner/chairs/"
+	{
+		// Encode "chair_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "chair_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ChairID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeOwnerGetChairDetailResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// OwnerGetChairs invokes owner-get-chairs operation.
+//
+// 椅子のオーナーが管理している椅子の一覧を取得する.
+//
+// GET /owner/chairs
+func (c *Client) OwnerGetChairs(ctx context.Context) (*OwnerGetChairsOK, error) {
+	res, err := c.sendOwnerGetChairs(ctx)
+	return res, err
+}
+
+func (c *Client) sendOwnerGetChairs(ctx context.Context) (res *OwnerGetChairsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/owner/chairs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeOwnerGetChairsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// OwnerGetSales invokes owner-get-sales operation.
+//
+// 椅子のオーナーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
+//
+// GET /owner/sales
+func (c *Client) OwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (*OwnerGetSalesOK, error) {
+	res, err := c.sendOwnerGetSales(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendOwnerGetSales(ctx context.Context, params OwnerGetSalesParams) (res *OwnerGetSalesOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/owner/sales"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "since" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "since",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Since.Get(); ok {
+				return e.EncodeValue(conv.Int64ToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "until" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "until",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Until.Get(); ok {
+				return e.EncodeValue(conv.Int64ToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeOwnerGetSalesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// OwnerPostRegister invokes owner-post-register operation.
+//
+// 椅子のオーナー自身が登録を行う.
+//
+// POST /owner/register
+func (c *Client) OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (OwnerPostRegisterRes, error) {
+	res, err := c.sendOwnerPostRegister(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendOwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (res OwnerPostRegisterRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/owner/register"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeOwnerPostRegisterRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeOwnerPostRegisterResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // PostInitialize invokes post-initialize operation.
 //
 // サービスを初期化する.
@@ -890,208 +1221,6 @@ func (c *Client) sendPostInitialize(ctx context.Context, request OptPostInitiali
 	defer resp.Body.Close()
 
 	result, err := decodePostInitializeResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProviderGetChairDetail invokes provider-get-chair-detail operation.
-//
-// 管理している椅子の詳細を取得する.
-//
-// GET /provider/chairs/{chair_id}
-func (c *Client) ProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (*ProviderGetChairDetailOK, error) {
-	res, err := c.sendProviderGetChairDetail(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendProviderGetChairDetail(ctx context.Context, params ProviderGetChairDetailParams) (res *ProviderGetChairDetailOK, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/provider/chairs/"
-	{
-		// Encode "chair_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "chair_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.ChairID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeProviderGetChairDetailResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProviderGetChairs invokes provider-get-chairs operation.
-//
-// 椅子プロバイダーが管理している椅子の一覧を取得する.
-//
-// GET /provider/chairs
-func (c *Client) ProviderGetChairs(ctx context.Context) (*ProviderGetChairsOK, error) {
-	res, err := c.sendProviderGetChairs(ctx)
-	return res, err
-}
-
-func (c *Client) sendProviderGetChairs(ctx context.Context) (res *ProviderGetChairsOK, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/provider/chairs"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeProviderGetChairsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProviderGetSales invokes provider-get-sales operation.
-//
-// 椅子プロバイダーが指定期間の全体・椅子ごと・モデルごとの売上情報を取得する.
-//
-// GET /provider/sales
-func (c *Client) ProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (*ProviderGetSalesOK, error) {
-	res, err := c.sendProviderGetSales(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendProviderGetSales(ctx context.Context, params ProviderGetSalesParams) (res *ProviderGetSalesOK, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/provider/sales"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "since" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "since",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Since.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "until" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "until",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Until.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeProviderGetSalesResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProviderPostRegister invokes provider-post-register operation.
-//
-// 椅子プロバイダーが登録を行う.
-//
-// POST /provider/register
-func (c *Client) ProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (*ProviderPostRegisterCreated, error) {
-	res, err := c.sendProviderPostRegister(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendProviderPostRegister(ctx context.Context, request OptProviderPostRegisterReq) (res *ProviderPostRegisterCreated, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/provider/register"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeProviderPostRegisterRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeProviderPostRegisterResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

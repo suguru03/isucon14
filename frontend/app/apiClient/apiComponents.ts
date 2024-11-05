@@ -14,8 +14,15 @@ export type PostInitializeError = Fetcher.ErrorWrapper<undefined>;
 export type PostInitializeResponse = {
   /**
    * 実装言語
+   * - go
+   * - perl
+   * - php
+   * - python
+   * - ruby
+   * - rust
+   * - node
    */
-  language: "go" | "perl" | "php" | "python" | "ruby" | "rust" | "node";
+  language: string;
 };
 
 export type PostInitializeRequestBody = {
@@ -70,10 +77,6 @@ export type AppPostRegisterError = Fetcher.ErrorWrapper<{
 }>;
 
 export type AppPostRegisterResponse = {
-  /**
-   * アクセストークン
-   */
-  access_token: string;
   /**
    * ユーザーID
    */
@@ -138,7 +141,10 @@ export const useAppPostRegister = (
   });
 };
 
-export type AppPostPaymentMethodsError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostPaymentMethodsError = Fetcher.ErrorWrapper<{
+  status: 400;
+  payload: Schemas.Error;
+}>;
 
 export type AppPostPaymentMethodsRequestBody = {
   /**
@@ -186,13 +192,26 @@ export const useAppPostPaymentMethods = (
   });
 };
 
-export type AppPostRequestError = Fetcher.ErrorWrapper<undefined>;
+export type AppPostRequestError = Fetcher.ErrorWrapper<
+  | {
+      status: 400;
+      payload: Schemas.Error;
+    }
+  | {
+      status: 409;
+      payload: Schemas.Error;
+    }
+>;
 
 export type AppPostRequestResponse = {
   /**
    * 配車要求ID
    */
   request_id: string;
+  /**
+   * 割引後運賃
+   */
+  fare: number;
 };
 
 export type AppPostRequestRequestBody = {
@@ -241,6 +260,72 @@ export const useAppPostRequest = (
   >({
     mutationFn: (variables: AppPostRequestVariables) =>
       fetchAppPostRequest({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type AppPostRequestEstimateError = Fetcher.ErrorWrapper<{
+  status: 400;
+  payload: Schemas.Error;
+}>;
+
+export type AppPostRequestEstimateResponse = {
+  /**
+   * 割引後運賃
+   */
+  fare: number;
+  /**
+   * 割引額
+   */
+  discount: number;
+};
+
+export type AppPostRequestEstimateRequestBody = {
+  /**
+   * 配車位置
+   */
+  pickup_coordinate: Schemas.Coordinate;
+  /**
+   * 目的地
+   */
+  destination_coordinate: Schemas.Coordinate;
+};
+
+export type AppPostRequestEstimateVariables = {
+  body: AppPostRequestEstimateRequestBody;
+} & ApiContext["fetcherOptions"];
+
+export const fetchAppPostRequestEstimate = (
+  variables: AppPostRequestEstimateVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    AppPostRequestEstimateResponse,
+    AppPostRequestEstimateError,
+    AppPostRequestEstimateRequestBody,
+    {},
+    {},
+    {}
+  >({ url: "/app/requests/estimate", method: "post", ...variables, signal });
+
+export const useAppPostRequestEstimate = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      AppPostRequestEstimateResponse,
+      AppPostRequestEstimateError,
+      AppPostRequestEstimateVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    AppPostRequestEstimateResponse,
+    AppPostRequestEstimateError,
+    AppPostRequestEstimateVariables
+  >({
+    mutationFn: (variables: AppPostRequestEstimateVariables) =>
+      fetchAppPostRequestEstimate({ ...fetcherOptions, ...variables }),
     ...options,
   });
 };
@@ -313,6 +398,19 @@ export type AppPostRequestEvaluateError = Fetcher.ErrorWrapper<
     }
 >;
 
+export type AppPostRequestEvaluateResponse = {
+  /**
+   * 割引後運賃
+   */
+  fare: number;
+  /**
+   * 完了日時
+   *
+   * @format int64
+   */
+  completed_at: number;
+};
+
 export type AppPostRequestEvaluateRequestBody = {
   /**
    * 椅子の評価
@@ -333,7 +431,7 @@ export const fetchAppPostRequestEvaluate = (
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    undefined,
+    AppPostRequestEvaluateResponse,
     AppPostRequestEvaluateError,
     AppPostRequestEvaluateRequestBody,
     {},
@@ -349,7 +447,7 @@ export const fetchAppPostRequestEvaluate = (
 export const useAppPostRequestEvaluate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      undefined,
+      AppPostRequestEvaluateResponse,
       AppPostRequestEvaluateError,
       AppPostRequestEvaluateVariables
     >,
@@ -358,7 +456,7 @@ export const useAppPostRequestEvaluate = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    undefined,
+    AppPostRequestEvaluateResponse,
     AppPostRequestEvaluateError,
     AppPostRequestEvaluateVariables
   >({
@@ -370,6 +468,33 @@ export const useAppPostRequestEvaluate = (
 
 export type AppGetNotificationError = Fetcher.ErrorWrapper<undefined>;
 
+export type AppGetNotificationResponse = {
+  /**
+   * 配車要求ID
+   */
+  request_id: string;
+  pickup_coordinate: Schemas.Coordinate;
+  destination_coordinate: Schemas.Coordinate;
+  status: Schemas.RequestStatus;
+  chair?: Schemas.AppChair;
+  /**
+   * 配車要求日時
+   *
+   * @format int64
+   */
+  created_at: number;
+  /**
+   * 配車要求更新日時
+   *
+   * @format int64
+   */
+  updated_at: number;
+  /**
+   * 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+   */
+  retry_after_ms?: number;
+};
+
 export type AppGetNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
@@ -379,21 +504,23 @@ export const fetchAppGetNotification = (
   variables: AppGetNotificationVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<Schemas.AppRequest, AppGetNotificationError, undefined, {}, {}, {}>({
-    url: "/app/notification",
-    method: "get",
-    ...variables,
-    signal,
-  });
+  apiFetch<
+    AppGetNotificationResponse,
+    AppGetNotificationError,
+    undefined,
+    {},
+    {},
+    {}
+  >({ url: "/app/notification", method: "get", ...variables, signal });
 
 /**
  * 最新の自分の配車要求を取得します。
  */
-export const useAppGetNotification = <TData = Schemas.AppRequest,>(
+export const useAppGetNotification = <TData = AppGetNotificationResponse,>(
   variables: AppGetNotificationVariables,
   options?: Omit<
     reactQuery.UseQueryOptions<
-      Schemas.AppRequest,
+      AppGetNotificationResponse,
       AppGetNotificationError,
       TData
     >,
@@ -402,7 +529,7 @@ export const useAppGetNotification = <TData = Schemas.AppRequest,>(
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<
-    Schemas.AppRequest,
+    AppGetNotificationResponse,
     AppGetNotificationError,
     TData
   >({
@@ -418,138 +545,56 @@ export const useAppGetNotification = <TData = Schemas.AppRequest,>(
   });
 };
 
-export type ProviderPostRegisterError = Fetcher.ErrorWrapper<undefined>;
-
-export type ProviderPostRegisterResponse = {
+export type AppGetNearbyChairsQueryParams = {
   /**
-   * アクセストークン
+   * 緯度
    */
-  access_token: string;
+  latitude: number;
   /**
-   * プロバイダーID
+   * 経度
    */
-  id: string;
+  longitude: number;
+  /**
+   * 検索距離
+   */
+  distance?: number;
 };
 
-export type ProviderPostRegisterRequestBody = {
+export type AppGetNearbyChairsError = Fetcher.ErrorWrapper<undefined>;
+
+export type AppGetNearbyChairsResponse = {
+  chairs: Schemas.AppChair[];
   /**
-   * プロバイダー名
+   * 取得日時
+   *
+   * @format int64
    */
-  name: string;
+  retrieved_at: number;
 };
 
-export type ProviderPostRegisterVariables = {
-  body: ProviderPostRegisterRequestBody;
+export type AppGetNearbyChairsVariables = {
+  queryParams: AppGetNearbyChairsQueryParams;
 } & ApiContext["fetcherOptions"];
 
-export const fetchProviderPostRegister = (
-  variables: ProviderPostRegisterVariables,
+export const fetchAppGetNearbyChairs = (
+  variables: AppGetNearbyChairsVariables,
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    ProviderPostRegisterResponse,
-    ProviderPostRegisterError,
-    ProviderPostRegisterRequestBody,
-    {},
-    {},
-    {}
-  >({ url: "/provider/register", method: "post", ...variables, signal });
-
-export const useProviderPostRegister = (
-  options?: Omit<
-    reactQuery.UseMutationOptions<
-      ProviderPostRegisterResponse,
-      ProviderPostRegisterError,
-      ProviderPostRegisterVariables
-    >,
-    "mutationFn"
-  >,
-) => {
-  const { fetcherOptions } = useApiContext();
-  return reactQuery.useMutation<
-    ProviderPostRegisterResponse,
-    ProviderPostRegisterError,
-    ProviderPostRegisterVariables
-  >({
-    mutationFn: (variables: ProviderPostRegisterVariables) =>
-      fetchProviderPostRegister({ ...fetcherOptions, ...variables }),
-    ...options,
-  });
-};
-
-export type ProviderGetSalesQueryParams = {
-  /**
-   * 開始日（含む）
-   */
-  since: string;
-  /**
-   * 終了日（含む）
-   */
-  until: string;
-};
-
-export type ProviderGetSalesError = Fetcher.ErrorWrapper<undefined>;
-
-export type ProviderGetSalesResponse = {
-  /**
-   * プロバイダー全体の売上
-   */
-  total_sales?: number;
-  /**
-   * 椅子ごとの売上情報
-   */
-  chairs?: {
-    /**
-     * 椅子ID
-     */
-    id?: string;
-    /**
-     * 椅子名
-     */
-    name?: string;
-    /**
-     * 椅子ごとの売上
-     */
-    sales?: number;
-  }[];
-  /**
-   * モデルごとの売上情報
-   */
-  models?: {
-    /**
-     * 椅子モデル
-     */
-    model?: string;
-    /**
-     * モデルごとの売上
-     */
-    sales?: number;
-  }[];
-};
-
-export type ProviderGetSalesVariables = {
-  queryParams: ProviderGetSalesQueryParams;
-} & ApiContext["fetcherOptions"];
-
-export const fetchProviderGetSales = (
-  variables: ProviderGetSalesVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    ProviderGetSalesResponse,
-    ProviderGetSalesError,
+    AppGetNearbyChairsResponse,
+    AppGetNearbyChairsError,
     undefined,
     {},
-    ProviderGetSalesQueryParams,
+    AppGetNearbyChairsQueryParams,
     {}
-  >({ url: "/provider/sales", method: "get", ...variables, signal });
+  >({ url: "/app/nearby-chairs", method: "get", ...variables, signal });
 
-export const useProviderGetSales = <TData = ProviderGetSalesResponse,>(
-  variables: ProviderGetSalesVariables,
+export const useAppGetNearbyChairs = <TData = AppGetNearbyChairsResponse,>(
+  variables: AppGetNearbyChairsVariables,
   options?: Omit<
     reactQuery.UseQueryOptions<
-      ProviderGetSalesResponse,
-      ProviderGetSalesError,
+      AppGetNearbyChairsResponse,
+      AppGetNearbyChairsError,
       TData
     >,
     "queryKey" | "queryFn" | "initialData"
@@ -557,17 +602,346 @@ export const useProviderGetSales = <TData = ProviderGetSalesResponse,>(
 ) => {
   const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
   return reactQuery.useQuery<
-    ProviderGetSalesResponse,
-    ProviderGetSalesError,
+    AppGetNearbyChairsResponse,
+    AppGetNearbyChairsError,
     TData
   >({
     queryKey: queryKeyFn({
-      path: "/provider/sales",
-      operationId: "providerGetSales",
+      path: "/app/nearby-chairs",
+      operationId: "appGetNearbyChairs",
       variables,
     }),
     queryFn: ({ signal }) =>
-      fetchProviderGetSales({ ...fetcherOptions, ...variables }, signal),
+      fetchAppGetNearbyChairs({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
+export type OwnerPostRegisterError = Fetcher.ErrorWrapper<{
+  status: 400;
+  payload: Schemas.Error;
+}>;
+
+export type OwnerPostRegisterResponse = {
+  /**
+   * オーナーID
+   */
+  id: string;
+  /**
+   * 椅子をオーナーに紐づけるための椅子登録トークン
+   */
+  chair_register_token: string;
+};
+
+export type OwnerPostRegisterRequestBody = {
+  /**
+   * オーナー名
+   */
+  name: string;
+};
+
+export type OwnerPostRegisterVariables = {
+  body: OwnerPostRegisterRequestBody;
+} & ApiContext["fetcherOptions"];
+
+export const fetchOwnerPostRegister = (
+  variables: OwnerPostRegisterVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    OwnerPostRegisterResponse,
+    OwnerPostRegisterError,
+    OwnerPostRegisterRequestBody,
+    {},
+    {},
+    {}
+  >({ url: "/owner/register", method: "post", ...variables, signal });
+
+export const useOwnerPostRegister = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      OwnerPostRegisterResponse,
+      OwnerPostRegisterError,
+      OwnerPostRegisterVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    OwnerPostRegisterResponse,
+    OwnerPostRegisterError,
+    OwnerPostRegisterVariables
+  >({
+    mutationFn: (variables: OwnerPostRegisterVariables) =>
+      fetchOwnerPostRegister({ ...fetcherOptions, ...variables }),
+    ...options,
+  });
+};
+
+export type OwnerGetSalesQueryParams = {
+  /**
+   * 開始日時（含む）
+   *
+   * @format int64
+   */
+  since?: number;
+  /**
+   * 終了日時（含む）
+   *
+   * @format int64
+   */
+  until?: number;
+};
+
+export type OwnerGetSalesError = Fetcher.ErrorWrapper<undefined>;
+
+export type OwnerGetSalesResponse = {
+  /**
+   * オーナーが管理する椅子全体の売上
+   */
+  total_sales: number;
+  /**
+   * 椅子ごとの売上情報
+   */
+  chairs: {
+    /**
+     * 椅子ID
+     */
+    id: string;
+    /**
+     * 椅子名
+     */
+    name: string;
+    /**
+     * 椅子ごとの売上
+     */
+    sales: number;
+  }[];
+  /**
+   * モデルごとの売上情報
+   */
+  models: {
+    /**
+     * 椅子モデル
+     */
+    model: string;
+    /**
+     * モデルごとの売上
+     */
+    sales: number;
+  }[];
+};
+
+export type OwnerGetSalesVariables = {
+  queryParams?: OwnerGetSalesQueryParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchOwnerGetSales = (
+  variables: OwnerGetSalesVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    OwnerGetSalesResponse,
+    OwnerGetSalesError,
+    undefined,
+    {},
+    OwnerGetSalesQueryParams,
+    {}
+  >({ url: "/owner/sales", method: "get", ...variables, signal });
+
+export const useOwnerGetSales = <TData = OwnerGetSalesResponse,>(
+  variables: OwnerGetSalesVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      OwnerGetSalesResponse,
+      OwnerGetSalesError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<OwnerGetSalesResponse, OwnerGetSalesError, TData>({
+    queryKey: queryKeyFn({
+      path: "/owner/sales",
+      operationId: "ownerGetSales",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchOwnerGetSales({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
+export type OwnerGetChairsError = Fetcher.ErrorWrapper<undefined>;
+
+export type OwnerGetChairsResponse = {
+  chairs: {
+    /**
+     * 椅子ID
+     */
+    id: string;
+    /**
+     * 椅子の名前
+     */
+    name: string;
+    /**
+     * 椅子のモデル
+     */
+    model: string;
+    /**
+     * 稼働中かどうか
+     */
+    active: boolean;
+    /**
+     * 登録日時
+     *
+     * @format int64
+     */
+    registered_at: number;
+    /**
+     * 総移動距離
+     */
+    total_distance: number;
+    /**
+     * 総移動距離の更新日時
+     *
+     * @format int64
+     */
+    total_distance_updated_at?: number;
+  }[];
+};
+
+export type OwnerGetChairsVariables = ApiContext["fetcherOptions"];
+
+export const fetchOwnerGetChairs = (
+  variables: OwnerGetChairsVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<OwnerGetChairsResponse, OwnerGetChairsError, undefined, {}, {}, {}>({
+    url: "/owner/chairs",
+    method: "get",
+    ...variables,
+    signal,
+  });
+
+export const useOwnerGetChairs = <TData = OwnerGetChairsResponse,>(
+  variables: OwnerGetChairsVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      OwnerGetChairsResponse,
+      OwnerGetChairsError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<
+    OwnerGetChairsResponse,
+    OwnerGetChairsError,
+    TData
+  >({
+    queryKey: queryKeyFn({
+      path: "/owner/chairs",
+      operationId: "ownerGetChairs",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchOwnerGetChairs({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
+export type OwnerGetChairDetailPathParams = {
+  /**
+   * 椅子ID
+   */
+  chairId: string;
+};
+
+export type OwnerGetChairDetailError = Fetcher.ErrorWrapper<undefined>;
+
+export type OwnerGetChairDetailResponse = {
+  /**
+   * 椅子ID
+   */
+  id: string;
+  /**
+   * 椅子の名前
+   */
+  name: string;
+  /**
+   * 椅子のモデル
+   */
+  model: string;
+  /**
+   * 稼働中かどうか
+   */
+  active: boolean;
+  /**
+   * 登録日時
+   *
+   * @format int64
+   */
+  registered_at: number;
+  /**
+   * 総移動距離
+   */
+  total_distance: number;
+  /**
+   * 総移動距離の更新日時
+   *
+   * @format int64
+   */
+  total_distance_updated_at?: number;
+};
+
+export type OwnerGetChairDetailVariables = {
+  pathParams: OwnerGetChairDetailPathParams;
+} & ApiContext["fetcherOptions"];
+
+export const fetchOwnerGetChairDetail = (
+  variables: OwnerGetChairDetailVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    OwnerGetChairDetailResponse,
+    OwnerGetChairDetailError,
+    undefined,
+    {},
+    {},
+    OwnerGetChairDetailPathParams
+  >({ url: "/owner/chairs/{chairId}", method: "get", ...variables, signal });
+
+export const useOwnerGetChairDetail = <TData = OwnerGetChairDetailResponse,>(
+  variables: OwnerGetChairDetailVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      OwnerGetChairDetailResponse,
+      OwnerGetChairDetailError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<
+    OwnerGetChairDetailResponse,
+    OwnerGetChairDetailError,
+    TData
+  >({
+    queryKey: queryKeyFn({
+      path: "/owner/chairs/{chairId}",
+      operationId: "ownerGetChairDetail",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchOwnerGetChairDetail({ ...fetcherOptions, ...variables }, signal),
     ...options,
     ...queryOptions,
   });
@@ -577,13 +951,13 @@ export type ChairPostRegisterError = Fetcher.ErrorWrapper<undefined>;
 
 export type ChairPostRegisterResponse = {
   /**
-   * アクセストークン
-   */
-  access_token: string;
-  /**
    * 椅子ID
    */
   id: string;
+  /**
+   * オーナーID
+   */
+  owner_id: string;
 };
 
 export type ChairPostRegisterRequestBody = {
@@ -595,6 +969,10 @@ export type ChairPostRegisterRequestBody = {
    * 椅子のモデル
    */
   model: string;
+  /**
+   * 椅子をオーナーに紐づけるための椅子登録トークン
+   */
+  chair_register_token: string;
 };
 
 export type ChairPostRegisterVariables = {
@@ -638,15 +1016,13 @@ export const useChairPostRegister = (
 
 export type ChairPostActivateError = Fetcher.ErrorWrapper<undefined>;
 
-export type ChairPostActivateVariables = {
-  body?: Record<string, any>;
-} & ApiContext["fetcherOptions"];
+export type ChairPostActivateVariables = ApiContext["fetcherOptions"];
 
 export const fetchChairPostActivate = (
   variables: ChairPostActivateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, ChairPostActivateError, Record<string, any>, {}, {}, {}>({
+  apiFetch<undefined, ChairPostActivateError, undefined, {}, {}, {}>({
     url: "/chair/activate",
     method: "post",
     ...variables,
@@ -677,22 +1053,18 @@ export const useChairPostActivate = (
 
 export type ChairPostDeactivateError = Fetcher.ErrorWrapper<undefined>;
 
-export type ChairPostDeactivateVariables = {
-  body?: Record<string, any>;
-} & ApiContext["fetcherOptions"];
+export type ChairPostDeactivateVariables = ApiContext["fetcherOptions"];
 
 export const fetchChairPostDeactivate = (
   variables: ChairPostDeactivateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<
-    undefined,
-    ChairPostDeactivateError,
-    Record<string, any>,
-    {},
-    {},
-    {}
-  >({ url: "/chair/deactivate", method: "post", ...variables, signal });
+  apiFetch<undefined, ChairPostDeactivateError, undefined, {}, {}, {}>({
+    url: "/chair/deactivate",
+    method: "post",
+    ...variables,
+    signal,
+  });
 
 export const useChairPostDeactivate = (
   options?: Omit<
@@ -718,6 +1090,15 @@ export const useChairPostDeactivate = (
 
 export type ChairPostCoordinateError = Fetcher.ErrorWrapper<undefined>;
 
+export type ChairPostCoordinateResponse = {
+  /**
+   * 記録日時
+   *
+   * @format int64
+   */
+  recorded_at: number;
+};
+
 export type ChairPostCoordinateVariables = {
   body: Schemas.Coordinate;
 } & ApiContext["fetcherOptions"];
@@ -726,14 +1107,19 @@ export const fetchChairPostCoordinate = (
   variables: ChairPostCoordinateVariables,
   signal?: AbortSignal,
 ) =>
-  apiFetch<undefined, ChairPostCoordinateError, Schemas.Coordinate, {}, {}, {}>(
-    { url: "/chair/coordinate", method: "post", ...variables, signal },
-  );
+  apiFetch<
+    ChairPostCoordinateResponse,
+    ChairPostCoordinateError,
+    Schemas.Coordinate,
+    {},
+    {},
+    {}
+  >({ url: "/chair/coordinate", method: "post", ...variables, signal });
 
 export const useChairPostCoordinate = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      undefined,
+      ChairPostCoordinateResponse,
       ChairPostCoordinateError,
       ChairPostCoordinateVariables
     >,
@@ -742,13 +1128,80 @@ export const useChairPostCoordinate = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    undefined,
+    ChairPostCoordinateResponse,
     ChairPostCoordinateError,
     ChairPostCoordinateVariables
   >({
     mutationFn: (variables: ChairPostCoordinateVariables) =>
       fetchChairPostCoordinate({ ...fetcherOptions, ...variables }),
     ...options,
+  });
+};
+
+export type ChairGetNotificationError = Fetcher.ErrorWrapper<undefined>;
+
+export type ChairGetNotificationResponse = {
+  /**
+   * 配車要求ID
+   */
+  request_id: string;
+  user: Schemas.User;
+  pickup_coordinate: Schemas.Coordinate;
+  destination_coordinate: Schemas.Coordinate;
+  status: Schemas.RequestStatus;
+  /**
+   * 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+   */
+  retry_after_ms?: number;
+};
+
+export type ChairGetNotificationVariables = ApiContext["fetcherOptions"];
+
+/**
+ * 椅子に配車要求を通知するなどで使う想定
+ */
+export const fetchChairGetNotification = (
+  variables: ChairGetNotificationVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    ChairGetNotificationResponse,
+    ChairGetNotificationError,
+    undefined,
+    {},
+    {},
+    {}
+  >({ url: "/chair/notification", method: "get", ...variables, signal });
+
+/**
+ * 椅子に配車要求を通知するなどで使う想定
+ */
+export const useChairGetNotification = <TData = ChairGetNotificationResponse,>(
+  variables: ChairGetNotificationVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<
+      ChairGetNotificationResponse,
+      ChairGetNotificationError,
+      TData
+    >,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<
+    ChairGetNotificationResponse,
+    ChairGetNotificationError,
+    TData
+  >({
+    queryKey: queryKeyFn({
+      path: "/chair/notification",
+      operationId: "chairGetNotification",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchChairGetNotification({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
   });
 };
 
@@ -993,58 +1446,6 @@ export const useChairPostRequestDepart = (
   });
 };
 
-export type ChairGetNotificationError = Fetcher.ErrorWrapper<undefined>;
-
-export type ChairGetNotificationVariables = ApiContext["fetcherOptions"];
-
-/**
- * 椅子に配車要求を通知するなどで使う想定
- */
-export const fetchChairGetNotification = (
-  variables: ChairGetNotificationVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    Schemas.ChairRequest,
-    ChairGetNotificationError,
-    undefined,
-    {},
-    {},
-    {}
-  >({ url: "/chair/notification", method: "get", ...variables, signal });
-
-/**
- * 椅子に配車要求を通知するなどで使う想定
- */
-export const useChairGetNotification = <TData = Schemas.ChairRequest,>(
-  variables: ChairGetNotificationVariables,
-  options?: Omit<
-    reactQuery.UseQueryOptions<
-      Schemas.ChairRequest,
-      ChairGetNotificationError,
-      TData
-    >,
-    "queryKey" | "queryFn" | "initialData"
-  >,
-) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<
-    Schemas.ChairRequest,
-    ChairGetNotificationError,
-    TData
-  >({
-    queryKey: queryKeyFn({
-      path: "/chair/notification",
-      operationId: "chairGetNotification",
-      variables,
-    }),
-    queryFn: ({ signal }) =>
-      fetchChairGetNotification({ ...fetcherOptions, ...variables }, signal),
-    ...options,
-    ...queryOptions,
-  });
-};
-
 export type QueryOperation =
   | {
       path: "/app/requests/{requestId}";
@@ -1057,17 +1458,32 @@ export type QueryOperation =
       variables: AppGetNotificationVariables;
     }
   | {
-      path: "/provider/sales";
-      operationId: "providerGetSales";
-      variables: ProviderGetSalesVariables;
+      path: "/app/nearby-chairs";
+      operationId: "appGetNearbyChairs";
+      variables: AppGetNearbyChairsVariables;
     }
   | {
-      path: "/chair/requests/{requestId}";
-      operationId: "chairGetRequest";
-      variables: ChairGetRequestVariables;
+      path: "/owner/sales";
+      operationId: "ownerGetSales";
+      variables: OwnerGetSalesVariables;
+    }
+  | {
+      path: "/owner/chairs";
+      operationId: "ownerGetChairs";
+      variables: OwnerGetChairsVariables;
+    }
+  | {
+      path: "/owner/chairs/{chairId}";
+      operationId: "ownerGetChairDetail";
+      variables: OwnerGetChairDetailVariables;
     }
   | {
       path: "/chair/notification";
       operationId: "chairGetNotification";
       variables: ChairGetNotificationVariables;
+    }
+  | {
+      path: "/chair/requests/{requestId}";
+      operationId: "chairGetRequest";
+      variables: ChairGetRequestVariables;
     };

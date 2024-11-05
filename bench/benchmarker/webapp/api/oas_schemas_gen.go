@@ -6,13 +6,304 @@ import (
 	"github.com/go-faster/errors"
 )
 
+// App向けの椅子情報.
+// Ref: #/components/schemas/AppChair
+type AppChair struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 椅子の統計情報.
+	Stats AppChairStats `json:"stats"`
+}
+
+// GetID returns the value of ID.
+func (s *AppChair) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AppChair) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *AppChair) GetModel() string {
+	return s.Model
+}
+
+// GetStats returns the value of Stats.
+func (s *AppChair) GetStats() AppChairStats {
+	return s.Stats
+}
+
+// SetID sets the value of ID.
+func (s *AppChair) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AppChair) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *AppChair) SetModel(val string) {
+	s.Model = val
+}
+
+// SetStats sets the value of Stats.
+func (s *AppChair) SetStats(val AppChairStats) {
+	s.Stats = val
+}
+
+// 椅子の統計情報.
+type AppChairStats struct {
+	// 最近の乗車情報.
+	RecentRides []AppChairStatsRecentRidesItem `json:"recent_rides"`
+	// 総乗車回数.
+	TotalRidesCount int `json:"total_rides_count"`
+	// 総評価平均.
+	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
+}
+
+// GetRecentRides returns the value of RecentRides.
+func (s *AppChairStats) GetRecentRides() []AppChairStatsRecentRidesItem {
+	return s.RecentRides
+}
+
+// GetTotalRidesCount returns the value of TotalRidesCount.
+func (s *AppChairStats) GetTotalRidesCount() int {
+	return s.TotalRidesCount
+}
+
+// GetTotalEvaluationAvg returns the value of TotalEvaluationAvg.
+func (s *AppChairStats) GetTotalEvaluationAvg() float64 {
+	return s.TotalEvaluationAvg
+}
+
+// SetRecentRides sets the value of RecentRides.
+func (s *AppChairStats) SetRecentRides(val []AppChairStatsRecentRidesItem) {
+	s.RecentRides = val
+}
+
+// SetTotalRidesCount sets the value of TotalRidesCount.
+func (s *AppChairStats) SetTotalRidesCount(val int) {
+	s.TotalRidesCount = val
+}
+
+// SetTotalEvaluationAvg sets the value of TotalEvaluationAvg.
+func (s *AppChairStats) SetTotalEvaluationAvg(val float64) {
+	s.TotalEvaluationAvg = val
+}
+
+type AppChairStatsRecentRidesItem struct {
+	// 配車要求ID.
+	ID                    string     `json:"id"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+	// 移動距離.
+	Distance int `json:"distance"`
+	// 移動時間 (ミリ秒).
+	Duration int64 `json:"duration"`
+	// 評価.
+	Evaluation int `json:"evaluation"`
+}
+
+// GetID returns the value of ID.
+func (s *AppChairStatsRecentRidesItem) GetID() string {
+	return s.ID
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppChairStatsRecentRidesItem) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppChairStatsRecentRidesItem) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetDistance returns the value of Distance.
+func (s *AppChairStatsRecentRidesItem) GetDistance() int {
+	return s.Distance
+}
+
+// GetDuration returns the value of Duration.
+func (s *AppChairStatsRecentRidesItem) GetDuration() int64 {
+	return s.Duration
+}
+
+// GetEvaluation returns the value of Evaluation.
+func (s *AppChairStatsRecentRidesItem) GetEvaluation() int {
+	return s.Evaluation
+}
+
+// SetID sets the value of ID.
+func (s *AppChairStatsRecentRidesItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppChairStatsRecentRidesItem) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppChairStatsRecentRidesItem) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetDistance sets the value of Distance.
+func (s *AppChairStatsRecentRidesItem) SetDistance(val int) {
+	s.Distance = val
+}
+
+// SetDuration sets the value of Duration.
+func (s *AppChairStatsRecentRidesItem) SetDuration(val int64) {
+	s.Duration = val
+}
+
+// SetEvaluation sets the value of Evaluation.
+func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
+	s.Evaluation = val
+}
+
+type AppGetNearbyChairsOK struct {
+	Chairs []AppChair `json:"chairs"`
+	// 取得日時.
+	RetrievedAt int64 `json:"retrieved_at"`
+}
+
+// GetChairs returns the value of Chairs.
+func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
+	return s.Chairs
+}
+
+// GetRetrievedAt returns the value of RetrievedAt.
+func (s *AppGetNearbyChairsOK) GetRetrievedAt() int64 {
+	return s.RetrievedAt
+}
+
+// SetChairs sets the value of Chairs.
+func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
+	s.Chairs = val
+}
+
+// SetRetrievedAt sets the value of RetrievedAt.
+func (s *AppGetNearbyChairsOK) SetRetrievedAt(val int64) {
+	s.RetrievedAt = val
+}
+
 // AppGetNotificationNoContent is response for AppGetNotification operation.
 type AppGetNotificationNoContent struct{}
 
 func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
+type AppGetNotificationOK struct {
+	// 配車要求ID.
+	RequestID             string        `json:"request_id"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
+	Chair                 OptAppChair   `json:"chair"`
+	// 配車要求日時.
+	CreatedAt int64 `json:"created_at"`
+	// 配車要求更新日時.
+	UpdatedAt int64 `json:"updated_at"`
+	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
+	RetryAfterMs OptInt `json:"retry_after_ms"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *AppGetNotificationOK) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppGetNotificationOK) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppGetNotificationOK) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *AppGetNotificationOK) GetStatus() RequestStatus {
+	return s.Status
+}
+
+// GetChair returns the value of Chair.
+func (s *AppGetNotificationOK) GetChair() OptAppChair {
+	return s.Chair
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AppGetNotificationOK) GetCreatedAt() int64 {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *AppGetNotificationOK) GetUpdatedAt() int64 {
+	return s.UpdatedAt
+}
+
+// GetRetryAfterMs returns the value of RetryAfterMs.
+func (s *AppGetNotificationOK) GetRetryAfterMs() OptInt {
+	return s.RetryAfterMs
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *AppGetNotificationOK) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppGetNotificationOK) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AppGetNotificationOK) SetStatus(val RequestStatus) {
+	s.Status = val
+}
+
+// SetChair sets the value of Chair.
+func (s *AppGetNotificationOK) SetChair(val OptAppChair) {
+	s.Chair = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AppGetNotificationOK) SetCreatedAt(val int64) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *AppGetNotificationOK) SetUpdatedAt(val int64) {
+	s.UpdatedAt = val
+}
+
+// SetRetryAfterMs sets the value of RetryAfterMs.
+func (s *AppGetNotificationOK) SetRetryAfterMs(val OptInt) {
+	s.RetryAfterMs = val
+}
+
+func (*AppGetNotificationOK) appGetNotificationRes() {}
+
 // AppPostPaymentMethodsNoContent is response for AppPostPaymentMethods operation.
 type AppPostPaymentMethodsNoContent struct{}
+
+func (*AppPostPaymentMethodsNoContent) appPostPaymentMethodsRes() {}
 
 type AppPostPaymentMethodsReq struct {
 	// 決済トークン.
@@ -29,22 +320,60 @@ func (s *AppPostPaymentMethodsReq) SetToken(val string) {
 	s.Token = val
 }
 
-type AppPostRegisterOK struct {
+type AppPostRegisterCreated struct {
 	// ユーザーID.
 	ID string `json:"id"`
+	// 自分の招待コード.
+	InvitationCode string `json:"invitation_code"`
 }
 
 // GetID returns the value of ID.
-func (s *AppPostRegisterOK) GetID() string {
+func (s *AppPostRegisterCreated) GetID() string {
 	return s.ID
 }
 
+// GetInvitationCode returns the value of InvitationCode.
+func (s *AppPostRegisterCreated) GetInvitationCode() string {
+	return s.InvitationCode
+}
+
 // SetID sets the value of ID.
-func (s *AppPostRegisterOK) SetID(val string) {
+func (s *AppPostRegisterCreated) SetID(val string) {
 	s.ID = val
 }
 
-func (*AppPostRegisterOK) appPostRegisterRes() {}
+// SetInvitationCode sets the value of InvitationCode.
+func (s *AppPostRegisterCreated) SetInvitationCode(val string) {
+	s.InvitationCode = val
+}
+
+// AppPostRegisterCreatedHeaders wraps AppPostRegisterCreated with response headers.
+type AppPostRegisterCreatedHeaders struct {
+	SetCookie OptString
+	Response  AppPostRegisterCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *AppPostRegisterCreatedHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *AppPostRegisterCreatedHeaders) GetResponse() AppPostRegisterCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *AppPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AppPostRegisterCreatedHeaders) SetResponse(val AppPostRegisterCreated) {
+	s.Response = val
+}
+
+func (*AppPostRegisterCreatedHeaders) appPostRegisterRes() {}
 
 type AppPostRegisterReq struct {
 	// ユーザー名.
@@ -55,6 +384,8 @@ type AppPostRegisterReq struct {
 	Lastname string `json:"lastname"`
 	// 生年月日.
 	DateOfBirth string `json:"date_of_birth"`
+	// 他の人の招待コード.
+	InvitationCode OptString `json:"invitation_code"`
 }
 
 // GetUsername returns the value of Username.
@@ -77,6 +408,11 @@ func (s *AppPostRegisterReq) GetDateOfBirth() string {
 	return s.DateOfBirth
 }
 
+// GetInvitationCode returns the value of InvitationCode.
+func (s *AppPostRegisterReq) GetInvitationCode() OptString {
+	return s.InvitationCode
+}
+
 // SetUsername sets the value of Username.
 func (s *AppPostRegisterReq) SetUsername(val string) {
 	s.Username = val
@@ -97,9 +433,16 @@ func (s *AppPostRegisterReq) SetDateOfBirth(val string) {
 	s.DateOfBirth = val
 }
 
+// SetInvitationCode sets the value of InvitationCode.
+func (s *AppPostRegisterReq) SetInvitationCode(val OptString) {
+	s.InvitationCode = val
+}
+
 type AppPostRequestAccepted struct {
 	// 配車要求ID.
 	RequestID string `json:"request_id"`
+	// 割引後運賃.
+	Fare int `json:"fare"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -107,9 +450,85 @@ func (s *AppPostRequestAccepted) GetRequestID() string {
 	return s.RequestID
 }
 
+// GetFare returns the value of Fare.
+func (s *AppPostRequestAccepted) GetFare() int {
+	return s.Fare
+}
+
 // SetRequestID sets the value of RequestID.
 func (s *AppPostRequestAccepted) SetRequestID(val string) {
 	s.RequestID = val
+}
+
+// SetFare sets the value of Fare.
+func (s *AppPostRequestAccepted) SetFare(val int) {
+	s.Fare = val
+}
+
+func (*AppPostRequestAccepted) appPostRequestRes() {}
+
+type AppPostRequestBadRequest Error
+
+func (*AppPostRequestBadRequest) appPostRequestRes() {}
+
+type AppPostRequestConflict Error
+
+func (*AppPostRequestConflict) appPostRequestRes() {}
+
+type AppPostRequestEstimateOK struct {
+	// 割引後運賃.
+	Fare int `json:"fare"`
+	// 割引額.
+	Discount int `json:"discount"`
+}
+
+// GetFare returns the value of Fare.
+func (s *AppPostRequestEstimateOK) GetFare() int {
+	return s.Fare
+}
+
+// GetDiscount returns the value of Discount.
+func (s *AppPostRequestEstimateOK) GetDiscount() int {
+	return s.Discount
+}
+
+// SetFare sets the value of Fare.
+func (s *AppPostRequestEstimateOK) SetFare(val int) {
+	s.Fare = val
+}
+
+// SetDiscount sets the value of Discount.
+func (s *AppPostRequestEstimateOK) SetDiscount(val int) {
+	s.Discount = val
+}
+
+func (*AppPostRequestEstimateOK) appPostRequestEstimateRes() {}
+
+type AppPostRequestEstimateReq struct {
+	// 配車位置.
+	PickupCoordinate Coordinate `json:"pickup_coordinate"`
+	// 目的地.
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *AppPostRequestEstimateReq) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *AppPostRequestEstimateReq) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *AppPostRequestEstimateReq) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *AppPostRequestEstimateReq) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
 }
 
 type AppPostRequestEvaluateBadRequest Error
@@ -121,10 +540,10 @@ type AppPostRequestEvaluateNotFound Error
 func (*AppPostRequestEvaluateNotFound) appPostRequestEvaluateRes() {}
 
 type AppPostRequestEvaluateOK struct {
-	// 運賃.
+	// 割引後運賃.
 	Fare int `json:"fare"`
 	// 完了日時.
-	CompletedAt string `json:"completed_at"`
+	CompletedAt int64 `json:"completed_at"`
 }
 
 // GetFare returns the value of Fare.
@@ -133,7 +552,7 @@ func (s *AppPostRequestEvaluateOK) GetFare() int {
 }
 
 // GetCompletedAt returns the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) GetCompletedAt() string {
+func (s *AppPostRequestEvaluateOK) GetCompletedAt() int64 {
 	return s.CompletedAt
 }
 
@@ -143,7 +562,7 @@ func (s *AppPostRequestEvaluateOK) SetFare(val int) {
 }
 
 // SetCompletedAt sets the value of CompletedAt.
-func (s *AppPostRequestEvaluateOK) SetCompletedAt(val string) {
+func (s *AppPostRequestEvaluateOK) SetCompletedAt(val int64) {
 	s.CompletedAt = val
 }
 
@@ -199,11 +618,11 @@ type AppRequest struct {
 	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
 	Status                RequestStatus `json:"status"`
-	Chair                 OptChair      `json:"chair"`
+	Chair                 OptAppChair   `json:"chair"`
 	// 配車要求日時.
-	CreatedAt float64 `json:"created_at"`
+	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
-	UpdatedAt float64 `json:"updated_at"`
+	UpdatedAt int64 `json:"updated_at"`
 }
 
 // GetRequestID returns the value of RequestID.
@@ -227,17 +646,17 @@ func (s *AppRequest) GetStatus() RequestStatus {
 }
 
 // GetChair returns the value of Chair.
-func (s *AppRequest) GetChair() OptChair {
+func (s *AppRequest) GetChair() OptAppChair {
 	return s.Chair
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *AppRequest) GetCreatedAt() float64 {
+func (s *AppRequest) GetCreatedAt() int64 {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppRequest) GetUpdatedAt() float64 {
+func (s *AppRequest) GetUpdatedAt() int64 {
 	return s.UpdatedAt
 }
 
@@ -262,104 +681,126 @@ func (s *AppRequest) SetStatus(val RequestStatus) {
 }
 
 // SetChair sets the value of Chair.
-func (s *AppRequest) SetChair(val OptChair) {
+func (s *AppRequest) SetChair(val OptAppChair) {
 	s.Chair = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *AppRequest) SetCreatedAt(val float64) {
+func (s *AppRequest) SetCreatedAt(val int64) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppRequest) SetUpdatedAt(val float64) {
+func (s *AppRequest) SetUpdatedAt(val int64) {
 	s.UpdatedAt = val
 }
 
-func (*AppRequest) appGetNotificationRes() {}
-func (*AppRequest) appGetRequestRes()      {}
-
-// 簡易椅子情報.
-// Ref: #/components/schemas/Chair
-type Chair struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-}
-
-// GetID returns the value of ID.
-func (s *Chair) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *Chair) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *Chair) GetModel() string {
-	return s.Model
-}
-
-// SetID sets the value of ID.
-func (s *Chair) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *Chair) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *Chair) SetModel(val string) {
-	s.Model = val
-}
+func (*AppRequest) appGetRequestRes() {}
 
 // ChairGetNotificationNoContent is response for ChairGetNotification operation.
 type ChairGetNotificationNoContent struct{}
 
 func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
 
+type ChairGetNotificationOK struct {
+	// 配車要求ID.
+	RequestID             string        `json:"request_id"`
+	User                  User          `json:"user"`
+	PickupCoordinate      Coordinate    `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
+	Status                RequestStatus `json:"status"`
+	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
+	RetryAfterMs OptInt `json:"retry_after_ms"`
+}
+
+// GetRequestID returns the value of RequestID.
+func (s *ChairGetNotificationOK) GetRequestID() string {
+	return s.RequestID
+}
+
+// GetUser returns the value of User.
+func (s *ChairGetNotificationOK) GetUser() User {
+	return s.User
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *ChairGetNotificationOK) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *ChairGetNotificationOK) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *ChairGetNotificationOK) GetStatus() RequestStatus {
+	return s.Status
+}
+
+// GetRetryAfterMs returns the value of RetryAfterMs.
+func (s *ChairGetNotificationOK) GetRetryAfterMs() OptInt {
+	return s.RetryAfterMs
+}
+
+// SetRequestID sets the value of RequestID.
+func (s *ChairGetNotificationOK) SetRequestID(val string) {
+	s.RequestID = val
+}
+
+// SetUser sets the value of User.
+func (s *ChairGetNotificationOK) SetUser(val User) {
+	s.User = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *ChairGetNotificationOK) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *ChairGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ChairGetNotificationOK) SetStatus(val RequestStatus) {
+	s.Status = val
+}
+
+// SetRetryAfterMs sets the value of RetryAfterMs.
+func (s *ChairGetNotificationOK) SetRetryAfterMs(val OptInt) {
+	s.RetryAfterMs = val
+}
+
+func (*ChairGetNotificationOK) chairGetNotificationRes() {}
+
 // ChairPostActivateNoContent is response for ChairPostActivate operation.
 type ChairPostActivateNoContent struct{}
 
-type ChairPostActivateReq struct{}
-
 type ChairPostCoordinateOK struct {
 	// 記録日時.
-	Datetime string `json:"datetime"`
+	RecordedAt int64 `json:"recorded_at"`
 }
 
-// GetDatetime returns the value of Datetime.
-func (s *ChairPostCoordinateOK) GetDatetime() string {
-	return s.Datetime
+// GetRecordedAt returns the value of RecordedAt.
+func (s *ChairPostCoordinateOK) GetRecordedAt() int64 {
+	return s.RecordedAt
 }
 
-// SetDatetime sets the value of Datetime.
-func (s *ChairPostCoordinateOK) SetDatetime(val string) {
-	s.Datetime = val
+// SetRecordedAt sets the value of RecordedAt.
+func (s *ChairPostCoordinateOK) SetRecordedAt(val int64) {
+	s.RecordedAt = val
 }
 
 // ChairPostDeactivateNoContent is response for ChairPostDeactivate operation.
 type ChairPostDeactivateNoContent struct{}
 
-type ChairPostDeactivateReq struct{}
-
 type ChairPostRegisterCreated struct {
-	// アクセストークン.
-	AccessToken string `json:"access_token"`
 	// 椅子ID.
 	ID string `json:"id"`
-}
-
-// GetAccessToken returns the value of AccessToken.
-func (s *ChairPostRegisterCreated) GetAccessToken() string {
-	return s.AccessToken
+	// オーナーID.
+	OwnerID string `json:"owner_id"`
 }
 
 // GetID returns the value of ID.
@@ -367,9 +808,9 @@ func (s *ChairPostRegisterCreated) GetID() string {
 	return s.ID
 }
 
-// SetAccessToken sets the value of AccessToken.
-func (s *ChairPostRegisterCreated) SetAccessToken(val string) {
-	s.AccessToken = val
+// GetOwnerID returns the value of OwnerID.
+func (s *ChairPostRegisterCreated) GetOwnerID() string {
+	return s.OwnerID
 }
 
 // SetID sets the value of ID.
@@ -377,11 +818,44 @@ func (s *ChairPostRegisterCreated) SetID(val string) {
 	s.ID = val
 }
 
+// SetOwnerID sets the value of OwnerID.
+func (s *ChairPostRegisterCreated) SetOwnerID(val string) {
+	s.OwnerID = val
+}
+
+// ChairPostRegisterCreatedHeaders wraps ChairPostRegisterCreated with response headers.
+type ChairPostRegisterCreatedHeaders struct {
+	SetCookie OptString
+	Response  ChairPostRegisterCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *ChairPostRegisterCreatedHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *ChairPostRegisterCreatedHeaders) GetResponse() ChairPostRegisterCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *ChairPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ChairPostRegisterCreatedHeaders) SetResponse(val ChairPostRegisterCreated) {
+	s.Response = val
+}
+
 type ChairPostRegisterReq struct {
 	// 椅子の名前.
 	Name string `json:"name"`
 	// 椅子のモデル.
 	Model string `json:"model"`
+	// 椅子をオーナーに紐づけるための椅子登録トークン.
+	ChairRegisterToken string `json:"chair_register_token"`
 }
 
 // GetName returns the value of Name.
@@ -394,6 +868,11 @@ func (s *ChairPostRegisterReq) GetModel() string {
 	return s.Model
 }
 
+// GetChairRegisterToken returns the value of ChairRegisterToken.
+func (s *ChairPostRegisterReq) GetChairRegisterToken() string {
+	return s.ChairRegisterToken
+}
+
 // SetName sets the value of Name.
 func (s *ChairPostRegisterReq) SetName(val string) {
 	s.Name = val
@@ -402,6 +881,11 @@ func (s *ChairPostRegisterReq) SetName(val string) {
 // SetModel sets the value of Model.
 func (s *ChairPostRegisterReq) SetModel(val string) {
 	s.Model = val
+}
+
+// SetChairRegisterToken sets the value of ChairRegisterToken.
+func (s *ChairPostRegisterReq) SetChairRegisterToken(val string) {
+	s.ChairRegisterToken = val
 }
 
 // ChairPostRequestAcceptNoContent is response for ChairPostRequestAccept operation.
@@ -488,8 +972,7 @@ func (s *ChairRequest) SetStatus(val OptRequestStatus) {
 	s.Status = val
 }
 
-func (*ChairRequest) chairGetNotificationRes() {}
-func (*ChairRequest) chairGetRequestRes()      {}
+func (*ChairRequest) chairGetRequestRes() {}
 
 // 座標情報.
 // Ref: #/components/schemas/Coordinate
@@ -536,10 +1019,59 @@ func (s *Error) SetMessage(val string) {
 }
 
 func (*Error) appGetRequestRes()          {}
+func (*Error) appPostPaymentMethodsRes()  {}
 func (*Error) appPostRegisterRes()        {}
+func (*Error) appPostRequestEstimateRes() {}
 func (*Error) chairGetRequestRes()        {}
 func (*Error) chairPostRequestAcceptRes() {}
 func (*Error) chairPostRequestDenyRes()   {}
+func (*Error) ownerPostRegisterRes()      {}
+
+// NewOptAppChair returns new OptAppChair with value set to v.
+func NewOptAppChair(v AppChair) OptAppChair {
+	return OptAppChair{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppChair is optional AppChair.
+type OptAppChair struct {
+	Value AppChair
+	Set   bool
+}
+
+// IsSet returns true if OptAppChair was set.
+func (o OptAppChair) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppChair) Reset() {
+	var v AppChair
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppChair) SetTo(v AppChair) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppChair) Get() (v AppChair, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppChair) Or(d AppChair) AppChair {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
 
 // NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
 func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {
@@ -627,6 +1159,52 @@ func (o OptAppPostRegisterReq) Get() (v AppPostRegisterReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAppPostRegisterReq) Or(d AppPostRegisterReq) AppPostRegisterReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAppPostRequestEstimateReq returns new OptAppPostRequestEstimateReq with value set to v.
+func NewOptAppPostRequestEstimateReq(v AppPostRequestEstimateReq) OptAppPostRequestEstimateReq {
+	return OptAppPostRequestEstimateReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAppPostRequestEstimateReq is optional AppPostRequestEstimateReq.
+type OptAppPostRequestEstimateReq struct {
+	Value AppPostRequestEstimateReq
+	Set   bool
+}
+
+// IsSet returns true if OptAppPostRequestEstimateReq was set.
+func (o OptAppPostRequestEstimateReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAppPostRequestEstimateReq) Reset() {
+	var v AppPostRequestEstimateReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAppPostRequestEstimateReq) SetTo(v AppPostRequestEstimateReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAppPostRequestEstimateReq) Get() (v AppPostRequestEstimateReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAppPostRequestEstimateReq) Or(d AppPostRequestEstimateReq) AppPostRequestEstimateReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -725,52 +1303,6 @@ func (o OptAppPostRequestReq) Or(d AppPostRequestReq) AppPostRequestReq {
 	return d
 }
 
-// NewOptChair returns new OptChair with value set to v.
-func NewOptChair(v Chair) OptChair {
-	return OptChair{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptChair is optional Chair.
-type OptChair struct {
-	Value Chair
-	Set   bool
-}
-
-// IsSet returns true if OptChair was set.
-func (o OptChair) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptChair) Reset() {
-	var v Chair
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptChair) SetTo(v Chair) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptChair) Get() (v Chair, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptChair) Or(d Chair) Chair {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptChairPostRegisterReq returns new OptChairPostRegisterReq with value set to v.
 func NewOptChairPostRegisterReq(v ChairPostRegisterReq) OptChairPostRegisterReq {
 	return OptChairPostRegisterReq{
@@ -863,6 +1395,144 @@ func (o OptCoordinate) Or(d Coordinate) Coordinate {
 	return d
 }
 
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptOwnerPostRegisterReq returns new OptOwnerPostRegisterReq with value set to v.
+func NewOptOwnerPostRegisterReq(v OwnerPostRegisterReq) OptOwnerPostRegisterReq {
+	return OptOwnerPostRegisterReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOwnerPostRegisterReq is optional OwnerPostRegisterReq.
+type OptOwnerPostRegisterReq struct {
+	Value OwnerPostRegisterReq
+	Set   bool
+}
+
+// IsSet returns true if OptOwnerPostRegisterReq was set.
+func (o OptOwnerPostRegisterReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOwnerPostRegisterReq) Reset() {
+	var v OwnerPostRegisterReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOwnerPostRegisterReq) SetTo(v OwnerPostRegisterReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOwnerPostRegisterReq) Get() (v OwnerPostRegisterReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOwnerPostRegisterReq) Or(d OwnerPostRegisterReq) OwnerPostRegisterReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptPostInitializeReq returns new OptPostInitializeReq with value set to v.
 func NewOptPostInitializeReq(v PostInitializeReq) OptPostInitializeReq {
 	return OptPostInitializeReq{
@@ -903,52 +1573,6 @@ func (o OptPostInitializeReq) Get() (v PostInitializeReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostInitializeReq) Or(d PostInitializeReq) PostInitializeReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptProviderPostRegisterReq returns new OptProviderPostRegisterReq with value set to v.
-func NewOptProviderPostRegisterReq(v ProviderPostRegisterReq) OptProviderPostRegisterReq {
-	return OptProviderPostRegisterReq{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptProviderPostRegisterReq is optional ProviderPostRegisterReq.
-type OptProviderPostRegisterReq struct {
-	Value ProviderPostRegisterReq
-	Set   bool
-}
-
-// IsSet returns true if OptProviderPostRegisterReq was set.
-func (o OptProviderPostRegisterReq) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptProviderPostRegisterReq) Reset() {
-	var v ProviderPostRegisterReq
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptProviderPostRegisterReq) SetTo(v ProviderPostRegisterReq) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptProviderPostRegisterReq) Get() (v ProviderPostRegisterReq, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptProviderPostRegisterReq) Or(d ProviderPostRegisterReq) ProviderPostRegisterReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1047,96 +1671,363 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+type OwnerGetChairDetailOK struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 稼働中かどうか.
+	Active bool `json:"active"`
+	// 登録日時.
+	RegisteredAt int64 `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptInt64 `json:"total_distance_updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetChairDetailOK) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetChairDetailOK) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetChairDetailOK) GetModel() string {
+	return s.Model
+}
+
+// GetActive returns the value of Active.
+func (s *OwnerGetChairDetailOK) GetActive() bool {
+	return s.Active
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *OwnerGetChairDetailOK) GetRegisteredAt() int64 {
+	return s.RegisteredAt
+}
+
+// GetTotalDistance returns the value of TotalDistance.
+func (s *OwnerGetChairDetailOK) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairDetailOK) GetTotalDistanceUpdatedAt() OptInt64 {
+	return s.TotalDistanceUpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetChairDetailOK) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetChairDetailOK) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetChairDetailOK) SetModel(val string) {
+	s.Model = val
+}
+
+// SetActive sets the value of Active.
+func (s *OwnerGetChairDetailOK) SetActive(val bool) {
+	s.Active = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *OwnerGetChairDetailOK) SetRegisteredAt(val int64) {
+	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *OwnerGetChairDetailOK) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptInt64) {
+	s.TotalDistanceUpdatedAt = val
+}
+
+type OwnerGetChairsOK struct {
+	Chairs []OwnerGetChairsOKChairsItem `json:"chairs"`
+}
+
+// GetChairs returns the value of Chairs.
+func (s *OwnerGetChairsOK) GetChairs() []OwnerGetChairsOKChairsItem {
+	return s.Chairs
+}
+
+// SetChairs sets the value of Chairs.
+func (s *OwnerGetChairsOK) SetChairs(val []OwnerGetChairsOKChairsItem) {
+	s.Chairs = val
+}
+
+type OwnerGetChairsOKChairsItem struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 稼働中かどうか.
+	Active bool `json:"active"`
+	// 登録日時.
+	RegisteredAt int64 `json:"registered_at"`
+	// 総移動距離.
+	TotalDistance int `json:"total_distance"`
+	// 総移動距離の更新日時.
+	TotalDistanceUpdatedAt OptInt64 `json:"total_distance_updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetChairsOKChairsItem) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetChairsOKChairsItem) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetChairsOKChairsItem) GetModel() string {
+	return s.Model
+}
+
+// GetActive returns the value of Active.
+func (s *OwnerGetChairsOKChairsItem) GetActive() bool {
+	return s.Active
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *OwnerGetChairsOKChairsItem) GetRegisteredAt() int64 {
+	return s.RegisteredAt
+}
+
+// GetTotalDistance returns the value of TotalDistance.
+func (s *OwnerGetChairsOKChairsItem) GetTotalDistance() int {
+	return s.TotalDistance
+}
+
+// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptInt64 {
+	return s.TotalDistanceUpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetChairsOKChairsItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetChairsOKChairsItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetChairsOKChairsItem) SetModel(val string) {
+	s.Model = val
+}
+
+// SetActive sets the value of Active.
+func (s *OwnerGetChairsOKChairsItem) SetActive(val bool) {
+	s.Active = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *OwnerGetChairsOKChairsItem) SetRegisteredAt(val int64) {
+	s.RegisteredAt = val
+}
+
+// SetTotalDistance sets the value of TotalDistance.
+func (s *OwnerGetChairsOKChairsItem) SetTotalDistance(val int) {
+	s.TotalDistance = val
+}
+
+// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
+func (s *OwnerGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptInt64) {
+	s.TotalDistanceUpdatedAt = val
+}
+
+type OwnerGetSalesOK struct {
+	// オーナーが管理する椅子全体の売上.
+	TotalSales int `json:"total_sales"`
+	// 椅子ごとの売上情報.
+	Chairs []OwnerGetSalesOKChairsItem `json:"chairs"`
+	// モデルごとの売上情報.
+	Models []OwnerGetSalesOKModelsItem `json:"models"`
+}
+
+// GetTotalSales returns the value of TotalSales.
+func (s *OwnerGetSalesOK) GetTotalSales() int {
+	return s.TotalSales
+}
+
+// GetChairs returns the value of Chairs.
+func (s *OwnerGetSalesOK) GetChairs() []OwnerGetSalesOKChairsItem {
+	return s.Chairs
+}
+
+// GetModels returns the value of Models.
+func (s *OwnerGetSalesOK) GetModels() []OwnerGetSalesOKModelsItem {
+	return s.Models
+}
+
+// SetTotalSales sets the value of TotalSales.
+func (s *OwnerGetSalesOK) SetTotalSales(val int) {
+	s.TotalSales = val
+}
+
+// SetChairs sets the value of Chairs.
+func (s *OwnerGetSalesOK) SetChairs(val []OwnerGetSalesOKChairsItem) {
+	s.Chairs = val
+}
+
+// SetModels sets the value of Models.
+func (s *OwnerGetSalesOK) SetModels(val []OwnerGetSalesOKModelsItem) {
+	s.Models = val
+}
+
+type OwnerGetSalesOKChairsItem struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子名.
+	Name string `json:"name"`
+	// 椅子ごとの売上.
+	Sales int `json:"sales"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerGetSalesOKChairsItem) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *OwnerGetSalesOKChairsItem) GetName() string {
+	return s.Name
+}
+
+// GetSales returns the value of Sales.
+func (s *OwnerGetSalesOKChairsItem) GetSales() int {
+	return s.Sales
+}
+
+// SetID sets the value of ID.
+func (s *OwnerGetSalesOKChairsItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *OwnerGetSalesOKChairsItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetSales sets the value of Sales.
+func (s *OwnerGetSalesOKChairsItem) SetSales(val int) {
+	s.Sales = val
+}
+
+type OwnerGetSalesOKModelsItem struct {
+	// 椅子モデル.
+	Model string `json:"model"`
+	// モデルごとの売上.
+	Sales int `json:"sales"`
+}
+
+// GetModel returns the value of Model.
+func (s *OwnerGetSalesOKModelsItem) GetModel() string {
+	return s.Model
+}
+
+// GetSales returns the value of Sales.
+func (s *OwnerGetSalesOKModelsItem) GetSales() int {
+	return s.Sales
+}
+
+// SetModel sets the value of Model.
+func (s *OwnerGetSalesOKModelsItem) SetModel(val string) {
+	s.Model = val
+}
+
+// SetSales sets the value of Sales.
+func (s *OwnerGetSalesOKModelsItem) SetSales(val int) {
+	s.Sales = val
+}
+
+type OwnerPostRegisterCreated struct {
+	// オーナーID.
+	ID string `json:"id"`
+	// 椅子をオーナーに紐づけるための椅子登録トークン.
+	ChairRegisterToken string `json:"chair_register_token"`
+}
+
+// GetID returns the value of ID.
+func (s *OwnerPostRegisterCreated) GetID() string {
+	return s.ID
+}
+
+// GetChairRegisterToken returns the value of ChairRegisterToken.
+func (s *OwnerPostRegisterCreated) GetChairRegisterToken() string {
+	return s.ChairRegisterToken
+}
+
+// SetID sets the value of ID.
+func (s *OwnerPostRegisterCreated) SetID(val string) {
+	s.ID = val
+}
+
+// SetChairRegisterToken sets the value of ChairRegisterToken.
+func (s *OwnerPostRegisterCreated) SetChairRegisterToken(val string) {
+	s.ChairRegisterToken = val
+}
+
+func (*OwnerPostRegisterCreated) ownerPostRegisterRes() {}
+
+type OwnerPostRegisterReq struct {
+	// オーナー名.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *OwnerPostRegisterReq) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *OwnerPostRegisterReq) SetName(val string) {
+	s.Name = val
+}
+
 type PostInitializeOK struct {
-	// 実装言語.
-	Language PostInitializeOKLanguage `json:"language"`
+	// 実装言語
+	// - go
+	// - perl
+	// - php
+	// - python
+	// - ruby
+	// - rust
+	// - node.
+	Language string `json:"language"`
 }
 
 // GetLanguage returns the value of Language.
-func (s *PostInitializeOK) GetLanguage() PostInitializeOKLanguage {
+func (s *PostInitializeOK) GetLanguage() string {
 	return s.Language
 }
 
 // SetLanguage sets the value of Language.
-func (s *PostInitializeOK) SetLanguage(val PostInitializeOKLanguage) {
+func (s *PostInitializeOK) SetLanguage(val string) {
 	s.Language = val
-}
-
-// 実装言語.
-type PostInitializeOKLanguage string
-
-const (
-	PostInitializeOKLanguageGo     PostInitializeOKLanguage = "go"
-	PostInitializeOKLanguagePerl   PostInitializeOKLanguage = "perl"
-	PostInitializeOKLanguagePhp    PostInitializeOKLanguage = "php"
-	PostInitializeOKLanguagePython PostInitializeOKLanguage = "python"
-	PostInitializeOKLanguageRuby   PostInitializeOKLanguage = "ruby"
-	PostInitializeOKLanguageRust   PostInitializeOKLanguage = "rust"
-	PostInitializeOKLanguageNode   PostInitializeOKLanguage = "node"
-)
-
-// AllValues returns all PostInitializeOKLanguage values.
-func (PostInitializeOKLanguage) AllValues() []PostInitializeOKLanguage {
-	return []PostInitializeOKLanguage{
-		PostInitializeOKLanguageGo,
-		PostInitializeOKLanguagePerl,
-		PostInitializeOKLanguagePhp,
-		PostInitializeOKLanguagePython,
-		PostInitializeOKLanguageRuby,
-		PostInitializeOKLanguageRust,
-		PostInitializeOKLanguageNode,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s PostInitializeOKLanguage) MarshalText() ([]byte, error) {
-	switch s {
-	case PostInitializeOKLanguageGo:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePerl:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePhp:
-		return []byte(s), nil
-	case PostInitializeOKLanguagePython:
-		return []byte(s), nil
-	case PostInitializeOKLanguageRuby:
-		return []byte(s), nil
-	case PostInitializeOKLanguageRust:
-		return []byte(s), nil
-	case PostInitializeOKLanguageNode:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *PostInitializeOKLanguage) UnmarshalText(data []byte) error {
-	switch PostInitializeOKLanguage(data) {
-	case PostInitializeOKLanguageGo:
-		*s = PostInitializeOKLanguageGo
-		return nil
-	case PostInitializeOKLanguagePerl:
-		*s = PostInitializeOKLanguagePerl
-		return nil
-	case PostInitializeOKLanguagePhp:
-		*s = PostInitializeOKLanguagePhp
-		return nil
-	case PostInitializeOKLanguagePython:
-		*s = PostInitializeOKLanguagePython
-		return nil
-	case PostInitializeOKLanguageRuby:
-		*s = PostInitializeOKLanguageRuby
-		return nil
-	case PostInitializeOKLanguageRust:
-		*s = PostInitializeOKLanguageRust
-		return nil
-	case PostInitializeOKLanguageNode:
-		*s = PostInitializeOKLanguageNode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 type PostInitializeReq struct {
@@ -1152,329 +2043,6 @@ func (s *PostInitializeReq) GetPaymentServer() string {
 // SetPaymentServer sets the value of PaymentServer.
 func (s *PostInitializeReq) SetPaymentServer(val string) {
 	s.PaymentServer = val
-}
-
-type ProviderGetChairDetailOK struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 稼働中かどうか.
-	Active bool `json:"active"`
-	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
-	// 総移動距離.
-	TotalDistance int `json:"total_distance"`
-	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetChairDetailOK) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetChairDetailOK) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetChairDetailOK) GetModel() string {
-	return s.Model
-}
-
-// GetActive returns the value of Active.
-func (s *ProviderGetChairDetailOK) GetActive() bool {
-	return s.Active
-}
-
-// GetRegisteredAt returns the value of RegisteredAt.
-func (s *ProviderGetChairDetailOK) GetRegisteredAt() string {
-	return s.RegisteredAt
-}
-
-// GetTotalDistance returns the value of TotalDistance.
-func (s *ProviderGetChairDetailOK) GetTotalDistance() int {
-	return s.TotalDistance
-}
-
-// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairDetailOK) GetTotalDistanceUpdatedAt() OptString {
-	return s.TotalDistanceUpdatedAt
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetChairDetailOK) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetChairDetailOK) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetChairDetailOK) SetModel(val string) {
-	s.Model = val
-}
-
-// SetActive sets the value of Active.
-func (s *ProviderGetChairDetailOK) SetActive(val bool) {
-	s.Active = val
-}
-
-// SetRegisteredAt sets the value of RegisteredAt.
-func (s *ProviderGetChairDetailOK) SetRegisteredAt(val string) {
-	s.RegisteredAt = val
-}
-
-// SetTotalDistance sets the value of TotalDistance.
-func (s *ProviderGetChairDetailOK) SetTotalDistance(val int) {
-	s.TotalDistance = val
-}
-
-// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptString) {
-	s.TotalDistanceUpdatedAt = val
-}
-
-type ProviderGetChairsOK struct {
-	Chairs []ProviderGetChairsOKChairsItem `json:"chairs"`
-}
-
-// GetChairs returns the value of Chairs.
-func (s *ProviderGetChairsOK) GetChairs() []ProviderGetChairsOKChairsItem {
-	return s.Chairs
-}
-
-// SetChairs sets the value of Chairs.
-func (s *ProviderGetChairsOK) SetChairs(val []ProviderGetChairsOKChairsItem) {
-	s.Chairs = val
-}
-
-type ProviderGetChairsOKChairsItem struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 稼働中かどうか.
-	Active bool `json:"active"`
-	// 登録日時.
-	RegisteredAt string `json:"registered_at"`
-	// 総移動距離.
-	TotalDistance int `json:"total_distance"`
-	// 総移動距離の更新日時.
-	TotalDistanceUpdatedAt OptString `json:"total_distance_updated_at"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetChairsOKChairsItem) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetChairsOKChairsItem) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetChairsOKChairsItem) GetModel() string {
-	return s.Model
-}
-
-// GetActive returns the value of Active.
-func (s *ProviderGetChairsOKChairsItem) GetActive() bool {
-	return s.Active
-}
-
-// GetRegisteredAt returns the value of RegisteredAt.
-func (s *ProviderGetChairsOKChairsItem) GetRegisteredAt() string {
-	return s.RegisteredAt
-}
-
-// GetTotalDistance returns the value of TotalDistance.
-func (s *ProviderGetChairsOKChairsItem) GetTotalDistance() int {
-	return s.TotalDistance
-}
-
-// GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairsOKChairsItem) GetTotalDistanceUpdatedAt() OptString {
-	return s.TotalDistanceUpdatedAt
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetChairsOKChairsItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetChairsOKChairsItem) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetChairsOKChairsItem) SetModel(val string) {
-	s.Model = val
-}
-
-// SetActive sets the value of Active.
-func (s *ProviderGetChairsOKChairsItem) SetActive(val bool) {
-	s.Active = val
-}
-
-// SetRegisteredAt sets the value of RegisteredAt.
-func (s *ProviderGetChairsOKChairsItem) SetRegisteredAt(val string) {
-	s.RegisteredAt = val
-}
-
-// SetTotalDistance sets the value of TotalDistance.
-func (s *ProviderGetChairsOKChairsItem) SetTotalDistance(val int) {
-	s.TotalDistance = val
-}
-
-// SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *ProviderGetChairsOKChairsItem) SetTotalDistanceUpdatedAt(val OptString) {
-	s.TotalDistanceUpdatedAt = val
-}
-
-type ProviderGetSalesOK struct {
-	// プロバイダー全体の売上.
-	TotalSales int `json:"total_sales"`
-	// 椅子ごとの売上情報.
-	Chairs []ProviderGetSalesOKChairsItem `json:"chairs"`
-	// モデルごとの売上情報.
-	Models []ProviderGetSalesOKModelsItem `json:"models"`
-}
-
-// GetTotalSales returns the value of TotalSales.
-func (s *ProviderGetSalesOK) GetTotalSales() int {
-	return s.TotalSales
-}
-
-// GetChairs returns the value of Chairs.
-func (s *ProviderGetSalesOK) GetChairs() []ProviderGetSalesOKChairsItem {
-	return s.Chairs
-}
-
-// GetModels returns the value of Models.
-func (s *ProviderGetSalesOK) GetModels() []ProviderGetSalesOKModelsItem {
-	return s.Models
-}
-
-// SetTotalSales sets the value of TotalSales.
-func (s *ProviderGetSalesOK) SetTotalSales(val int) {
-	s.TotalSales = val
-}
-
-// SetChairs sets the value of Chairs.
-func (s *ProviderGetSalesOK) SetChairs(val []ProviderGetSalesOKChairsItem) {
-	s.Chairs = val
-}
-
-// SetModels sets the value of Models.
-func (s *ProviderGetSalesOK) SetModels(val []ProviderGetSalesOKModelsItem) {
-	s.Models = val
-}
-
-type ProviderGetSalesOKChairsItem struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子名.
-	Name string `json:"name"`
-	// 椅子ごとの売上.
-	Sales int `json:"sales"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderGetSalesOKChairsItem) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ProviderGetSalesOKChairsItem) GetName() string {
-	return s.Name
-}
-
-// GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) GetSales() int {
-	return s.Sales
-}
-
-// SetID sets the value of ID.
-func (s *ProviderGetSalesOKChairsItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ProviderGetSalesOKChairsItem) SetName(val string) {
-	s.Name = val
-}
-
-// SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKChairsItem) SetSales(val int) {
-	s.Sales = val
-}
-
-type ProviderGetSalesOKModelsItem struct {
-	// 椅子モデル.
-	Model string `json:"model"`
-	// モデルごとの売上.
-	Sales int `json:"sales"`
-}
-
-// GetModel returns the value of Model.
-func (s *ProviderGetSalesOKModelsItem) GetModel() string {
-	return s.Model
-}
-
-// GetSales returns the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) GetSales() int {
-	return s.Sales
-}
-
-// SetModel sets the value of Model.
-func (s *ProviderGetSalesOKModelsItem) SetModel(val string) {
-	s.Model = val
-}
-
-// SetSales sets the value of Sales.
-func (s *ProviderGetSalesOKModelsItem) SetSales(val int) {
-	s.Sales = val
-}
-
-type ProviderPostRegisterCreated struct {
-	// プロバイダーID.
-	ID string `json:"id"`
-}
-
-// GetID returns the value of ID.
-func (s *ProviderPostRegisterCreated) GetID() string {
-	return s.ID
-}
-
-// SetID sets the value of ID.
-func (s *ProviderPostRegisterCreated) SetID(val string) {
-	s.ID = val
-}
-
-type ProviderPostRegisterReq struct {
-	// プロバイダー名.
-	Name string `json:"name"`
-}
-
-// GetName returns the value of Name.
-func (s *ProviderPostRegisterReq) GetName() string {
-	return s.Name
-}
-
-// SetName sets the value of Name.
-func (s *ProviderPostRegisterReq) SetName(val string) {
-	s.Name = val
 }
 
 // 配車要求ステータス

@@ -127,13 +127,8 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             chair: appRequest.chair,
           },
         });
-      })().catch((e: Error) => {
-        const es = e.stack as any
-        if (es && typeof es === 'object' && typeof es.message === 'string'
-               && es.message.includes("app_session cookie is required")) {
-          navigate("/client/register");
-        }
-        console.error(`ERROR: ${e}`);
+      })().catch((e) => {
+        console.error(`ERROR: ${JSON.stringify(e)}`);
       });
     }
   }, [accessToken, setClientAppPayloadWithStatus, isSSE, navigate]);
