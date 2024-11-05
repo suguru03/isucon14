@@ -10,12 +10,20 @@ import {
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchAppGetNotification } from "~/apiClient/apiComponents";
+import { ErrorWrapper } from "~/apiClient/apiFetcher";
 import type {
   AppRequest,
   Coordinate,
   RequestStatus,
 } from "~/apiClient/apiSchemas";
 import type { ClientAppRequest } from "~/types";
+
+const isApiFetchError = (obj: any): obj is ErrorWrapper<{
+  status: number;
+  payload: string;
+}> => {
+  return obj && typeof obj === 'object' && 'status' in obj && 'payload' in obj;
+}
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
@@ -128,6 +136,15 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
+        if (e.stack && isApiFetchError(e.stack)) {
+          const err: ErrorWrapper<{
+            status: number;
+            payload: string;
+          }> = e.stack;
+          if (err.status === 401) {
+            navigate("/client/register");
+          }
+        }
         console.error(`ERROR: ${JSON.stringify(e)}`);
       });
     }

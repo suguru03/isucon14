@@ -1,6 +1,5 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { alternativeURLExpression } from "./api-url.mjs";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
@@ -8,6 +7,7 @@ import {
   ChairPostRegisterRequestBody,
   OwnerPostRegisterRequestBody,
 } from "~/apiClient/apiComponents";
+import { alternativeURLExpression } from "./api-url.mjs";
 
 const DEFAULT_HOSTNAME = "localhost";
 const DEFAULT_PORT = 3000;
@@ -128,7 +128,6 @@ export const config = {
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
     host: DEFAULT_HOSTNAME,

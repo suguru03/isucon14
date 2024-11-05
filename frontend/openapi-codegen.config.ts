@@ -57,9 +57,17 @@ export default defineConfig({
        */
       await rewriteFile("./app/apiClient/apiFetcher.ts", (content) => {
         return content.replace(
-          "return await response.json();",
-          "return {...await response.json(), _responseStatus: response.status};",
-        );
+                    "return await response.json();",
+                    "return {...await response.json(), _responseStatus: response.status};",
+                  )
+                  .replace(
+                    "| { status: \"unknown\"; payload: string }",
+                    "| { status: \"unknown\"; payload: string }\n  | { status: number; payload: string }"
+                  )
+                  .replace(
+                    "error = await response.json();",
+                    "error = {\n          status: response.status,\n          payload: await response.text()\n        };"
+                  );
       });
 
       /**
