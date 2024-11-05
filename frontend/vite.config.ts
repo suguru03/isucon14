@@ -127,7 +127,7 @@ export const config = {
     proxy: {
       "/api": {
         target: "http://localhost:8080",
-        changeOrigin: true
+        changeOrigin: true,
       },
     },
     host: DEFAULT_HOSTNAME,
