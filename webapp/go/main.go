@@ -76,6 +76,7 @@ func setup() http.Handler {
 
 		authedMux := mux.With(appAuthMiddleware)
 		authedMux.HandleFunc("POST /api/app/payment-methods", appPostPaymentMethods)
+		authedMux.HandleFunc("GET /api/app/requests", appGetRequests)
 		authedMux.HandleFunc("POST /api/app/requests", appPostRequests)
 		authedMux.HandleFunc("POST /api/app/requests/estimate", appPostRequestEstimate)
 		authedMux.HandleFunc("GET /api/app/requests/{request_id}", appGetRequest)

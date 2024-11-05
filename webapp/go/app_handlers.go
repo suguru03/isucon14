@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -156,6 +157,80 @@ func appPostPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type getAppRequestsResponse struct {
+	Requests []getAppRequestsResponseItem `json:"requests"`
+}
+
+type getAppRequestsResponseItem struct {
+	RequestID             string                         `json:"request_id"`
+	PickupCoordinate      Coordinate                     `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate                     `json:"destination_coordinate"`
+	Chair                 getAppRequestResponseItemChair `json:"chair"`
+	Fare                  int                            `json:"fare"`
+	Evaluation            int                            `json:"evaluation"`
+	RequestedAt           int64                          `json:"requested_at"`
+	CompletedAt           int64                          `json:"completed_at"`
+}
+
+type getAppRequestResponseItemChair struct {
+	ID    string `json:"id"`
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+	Model string `json:"model"`
+}
+
+func appGetRequests(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value("user").(*User)
+
+	rideRequests := []RideRequest{}
+	if err := db.Select(
+		&rideRequests,
+		`SELECT * FROM ride_requests WHERE user_id = ? AND status = 'COMPLETED' ORDER BY requested_at DESC`,
+		user.ID,
+	); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	requests := []getAppRequestsResponseItem{}
+	for _, rideRequest := range rideRequests {
+		item := getAppRequestsResponseItem{
+			RequestID:             rideRequest.ID,
+			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
+			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
+			Fare:                  calculateSale(rideRequest),
+			Evaluation:            *rideRequest.Evaluation,
+			RequestedAt:           rideRequest.RequestedAt.UnixMilli(),
+			CompletedAt:           rideRequest.UpdatedAt.UnixMilli(),
+		}
+
+		item.Chair = getAppRequestResponseItemChair{}
+
+		chair := &Chair{}
+		if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, rideRequest.ChairID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		item.Chair.ID = chair.ID
+		item.Chair.Name = chair.Name
+		item.Chair.Model = chair.Model
+
+		owner := &Owner{}
+		if err := db.Get(owner, `SELECT * FROM owners WHERE id = ?`, chair.OwnerID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		item.Chair.Owner = owner.Name
+
+		requests = append(requests, item)
+	}
+
+	fmt.Printf("requests: %+v\n", requests)
+	writeJSON(w, http.StatusOK, &getAppRequestsResponse{
+		Requests: requests,
+	})
 }
 
 type appPostRequestsRequest struct {

@@ -50,7 +50,7 @@ type RegisteredProviderData struct {
 }
 
 func (p *Provider) String() string {
-	return fmt.Sprintf("Provider{id=%d}", p.ID)
+	return fmt.Sprintf("Owner{id=%d}", p.ID)
 }
 
 func (p *Provider) SetID(id ProviderID) {

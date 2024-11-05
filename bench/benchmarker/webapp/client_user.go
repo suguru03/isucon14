@@ -49,6 +49,34 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegist
 	return resBody, nil
 }
 
+func (c *Client) AppGetRequests(ctx context.Context) (*api.AppGetRequestsOK, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, "/api/app/requests", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, modifier := range c.requestModifiers {
+		modifier(req)
+	}
+
+	resp, err := c.agent.Do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("GET /app/requests のリクエストが失敗しました: %w", err)
+	}
+	defer closeBody(resp)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET /app/requests へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+	}
+
+	resBody := &api.AppGetRequestsOK{}
+	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
+		return nil, fmt.Errorf("requestsのJSONのdecodeに失敗しました: %w", err)
+	}
+
+	return resBody, nil
+}
+
 func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequestReq) (*api.AppPostRequestAccepted, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {

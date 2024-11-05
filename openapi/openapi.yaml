@@ -133,6 +133,76 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
   /app/requests:
+    get:
+      tags:
+        - app
+      summary: ユーザーが完了済みの配車要求一覧を取得する
+      operationId: app-get-requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        request_id:
+                          type: string
+                          description: 配車要求ID
+                        pickup_coordinate:
+                          $ref: "#/components/schemas/Coordinate"
+                        destination_coordinate:
+                          $ref: "#/components/schemas/Coordinate"
+                        chair:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 椅子ID
+                            owner:
+                              type: string
+                              description: オーナー名
+                            name:
+                              type: string
+                              description: 椅子の名前
+                            model:
+                              type: string
+                              description: 椅子のモデル
+                          required:
+                            - id
+                            - owner
+                            - name
+                            - model
+                        fare:
+                          type: integer
+                          description: 運賃
+                        evaluation:
+                          type: integer
+                          description: 椅子の評価
+                        requested_at:
+                          type: integer
+                          format: int64
+                          description: 配車要求日時
+                        completed_at:
+                          type: integer
+                          format: int64
+                          description: 評価まで完了した日時
+                      required:
+                        - request_id
+                        - pickup_coordinate
+                        - destination_coordinate
+                        - chair
+                        - fare
+                        - evaluation
+                        - requested_at
+                        - completed_at
+                required:
+                  - requests
     post:
       tags:
         - app

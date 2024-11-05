@@ -321,6 +321,42 @@ func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User
 	return nil
 }
 
+func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse, error) {
+	res, err := c.client.AppGetRequests(c.ctx)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
+	}
+
+	requests := make([]*world.RequestHistory, len(res.Requests))
+	for i, r := range res.Requests {
+		requests[i] = &world.RequestHistory{
+			ID: r.RequestID,
+			PickupCoordinate: world.Coordinate{
+				X: r.PickupCoordinate.Latitude,
+				Y: r.PickupCoordinate.Longitude,
+			},
+			DestinationCoordinate: world.Coordinate{
+				X: r.DestinationCoordinate.Latitude,
+				Y: r.DestinationCoordinate.Longitude,
+			},
+			Chair: world.RequestHistoryChair{
+				ID:    r.Chair.ID,
+				Owner: r.Chair.Owner,
+				Name:  r.Chair.Name,
+				Model: r.Chair.Model,
+			},
+			Fare:        r.Fare,
+			Evaluation:  r.Evaluation,
+			RequestedAt: time.UnixMilli(r.RequestedAt),
+			CompletedAt: time.UnixMilli(r.CompletedAt),
+		}
+	}
+
+	return &world.GetRequestsResponse{
+		Requests: requests,
+	}, nil
+}
+
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
 

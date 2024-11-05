@@ -34,6 +34,12 @@ type Invoker interface {
 	//
 	// GET /app/requests/{request_id}
 	AppGetRequest(ctx context.Context, params AppGetRequestParams) (AppGetRequestRes, error)
+	// AppGetRequests invokes app-get-requests operation.
+	//
+	// ユーザーが完了済みの配車要求一覧を取得する.
+	//
+	// GET /app/requests
+	AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error)
 	// AppPostPaymentMethods invokes app-post-payment-methods operation.
 	//
 	// 決済トークンの登録.
@@ -361,6 +367,42 @@ func (c *Client) sendAppGetRequest(ctx context.Context, params AppGetRequestPara
 	defer resp.Body.Close()
 
 	result, err := decodeAppGetRequestResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// AppGetRequests invokes app-get-requests operation.
+//
+// ユーザーが完了済みの配車要求一覧を取得する.
+//
+// GET /app/requests
+func (c *Client) AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error) {
+	res, err := c.sendAppGetRequests(ctx)
+	return res, err
+}
+
+func (c *Client) sendAppGetRequests(ctx context.Context) (res *AppGetRequestsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/requests"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppGetRequestsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

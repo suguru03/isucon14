@@ -204,6 +204,56 @@ func decodeAppGetRequestResponse(resp *http.Response) (res AppGetRequestRes, _ e
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
+func decodeAppGetRequestsResponse(resp *http.Response) (res *AppGetRequestsOK, _ error) {
+	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response AppGetRequestsOK
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
 func decodeAppPostPaymentMethodsResponse(resp *http.Response) (res AppPostPaymentMethodsRes, _ error) {
 	switch resp.StatusCode {
 	case 204:
@@ -1281,7 +1331,47 @@ func decodeOwnerPostRegisterResponse(resp *http.Response) (res OwnerPostRegister
 				}
 				return res, err
 			}
-			return &response, nil
+			var wrapper OwnerPostRegisterCreatedHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							var wrapperDotSetCookieVal string
+							if err := func() error {
+								val, err := d.DecodeValue()
+								if err != nil {
+									return err
+								}
+
+								c, err := conv.ToString(val)
+								if err != nil {
+									return err
+								}
+
+								wrapperDotSetCookieVal = c
+								return nil
+							}(); err != nil {
+								return err
+							}
+							wrapper.SetCookie.SetTo(wrapperDotSetCookieVal)
+							return nil
+						}); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Set-Cookie header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
