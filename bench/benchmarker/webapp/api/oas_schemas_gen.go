@@ -320,22 +320,60 @@ func (s *AppPostPaymentMethodsReq) SetToken(val string) {
 	s.Token = val
 }
 
-type AppPostRegisterOK struct {
+type AppPostRegisterCreated struct {
 	// ユーザーID.
 	ID string `json:"id"`
+	// 自分の招待コード.
+	InvitationCode string `json:"invitation_code"`
 }
 
 // GetID returns the value of ID.
-func (s *AppPostRegisterOK) GetID() string {
+func (s *AppPostRegisterCreated) GetID() string {
 	return s.ID
 }
 
+// GetInvitationCode returns the value of InvitationCode.
+func (s *AppPostRegisterCreated) GetInvitationCode() string {
+	return s.InvitationCode
+}
+
 // SetID sets the value of ID.
-func (s *AppPostRegisterOK) SetID(val string) {
+func (s *AppPostRegisterCreated) SetID(val string) {
 	s.ID = val
 }
 
-func (*AppPostRegisterOK) appPostRegisterRes() {}
+// SetInvitationCode sets the value of InvitationCode.
+func (s *AppPostRegisterCreated) SetInvitationCode(val string) {
+	s.InvitationCode = val
+}
+
+// AppPostRegisterCreatedHeaders wraps AppPostRegisterCreated with response headers.
+type AppPostRegisterCreatedHeaders struct {
+	SetCookie OptString
+	Response  AppPostRegisterCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *AppPostRegisterCreatedHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *AppPostRegisterCreatedHeaders) GetResponse() AppPostRegisterCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *AppPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AppPostRegisterCreatedHeaders) SetResponse(val AppPostRegisterCreated) {
+	s.Response = val
+}
+
+func (*AppPostRegisterCreatedHeaders) appPostRegisterRes() {}
 
 type AppPostRegisterReq struct {
 	// ユーザー名.
@@ -346,6 +384,8 @@ type AppPostRegisterReq struct {
 	Lastname string `json:"lastname"`
 	// 生年月日.
 	DateOfBirth string `json:"date_of_birth"`
+	// 他の人の招待コード.
+	InvitationCode OptString `json:"invitation_code"`
 }
 
 // GetUsername returns the value of Username.
@@ -368,6 +408,11 @@ func (s *AppPostRegisterReq) GetDateOfBirth() string {
 	return s.DateOfBirth
 }
 
+// GetInvitationCode returns the value of InvitationCode.
+func (s *AppPostRegisterReq) GetInvitationCode() OptString {
+	return s.InvitationCode
+}
+
 // SetUsername sets the value of Username.
 func (s *AppPostRegisterReq) SetUsername(val string) {
 	s.Username = val
@@ -386,6 +431,11 @@ func (s *AppPostRegisterReq) SetLastname(val string) {
 // SetDateOfBirth sets the value of DateOfBirth.
 func (s *AppPostRegisterReq) SetDateOfBirth(val string) {
 	s.DateOfBirth = val
+}
+
+// SetInvitationCode sets the value of InvitationCode.
+func (s *AppPostRegisterReq) SetInvitationCode(val OptString) {
+	s.InvitationCode = val
 }
 
 type AppPostRequestAccepted struct {
@@ -771,6 +821,32 @@ func (s *ChairPostRegisterCreated) SetID(val string) {
 // SetOwnerID sets the value of OwnerID.
 func (s *ChairPostRegisterCreated) SetOwnerID(val string) {
 	s.OwnerID = val
+}
+
+// ChairPostRegisterCreatedHeaders wraps ChairPostRegisterCreated with response headers.
+type ChairPostRegisterCreatedHeaders struct {
+	SetCookie OptString
+	Response  ChairPostRegisterCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *ChairPostRegisterCreatedHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *ChairPostRegisterCreatedHeaders) GetResponse() ChairPostRegisterCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *ChairPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ChairPostRegisterCreatedHeaders) SetResponse(val ChairPostRegisterCreated) {
+	s.Response = val
 }
 
 type ChairPostRegisterReq struct {
@@ -1543,6 +1619,52 @@ func (o OptRequestStatus) Get() (v RequestStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRequestStatus) Or(d RequestStatus) RequestStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptString is optional string.
+type OptString struct {
+	Value string
+	Set   bool
+}
+
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptString) SetTo(v string) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptString) Get() (v string, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
 	if v, ok := o.Get(); ok {
 		return v
 	}

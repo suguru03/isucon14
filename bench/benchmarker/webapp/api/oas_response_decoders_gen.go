@@ -10,7 +10,9 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 
+	"github.com/ogen-go/ogen/conv"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/uri"
 	"github.com/ogen-go/ogen/validate"
 )
 
@@ -248,8 +250,8 @@ func decodeAppPostPaymentMethodsResponse(resp *http.Response) (res AppPostPaymen
 
 func decodeAppPostRegisterResponse(resp *http.Response) (res AppPostRegisterRes, _ error) {
 	switch resp.StatusCode {
-	case 200:
-		// Code 200.
+	case 201:
+		// Code 201.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil {
 			return res, errors.Wrap(err, "parse media type")
@@ -262,7 +264,7 @@ func decodeAppPostRegisterResponse(resp *http.Response) (res AppPostRegisterRes,
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response AppPostRegisterOK
+			var response AppPostRegisterCreated
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -279,7 +281,47 @@ func decodeAppPostRegisterResponse(resp *http.Response) (res AppPostRegisterRes,
 				}
 				return res, err
 			}
-			return &response, nil
+			var wrapper AppPostRegisterCreatedHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							var wrapperDotSetCookieVal string
+							if err := func() error {
+								val, err := d.DecodeValue()
+								if err != nil {
+									return err
+								}
+
+								c, err := conv.ToString(val)
+								if err != nil {
+									return err
+								}
+
+								wrapperDotSetCookieVal = c
+								return nil
+							}(); err != nil {
+								return err
+							}
+							wrapper.SetCookie.SetTo(wrapperDotSetCookieVal)
+							return nil
+						}); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Set-Cookie header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -817,7 +859,7 @@ func decodeChairPostDeactivateResponse(resp *http.Response) (res *ChairPostDeact
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeChairPostRegisterResponse(resp *http.Response) (res *ChairPostRegisterCreated, _ error) {
+func decodeChairPostRegisterResponse(resp *http.Response) (res *ChairPostRegisterCreatedHeaders, _ error) {
 	switch resp.StatusCode {
 	case 201:
 		// Code 201.
@@ -850,7 +892,47 @@ func decodeChairPostRegisterResponse(resp *http.Response) (res *ChairPostRegiste
 				}
 				return res, err
 			}
-			return &response, nil
+			var wrapper ChairPostRegisterCreatedHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							var wrapperDotSetCookieVal string
+							if err := func() error {
+								val, err := d.DecodeValue()
+								if err != nil {
+									return err
+								}
+
+								c, err := conv.ToString(val)
+								if err != nil {
+									return err
+								}
+
+								wrapperDotSetCookieVal = c
+								return nil
+							}(); err != nil {
+								return err
+							}
+							wrapper.SetCookie.SetTo(wrapperDotSetCookieVal)
+							return nil
+						}); err != nil {
+							return err
+						}
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Set-Cookie header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}

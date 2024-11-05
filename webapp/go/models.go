@@ -30,14 +30,15 @@ type ChairLocation struct {
 }
 
 type User struct {
-	ID          string    `db:"id"`
-	Username    string    `db:"username"`
-	Firstname   string    `db:"firstname"`
-	Lastname    string    `db:"lastname"`
-	DateOfBirth string    `db:"date_of_birth"`
-	AccessToken string    `db:"access_token"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID             string    `db:"id"`
+	Username       string    `db:"username"`
+	Firstname      string    `db:"firstname"`
+	Lastname       string    `db:"lastname"`
+	DateOfBirth    string    `db:"date_of_birth"`
+	AccessToken    string    `db:"access_token"`
+	InvitationCode string    `db:"invitation_code"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
 }
 
 type PaymentToken struct {

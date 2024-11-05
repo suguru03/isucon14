@@ -69,6 +69,9 @@ paths:
                 date_of_birth:
                   type: string
                   description: 生年月日
+                invitation_code:
+                  type: string
+                  description: 他の人の招待コード
               required:
                 - username
                 - firstname
@@ -91,8 +94,12 @@ paths:
                   id:
                     type: string
                     description: ユーザーID
+                  invitation_code:
+                    type: string
+                    description: 自分の招待コード
                 required:
                   - id
+                  - invitation_code
         "400":
           description: Bad Request
           content:
