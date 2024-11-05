@@ -103,7 +103,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 		// 招待した人にもRewardを付与
 		_, err = tx.Exec(
 			"INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
-			inviter.ID, "RWD_"+*req.InvitationCode, 1500,
+			inviter.ID, "RWD_"+*req.InvitationCode, 1000,
 		)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err)
@@ -222,8 +222,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			// 無ければ他のクーポンを順番に使う
-			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL LIMIT 1 FOR UPDATE", user.ID); err != nil {
+			// 無ければ他のクーポンを付与された順番に使う
+			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE", user.ID); err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					writeError(w, http.StatusInternalServerError, err)
 					return
@@ -247,8 +247,8 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		// 他のクーポンを順番に使う
-		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL LIMIT 1 FOR UPDATE", user.ID); err != nil {
+		// 他のクーポンを付与された順番に使う
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE", user.ID); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				writeError(w, http.StatusInternalServerError, err)
 				return
@@ -923,8 +923,8 @@ func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *RideRequest, picku
 				return 0, err
 			}
 
-			// 無いなら他のクーポンを順番に使う
-			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL LIMIT 1", userID); err != nil {
+			// 無いなら他のクーポンを付与された順番に使う
+			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1", userID); err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					return 0, err
 				}
