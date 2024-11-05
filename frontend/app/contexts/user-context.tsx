@@ -17,30 +17,42 @@ import type {
 } from "~/apiClient/apiSchemas";
 import type { ClientAppRequest } from "~/types";
 
-const isApiFetchError = (obj: object): obj is {
-  name: string,
-  message: string,
+const isApiFetchError = (
+  obj: object,
+): obj is {
+  name: string;
+  message: string;
   stack: {
     status: number;
     payload: string;
-  }
+  };
 } => {
-  if (typeof obj === 'object' && obj !== null &&
-          'name' in obj && typeof obj.name === 'string' &&
-          'message' in obj && typeof obj.message === 'string' &&
-          'stack' in obj && typeof obj.stack === 'object') {
-      const stack = obj.stack;
-      if (stack !== null &&
-          'status' in stack && typeof stack.status === 'number' &&
-          'payload' in stack && typeof stack.payload === 'string') {
-            return true;
-      } else {
-        return false;
-      }
+  if (
+    typeof obj === "object" &&
+    obj !== null &&
+    "name" in obj &&
+    typeof obj.name === "string" &&
+    "message" in obj &&
+    typeof obj.message === "string" &&
+    "stack" in obj &&
+    typeof obj.stack === "object"
+  ) {
+    const stack = obj.stack;
+    if (
+      stack !== null &&
+      "status" in stack &&
+      typeof stack.status === "number" &&
+      "payload" in stack &&
+      typeof stack.payload === "string"
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
     return false;
   }
-}
+};
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
@@ -153,14 +165,14 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
-        if (typeof e === 'object' && isApiFetchError(e as object)) {
+        if (typeof e === "object" && isApiFetchError(e as object)) {
           const apiError = e as {
-            name: string,
-            message: string,
+            name: string;
+            message: string;
             stack: {
               status: number;
               payload: string;
-            }
+            };
           };
           if (apiError.stack.status === 401) {
             navigate("/client/register");
