@@ -178,9 +178,16 @@ func (u *User) Tick(ctx *Context) error {
 			// Region内の最低ユーザー数を下回るならそのまま残る
 		}
 
+		// 過去のリクエストを確認する
+		// TODO 作成する条件・頻度
+		err := u.CheckRequestHistory(ctx)
+		if err != nil {
+			return err
+		}
+
 		// リクエストを作成する
 		// TODO 作成する条件・頻度
-		err := u.CreateRequest(ctx)
+		err = u.CreateRequest(ctx)
 		if err != nil {
 			return err
 		}
@@ -197,6 +204,16 @@ func (u *User) Deactivate() {
 	u.notificationConn.Close()
 	u.notificationConn = nil
 	u.World.PublishEvent(&EventUserLeave{User: u})
+}
+
+func (u *User) CheckRequestHistory(ctx *Context) error {
+	_, err := u.Client.GetRequests(ctx)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+	// TODO: ここでvalidationも行う？
+
+	return nil
 }
 
 func (u *User) CreateRequest(ctx *Context) error {
