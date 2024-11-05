@@ -39,17 +39,19 @@ CREATE TABLE chair_locations
 DROP TABLE IF EXISTS users;
 CREATE TABLE users
 (
-  id            VARCHAR(26)  NOT NULL COMMENT 'ユーザーID',
-  username      VARCHAR(30)  NOT NULL COMMENT 'ユーザー名',
-  firstname     VARCHAR(30)  NOT NULL COMMENT '本名(名前)',
-  lastname      VARCHAR(30)  NOT NULL COMMENT '本名(名字)',
-  date_of_birth VARCHAR(30)  NOT NULL COMMENT '生年月日',
-  access_token  VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
-  created_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
-  updated_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
+  id              VARCHAR(26)  NOT NULL COMMENT 'ユーザーID',
+  username        VARCHAR(30)  NOT NULL COMMENT 'ユーザー名',
+  firstname       VARCHAR(30)  NOT NULL COMMENT '本名(名前)',
+  lastname        VARCHAR(30)  NOT NULL COMMENT '本名(名字)',
+  date_of_birth   VARCHAR(30)  NOT NULL COMMENT '生年月日',
+  access_token    VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
+  invitation_code VARCHAR(30)  NOT NULL COMMENT '招待トークン',
+  created_at      DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
+  updated_at      DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
   PRIMARY KEY (id),
   UNIQUE (username),
-  UNIQUE (access_token)
+  UNIQUE (access_token),
+  UNIQUE (invitation_code)
 )
   COMMENT = '利用者情報テーブル';
 

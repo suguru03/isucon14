@@ -99,7 +99,7 @@ type Invoker interface {
 	// 椅子登録を行う.
 	//
 	// POST /chair/register
-	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error)
+	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error)
 	// ChairPostRequestAccept invokes chair-post-request-accept operation.
 	//
 	// 椅子が配車要求を受理する.
@@ -788,12 +788,12 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context) (res *ChairPostDea
 // 椅子登録を行う.
 //
 // POST /chair/register
-func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error) {
+func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error) {
 	res, err := c.sendChairPostRegister(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreated, err error) {
+func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreatedHeaders, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string

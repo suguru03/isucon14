@@ -12,14 +12,16 @@ import (
 )
 
 type appPostRegisterRequest struct {
-	Username    string `json:"username"`
-	FirstName   string `json:"firstname"`
-	LastName    string `json:"lastname"`
-	DateOfBirth string `json:"date_of_birth"`
+	Username       string  `json:"username"`
+	FirstName      string  `json:"firstname"`
+	LastName       string  `json:"lastname"`
+	DateOfBirth    string  `json:"date_of_birth"`
+	InvitationCode *string `json:"invitation_code"`
 }
 
 type appPostRegisterResponse struct {
-	ID string `json:"id"`
+	ID             string `json:"id"`
+	InvitationCode string `json:"invitation_code"`
 }
 
 func appPostRegister(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +37,7 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 
 	userID := ulid.Make().String()
 	accessToken := secureRandomStr(32)
+	invitationCode := secureRandomStr(15)
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -44,8 +47,8 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	_, err = tx.Exec(
-		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken,
+		"INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		userID, req.Username, req.FirstName, req.LastName, req.DateOfBirth, accessToken, invitationCode,
 	)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -62,20 +65,66 @@ func appPostRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 招待コードを使った登録
+	if req.InvitationCode != nil && *req.InvitationCode != "" {
+		// 招待する側の招待数をチェック
+		var coupons []Coupon
+		err = tx.Select(&coupons, "SELECT * FROM coupons WHERE code = ? FOR UPDATE", "INV_"+*req.InvitationCode)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if len(coupons) >= 3 {
+			writeError(w, http.StatusBadRequest, errors.New("この招待コードは使用できません。"))
+			return
+		}
+
+		// ユーザーチェック
+		var inviter User
+		err = tx.Get(&inviter, "SELECT * FROM users WHERE invitation_code = ?", *req.InvitationCode)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				writeError(w, http.StatusBadRequest, errors.New("この招待コードは使用できません。"))
+				return
+			}
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		// 招待クーポン付与
+		_, err = tx.Exec(
+			"INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
+			userID, "INV_"+*req.InvitationCode, 1500,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		// 招待した人にもRewardを付与
+		_, err = tx.Exec(
+			"INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
+			inviter.ID, "RWD_"+*req.InvitationCode, 1000,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "app_session",
-		Value:    accessToken,
-		HttpOnly: true,
+		Path:  "/",
+		Name:  "app_session",
+		Value: accessToken,
 	})
 
 	writeJSON(w, http.StatusCreated, &appPostRegisterResponse{
-		ID: userID,
+		ID:             userID,
+		InvitationCode: invitationCode,
 	})
 }
 
@@ -159,21 +208,55 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 初回利用で、初回利用クーポンがあれば必ず使う
 	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? `, user.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	var coupon Coupon
 	if requestCount == 1 {
-		var coupon Coupon
-		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL", user.ID); err != nil {
+		// 初回利用で、初回利用クーポンがあれば必ず使う
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL FOR UPDATE", user.ID); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+
+			// 無ければ他のクーポンを付与された順番に使う
+			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE", user.ID); err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					writeError(w, http.StatusInternalServerError, err)
+					return
+				}
+			} else {
+				if _, err := tx.Exec(
+					"UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
+					requestID, user.ID, coupon.Code,
+				); err != nil {
+					writeError(w, http.StatusInternalServerError, err)
+					return
+				}
 			}
 		} else {
 			if _, err := tx.Exec(
 				"UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = 'CP_NEW2024'",
 				requestID, user.ID,
+			); err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+		}
+	} else {
+		// 他のクーポンを付与された順番に使う
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE", user.ID); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+		} else {
+			if _, err := tx.Exec(
+				"UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
+				requestID, user.ID, coupon.Code,
 			); err != nil {
 				writeError(w, http.StatusInternalServerError, err)
 				return
@@ -838,6 +921,15 @@ func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *RideRequest, picku
 		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL", userID); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return 0, err
+			}
+
+			// 無いなら他のクーポンを付与された順番に使う
+			if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1", userID); err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					return 0, err
+				}
+			} else {
+				discount = coupon.Discount
 			}
 		} else {
 			discount = coupon.Discount

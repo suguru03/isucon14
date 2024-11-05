@@ -49,10 +49,9 @@ func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "owner_session",
-		Value:    accessToken,
-		HttpOnly: true,
+		Path:  "/",
+		Name:  "owner_session",
+		Value: accessToken,
 	})
 
 	writeJSON(w, http.StatusCreated, &ownerPostRegisterResponse{

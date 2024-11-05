@@ -903,28 +903,33 @@ func (s *AppPostPaymentMethodsReq) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *AppPostRegisterOK) Encode(e *jx.Encoder) {
+func (s *AppPostRegisterCreated) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AppPostRegisterOK) encodeFields(e *jx.Encoder) {
+func (s *AppPostRegisterCreated) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("id")
 		e.Str(s.ID)
 	}
+	{
+		e.FieldStart("invitation_code")
+		e.Str(s.InvitationCode)
+	}
 }
 
-var jsonFieldsNameOfAppPostRegisterOK = [1]string{
+var jsonFieldsNameOfAppPostRegisterCreated = [2]string{
 	0: "id",
+	1: "invitation_code",
 }
 
-// Decode decodes AppPostRegisterOK from json.
-func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
+// Decode decodes AppPostRegisterCreated from json.
+func (s *AppPostRegisterCreated) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AppPostRegisterOK to nil")
+		return errors.New("invalid: unable to decode AppPostRegisterCreated to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -942,17 +947,29 @@ func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
+		case "invitation_code":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.InvitationCode = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"invitation_code\"")
+			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AppPostRegisterOK")
+		return errors.Wrap(err, "decode AppPostRegisterCreated")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -964,8 +981,8 @@ func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfAppPostRegisterOK) {
-					name = jsonFieldsNameOfAppPostRegisterOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfAppPostRegisterCreated) {
+					name = jsonFieldsNameOfAppPostRegisterCreated[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -986,14 +1003,14 @@ func (s *AppPostRegisterOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AppPostRegisterOK) MarshalJSON() ([]byte, error) {
+func (s *AppPostRegisterCreated) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AppPostRegisterOK) UnmarshalJSON(data []byte) error {
+func (s *AppPostRegisterCreated) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1023,13 +1040,20 @@ func (s *AppPostRegisterReq) encodeFields(e *jx.Encoder) {
 		e.FieldStart("date_of_birth")
 		e.Str(s.DateOfBirth)
 	}
+	{
+		if s.InvitationCode.Set {
+			e.FieldStart("invitation_code")
+			s.InvitationCode.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfAppPostRegisterReq = [4]string{
+var jsonFieldsNameOfAppPostRegisterReq = [5]string{
 	0: "username",
 	1: "firstname",
 	2: "lastname",
 	3: "date_of_birth",
+	4: "invitation_code",
 }
 
 // Decode decodes AppPostRegisterReq from json.
@@ -1088,6 +1112,16 @@ func (s *AppPostRegisterReq) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"date_of_birth\"")
+			}
+		case "invitation_code":
+			if err := func() error {
+				s.InvitationCode.Reset()
+				if err := s.InvitationCode.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"invitation_code\"")
 			}
 		default:
 			return d.Skip()
@@ -3528,6 +3562,41 @@ func (s OptRequestStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptRequestStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes string as json.
+func (o OptString) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes string from json.
+func (o *OptString) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptString to nil")
+	}
+	o.Set = true
+	v, err := d.Str()
+	if err != nil {
+		return err
+	}
+	o.Value = string(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptString) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptString) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
