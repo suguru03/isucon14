@@ -51,18 +51,20 @@ type RideRequest struct {
 	ID                   string         `db:"id"`
 	UserID               string         `db:"user_id"`
 	ChairID              sql.NullString `db:"chair_id"`
-	Status               string         `db:"status"`
 	PickupLatitude       int            `db:"pickup_latitude"`
 	PickupLongitude      int            `db:"pickup_longitude"`
 	DestinationLatitude  int            `db:"destination_latitude"`
 	DestinationLongitude int            `db:"destination_longitude"`
 	Evaluation           *int           `db:"evaluation"`
-	RequestedAt          time.Time      `db:"requested_at"`
-	MatchedAt            *time.Time     `db:"matched_at"`
-	DispatchedAt         *time.Time     `db:"dispatched_at"`
-	RodeAt               *time.Time     `db:"rode_at"`
-	ArrivedAt            *time.Time     `db:"arrived_at"`
+	CreatedAt            time.Time      `db:"created_at"`
 	UpdatedAt            time.Time      `db:"updated_at"`
+}
+
+type RideRequestStatus struct {
+	ID            string    `db:"id"`
+	RideRequestID string    `db:"ride_request_id"`
+	Status        string    `db:"status"`
+	CreatedAt     time.Time `db:"created_at"`
 }
 
 type Owner struct {

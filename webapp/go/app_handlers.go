@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -187,7 +186,7 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 	rideRequests := []RideRequest{}
 	if err := db.Select(
 		&rideRequests,
-		`SELECT * FROM ride_requests WHERE user_id = ? AND status = 'COMPLETED' ORDER BY requested_at DESC`,
+		`SELECT * FROM ride_requests WHERE user_id = ? ORDER BY created_at DESC`,
 		user.ID,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -196,13 +195,21 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 
 	requests := []getAppRequestsResponseItem{}
 	for _, rideRequest := range rideRequests {
+		status, err := getLatestRideRequestStatus(db, rideRequest.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status != "COMPLETED" {
+			continue
+		}
 		item := getAppRequestsResponseItem{
 			RequestID:             rideRequest.ID,
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 			Fare:                  calculateSale(rideRequest),
 			Evaluation:            *rideRequest.Evaluation,
-			RequestedAt:           rideRequest.RequestedAt.UnixMilli(),
+			RequestedAt:           rideRequest.CreatedAt.UnixMilli(),
 			CompletedAt:           rideRequest.UpdatedAt.UnixMilli(),
 		}
 
@@ -227,7 +234,6 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 		requests = append(requests, item)
 	}
 
-	fmt.Printf("requests: %+v\n", requests)
 	writeJSON(w, http.StatusOK, &getAppRequestsResponse{
 		Requests: requests,
 	})
@@ -241,6 +247,16 @@ type appPostRequestsRequest struct {
 type appPostRequestsResponse struct {
 	RequestID string `json:"request_id"`
 	Fare      int    `json:"fare"`
+}
+
+type executableGet interface {
+	Get(dest interface{}, query string, args ...interface{}) error
+}
+
+func getLatestRideRequestStatus(tx executableGet, requestID string) (string, error) {
+	status := ""
+	err := tx.Get(&status, `SELECT status FROM ride_request_statuses WHERE ride_request_id = ? ORDER BY created_at DESC LIMIT 1`, requestID)
+	return status, err
 }
 
 func appPostRequests(w http.ResponseWriter, r *http.Request) {
@@ -264,25 +280,47 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	requestCount := 0
-	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')`, user.ID); err != nil {
+	rideRequests := []RideRequest{}
+	if err := tx.Select(&rideRequests, `SELECT * FROM ride_requests WHERE user_id = ?`, user.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if requestCount > 0 {
+
+	continuingRideRequestCount := 0
+	for _, rideRequest := range rideRequests {
+		status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status != "COMPLETED" && status != "CANCELED" {
+			continuingRideRequestCount++
+		}
+	}
+
+	if continuingRideRequestCount > 0 {
 		writeError(w, http.StatusConflict, errors.New("request already exists"))
 		return
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_requests (id, user_id, status, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
-				  VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		requestID, user.ID, "MATCHING", req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
+		`INSERT INTO ride_requests (id, user_id, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
+				  VALUES (?, ?, ?, ?, ?, ?)`,
+		requestID, user.ID, req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
+	if _, err := tx.Exec(
+		`INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)`,
+		ulid.Make().String(), requestID, "MATCHING",
+	); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	var requestCount int
 	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? `, user.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -469,12 +507,18 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	response := &appGetRequestResponse{
 		RequestID:             rideRequest.ID,
 		PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 		DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
-		Status:                rideRequest.Status,
-		CreatedAt:             rideRequest.RequestedAt.UnixMilli(),
+		Status:                status,
+		CreatedAt:             rideRequest.CreatedAt.UnixMilli(),
 		UpdateAt:              rideRequest.UpdatedAt.UnixMilli(),
 	}
 
@@ -515,7 +559,7 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 		&rideRequests,
 		`SELECT *
 		 FROM ride_requests
-		 WHERE ride_requests.chair_id = ? AND ride_requests.status = 'COMPLETED'
+		 WHERE ride_requests.chair_id = ?
 		 ORDER BY ride_requests.updated_at DESC`,
 		chairID,
 	)
@@ -530,10 +574,38 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 		err := tx.Select(
 			&chairLocations,
 			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at`,
-			chairID, rideRequest.RequestedAt, rideRequest.UpdatedAt,
+			chairID, rideRequest.CreatedAt, rideRequest.UpdatedAt,
 		)
 		if err != nil {
 			return stats, err
+		}
+
+		rideRequestStatuses := []RideRequestStatus{}
+		err = tx.Select(
+			&rideRequestStatuses,
+			`SELECT * FROM ride_request_statuses WHERE ride_request_id = ? ORDER BY created_at`,
+			rideRequest.ID,
+		)
+		if err != nil {
+			return stats, err
+		}
+		var arrivedAt, rodeAt *time.Time
+		var isCompleted bool
+		for _, status := range rideRequestStatuses {
+			if status.Status == "ARRIVED" {
+				arrivedAt = &status.CreatedAt
+			} else if status.Status == "CARRYING" {
+				rodeAt = &status.CreatedAt
+			}
+			if status.Status == "COMPLETED" {
+				isCompleted = true
+			}
+		}
+		if arrivedAt == nil || rodeAt == nil {
+			continue
+		}
+		if !isCompleted {
+			continue
 		}
 
 		distance := 0
@@ -552,7 +624,7 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 			Distance:              distance,
-			Duration:              rideRequest.ArrivedAt.Sub(*rideRequest.RodeAt).Milliseconds(),
+			Duration:              arrivedAt.Sub(*rodeAt).Milliseconds(),
 			Evaluation:            *rideRequest.Evaluation,
 		})
 
@@ -621,15 +693,20 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+	status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
 
-	if rideRequest.Status != "ARRIVED" {
+	if status != "ARRIVED" {
 		writeError(w, http.StatusBadRequest, errors.New("not arrived yet"))
 		return
 	}
 
 	result, err := tx.Exec(
-		`UPDATE ride_requests SET evaluation = ?, status = ? WHERE id = ?`,
-		postAppEvaluateRequest.Evaluation, "COMPLETED", requestID)
+		`UPDATE ride_requests SET evaluation = ? WHERE id = ?`,
+		postAppEvaluateRequest.Evaluation, requestID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -639,6 +716,14 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if count == 0 {
 		writeError(w, http.StatusNotFound, errors.New("request not found"))
+		return
+	}
+
+	_, err = tx.Exec(
+		`INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)`,
+		ulid.Make().String(), requestID, "COMPLETED")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -671,7 +756,7 @@ func appPostRequestEvaluate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest, func() ([]RideRequest, error) {
 		rideRequests := []RideRequest{}
-		if err := tx.Select(&rideRequests, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at ASC`, rideRequest.UserID); err != nil {
+		if err := tx.Select(&rideRequests, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY created_at ASC`, rideRequest.UserID); err != nil {
 			return nil, err
 		}
 		return rideRequests, nil
@@ -716,11 +801,17 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID); err != nil {
+	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`, user.ID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -735,8 +826,8 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Latitude:  rideRequest.DestinationLatitude,
 			Longitude: rideRequest.DestinationLongitude,
 		},
-		Status:    rideRequest.Status,
-		CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+		Status:    status,
+		CreatedAt: rideRequest.CreatedAt.UnixMilli(),
 		UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 	}
 
@@ -772,6 +863,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 
 	var lastRideRequest *RideRequest
+	var lastRideRequestStatus string
 	for {
 		select {
 		case <-r.Context().Done():
@@ -787,7 +879,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				defer tx.Rollback()
 
 				rideRequest := &RideRequest{}
-				err = tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY requested_at DESC LIMIT 1`, user.ID)
+				err = tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`, user.ID)
 				if err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						time.Sleep(100 * time.Millisecond)
@@ -795,7 +887,11 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 					return err
 				}
-				if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && rideRequest.Status == lastRideRequest.Status {
+				status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+				if err != nil {
+					return err
+				}
+				if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && status == lastRideRequestStatus {
 					time.Sleep(100 * time.Millisecond)
 					return nil
 				}
@@ -822,19 +918,20 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						Latitude:  rideRequest.DestinationLatitude,
 						Longitude: rideRequest.DestinationLongitude,
 					},
-					Status: rideRequest.Status,
+					Status: status,
 					Chair: &appChair{
 						ID:    chair.ID,
 						Name:  chair.Name,
 						Model: chair.Model,
 						Stats: stats,
 					},
-					CreatedAt: rideRequest.RequestedAt.UnixMilli(),
+					CreatedAt: rideRequest.CreatedAt.UnixMilli(),
 					UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 				}); err != nil {
 					return err
 				}
 				lastRideRequest = rideRequest
+				lastRideRequestStatus = status
 
 				return nil
 			}()
@@ -907,7 +1004,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		rideRequest := &RideRequest{}
 		err := tx.Get(
 			rideRequest,
-			`SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY requested_at DESC LIMIT 1`,
+			`SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1`,
 			chair.ID,
 		)
 		if err != nil {
@@ -916,7 +1013,12 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		if rideRequest.Status != "COMPLETED" {
+		status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status != "COMPLETED" {
 			continue
 		}
 
