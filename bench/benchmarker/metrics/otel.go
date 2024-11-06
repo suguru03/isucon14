@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"io"
 	"os"
 	"time"
 
@@ -49,5 +48,5 @@ func getExporter() (metricsdk.Exporter, error) {
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
 		return otlpmetrichttp.New(context.Background())
 	}
-	return stdoutmetric.New(stdoutmetric.WithWriter(io.Discard))
+	return stdoutmetric.New(stdoutmetric.WithWriter(os.Stdout))
 }

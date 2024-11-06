@@ -201,7 +201,6 @@ func (p *Provider) ValidateChairs(serverSide *GetProviderChairsResponse) error {
 			// TODO: いつまで経っても反映されない場合のペナルティ
 			want := chair.Location.TotalTravelDistanceUntil(data.TotalDistanceUpdatedAt.Time)
 			if data.TotalDistance != want {
-				panic(fmt.Sprintf("total_distanceが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.TotalDistance, want))
 				return fmt.Errorf("total_distanceが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.TotalDistance, want)
 			}
 		}
