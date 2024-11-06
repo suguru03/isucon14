@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
-import { fetchProviderPostRegister } from "~/apiClient/apiComponents";
+import { fetchOwnerPostRegister } from "~/apiClient/apiComponents";
 import { TextInput } from "~/components/primitives/form/text";
 
 export const meta: MetaFunction = () => {
@@ -12,10 +12,7 @@ export const meta: MetaFunction = () => {
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-  const provider = await fetchProviderPostRegister({
-    headers: {
-      Authorization: `Bearer ${String(formData.get("provide_access_token")) ?? ""}`,
-    },
+  const provider = await fetchOwnerPostRegister({
     body: {
       name: String(formData.get("provider_name")) ?? "",
     },
@@ -31,12 +28,6 @@ export default function DriverRegister() {
         method="POST"
       >
         <div>
-          <TextInput
-            id="provide_access_token"
-            name="provide_access_token"
-            label="provide_access_token:"
-            required
-          />
           <TextInput
             id="provider_name"
             name="provider_name"

@@ -34,12 +34,18 @@ type Invoker interface {
 	//
 	// GET /app/requests/{request_id}
 	AppGetRequest(ctx context.Context, params AppGetRequestParams) (AppGetRequestRes, error)
+	// AppGetRequests invokes app-get-requests operation.
+	//
+	// ユーザーが完了済みの配車要求一覧を取得する.
+	//
+	// GET /app/requests
+	AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error)
 	// AppPostPaymentMethods invokes app-post-payment-methods operation.
 	//
 	// 決済トークンの登録.
 	//
 	// POST /app/payment-methods
-	AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error
+	AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (AppPostPaymentMethodsRes, error)
 	// AppPostRegister invokes app-post-register operation.
 	//
 	// ユーザーが会員登録を行う.
@@ -51,7 +57,13 @@ type Invoker interface {
 	// ユーザーが配車要求を行う.
 	//
 	// POST /app/requests
-	AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (*AppPostRequestAccepted, error)
+	AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (AppPostRequestRes, error)
+	// AppPostRequestEstimate invokes app-post-request-estimate operation.
+	//
+	// リクエストの運賃を見積もる.
+	//
+	// POST /app/requests/estimate
+	AppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (AppPostRequestEstimateRes, error)
 	// AppPostRequestEvaluate invokes app-post-request-evaluate operation.
 	//
 	// ユーザーが椅子を評価する.
@@ -75,7 +87,7 @@ type Invoker interface {
 	// 椅子が配車受付を開始する.
 	//
 	// POST /chair/activate
-	ChairPostActivate(ctx context.Context, request *ChairPostActivateReq) error
+	ChairPostActivate(ctx context.Context) error
 	// ChairPostCoordinate invokes chair-post-coordinate operation.
 	//
 	// 椅子が位置情報を送信する.
@@ -87,13 +99,13 @@ type Invoker interface {
 	// 椅子が配車受付を停止する.
 	//
 	// POST /chair/deactivate
-	ChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) error
+	ChairPostDeactivate(ctx context.Context) error
 	// ChairPostRegister invokes chair-post-register operation.
 	//
 	// 椅子登録を行う.
 	//
 	// POST /chair/register
-	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error)
+	ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error)
 	// ChairPostRequestAccept invokes chair-post-request-accept operation.
 	//
 	// 椅子が配車要求を受理する.
@@ -135,7 +147,7 @@ type Invoker interface {
 	// 椅子のオーナー自身が登録を行う.
 	//
 	// POST /owner/register
-	OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (*OwnerPostRegisterCreated, error)
+	OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (OwnerPostRegisterRes, error)
 	// PostInitialize invokes post-initialize operation.
 	//
 	// サービスを初期化する.
@@ -362,17 +374,53 @@ func (c *Client) sendAppGetRequest(ctx context.Context, params AppGetRequestPara
 	return result, nil
 }
 
+// AppGetRequests invokes app-get-requests operation.
+//
+// ユーザーが完了済みの配車要求一覧を取得する.
+//
+// GET /app/requests
+func (c *Client) AppGetRequests(ctx context.Context) (*AppGetRequestsOK, error) {
+	res, err := c.sendAppGetRequests(ctx)
+	return res, err
+}
+
+func (c *Client) sendAppGetRequests(ctx context.Context) (res *AppGetRequestsOK, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/requests"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppGetRequestsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // AppPostPaymentMethods invokes app-post-payment-methods operation.
 //
 // 決済トークンの登録.
 //
 // POST /app/payment-methods
-func (c *Client) AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) error {
-	_, err := c.sendAppPostPaymentMethods(ctx, request)
-	return err
+func (c *Client) AppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (AppPostPaymentMethodsRes, error) {
+	res, err := c.sendAppPostPaymentMethods(ctx, request)
+	return res, err
 }
 
-func (c *Client) sendAppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (res *AppPostPaymentMethodsNoContent, err error) {
+func (c *Client) sendAppPostPaymentMethods(ctx context.Context, request OptAppPostPaymentMethodsReq) (res AppPostPaymentMethodsRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -445,12 +493,12 @@ func (c *Client) sendAppPostRegister(ctx context.Context, request OptAppPostRegi
 // ユーザーが配車要求を行う.
 //
 // POST /app/requests
-func (c *Client) AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (*AppPostRequestAccepted, error) {
+func (c *Client) AppPostRequest(ctx context.Context, request OptAppPostRequestReq) (AppPostRequestRes, error) {
 	res, err := c.sendAppPostRequest(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostRequestReq) (res *AppPostRequestAccepted, err error) {
+func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostRequestReq) (res AppPostRequestRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -472,6 +520,45 @@ func (c *Client) sendAppPostRequest(ctx context.Context, request OptAppPostReque
 	defer resp.Body.Close()
 
 	result, err := decodeAppPostRequestResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// AppPostRequestEstimate invokes app-post-request-estimate operation.
+//
+// リクエストの運賃を見積もる.
+//
+// POST /app/requests/estimate
+func (c *Client) AppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (AppPostRequestEstimateRes, error) {
+	res, err := c.sendAppPostRequestEstimate(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendAppPostRequestEstimate(ctx context.Context, request OptAppPostRequestEstimateReq) (res AppPostRequestEstimateRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/app/requests/estimate"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAppPostRequestEstimateRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeAppPostRequestEstimateResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -632,12 +719,12 @@ func (c *Client) sendChairGetRequest(ctx context.Context, params ChairGetRequest
 // 椅子が配車受付を開始する.
 //
 // POST /chair/activate
-func (c *Client) ChairPostActivate(ctx context.Context, request *ChairPostActivateReq) error {
-	_, err := c.sendChairPostActivate(ctx, request)
+func (c *Client) ChairPostActivate(ctx context.Context) error {
+	_, err := c.sendChairPostActivate(ctx)
 	return err
 }
 
-func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostActivateReq) (res *ChairPostActivateNoContent, err error) {
+func (c *Client) sendChairPostActivate(ctx context.Context) (res *ChairPostActivateNoContent, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -647,9 +734,6 @@ func (c *Client) sendChairPostActivate(ctx context.Context, request *ChairPostAc
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeChairPostActivateRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)
@@ -710,12 +794,12 @@ func (c *Client) sendChairPostCoordinate(ctx context.Context, request OptCoordin
 // 椅子が配車受付を停止する.
 //
 // POST /chair/deactivate
-func (c *Client) ChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) error {
-	_, err := c.sendChairPostDeactivate(ctx, request)
+func (c *Client) ChairPostDeactivate(ctx context.Context) error {
+	_, err := c.sendChairPostDeactivate(ctx)
 	return err
 }
 
-func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPostDeactivateReq) (res *ChairPostDeactivateNoContent, err error) {
+func (c *Client) sendChairPostDeactivate(ctx context.Context) (res *ChairPostDeactivateNoContent, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -725,9 +809,6 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPost
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeChairPostDeactivateRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	resp, err := c.cfg.Client.Do(r)
@@ -749,12 +830,12 @@ func (c *Client) sendChairPostDeactivate(ctx context.Context, request *ChairPost
 // 椅子登録を行う.
 //
 // POST /chair/register
-func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreated, error) {
+func (c *Client) ChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (*ChairPostRegisterCreatedHeaders, error) {
 	res, err := c.sendChairPostRegister(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreated, err error) {
+func (c *Client) sendChairPostRegister(ctx context.Context, request OptChairPostRegisterReq) (res *ChairPostRegisterCreatedHeaders, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -1066,7 +1147,7 @@ func (c *Client) sendOwnerGetSales(ctx context.Context, params OwnerGetSalesPara
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Since.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
+				return e.EncodeValue(conv.Int64ToString(val))
 			}
 			return nil
 		}); err != nil {
@@ -1083,7 +1164,7 @@ func (c *Client) sendOwnerGetSales(ctx context.Context, params OwnerGetSalesPara
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
 			if val, ok := params.Until.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
+				return e.EncodeValue(conv.Int64ToString(val))
 			}
 			return nil
 		}); err != nil {
@@ -1116,12 +1197,12 @@ func (c *Client) sendOwnerGetSales(ctx context.Context, params OwnerGetSalesPara
 // 椅子のオーナー自身が登録を行う.
 //
 // POST /owner/register
-func (c *Client) OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (*OwnerPostRegisterCreated, error) {
+func (c *Client) OwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (OwnerPostRegisterRes, error) {
 	res, err := c.sendOwnerPostRegister(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendOwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (res *OwnerPostRegisterCreated, err error) {
+func (c *Client) sendOwnerPostRegister(ctx context.Context, request OptOwnerPostRegisterReq) (res OwnerPostRegisterRes, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
