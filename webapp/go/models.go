@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type ChairModel struct {
-	Name  string `db:"name"`
-	Speed int    `db:"speed"`
-}
-
 type Chair struct {
 	ID          string    `db:"id"`
 	OwnerID     string    `db:"owner_id"`
