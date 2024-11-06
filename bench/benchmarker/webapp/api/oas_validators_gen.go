@@ -107,6 +107,70 @@ func (s *AppGetNearbyChairsOK) Validate() error {
 	return nil
 }
 
+func (s *AppGetNotificationOK) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Chair.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "chair",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *AppGetRequestsOK) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Requests == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "requests",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *AppPostRequestEvaluateReq) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -174,25 +238,26 @@ func (s *AppRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.CreatedAt)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "created_at",
-			Error: err,
-		})
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
 	}
+	return nil
+}
+
+func (s *ChairGetNotificationOK) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
 	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.UpdatedAt)); err != nil {
-			return errors.Wrap(err, "float")
+		if err := s.Status.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "updated_at",
+			Name:  "status",
 			Error: err,
 		})
 	}
@@ -287,50 +352,6 @@ func (s *OwnerGetSalesOK) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s *PostInitializeOK) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Language.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "language",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s PostInitializeOKLanguage) Validate() error {
-	switch s {
-	case "go":
-		return nil
-	case "perl":
-		return nil
-	case "php":
-		return nil
-	case "python":
-		return nil
-	case "ruby":
-		return nil
-	case "rust":
-		return nil
-	case "node":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s RequestStatus) Validate() error {

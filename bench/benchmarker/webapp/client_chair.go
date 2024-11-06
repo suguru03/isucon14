@@ -36,7 +36,7 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /api/chair/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/chair/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
 	resBody := &api.ChairPostRegisterCreated{}
@@ -228,14 +228,32 @@ func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (
 	return resBody, nil
 }
 
-func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairRequest, error] {
-	return c.chairGetNotification(ctx, false)
+func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairGetNotificationOK, error] {
+	return func(yield func(*api.ChairGetNotificationOK, error) bool) {
+		for notification, err := range c.chairGetNotification(ctx, false) {
+			if notification == nil {
+				if !yield(nil, err) {
+					return
+				}
+			} else {
+				if !yield(&api.ChairGetNotificationOK{
+					RequestID:             notification.RequestID,
+					User:                  notification.User,
+					PickupCoordinate:      notification.PickupCoordinate,
+					DestinationCoordinate: notification.DestinationCoordinate,
+					Status:                notification.Status,
+				}, err) {
+					return
+				}
+			}
+		}
+	}
 }
 
-func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.ChairRequest, error] {
+func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.ChairGetNotificationOK, error] {
 	req, err := c.agent.NewRequest(http.MethodGet, "/api/chair/notification", nil)
 	if err != nil {
-		return func(yield func(*api.ChairRequest, error) bool) { yield(nil, err) }
+		return func(yield func(*api.ChairGetNotificationOK, error) bool) { yield(nil, err) }
 	}
 
 	for _, modifier := range c.requestModifiers {
@@ -251,18 +269,18 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 
 	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return func(yield func(*api.ChairRequest, error) bool) {
+		return func(yield func(*api.ChairGetNotificationOK, error) bool) {
 			yield(nil, fmt.Errorf("GET /api/chair/notificationsのリクエストが失敗しました: %w", err))
 		}
 	}
 
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
-		return func(yield func(*api.ChairRequest, error) bool) {
+		return func(yield func(*api.ChairGetNotificationOK, error) bool) {
 			defer closeBody(resp)
 
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
-				request := &api.ChairRequest{}
+				request := &api.ChairGetNotificationOK{}
 				line := scanner.Text()
 				if strings.HasPrefix(line, "data:") {
 					err := json.Unmarshal([]byte(line[5:]), request)
@@ -275,7 +293,7 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	}
 
 	defer closeBody(resp)
-	request := &api.ChairRequest{}
+	request := &api.ChairGetNotificationOK{}
 	if resp.StatusCode == http.StatusOK {
 		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
 			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
@@ -285,13 +303,15 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	}
 
 	if nested {
-		return func(yield func(*api.ChairRequest, error) bool) { yield(request, err) }
+		return func(yield func(*api.ChairGetNotificationOK, error) bool) { yield(request, err) }
 	} else {
-		return func(yield func(*api.ChairRequest, error) bool) {
+		return func(yield func(*api.ChairGetNotificationOK, error) bool) {
 			if !yield(request, err) {
 				return
 			}
 
+			const defaultWaitTime = 30 * time.Millisecond
+			waitTime := defaultWaitTime
 			for {
 				select {
 				// こちらから切断
@@ -299,11 +319,15 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 					return
 
 				default:
-					// TODO: tickを拾ってくる
-					time.Sleep(30 * time.Millisecond)
+					time.Sleep(waitTime)
 					for notification, err := range c.chairGetNotification(ctx, true) {
 						if !yield(notification, err) {
 							return
+						}
+						if notification != nil && notification.RetryAfterMs.IsSet() {
+							waitTime = time.Duration(notification.RetryAfterMs.Value) * time.Millisecond
+						} else {
+							waitTime = defaultWaitTime
 						}
 					}
 				}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
@@ -47,13 +48,13 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSalesParams) (*api.OwnerGetSalesOK, error) {
 	q := url.Values{}
 	if params.Since.IsSet() {
-		q.Set("since", params.Since.Value)
+		q.Set("since", strconv.FormatInt(params.Since.Value, 10))
 	}
 	if params.Until.IsSet() {
-		q.Set("until", params.Until.Value)
+		q.Set("until", strconv.FormatInt(params.Until.Value, 10))
 	}
 
-	req, err := c.agent.NewRequest(http.MethodGet, "/owner/sales?"+q.Encode(), nil)
+	req, err := c.agent.NewRequest(http.MethodGet, "/api/owner/sales?"+q.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}

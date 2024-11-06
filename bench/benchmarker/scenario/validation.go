@@ -11,10 +11,10 @@ import (
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
-	payments := s.world.PaymentDB.TotalPayment()
-	sales := s.Score()
-	if payments != sales {
-		s.contestantLogger.Error("決済サーバーの決済額とRideRequestの売り上げが一致していません", slog.Int64("diff(payments-sales)", payments-sales))
+	actual := s.world.PaymentDB.TotalPayment() + s.TotalDiscount()
+	expected := s.Score()
+	if actual != expected {
+		s.contestantLogger.Error("決済サーバーで決済された額とユーザーが支払うべき額が一致していません", slog.Int64("diff(actual-expected)", actual-expected))
 	}
 
 	for _, region := range s.world.Regions {
