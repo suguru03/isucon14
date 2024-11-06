@@ -48,5 +48,5 @@ func getExporter() (metricsdk.Exporter, error) {
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
 		return otlpmetrichttp.New(context.Background())
 	}
-	return stdoutmetric.New(stdoutmetric.WithWriter(os.Stdout))
+	return stdoutmetric.New(stdoutmetric.WithWriter(os.Stderr))
 }
