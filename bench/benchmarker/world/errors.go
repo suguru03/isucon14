@@ -26,8 +26,6 @@ const (
 	ErrorCodeFailedToDenyRequest
 	// ErrorCodeFailedToEvaluate ユーザーが送迎の評価をしようとしたが失敗した
 	ErrorCodeFailedToEvaluate
-	// ErrorCodeFailedToCheckRequestHistory ユーザーがリクエスト履歴を確認しようとしたが失敗した
-	ErrorCodeFailedToCheckRequestHistory
 	// ErrorCodeFailedToCreateRequest ユーザーがリクエストを作成しようとしたが失敗した
 	ErrorCodeFailedToCreateRequest
 	// ErrorCodeUserNotRequestingButStatusChanged リクエストしていないユーザーのリクエストステータスが更新された

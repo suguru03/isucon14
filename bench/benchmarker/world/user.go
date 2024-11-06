@@ -144,7 +144,7 @@ func (u *User) Tick(ctx *Context) error {
 				}
 				u.TotalEvaluation += score
 				u.Request.Chair.Provider.CompletedRequest.Append(u.Request)
-				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Sales()))
+				u.Request.Chair.Provider.TotalSales.Add(int64(u.Request.Fare()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}
 
@@ -178,16 +178,9 @@ func (u *User) Tick(ctx *Context) error {
 			// Region内の最低ユーザー数を下回るならそのまま残る
 		}
 
-		// 過去のリクエストを確認する
-		// TODO 作成する条件・頻度
-		err := u.CheckRequestHistory(ctx)
-		if err != nil {
-			return err
-		}
-
 		// リクエストを作成する
 		// TODO 作成する条件・頻度
-		err = u.CreateRequest(ctx)
+		err := u.CreateRequest(ctx)
 		if err != nil {
 			return err
 		}
@@ -204,16 +197,6 @@ func (u *User) Deactivate() {
 	u.notificationConn.Close()
 	u.notificationConn = nil
 	u.World.PublishEvent(&EventUserLeave{User: u})
-}
-
-func (u *User) CheckRequestHistory(ctx *Context) error {
-	_, err := u.Client.GetRequests(ctx)
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
-	}
-	// TODO: ここでvalidationも行う？
-
-	return nil
 }
 
 func (u *User) CreateRequest(ctx *Context) error {
@@ -236,12 +219,6 @@ func (u *User) CreateRequest(ctx *Context) error {
 			User:    RequestStatusMatching,
 		},
 	}
-
-	// 初回利用の割引を適用
-	if len(u.RequestHistory) == 0 {
-		req.Discount = 3000
-	}
-
 	res, err := u.Client.SendCreateRequest(ctx, req)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -81,8 +82,7 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 	}
 
 	return &world.RegisterProviderResponse{
-		ServerProviderID:     response.ID,
-		ChairRegisteredToken: response.ChairRegisterToken,
+		ServerProviderID: response.ID,
 		Client: &providerClient{
 			ctx:                c.ctx,
 			client:             client,
@@ -91,38 +91,13 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 	}, nil
 }
 
-func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
-	client, err := webapp.NewClient(c.webappClientConfig)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
-	}
-
-	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
-		Name:               data.Name,
-		Model:              data.Model,
-		ChairRegisterToken: provider.RegisteredData.ChairRegisterToken,
-	})
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
-	}
-
-	return &world.RegisterChairResponse{
-		ServerChairID: response.ID,
-		ServerOwnerID: response.OwnerID,
-		Client: &chairClient{
-			ctx:    c.ctx,
-			client: client,
-		},
-	}, nil
-}
-
 func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
 	params := api.OwnerGetSalesParams{}
 	if !args.Since.IsZero() {
-		params.Since.SetTo(args.Since.UnixMilli())
+		params.Since.SetTo(args.Since.Format(time.RFC3339Nano))
 	}
 	if !args.Until.IsZero() {
-		params.Until.SetTo(args.Until.UnixMilli())
+		params.Until.SetTo(args.Until.Format(time.RFC3339Nano))
 	}
 
 	response, err := c.client.ProviderGetSales(c.ctx, &params)
@@ -155,16 +130,43 @@ func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetPr
 	}
 
 	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.ProviderChair {
+		registeredAt, _ := time.Parse(time.RFC3339Nano, v.RegisteredAt)
+		totalDistanceUpdatedAt, _ := time.Parse(time.RFC3339Nano, v.TotalDistanceUpdatedAt.Value)
 		return &world.ProviderChair{
 			ID:                     v.ID,
 			Name:                   v.Name,
 			Model:                  v.Model,
 			Active:                 v.Active,
-			RegisteredAt:           time.UnixMilli(v.RegisteredAt),
+			RegisteredAt:           registeredAt,
 			TotalDistance:          v.TotalDistance,
-			TotalDistanceUpdatedAt: null.NewTime(time.UnixMilli(v.TotalDistanceUpdatedAt.Value), v.TotalDistanceUpdatedAt.Set),
+			TotalDistanceUpdatedAt: null.NewTime(totalDistanceUpdatedAt, v.TotalDistanceUpdatedAt.Set),
 		}
 	})}, nil
+}
+
+func (c *providerClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+	response, err := c.client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
+		Name:  data.Name,
+		Model: data.Model,
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
+	}
+
+	client, err := webapp.NewClient(c.webappClientConfig)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
+	}
+
+	client.SetCookie(&http.Cookie{Name: "chair_session", Value: response.AccessToken})
+
+	return &world.RegisterChairResponse{
+		ServerUserID: response.ID,
+		Client: &chairClient{
+			ctx:    c.ctx,
+			client: client,
+		},
+	}, nil
 }
 
 func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) (*world.SendChairCoordinateResponse, error) {
@@ -176,7 +178,12 @@ func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
 	}
 
-	return &world.SendChairCoordinateResponse{RecordedAt: time.UnixMilli(response.RecordedAt)}, nil
+	recordedAt, err := time.Parse(time.RFC3339Nano, response.Datetime)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostCoordinate, err)
+	}
+
+	return &world.SendChairCoordinateResponse{RecordedAt: recordedAt}, nil
 }
 
 func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
@@ -248,7 +255,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 			}
 
 			var event world.NotificationEvent
-			switch r.Status {
+			switch r.Status.Value {
 			case api.RequestStatusMATCHING:
 				event = &world.ChairNotificationEventMatched{
 					ServerRequestID: r.RequestID,
@@ -287,9 +294,14 @@ func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, scor
 		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
 	}
 
+	completedAt, err := time.Parse(time.RFC3339Nano, res.CompletedAt)
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostEvaluate, err)
+	}
+
 	return &world.SendEvaluationResponse{
 		Fare:        res.Fare,
-		CompletedAt: time.UnixMilli(res.CompletedAt),
+		CompletedAt: completedAt,
 	}, nil
 }
 
@@ -319,42 +331,6 @@ func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User
 		return WrapCodeError(ErrorCodeFailedToPostPaymentMethods, err)
 	}
 	return nil
-}
-
-func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse, error) {
-	res, err := c.client.AppGetRequests(c.ctx)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
-	}
-
-	requests := make([]*world.RequestHistory, len(res.Requests))
-	for i, r := range res.Requests {
-		requests[i] = &world.RequestHistory{
-			ID: r.RequestID,
-			PickupCoordinate: world.Coordinate{
-				X: r.PickupCoordinate.Latitude,
-				Y: r.PickupCoordinate.Longitude,
-			},
-			DestinationCoordinate: world.Coordinate{
-				X: r.DestinationCoordinate.Latitude,
-				Y: r.DestinationCoordinate.Longitude,
-			},
-			Chair: world.RequestHistoryChair{
-				ID:    r.Chair.ID,
-				Owner: r.Chair.Owner,
-				Name:  r.Chair.Name,
-				Model: r.Chair.Model,
-			},
-			Fare:        r.Fare,
-			Evaluation:  r.Evaluation,
-			RequestedAt: time.UnixMilli(r.RequestedAt),
-			CompletedAt: time.UnixMilli(r.CompletedAt),
-		}
-	}
-
-	return &world.GetRequestsResponse{
-		Requests: requests,
-	}, nil
 }
 
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {

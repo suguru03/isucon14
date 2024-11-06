@@ -45,12 +45,11 @@ type Provider struct {
 }
 
 type RegisteredProviderData struct {
-	Name               string
-	ChairRegisterToken string
+	Name string
 }
 
 func (p *Provider) String() string {
-	return fmt.Sprintf("Owner{id=%d}", p.ID)
+	return fmt.Sprintf("Provider{id=%d}", p.ID)
 }
 
 func (p *Provider) SetID(id ProviderID) {
@@ -75,7 +74,7 @@ func (p *Provider) Tick(ctx *Context) error {
 		last := lo.MaxBy(p.CompletedRequest.ToSlice(), func(a *Request, b *Request) bool { return a.ServerCompletedAt.After(b.ServerCompletedAt) })
 		if last != nil {
 			res, err := p.Client.GetProviderSales(ctx, &GetProviderSalesRequest{
-				Until: last.ServerCompletedAt.Add(1 * time.Millisecond), // webapp側のDBの精度との違いを吸収するために1ms追加して取る
+				Until: last.ServerCompletedAt,
 			})
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
@@ -134,7 +133,7 @@ func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesRe
 			panic("unexpected")
 		}
 
-		fare := r.Sales()
+		fare := r.Fare()
 		cs.Sales += fare
 		cspm.Sales += fare
 		totals += fare

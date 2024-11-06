@@ -17,13 +17,15 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   //   },
   // });
   const chair = await fetchChairPostRegister({
+    headers: {
+      Authorization: `Bearer ${String(formData.get("provide_access_token")) ?? ""}`,
+    },
     body: {
       model: String(formData.get("model")) ?? "",
       name: String(formData.get("name")) ?? "",
-      chair_register_token: String(formData.get("chair_register_token")) ?? "",
     },
   });
-  return redirect(`/driver?id=${chair.id}`);
+  return redirect(`/driver?access_token=${chair.access_token}&id=${chair.id}`);
 };
 
 export default function DriverRegister() {
@@ -35,9 +37,9 @@ export default function DriverRegister() {
       >
         <div>
           <TextInput
-            id="chair_register_token"
-            name="chair_register_token"
-            label="chair_register_token:"
+            id="provide_access_token"
+            name="provide_access_token"
+            label="provide_access_token:"
             required
           />
           <TextInput

@@ -39,19 +39,17 @@ CREATE TABLE chair_locations
 DROP TABLE IF EXISTS users;
 CREATE TABLE users
 (
-  id              VARCHAR(26)  NOT NULL COMMENT 'ユーザーID',
-  username        VARCHAR(30)  NOT NULL COMMENT 'ユーザー名',
-  firstname       VARCHAR(30)  NOT NULL COMMENT '本名(名前)',
-  lastname        VARCHAR(30)  NOT NULL COMMENT '本名(名字)',
-  date_of_birth   VARCHAR(30)  NOT NULL COMMENT '生年月日',
-  access_token    VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
-  invitation_code VARCHAR(30)  NOT NULL COMMENT '招待トークン',
-  created_at      DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
-  updated_at      DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
+  id            VARCHAR(26)  NOT NULL COMMENT 'ユーザーID',
+  username      VARCHAR(30)  NOT NULL COMMENT 'ユーザー名',
+  firstname     VARCHAR(30)  NOT NULL COMMENT '本名(名前)',
+  lastname      VARCHAR(30)  NOT NULL COMMENT '本名(名字)',
+  date_of_birth VARCHAR(30)  NOT NULL COMMENT '生年月日',
+  access_token  VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
+  created_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
+  updated_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
   PRIMARY KEY (id),
   UNIQUE (username),
-  UNIQUE (access_token),
-  UNIQUE (invitation_code)
+  UNIQUE (access_token)
 )
   COMMENT = '利用者情報テーブル';
 
@@ -95,27 +93,13 @@ CREATE TABLE ride_request_statuses
 DROP TABLE IF EXISTS owners;
 CREATE TABLE owners
 (
-  id                   VARCHAR(26)  NOT NULL COMMENT 'オーナーID',
-  name                 VARCHAR(30)  NOT NULL COMMENT 'オーナー名',
-  access_token         VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
-  chair_register_token VARCHAR(255) NOT NULL COMMENT '椅子登録トークン',
-  created_at           DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
-  updated_at           DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
+  id           VARCHAR(26)  NOT NULL COMMENT 'オーナーID',
+  name         VARCHAR(30)  NOT NULL COMMENT 'オーナー名',
+  access_token VARCHAR(255) NOT NULL COMMENT 'アクセストークン',
+  created_at   DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '登録日時',
+  updated_at   DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新日時',
   PRIMARY KEY (id),
   UNIQUE (name),
-  UNIQUE (access_token),
-  UNIQUE (chair_register_token)
+  UNIQUE (access_token)
 )
   COMMENT = '椅子のオーナー情報テーブル';
-
-DROP TABLE IF EXISTS coupons;
-CREATE TABLE coupons
-(
-  user_id    VARCHAR(26)  NOT NULL COMMENT '所有しているユーザーのID',
-  code       VARCHAR(255) NOT NULL COMMENT 'クーポンコード',
-  discount   INTEGER      NOT NULL COMMENT '割引額',
-  created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '付与日時',
-  used_by    VARCHAR(26)  NULL COMMENT '使用したride_requestのID',
-  PRIMARY KEY (user_id, code)
-)
-  COMMENT 'クーポンテーブル';

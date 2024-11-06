@@ -212,7 +212,6 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
 	}
-	registeredData.ChairRegisterToken = res.ChairRegisteredToken
 
 	p := &Provider{
 		ServerID:           res.ServerProviderID,
@@ -243,7 +242,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		Name: random.GenerateChairName(),
 	}
 
-	res, err := w.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
+	res, err := args.Provider.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
 		Name:  registeredData.Name,
 		Model: args.Model.Name,
 	})
@@ -252,7 +251,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	}
 
 	c := &Chair{
-		ServerID:          res.ServerChairID,
+		ServerID:          res.ServerUserID,
 		World:             w,
 		Region:            args.Provider.Region,
 		Provider:          args.Provider,

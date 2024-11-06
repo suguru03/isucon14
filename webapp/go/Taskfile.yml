@@ -9,6 +9,3 @@ tasks:
     - go.sum
   run:
     - ./isuride{{exeExt}}
-  run:vm:
-    - go build -o isuride{{exeExt}} .
-    - sudo systemctl restart isuride-go

@@ -57,7 +57,7 @@ type OwnerGetChairDetailParams struct {
 // OwnerGetSalesParams is parameters of owner-get-sales operation.
 type OwnerGetSalesParams struct {
 	// 開始日時（含む）.
-	Since OptInt64
+	Since OptString
 	// 終了日時（含む）.
-	Until OptInt64
+	Until OptString
 }

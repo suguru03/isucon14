@@ -8,15 +8,15 @@ import {
   type ReactNode,
 } from "react";
 import {
-  OwnerGetSalesResponse,
-  fetchOwnerGetSales,
+  ProviderGetSalesResponse,
+  fetchProviderGetSales,
 } from "~/apiClient/apiComponents";
 
 type ProviderChair = { id: string; name: string };
 
 type ClientProviderRequest = Partial<{
   chairs: ProviderChair[];
-  sales: OwnerGetSalesResponse;
+  sales: ProviderGetSalesResponse;
   provider: {
     id?: string;
   };
@@ -32,7 +32,7 @@ const DUMMY_DATA = {
     { model: "モデルA", sales: 999 },
     { model: "モデルB", sales: 999 },
   ],
-} as const satisfies OwnerGetSalesResponse;
+} as const satisfies ProviderGetSalesResponse;
 
 const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
 
@@ -56,7 +56,7 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const [sales, setSales] = useState<OwnerGetSalesResponse>();
+  const [sales, setSales] = useState<ProviderGetSalesResponse>();
 
   useEffect(() => {
     if (isDummy) {
@@ -69,8 +69,8 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
       const abortController = new AbortController();
       (async () => {
         setSales(
-          await fetchOwnerGetSales(
-            { queryParams: { since: Number(since), until: Number(until) } },
+          await fetchProviderGetSales(
+            { queryParams: { since, until } },
             abortController.signal,
           ),
         );

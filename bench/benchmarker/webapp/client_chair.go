@@ -36,7 +36,7 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /api/chair/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/chair/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
 	resBody := &api.ChairPostRegisterCreated{}
@@ -228,15 +228,15 @@ func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (
 	return resBody, nil
 }
 
-func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairGetNotificationOK, error] {
-	return func(yield func(*api.ChairGetNotificationOK, error) bool) {
+func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairRequest, error] {
+	return func(yield func(*api.ChairRequest, error) bool) {
 		for notification, err := range c.chairGetNotification(ctx, false) {
 			if notification == nil {
 				if !yield(nil, err) {
 					return
 				}
 			} else {
-				if !yield(&api.ChairGetNotificationOK{
+				if !yield(&api.ChairRequest{
 					RequestID:             notification.RequestID,
 					User:                  notification.User,
 					PickupCoordinate:      notification.PickupCoordinate,

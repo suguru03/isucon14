@@ -34,8 +34,6 @@ const (
 	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToPostRequest リクエスト送信に失敗したエラー
 	ErrorCodeFailedToPostRequest
-	// ErrorCodeFailedToGetRequests リクエスト一覧の取得に失敗したエラー
-	ErrorCodeFailedToGetRequests
 	// ErrorCodeFailedToPostPaymentMethods ユーザー支払い情報登録に失敗したエラー
 	ErrorCodeFailedToPostPaymentMethods
 	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗したエラー
