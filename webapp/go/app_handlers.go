@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -187,7 +186,7 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 	rideRequests := []RideRequest{}
 	if err := db.Select(
 		&rideRequests,
-		`SELECT * FROM ride_requests WHERE user_id = ? AND status = 'COMPLETED' ORDER BY requested_at DESC`,
+		`SELECT * FROM ride_requests WHERE user_id = ? ORDER BY created_at DESC`,
 		user.ID,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -196,13 +195,21 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 
 	requests := []getAppRequestsResponseItem{}
 	for _, rideRequest := range rideRequests {
+		status, err := getLatestRideRequestStatus(db, rideRequest.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status != "COMPLETED" {
+			continue
+		}
 		item := getAppRequestsResponseItem{
 			RequestID:             rideRequest.ID,
 			PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
 			Fare:                  calculateSale(rideRequest),
 			Evaluation:            *rideRequest.Evaluation,
-			RequestedAt:           rideRequest.RequestedAt.UnixMilli(),
+			RequestedAt:           rideRequest.CreatedAt.UnixMilli(),
 			CompletedAt:           rideRequest.UpdatedAt.UnixMilli(),
 		}
 
@@ -227,7 +234,6 @@ func appGetRequests(w http.ResponseWriter, r *http.Request) {
 		requests = append(requests, item)
 	}
 
-	fmt.Printf("requests: %+v\n", requests)
 	writeJSON(w, http.StatusOK, &getAppRequestsResponse{
 		Requests: requests,
 	})
@@ -314,6 +320,7 @@ func appPostRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var requestCount int
 	if err := tx.Get(&requestCount, `SELECT COUNT(*) FROM ride_requests WHERE user_id = ? `, user.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -510,7 +517,7 @@ func appGetRequest(w http.ResponseWriter, r *http.Request) {
 		RequestID:             rideRequest.ID,
 		PickupCoordinate:      Coordinate{Latitude: rideRequest.PickupLatitude, Longitude: rideRequest.PickupLongitude},
 		DestinationCoordinate: Coordinate{Latitude: rideRequest.DestinationLatitude, Longitude: rideRequest.DestinationLongitude},
-		Status:                rideRequest.Status,
+		Status:                status,
 		CreatedAt:             rideRequest.CreatedAt.UnixMilli(),
 		UpdateAt:              rideRequest.UpdatedAt.UnixMilli(),
 	}
@@ -819,7 +826,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Latitude:  rideRequest.DestinationLatitude,
 			Longitude: rideRequest.DestinationLongitude,
 		},
-		Status:    rideRequest.Status,
+		Status:    status,
 		CreatedAt: rideRequest.CreatedAt.UnixMilli(),
 		UpdateAt:  rideRequest.UpdatedAt.UnixMilli(),
 	}
