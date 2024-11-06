@@ -85,18 +85,13 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 
 	chair := r.Context().Value("chair").(*Chair)
 
-	fmt.Printf("[POST /coordinate] id: %v, req: %+v\n", chair.ID, req)
-
 	tx, err := db.Beginx()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	chairLocationID := ulid.Make().String()
-	defer func() {
-		tx.Rollback()
-		fmt.Printf("[POST /coordinate] DEFER id: %v, req: %+v, chairLocationID: %v\n", chair.ID, req, chairLocationID)
-	}()
+	defer tx.Rollback()
 	if _, err := tx.Exec(
 		`INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)`,
 		chairLocationID, chair.ID, req.Latitude, req.Longitude,
@@ -184,15 +179,12 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Printf("[GET /api/chair/notification] chair_id: %v, found: %v, status: %v\n", chair.ID, found, status)
-
 	if !found || status == "COMPLETED" || status == "CANCELED" {
 		matchRequest := &RideRequest{}
 		// TODO: いい感じに椅子とユーザーをマッチングさせる
 		// MEMO: 多分距離と椅子の移動速度が関係しそう
 		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				fmt.Println("[GET /api/chair/notification] no request found")
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}

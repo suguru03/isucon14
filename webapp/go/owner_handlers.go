@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -234,7 +233,6 @@ WHERE owner_id = ?
 		}
 		res.Chairs = append(res.Chairs, c)
 	}
-	fmt.Printf("[GET /api/owner/chairs] ids: %v\n", ids)
 	writeJSON(w, http.StatusOK, res)
 }
 

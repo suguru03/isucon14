@@ -28,7 +28,7 @@ func main() {
 func setup() http.Handler {
 	host := os.Getenv("ISUCON_DB_HOST")
 	if host == "" {
-		host = "localhost"
+		host = "127.0.0.1"
 	}
 	port := os.Getenv("ISUCON_DB_PORT")
 	if port == "" {
@@ -66,7 +66,7 @@ func setup() http.Handler {
 	db = _db
 
 	mux := chi.NewRouter()
-	// mux.Use(middleware.Logger)
+	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 	mux.HandleFunc("POST /api/initialize", postInitialize)
 
@@ -181,7 +181,6 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 }
 
 func writeError(w http.ResponseWriter, statusCode int, err error) {
-	fmt.Fprintln(os.Stderr, err)
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
 	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})
