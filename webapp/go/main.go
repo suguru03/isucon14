@@ -76,7 +76,9 @@ func setup() http.Handler {
 
 		authedMux := mux.With(appAuthMiddleware)
 		authedMux.HandleFunc("POST /api/app/payment-methods", appPostPaymentMethods)
+		authedMux.HandleFunc("GET /api/app/requests", appGetRequests)
 		authedMux.HandleFunc("POST /api/app/requests", appPostRequests)
+		authedMux.HandleFunc("POST /api/app/requests/estimate", appPostRequestEstimate)
 		authedMux.HandleFunc("GET /api/app/requests/{request_id}", appGetRequest)
 		authedMux.HandleFunc("POST /api/app/requests/{request_id}/evaluate", appPostRequestEvaluate)
 		//authedMux.HandleFunc("GET /api/app/notification", appGetNotificationSSE)
@@ -96,19 +98,18 @@ func setup() http.Handler {
 
 	// chair handlers
 	{
-		authedMux1 := mux.With(ownerAuthMiddleware)
-		authedMux1.HandleFunc("POST /api/chair/register", chairPostRegister)
+		mux.HandleFunc("POST /api/chair/register", chairPostRegister)
 
-		authedMux2 := mux.With(chairAuthMiddleware)
-		authedMux2.HandleFunc("POST /api/chair/activate", chairPostActivate)
-		authedMux2.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
-		authedMux2.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
-		//authedMux2.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
-		authedMux2.HandleFunc("GET /api/chair/notification", chairGetNotification)
-		authedMux2.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux2.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux := mux.With(chairAuthMiddleware)
+		authedMux.HandleFunc("POST /api/chair/activate", chairPostActivate)
+		authedMux.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
+		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
+		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
+		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
+		authedMux.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
+		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
 	}
 
 	return mux
@@ -181,6 +182,8 @@ func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
 }
 
 func writeError(w http.ResponseWriter, statusCode int, err error) {
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("[writeError] err: %v", err))
+
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)
 	buf, marshalError := json.Marshal(map[string]string{"message": err.Error()})
@@ -190,8 +193,6 @@ func writeError(w http.ResponseWriter, statusCode int, err error) {
 		return
 	}
 	w.Write(buf)
-
-	fmt.Fprintln(os.Stderr, err)
 }
 
 func secureRandomStr(b int) string {

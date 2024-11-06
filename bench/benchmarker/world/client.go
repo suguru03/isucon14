@@ -11,11 +11,15 @@ type WorldClient interface {
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
 	// RegisterProvider サーバーにプロバイダーを登録する
 	RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error)
+	// RegisterChair サーバーにユーザーを登録する
+	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 }
 
 type UserClient interface {
 	// SendCreateRequest サーバーにリクエスト作成を送信する
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
+	// GetRequests サーバーからリクエスト一覧を取得する
+	GetRequests(ctx *Context) (*GetRequestsResponse, error)
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
 	SendEvaluation(ctx *Context, req *Request, score int) (*SendEvaluationResponse, error)
 	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
@@ -25,8 +29,6 @@ type UserClient interface {
 }
 
 type ProviderClient interface {
-	// RegisterChair サーバーにユーザーを登録する
-	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
 	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
 	GetProviderSales(ctx *Context, args *GetProviderSalesRequest) (*GetProviderSalesResponse, error)
 	// GetProviderChairs サーバーからプロバイダーの椅子一覧を取得する
@@ -54,6 +56,28 @@ type ChairClient interface {
 
 type SendCreateRequestResponse struct {
 	ServerRequestID string
+}
+
+type GetRequestsResponse struct {
+	Requests []*RequestHistory
+}
+
+type RequestHistory struct {
+	ID                    string
+	PickupCoordinate      Coordinate
+	DestinationCoordinate Coordinate
+	Chair                 RequestHistoryChair
+	Fare                  int
+	Evaluation            int
+	RequestedAt           time.Time
+	CompletedAt           time.Time
+}
+
+type RequestHistoryChair struct {
+	ID    string
+	Owner string
+	Name  string
+	Model string
 }
 
 type GetRequestByChairResponse struct{}
@@ -123,7 +147,8 @@ type RegisterProviderRequest struct {
 }
 
 type RegisterProviderResponse struct {
-	ServerProviderID string
+	ServerProviderID     string
+	ChairRegisteredToken string
 
 	Client ProviderClient
 }
@@ -134,8 +159,8 @@ type RegisterChairRequest struct {
 }
 
 type RegisterChairResponse struct {
-	ServerUserID string
-	AccessToken  string
+	ServerChairID string
+	ServerOwnerID string
 
 	Client ChairClient
 }

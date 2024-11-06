@@ -6,5 +6,9 @@
   "editor.formatOnSave": true,
   "[go]": {
     "editor.defaultFormatter": "golang.go"
-  }
+  },
+  "perlnavigator.includePaths": [
+    "webapp/perl/lib",
+    "webapp/perl/local/lib/perl5"
+  ]
 }
