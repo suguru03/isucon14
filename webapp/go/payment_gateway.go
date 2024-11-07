@@ -22,7 +22,7 @@ type paymentGatewayGetPaymentsResponseOne struct {
 	Status string `json:"status"`
 }
 
-func requestPaymentGatewayPostPayment(token string, param *paymentGatewayPostPaymentRequest, retrieveRideRequestsOrderByCreatedAtAsc func() ([]RideRequest, error)) error {
+func requestPaymentGatewayPostPayment(token string, param *paymentGatewayPostPaymentRequest, retrieveRideRequestsOrderByCreatedAtAsc func() ([]Ride, error)) error {
 	b, err := json.Marshal(param)
 	if err != nil {
 		return err

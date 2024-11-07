@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type ChairModel struct {
-	Name  string `db:"name"`
-	Speed int    `db:"speed"`
-}
-
 type Chair struct {
 	ID          string    `db:"id"`
 	OwnerID     string    `db:"owner_id"`
@@ -19,6 +14,11 @@ type Chair struct {
 	AccessToken string    `db:"access_token"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
+}
+
+type ChairModel struct {
+	Name  string `db:"name"`
+	Speed int    `db:"speed"`
 }
 
 type ChairLocation struct {
@@ -47,7 +47,7 @@ type PaymentToken struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
-type RideRequest struct {
+type Ride struct {
 	ID                   string         `db:"id"`
 	UserID               string         `db:"user_id"`
 	ChairID              sql.NullString `db:"chair_id"`
@@ -60,11 +60,11 @@ type RideRequest struct {
 	UpdatedAt            time.Time      `db:"updated_at"`
 }
 
-type RideRequestStatus struct {
-	ID            string    `db:"id"`
-	RideRequestID string    `db:"ride_request_id"`
-	Status        string    `db:"status"`
-	CreatedAt     time.Time `db:"created_at"`
+type RideStatus struct {
+	ID        string    `db:"id"`
+	RideID    string    `db:"ride_id"`
+	Status    string    `db:"status"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type Owner struct {

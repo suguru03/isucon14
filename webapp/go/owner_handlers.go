@@ -24,7 +24,7 @@ type ownerPostRegisterResponse struct {
 	ChairRegisterToken string `json:"chair_register_token"`
 }
 
-func ownerPostRegister(w http.ResponseWriter, r *http.Request) {
+func ownerPostOwners(w http.ResponseWriter, r *http.Request) {
 	req := &ownerPostRegisterRequest{}
 	if err := bindJSON(r, req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
@@ -116,7 +116,7 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	modelSalesByModel := map[string]int{}
 	for _, chair := range chairs {
-		reqs := []RideRequest{}
+		reqs := []Ride{}
 		if err := db.Select(&reqs, "SELECT ride_requests.* FROM ride_requests JOIN ride_request_statuses ON ride_requests.id = ride_request_statuses.ride_request_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
@@ -146,7 +146,7 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
-func sumSales(requests []RideRequest) int {
+func sumSales(requests []Ride) int {
 	sale := 0
 	for _, req := range requests {
 		sale += calculateSale(req)
@@ -154,7 +154,7 @@ func sumSales(requests []RideRequest) int {
 	return sale
 }
 
-func calculateSale(req RideRequest) int {
+func calculateSale(req Ride) int {
 	return calculateFare(req.PickupLatitude, req.PickupLongitude, req.DestinationLatitude, req.DestinationLongitude)
 }
 

@@ -10,19 +10,19 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-type chairPostRegisterRequest struct {
+type chairPostChairsRequest struct {
 	Name               string `json:"name"`
 	Model              string `json:"model"`
 	ChairRegisterToken string `json:"chair_register_token"`
 }
 
-type chairPostRegisterResponse struct {
+type chairPostChairsResponse struct {
 	ID      string `json:"id"`
 	OwnerID string `json:"owner_id"`
 }
 
-func chairPostRegister(w http.ResponseWriter, r *http.Request) {
-	req := &chairPostRegisterRequest{}
+func chairPostChairs(w http.ResponseWriter, r *http.Request) {
+	req := &chairPostChairsRequest{}
 	if err := bindJSON(r, req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -60,16 +60,26 @@ func chairPostRegister(w http.ResponseWriter, r *http.Request) {
 		Value: accessToken,
 	})
 
-	writeJSON(w, http.StatusCreated, &chairPostRegisterResponse{
+	writeJSON(w, http.StatusCreated, &chairPostChairsResponse{
 		ID:      chairID,
 		OwnerID: owner.ID,
 	})
 }
 
-func chairPostActivate(w http.ResponseWriter, r *http.Request) {
+type postChairActivityRequest struct {
+	IsActive bool `json:"is_active"`
+}
+
+func chairPostActivity(w http.ResponseWriter, r *http.Request) {
 	chair := r.Context().Value("chair").(*Chair)
 
-	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", true, chair.ID)
+	req := &postChairActivityRequest{}
+	if err := bindJSON(r, req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", req.IsActive, chair.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -78,17 +88,7 @@ func chairPostActivate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func chairPostDeactivate(w http.ResponseWriter, r *http.Request) {
-	chair := r.Context().Value("chair").(*Chair)
-
-	_, err := db.Exec("UPDATE chairs SET is_active = ? WHERE id = ?", false, chair.ID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
+// TODO: Requestの構造体がないの、紛らわしいので要検討
 
 type chairPostCoordinateResponse struct {
 	RecordedAt int64 `json:"recorded_at"`
@@ -125,28 +125,28 @@ func chairPostCoordinate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+	ride := &Ride{}
+	if err := tx.Get(ride, `SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 	} else {
-		status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+		status, err := getLatestRideStatus(tx, ride.ID)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 		if status != "COMPLETED" && status != "CANCELED" {
-			if req.Latitude == rideRequest.PickupLatitude && req.Longitude == rideRequest.PickupLongitude && status == "DISPATCHING" {
-				if _, err := tx.Exec("INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)", ulid.Make().String(), rideRequest.ID, "DISPATCHED"); err != nil {
+			if req.Latitude == ride.PickupLatitude && req.Longitude == ride.PickupLongitude && status == "ENROUTE" {
+				if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", ulid.Make().String(), ride.ID, "PICKUP"); err != nil {
 					writeError(w, http.StatusInternalServerError, err)
 					return
 				}
 			}
 
-			if req.Latitude == rideRequest.DestinationLatitude && req.Longitude == rideRequest.DestinationLongitude && status == "CARRYING" {
-				if _, err := tx.Exec("INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)", ulid.Make().String(), rideRequest.ID, "ARRIVED"); err != nil {
+			if req.Latitude == ride.DestinationLatitude && req.Longitude == ride.DestinationLongitude && status == "CARRYING" {
+				if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", ulid.Make().String(), ride.ID, "ARRIVED"); err != nil {
 					writeError(w, http.StatusInternalServerError, err)
 					return
 				}
@@ -170,7 +170,7 @@ type simpleUser struct {
 }
 
 type chairGetNotificationResponse struct {
-	RequestID             string     `json:"request_id"`
+	RideID                string     `json:"ride_id"`
 	User                  simpleUser `json:"user"`
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
@@ -193,9 +193,9 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	found := true
-	rideRequest := &RideRequest{}
+	ride := &Ride{}
 	status := ""
-	if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+	if err := tx.Get(ride, `SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			found = false
 		} else {
@@ -205,7 +205,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if found {
-		status, err = getLatestRideRequestStatus(tx, rideRequest.ID)
+		status, err = getLatestRideStatus(tx, ride.ID)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
@@ -213,9 +213,9 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found || status == "COMPLETED" || status == "CANCELED" {
-		matchRequest := &RideRequest{}
+		matched := &Ride{}
 		// MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-		if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); err != nil {
+		if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -224,19 +224,19 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ? WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+		if _, err := tx.Exec("UPDATE rides SET chair_id = ? WHERE id = ?", chair.ID, matched.ID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 
 		if !found {
-			rideRequest = matchRequest
+			ride = matched
 			status = "MATCHING"
 		}
 	}
 
 	user := &User{}
-	err = tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+	err = tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -248,18 +248,18 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &chairGetNotificationResponse{
-		RequestID: rideRequest.ID,
+		RideID: ride.ID,
 		User: simpleUser{
 			ID:   user.ID,
 			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 		},
 		PickupCoordinate: Coordinate{
-			Latitude:  rideRequest.PickupLatitude,
-			Longitude: rideRequest.PickupLongitude,
+			Latitude:  ride.PickupLatitude,
+			Longitude: ride.PickupLongitude,
 		},
 		DestinationCoordinate: Coordinate{
-			Latitude:  rideRequest.DestinationLatitude,
-			Longitude: rideRequest.DestinationLongitude,
+			Latitude:  ride.DestinationLatitude,
+			Longitude: ride.DestinationLongitude,
 		},
 		Status: status,
 	})
@@ -272,8 +272,8 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 
-	var lastRideRequest *RideRequest
-	var lastRideRequestStatus string
+	var lastRide *Ride
+	var lastRideStatus string
 	for {
 		select {
 		case <-r.Context().Done():
@@ -283,7 +283,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 		default:
 			err := func() error {
 				found := true
-				rideRequest := &RideRequest{}
+				ride := &Ride{}
 				tx, err := db.Beginx()
 				if err != nil {
 					return err
@@ -294,7 +294,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 
-				if err := tx.Get(rideRequest, `SELECT * FROM ride_requests WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+				if err := tx.Get(ride, `SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						found = false
 					} else {
@@ -302,37 +302,37 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+				status, err := getLatestRideStatus(tx, ride.ID)
 				if err != nil {
 					return err
 				}
 
 				if !found || status == "COMPLETED" || status == "CANCELED" {
-					matchRequest := &RideRequest{}
+					matched := &Ride{}
 					// TODO: いい感じに椅子とユーザーをマッチングさせる
 					// MEMO: 多分距離と椅子の移動速度が関係しそう
-					if err := tx.Get(matchRequest, `SELECT * FROM ride_requests WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
+					if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
 						if errors.Is(err, sql.ErrNoRows) {
 							return nil
 						}
 						return err
 					}
 
-					if _, err := tx.Exec("UPDATE ride_requests SET chair_id = ? WHERE id = ?", chair.ID, matchRequest.ID); err != nil {
+					if _, err := tx.Exec("UPDATE rides SET chair_id = ? WHERE id = ?", chair.ID, matched.ID); err != nil {
 						return err
 					}
 
 					if !found {
-						rideRequest = matchRequest
+						ride = matched
 					}
 				}
 
-				if lastRideRequest != nil && rideRequest.ID == lastRideRequest.ID && status == lastRideRequestStatus {
+				if lastRide != nil && ride.ID == lastRide.ID && status == lastRideStatus {
 					return nil
 				}
 
 				user := &User{}
-				err = tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID)
+				err = tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID)
 				if err != nil {
 					return err
 				}
@@ -342,25 +342,25 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if err := writeSSE(w, "matched", &chairGetNotificationResponse{
-					RequestID: rideRequest.ID,
+					RideID: ride.ID,
 					User: simpleUser{
 						ID:   user.ID,
 						Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 					},
 					PickupCoordinate: Coordinate{
-						Latitude:  rideRequest.PickupLatitude,
-						Longitude: rideRequest.PickupLongitude,
+						Latitude:  ride.PickupLatitude,
+						Longitude: ride.PickupLongitude,
 					},
 					DestinationCoordinate: Coordinate{
-						Latitude:  rideRequest.DestinationLatitude,
-						Longitude: rideRequest.DestinationLongitude,
+						Latitude:  ride.DestinationLatitude,
+						Longitude: ride.DestinationLongitude,
 					},
 					Status: status,
 				}); err != nil {
 					return err
 				}
-				lastRideRequest = rideRequest
-				lastRideRequestStatus = status
+				lastRide = ride
+				lastRideStatus = status
 
 				return nil
 			}()
@@ -375,16 +375,16 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type chairGetRequestResponse struct {
-	RequestID             string     `json:"request_id"`
+type chairGetRideResponse struct {
+	ID                    string     `json:"id"`
 	User                  simpleUser `json:"user"`
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
 	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	Status                string     `json:"status"`
 }
 
-func chairGetRequest(w http.ResponseWriter, r *http.Request) {
-	requestID := r.PathValue("request_id")
+func chairGetRideRequest(w http.ResponseWriter, r *http.Request) {
+	rideID := r.PathValue("ride_id")
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -393,24 +393,24 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
+	ride := &Ride{}
+	if err := tx.Get(ride, "SELECT * FROM ride WHERE id = ?", rideID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("request not found"))
+			writeError(w, http.StatusNotFound, errors.New("ride not found"))
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
+	status, err := getLatestRideStatus(tx, ride.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	user := &User{}
-	if err := tx.Get(user, "SELECT * FROM users WHERE id = ?", rideRequest.UserID); err != nil {
+	if err := tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -420,68 +420,38 @@ func chairGetRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, &chairGetRequestResponse{
-		RequestID: rideRequest.ID,
+	writeJSON(w, http.StatusOK, &chairGetRideResponse{
+		ID: ride.ID,
 		User: simpleUser{
 			ID:   user.ID,
 			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
 		},
 		PickupCoordinate: Coordinate{
-			Latitude:  rideRequest.PickupLatitude,
-			Longitude: rideRequest.PickupLongitude,
+			Latitude:  ride.PickupLatitude,
+			Longitude: ride.PickupLongitude,
 		},
 		DestinationCoordinate: Coordinate{
-			Latitude:  rideRequest.DestinationLatitude,
-			Longitude: rideRequest.DestinationLongitude,
+			Latitude:  ride.DestinationLatitude,
+			Longitude: ride.DestinationLongitude,
 		},
 		Status: status,
 	})
 }
 
-func chairPostRequestAccept(w http.ResponseWriter, r *http.Request) {
-	requestID := r.PathValue("request_id")
-
-	chair := r.Context().Value("chair").(*Chair)
-
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	defer tx.Rollback()
-
-	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ?", requestID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("request not found"))
-			return
-		}
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if rideRequest.ChairID.String != chair.ID {
-		writeError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
-		return
-	}
-
-	if _, err := tx.Exec("INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)", ulid.Make().String(), requestID, "DISPATCHING"); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if err := tx.Commit(); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+type postChairRidesRideIDStatusRequest struct {
+	Status string `json:"status"`
 }
 
-func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
-	requestID := r.PathValue("request_id")
+func chairPostRideStatus(w http.ResponseWriter, r *http.Request) {
+	rideID := r.PathValue("ride_id")
 
 	chair := r.Context().Value("chair").(*Chair)
+
+	req := &postChairRidesRideIDStatusRequest{}
+	if err := bindJSON(r, req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -490,75 +460,51 @@ func chairPostRequestDeny(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE ", requestID); err != nil {
+	ride := &Ride{}
+	if err := tx.Get(ride, "SELECT * FROM rides WHERE id = ? FOR UPDATE", rideID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("request not found"))
+			writeError(w, http.StatusNotFound, errors.New("ride not found"))
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if rideRequest.ChairID.String != chair.ID {
-		writeError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
+	if ride.ChairID.String != chair.ID {
+		writeError(w, http.StatusBadRequest, errors.New("not assigned to this ride"))
 		return
 	}
 
-	if _, err := tx.Exec("INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)", ulid.Make().String(), requestID, "MATCHING"); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if err := tx.Commit(); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func chairPostRequestDepart(w http.ResponseWriter, r *http.Request) {
-	requestID := r.PathValue("request_id")
-
-	chair := r.Context().Value("chair").(*Chair)
-
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	defer tx.Rollback()
-
-	rideRequest := &RideRequest{}
-	if err := tx.Get(rideRequest, "SELECT * FROM ride_requests WHERE id = ? FOR UPDATE", requestID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("request not found"))
+	switch req.Status {
+	// Deny matching
+	case "MATCHING":
+		if _, err := tx.Exec("UPDATE rides SET chair_id = NULL, status = 'MATCHING', matched_at = NULL, updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if rideRequest.ChairID.String != chair.ID {
-		writeError(w, http.StatusBadRequest, errors.New("not assigned to this request"))
-		return
-	}
-
-	status, err := getLatestRideRequestStatus(tx, rideRequest.ID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if status != "DISPATCHED" {
-		writeError(w, http.StatusBadRequest, errors.New("chair has not arrived yet"))
-		return
-	}
-
-	if _, err := tx.Exec("INSERT INTO ride_request_statuses (id, ride_request_id, status) VALUES (?, ?, ?)", ulid.Make().String(), requestID, "CARRYING"); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
+	// Accept matching
+	case "ENROUTE":
+		if _, err := tx.Exec("UPDATE rides SET status = 'ENROUTE', updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	// After Pickin up user
+	case "CARRYING":
+		status, err := getLatestRideStatus(tx, ride.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if status != "PICKUP" {
+			writeError(w, http.StatusBadRequest, errors.New("chair has not arrived yet"))
+			return
+		}
+		if _, err := tx.Exec("UPDATE rides SET status = 'CARRYING', updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	default:
+		writeError(w, http.StatusBadRequest, errors.New("invalid status"))
 	}
 
 	if err := tx.Commit(); err != nil {
