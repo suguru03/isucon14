@@ -148,20 +148,20 @@ func (s *AppGetNotificationOK) Validate() error {
 	return nil
 }
 
-func (s *AppGetRequestsOK) Validate() error {
+func (s *AppGetRidesOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if s.Requests == nil {
+		if s.Rides == nil {
 			return errors.New("nil is invalid value")
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "requests",
+			Name:  "rides",
 			Error: err,
 		})
 	}
@@ -171,7 +171,7 @@ func (s *AppGetRequestsOK) Validate() error {
 	return nil
 }
 
-func (s *AppPostRequestEvaluateReq) Validate() error {
+func (s *AppPostRideEvaluationReq) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -203,7 +203,7 @@ func (s *AppPostRequestEvaluateReq) Validate() error {
 	return nil
 }
 
-func (s *AppRequest) Validate() error {
+func (s *AppRide) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -267,7 +267,43 @@ func (s *ChairGetNotificationOK) Validate() error {
 	return nil
 }
 
-func (s *ChairRequest) Validate() error {
+func (s *ChairPostRideStatusReq) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ChairPostRideStatusReqStatus) Validate() error {
+	switch s {
+	case "MATCHING":
+		return nil
+	case "CARRYING":
+		return nil
+	case "CANCELED":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ChairRide) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -354,13 +390,13 @@ func (s *OwnerGetSalesOK) Validate() error {
 	return nil
 }
 
-func (s RequestStatus) Validate() error {
+func (s RideStatus) Validate() error {
 	switch s {
 	case "MATCHING":
 		return nil
-	case "DISPATCHING":
+	case "ENROUTE":
 		return nil
-	case "DISPATCHED":
+	case "PICKUP":
 		return nil
 	case "CARRYING":
 		return nil

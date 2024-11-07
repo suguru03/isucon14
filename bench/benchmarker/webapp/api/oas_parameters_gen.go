@@ -12,40 +12,28 @@ type AppGetNearbyChairsParams struct {
 	Distance OptInt
 }
 
-// AppGetRequestParams is parameters of app-get-request operation.
-type AppGetRequestParams struct {
-	// 配車要求ID.
-	RequestID string
+// AppGetRideParams is parameters of app-get-ride operation.
+type AppGetRideParams struct {
+	// ライドID.
+	RideID string
 }
 
-// AppPostRequestEvaluateParams is parameters of app-post-request-evaluate operation.
-type AppPostRequestEvaluateParams struct {
-	// 配車要求ID.
-	RequestID string
+// AppPostRideEvaluationParams is parameters of app-post-ride-evaluation operation.
+type AppPostRideEvaluationParams struct {
+	// ライドID.
+	RideID string
 }
 
-// ChairGetRequestParams is parameters of chair-get-request operation.
-type ChairGetRequestParams struct {
-	// 配車要求ID.
-	RequestID string
+// ChairGetRideParams is parameters of chair-get-ride operation.
+type ChairGetRideParams struct {
+	// ライドID.
+	RideID string
 }
 
-// ChairPostRequestAcceptParams is parameters of chair-post-request-accept operation.
-type ChairPostRequestAcceptParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
-// ChairPostRequestDenyParams is parameters of chair-post-request-deny operation.
-type ChairPostRequestDenyParams struct {
-	// 配車要求ID.
-	RequestID string
-}
-
-// ChairPostRequestDepartParams is parameters of chair-post-request-depart operation.
-type ChairPostRequestDepartParams struct {
-	// 配車要求ID.
-	RequestID string
+// ChairPostRideStatusParams is parameters of chair-post-ride-status operation.
+type ChairPostRideStatusParams struct {
+	// ライドID.
+	RideID string
 }
 
 // OwnerGetChairDetailParams is parameters of owner-get-chair-detail operation.

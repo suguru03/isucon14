@@ -5,48 +5,40 @@ type AppGetNotificationRes interface {
 	appGetNotificationRes()
 }
 
-type AppGetRequestRes interface {
-	appGetRequestRes()
+type AppGetRideRes interface {
+	appGetRideRes()
 }
 
 type AppPostPaymentMethodsRes interface {
 	appPostPaymentMethodsRes()
 }
 
-type AppPostRegisterRes interface {
-	appPostRegisterRes()
+type AppPostRideEvaluationRes interface {
+	appPostRideEvaluationRes()
 }
 
-type AppPostRequestEstimateRes interface {
-	appPostRequestEstimateRes()
+type AppPostRidesEstimatedFareRes interface {
+	appPostRidesEstimatedFareRes()
 }
 
-type AppPostRequestEvaluateRes interface {
-	appPostRequestEvaluateRes()
+type AppPostRidesRes interface {
+	appPostRidesRes()
 }
 
-type AppPostRequestRes interface {
-	appPostRequestRes()
+type AppPostUsersRes interface {
+	appPostUsersRes()
 }
 
 type ChairGetNotificationRes interface {
 	chairGetNotificationRes()
 }
 
-type ChairGetRequestRes interface {
-	chairGetRequestRes()
+type ChairGetRideRes interface {
+	chairGetRideRes()
 }
 
-type ChairPostRequestAcceptRes interface {
-	chairPostRequestAcceptRes()
-}
-
-type ChairPostRequestDenyRes interface {
-	chairPostRequestDenyRes()
-}
-
-type ChairPostRequestDepartRes interface {
-	chairPostRequestDepartRes()
+type ChairPostRideStatusRes interface {
+	chairPostRideStatusRes()
 }
 
 type OwnerPostRegisterRes interface {
