@@ -28,7 +28,7 @@ const isApiFetchError = (
   };
 } => {
   if (typeof obj === "object" && obj !== null) {
-    const errorRoot = obj as {
+    const typedError = obj as {
       name?: unknown;
       message?: unknown;
       stack?: {
@@ -38,12 +38,12 @@ const isApiFetchError = (
     };
 
     return (
-      typeof errorRoot.name === "string" &&
-      typeof errorRoot.message === "string" &&
-      typeof errorRoot.stack === "object" &&
-      errorRoot.stack !== null &&
-      typeof errorRoot.stack.status === "number" &&
-      typeof errorRoot.stack.payload === "string"
+      typeof typedError.name === "string" &&
+      typeof typedError.message === "string" &&
+      typeof typedError.stack === "object" &&
+      typedError.stack !== null &&
+      typeof typedError.stack.status === "number" &&
+      typeof typedError.stack.payload === "string"
     );
   }
   return false;
