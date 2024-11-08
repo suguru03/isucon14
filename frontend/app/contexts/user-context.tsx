@@ -18,7 +18,7 @@ import type {
 import type { ClientAppRequest } from "~/types";
 
 const isApiFetchError = (
-  obj: any,
+  obj: unknown,
 ): obj is {
   name: string;
   message: string;
@@ -26,11 +26,28 @@ const isApiFetchError = (
     status: number;
     payload: string;
   };
-} =>
-  typeof obj?.name === "string" &&
-  typeof obj?.message === "string" &&
-  typeof obj?.stack?.status === "number" &&
-  typeof obj?.stack?.payload === "string";
+} => {
+  if (typeof obj === "object" && obj !== null) {
+    const errorRoot = obj as {
+      name?: unknown;
+      message?: unknown;
+      stack?: {
+        status?: unknown;
+        payload?: unknown;
+      };
+    };
+
+    return (
+      typeof errorRoot.name === "string" &&
+      typeof errorRoot.message === "string" &&
+      typeof errorRoot.stack === "object" &&
+      errorRoot.stack !== null &&
+      typeof errorRoot.stack.status === "number" &&
+      typeof errorRoot.stack.payload === "string"
+    );
+  }
+  return false;
+};
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
