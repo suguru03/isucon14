@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useMemo, useState } from "react";
+import { List } from "~/components/modules/list/list";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Tab } from "~/components/primitives/tab/tab";
 import { useClientProviderContext } from "~/contexts/provider-context";
@@ -34,7 +35,7 @@ export default function Index() {
 
   return (
     <section className="flex-1 mx-4">
-      <h1 className="text-3xl my-4">Provider Sales</h1>
+      <h1 className="text-3xl my-4">売上</h1>
       {sales ? (
         <>
           <div className="flex">
@@ -46,17 +47,16 @@ export default function Index() {
             />
           </div>
           <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
-          <ul>
-            {items.map((item) => (
-              <li
-                key={item.name}
-                className="px-4 py-3 border-b flex justify-between"
-              >
+          <List
+            items={items}
+            keyFn={(item) => item.name}
+            rowFn={(item) => (
+              <div className="flex justify-between">
                 <span>{item.name}</span>
                 <PriceText tagName="span" value={item.sales} />
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+          />
         </>
       ) : null}
     </section>

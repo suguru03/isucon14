@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useMemo } from "react";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { List } from "~/components/modules/list/list";
+import { Button } from "~/components/primitives/button/button";
 import { useClientProviderContext } from "~/contexts/provider-context";
 
 export const meta: MetaFunction = () => {
@@ -16,19 +17,22 @@ export default function Index() {
 
   return (
     <section className="flex-1 mx-4">
-      <h1 className="text-3xl my-4">Provider Home</h1>
-      <ul>
-        {chairs.map((item) => (
-          <li
-            key={item.name}
-            className="px-4 py-3 border-b flex justify-between"
-          >
-            <span>{item.id}</span>
-            <span>{item.name}</span>
-            <PriceText tagName="span" value={item.sales} />
-          </li>
-        ))}
-      </ul>
+      <h1 className="text-3xl my-4">椅子一覧</h1>
+      <div className="flex items-center justify-end">
+        <Button size="sm" onClick={() => alert("not implemented")}>
+          + 追加
+        </Button>
+      </div>
+      <List
+        items={chairs}
+        keyFn={(chair) => chair.id}
+        rowFn={(chair) => (
+          <div>
+            <span>{chair.name}</span>
+            <span className="ms-2 text-sm text-gray-500">{chair.id}</span>
+          </div>
+        )}
+      />
     </section>
   );
 }
