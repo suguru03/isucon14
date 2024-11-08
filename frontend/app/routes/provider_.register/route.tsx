@@ -20,7 +20,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   return redirect(`/provider?id=${provider.id}`);
 };
 
-export default function DriverRegister() {
+export default function ProviderRegister() {
   return (
     <>
       <Form
