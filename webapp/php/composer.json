@@ -30,7 +30,10 @@
   "autoload": {
     "psr-4": {
       "IsuRide\\": "src/"
-    }
+    },
+    "files": [
+      "src/function.php"
+    ]
   },
   "scripts": {
     "generate": [

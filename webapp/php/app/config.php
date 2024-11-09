@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use IsuRide\PaymentGateway\PostPayment;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
@@ -32,4 +33,7 @@ return [
         );
         return $logger;
     },
+    'payment_gateway' => function (): PostPayment {
+        return new PostPayment();
+    }
 ];
