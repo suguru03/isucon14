@@ -6,8 +6,8 @@ namespace IsuRide\App\Middlewares;
 
 use Exception;
 use Fig\Http\Message\StatusCodeInterface;
+use IsuRide\App\Database\Model\Owner;
 use IsuRide\App\Response\ErrorResponse;
-use IsuRide\App\Database\Model\User;
 use PDO;
 use PDOException;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -16,7 +16,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-readonly class AppAuthMiddleware implements MiddlewareInterface
+readonly class OwnerAuthMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private PDO $db,
@@ -24,24 +24,21 @@ readonly class AppAuthMiddleware implements MiddlewareInterface
     ) {
     }
 
-    /**
-     * @inheritdoc
-     */
     public function process(
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
         $cookies = $request->getCookieParams();
-        $accessToken = $cookies['app_session'] ?? '';
+        $accessToken = $cookies['owner_session'] ?? '';
         if ($accessToken === '') {
             return (new ErrorResponse())->write(
                 $this->responseFactory->createResponse(),
                 StatusCodeInterface::STATUS_UNAUTHORIZED,
-                new Exception('app_session cookie is required')
+                new Exception('owner_session cookie is required')
             );
         }
         try {
-            $stmt = $this->db->prepare('SELECT * FROM users WHERE access_token = ?');
+            $stmt = $this->db->prepare('SELECT * FROM owners WHERE access_token = ?');
             $stmt->execute([$accessToken]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
@@ -52,14 +49,12 @@ readonly class AppAuthMiddleware implements MiddlewareInterface
                 );
             }
             $request = $request->withAttribute(
-                'user',
-                new User(
+                'owner',
+                new Owner(
                     id: $result['id'],
-                    username: $result['username'],
-                    firstname: $result['firstname'],
-                    lastname: $result['lastname'],
-                    dateOfBirth: $result['date_of_birth'],
+                    name: $result['username'],
                     accessToken: $result['access_token'],
+                    chairRegisterToken: $result['chair_register_token'],
                     createdAt: $result['created_at'],
                     updatedAt: $result['updated_at']
                 )
