@@ -13,13 +13,15 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = AppFactory::create();
 $callableResolver = $app->getCallableResolver();
 
+$config = require __DIR__ . '/../app/config.php';
+
 // Register middleware
 $middleware = require __DIR__ . '/../app/middleware.php';
 $middleware($app);
 
 // Register routes
 $routes = require __DIR__ . '/../app/routes.php';
-$routes($app);
+$routes($app, $config);
 
 // Create Request object from globals
 $serverRequestCreator = ServerRequestCreatorFactory::create();

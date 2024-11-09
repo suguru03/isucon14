@@ -5,8 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get clean \
     && apt-get update \
-    && apt-get install -y locales \
-    && apt-get install language-pack-en
+    && apt-get install -y locales locales-all default-mysql-client \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_mysql
 

@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use IsuRide\PaymentGateway\PostPayment;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 
+$resourcePath = __DIR__ . '/../resource/config.json';
+
 return [
+    'resource_path' => $resourcePath,
     'database' => function (): PDO {
         $host = getenv('ISUCON_DB_HOST') ?: '127.0.0.1';
         $port = getenv('ISUCON_DB_PORT') ?: '3306';
@@ -32,4 +36,11 @@ return [
         );
         return $logger;
     },
+    'payment_gateway' => function () use ($resourcePath): PostPayment {
+        return new PostPayment(
+            json_decode(
+                file_get_contents($resourcePath),
+            )['payment_gateway']
+        );
+    }
 ];

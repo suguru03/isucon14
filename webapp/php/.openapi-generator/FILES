@@ -1,11 +1,4 @@
 .gitignore
-src/Api/AbstractAppApi.php
-src/Api/AbstractChairApi.php
-src/Api/AbstractOwnerApi.php
-src/Api/AbstractSystemApi.php
-src/App/RegisterMiddlewares.php
-src/App/RegisterRoutes.php
-src/BaseModel.php
 src/Model/AppChair.php
 src/Model/AppChairStats.php
 src/Model/AppChairStatsRecentRidesInner.php
@@ -32,6 +25,7 @@ src/Model/ChairPostRideStatusRequest.php
 src/Model/ChairRide.php
 src/Model/Coordinate.php
 src/Model/Error.php
+src/Model/ModelInterface.php
 src/Model/OwnerGetChairs200Response.php
 src/Model/OwnerGetChairs200ResponseChairsInner.php
 src/Model/OwnerGetSales200Response.php
@@ -43,3 +37,4 @@ src/Model/PostInitialize200Response.php
 src/Model/PostInitializeRequest.php
 src/Model/RideStatus.php
 src/Model/User.php
+src/ObjectSerializer.php

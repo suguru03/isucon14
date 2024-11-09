@@ -3,6 +3,7 @@ services:
     image: nginx:latest
     container_name: nginx
     volumes:
+      - ../webapp/php:/home/isucon/webapp/php
       - ./php/nginx/conf.d:/etc/nginx/conf.d
     ports:
       - "8080:80"
@@ -14,9 +15,11 @@ services:
     build:
       context: ../webapp/php
     init: true
-    working_dir: /home/isucon/webapp/php
     container_name: webapp
+    working_dir: /home/isucon/webapp/php
     volumes:
+      - ../webapp/sql:/home/isucon/webapp/sql
+      - ../webapp/php:/home/isucon/webapp/php
       - ./php/php-fpm.d/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
     environment:
       ISUCON_DB_HOST: db
