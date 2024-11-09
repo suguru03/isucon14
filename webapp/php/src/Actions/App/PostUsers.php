@@ -11,9 +11,8 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpBadRequestException;
-use Symfony\Component\Uid\Ulid;
 
-class PostUsers
+readonly class PostUsers
 {
     public function __construct(
         private ResponseFactoryInterface $responseFactory
