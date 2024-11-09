@@ -43,7 +43,7 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostUsersR
 
 	resBody := &api.AppPostUsersCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/usersのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -71,7 +71,7 @@ func (c *Client) AppGetRequests(ctx context.Context) (*api.AppGetRidesOK, error)
 
 	resBody := &api.AppGetRidesOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("ridesのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /app/ridesのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -104,7 +104,7 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRidesRe
 
 	resBody := &api.AppPostRidesAccepted{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("rideのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/ridesのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -132,7 +132,7 @@ func (c *Client) AppGetRequest(ctx context.Context, rideID string) (*api.AppRide
 
 	resBody := &api.AppRide{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("rideのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}のJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -165,7 +165,7 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, rideID string, reqB
 
 	resBody := &api.AppPostRideEvaluationOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/rides/{ride_id}/evaluationのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -339,7 +339,7 @@ func (c *Client) AppGetNearbyChairs(ctx context.Context, params *api.AppGetNearb
 
 	resBody := &api.AppGetNearbyChairsOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/app/requests/nearby-chairsのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil

@@ -41,7 +41,7 @@ func (c *Client) PostInitialize(ctx context.Context, reqBody *api.PostInitialize
 
 	var response PostInitializeResponse
 	if json.NewDecoder(resp.Body).Decode(&response) != nil {
-		return nil, fmt.Errorf("initializeのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/initializeのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return &response, nil

@@ -39,7 +39,7 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 
 	resBody := &api.OwnerPostOwnersCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/owner/ownersのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -75,7 +75,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 
 	resBody := &api.OwnerGetSalesOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/salesのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -103,7 +103,7 @@ func (c *Client) ProviderGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, 
 
 	resBody := &api.OwnerGetChairsOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/chairsのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
