@@ -103,7 +103,7 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 
 	resBody := &api.ChairPostCoordinateOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/chair/coordinateのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -131,7 +131,7 @@ func (c *Client) ChairGetRequest(ctx context.Context, rideID string) (*api.Chair
 
 	resBody := &api.ChairRide{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}のJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -208,7 +208,7 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return func(yield func(*api.ChairGetNotificationOK, error) bool) {
-			yield(nil, fmt.Errorf("GET /api/chair/notificationsのリクエストが失敗しました: %w", err))
+			yield(nil, fmt.Errorf("GET /api/chair/notificationのリクエストが失敗しました: %w", err))
 		}
 	}
 
@@ -234,10 +234,10 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	request := &api.ChairGetNotificationOK{}
 	if resp.StatusCode == http.StatusOK {
 		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
-			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+			err = fmt.Errorf("GET /api/chair/notificationのJSONのdecodeに失敗しました: %w", err)
 		}
 	} else if resp.StatusCode != http.StatusNoContent {
-		err = fmt.Errorf("GET /api/chair/notificationsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+		err = fmt.Errorf("GET /api/chair/notificationへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
 	}
 
 	if nested {
