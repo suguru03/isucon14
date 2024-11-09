@@ -9,13 +9,11 @@ use IsuRide\Result\Ride;
 use RuntimeException;
 use Throwable;
 
-class PostPayment
+readonly class PostPayment
 {
-    private string $paymentURL = "http://localhost:12345";
-
-    public function setPaymentURL(string $url): void
-    {
-        $this->paymentURL = $url;
+    public function __construct(
+        private string $paymentURL = "http://localhost:12345"
+    ) {
     }
 
     /**

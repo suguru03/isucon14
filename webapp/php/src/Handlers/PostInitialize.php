@@ -7,7 +7,6 @@ namespace IsuRide\Handlers;
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Model\PostInitialize200Response;
 use IsuRide\Model\PostInitializeRequest;
-use IsuRide\PaymentGateway\PostPayment;
 use IsuRide\Response\ErrorResponse;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -18,7 +17,7 @@ use Slim\Exception\HttpInternalServerErrorException;
 readonly class PostInitialize
 {
     public function __construct(
-        private PostPayment $postPayment,
+        private string $resourcePath,
         private ResponseFactoryInterface $responseFactory
     ) {
     }
@@ -70,7 +69,7 @@ readonly class PostInitialize
                 ]),
             ),
         );
-        $this->postPayment->setPaymentURL($req->getPaymentServer());
+        file_put_contents($this->resourcePath, (string) $req);
         return $response;
     }
 

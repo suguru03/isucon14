@@ -22,7 +22,7 @@ return function (App $app, array $config) {
     $app->post(
         '/api/initialize',
         new PostInitialize(
-            $paymentGateway,
+            $config['resource_path'],
             $app->getResponseFactory()
         )
     );
