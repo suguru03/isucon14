@@ -10,6 +10,8 @@ services:
         condition: service_healthy
     environment:
       ISUCON_DB_HOST: db
+    healthcheck:
+      test: curl -f http://localhost:8080 || exit 1
   db:
     image: mysql:8
     environment:
