@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\App;
+namespace IsuRide\App\PaymentGateway;
 
-readonly class PaymentGatewayGetPaymentsResponseOne
+readonly class GetPaymentsResponseOne
 {
     public function __construct(
         public int $amount,

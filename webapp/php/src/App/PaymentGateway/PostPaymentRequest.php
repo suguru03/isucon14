@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\App;
+namespace IsuRide\App\PaymentGateway;
 
 use JsonSerializable;
 
-readonly class PaymentGatewayPostPaymentRequest implements JsonSerializable
+readonly class PostPaymentRequest implements JsonSerializable
 {
     public function __construct(
         public int $amount

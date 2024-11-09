@@ -2,29 +2,27 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\App\Request;
+namespace IsuRide\App\PaymentGateway;
 
 use Closure;
-use IsuRide\App\PaymentGatewayGetPaymentsResponseOne;
-use IsuRide\App\PaymentGatewayPostPaymentRequest;
 use IsuRide\App\Result\Ride;
 use RuntimeException;
 use Throwable;
 
-class PaymentGatewayPostPayment
+class PostPayment
 {
     private string $paymentURL = "http://localhost:12345";
 
     /**
      * @param string $token
-     * @param PaymentGatewayPostPaymentRequest $param
+     * @param PostPaymentRequest $param
      * @param Closure(): Ride $retrieveRideRequestsOrderByCreatedAtAsc
      * @return void
      * @throws Throwable
      */
     public function execute(
         string $token,
-        PaymentGatewayPostPaymentRequest $param,
+        PostPaymentRequest $param,
         Closure $retrieveRideRequestsOrderByCreatedAtAsc
     ): void {
         $b = json_encode($param);
@@ -94,7 +92,7 @@ class PaymentGatewayPostPayment
 
                     $payments = [];
                     foreach ($paymentsData as $paymentData) {
-                        $payments[] = new PaymentGatewayGetPaymentsResponseOne(
+                        $payments[] = new GetPaymentsResponseOne(
                             (int)$paymentData['amount'],
                             (string)$paymentData['status']
                         );
