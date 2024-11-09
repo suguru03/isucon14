@@ -37,45 +37,45 @@ use constant AppHandler => [qw(app_auth_middleware)];
     post '/api/app/register' => sub { };
 
     #  app handlers
-    post '/apo/app/payment-methods' => AppHandler =>
-      \&Isuride::Handler::App->app_post_payment_methods;
+    post '/apo/app/payment-methods' => AppHandler => \&Isuride::Handler::App->app_post_payment_methods;
     get '/app/requests/{request_id}' => AppHandler => \&app_get_resuest;
 }
 
-sub default ( $self, $c ) {
-    $c->render_json( { greeting => 'hello' } );
+sub default ($self, $c) {
+    $c->render_json({ greeting => 'hello' });
 }
 
-sub app_get_resuest ( $self, $c ) {
+sub app_get_resuest ($self, $c) {
     my $request_id = $c->args->{request_id};
 
 }
 
 # middleware
 filter 'app_auth_middleware' => sub ($app) {
-    sub ( $self, $c ) {
+    sub ($self, $c) {
         my $access_token = $c->req->cookie('apps_session');
 
         unless ($access_token) {
-            return res_error( $c, HTTP_UNAUTHORIZED,
-                'app_session cookie is required' );
+            return res_error($c, HTTP_UNAUTHORIZE ', app_session cookie is required');
         }
 
         my $user =
-          $c->dbh->select_row( 'SELECT * FROM users WHERE access_token = ?',
-            $access_token );
+            $c->dbh->select_row(
+            'SELECT * FROM users WHERE access_token = ?',
+            $access_token
+            );
 
         unless ($user) {
-            return res_error( $c, HTTP_UNAUTHORIZED, 'invalid access_token' );
+            return res_error($c, HTTP_UNAUTHORIZED, 'invalid access_token');
         }
 
         $c->stash->{user} = $user;
-        return $app->( $self, $c );
+        return $app->($self, $c);
     };
 };
 
-sub res_error ( $c, $status_code, $err ) {
-    my $res = $c->render_json( { message => $err } );
+sub res_error ($c, $status_code, $err) {
+    my $res = $c->render_json({ message => $err });
     $res->status($status_code);
     return $res;
 }
