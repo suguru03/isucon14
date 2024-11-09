@@ -9,7 +9,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
+      ISUCON_DB_HOST: db
   db:
     image: mysql:8
     environment:
