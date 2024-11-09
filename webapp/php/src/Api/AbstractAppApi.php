@@ -63,7 +63,7 @@ abstract class AbstractAppApi
     /**
      * GET appGetNotification
      * Summary: ユーザー向け通知エンドポイント
-     * Notes: 最新の自分の配車要求を取得します。
+     * Notes: 最新の自分のライドを取得する
      * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
@@ -81,29 +81,49 @@ abstract class AbstractAppApi
     }
 
     /**
-     * GET appGetRequest
-     * Summary: ユーザーが配車要求の状態を確認する
+     * GET appGetRide
+     * Summary: ユーザーがライドの詳細を確認する
      * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
      * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
+     * @param string $rideId ライドID
      *
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function appGetRequest(
+    public function appGetRide(
         ServerRequestInterface $request,
         ResponseInterface $response,
-        string $requestId
+        string $rideId
     ): ResponseInterface {
-        $message = "How about implementing appGetRequest as a GET method in IsuRide\Api\AppApi class?";
+        $message = "How about implementing appGetRide as a GET method in IsuRide\Api\AppApi class?";
+        throw new HttpNotImplementedException($request, $message);
+    }
+
+    /**
+     * GET appGetRides
+     * Summary: ユーザーが完了済みのライド一覧を取得する
+     * Output-Formats: [application/json]
+     *
+     * @param ServerRequestInterface $request  Request
+     * @param ResponseInterface      $response Response
+     *
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException to force implementation class to override this method
+     */
+    public function appGetRides(
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    ): ResponseInterface {
+        $message = "How about implementing appGetRides as a GET method in IsuRide\Api\AppApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 
     /**
      * POST appPostPaymentMethods
      * Summary: 決済トークンの登録
+     * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
      * @param ResponseInterface      $response Response
@@ -121,7 +141,69 @@ abstract class AbstractAppApi
     }
 
     /**
-     * POST appPostRegister
+     * POST appPostRideEvaluation
+     * Summary: ユーザーがライドを評価する
+     * Output-Formats: [application/json]
+     *
+     * @param ServerRequestInterface $request  Request
+     * @param ResponseInterface      $response Response
+     * @param string $rideId ライドID
+     *
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException to force implementation class to override this method
+     */
+    public function appPostRideEvaluation(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        string $rideId
+    ): ResponseInterface {
+        $body = $request->getParsedBody();
+        $message = "How about implementing appPostRideEvaluation as a POST method in IsuRide\Api\AppApi class?";
+        throw new HttpNotImplementedException($request, $message);
+    }
+
+    /**
+     * POST appPostRides
+     * Summary: ユーザーが配車を要求する
+     * Output-Formats: [application/json]
+     *
+     * @param ServerRequestInterface $request  Request
+     * @param ResponseInterface      $response Response
+     *
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException to force implementation class to override this method
+     */
+    public function appPostRides(
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    ): ResponseInterface {
+        $body = $request->getParsedBody();
+        $message = "How about implementing appPostRides as a POST method in IsuRide\Api\AppApi class?";
+        throw new HttpNotImplementedException($request, $message);
+    }
+
+    /**
+     * POST appPostRidesEstimatedFare
+     * Summary: ライドの運賃を見積もる
+     * Output-Formats: [application/json]
+     *
+     * @param ServerRequestInterface $request  Request
+     * @param ResponseInterface      $response Response
+     *
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException to force implementation class to override this method
+     */
+    public function appPostRidesEstimatedFare(
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    ): ResponseInterface {
+        $body = $request->getParsedBody();
+        $message = "How about implementing appPostRidesEstimatedFare as a POST method in IsuRide\Api\AppApi class?";
+        throw new HttpNotImplementedException($request, $message);
+    }
+
+    /**
+     * POST appPostUsers
      * Summary: ユーザーが会員登録を行う
      * Output-Formats: [application/json]
      *
@@ -131,54 +213,12 @@ abstract class AbstractAppApi
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function appPostRegister(
+    public function appPostUsers(
         ServerRequestInterface $request,
         ResponseInterface $response
     ): ResponseInterface {
         $body = $request->getParsedBody();
-        $message = "How about implementing appPostRegister as a POST method in IsuRide\Api\AppApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST appPostRequest
-     * Summary: ユーザーが配車要求を行う
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function appPostRequest(
-        ServerRequestInterface $request,
-        ResponseInterface $response
-    ): ResponseInterface {
-        $body = $request->getParsedBody();
-        $message = "How about implementing appPostRequest as a POST method in IsuRide\Api\AppApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST appPostRequestEvaluate
-     * Summary: ユーザーが椅子を評価する
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function appPostRequestEvaluate(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $requestId
-    ): ResponseInterface {
-        $body = $request->getParsedBody();
-        $message = "How about implementing appPostRequestEvaluate as a POST method in IsuRide\Api\AppApi class?";
+        $message = "How about implementing appPostUsers as a POST method in IsuRide\Api\AppApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 }

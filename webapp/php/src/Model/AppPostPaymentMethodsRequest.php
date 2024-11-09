@@ -45,7 +45,6 @@ class AppPostPaymentMethodsRequest extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "token" ],
-  "type" : "object",
   "properties" : {
     "token" : {
       "type" : "string",

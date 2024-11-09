@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * AppPostRideEvaluationRequest
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class AppPostRideEvaluationRequest extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,11 +44,13 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "evaluation" ],
   "properties" : {
-    "language" : {
-      "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+    "evaluation" : {
+      "maximum" : 5,
+      "minimum" : 1,
+      "type" : "integer",
+      "description" : "ライドの評価"
     }
   }
 }

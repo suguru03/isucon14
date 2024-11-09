@@ -45,11 +45,10 @@ class AppChairStatsRecentRidesInner extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "destination_coordinate", "distance", "duration", "evaluation", "id", "pickup_coordinate" ],
-  "type" : "object",
   "properties" : {
     "id" : {
       "type" : "string",
-      "description" : "配車要求ID"
+      "description" : "ライドID"
     },
     "pickup_coordinate" : {
       "$ref" : "#/components/schemas/Coordinate"
@@ -63,7 +62,8 @@ class AppChairStatsRecentRidesInner extends BaseModel
     },
     "duration" : {
       "type" : "integer",
-      "description" : "移動時間"
+      "description" : "移動時間 (ミリ秒)",
+      "format" : "int64"
     },
     "evaluation" : {
       "type" : "integer",

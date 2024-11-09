@@ -58,30 +58,30 @@ abstract class AbstractChairApi
     }
 
     /**
-     * GET chairGetRequest
-     * Summary: 椅子が配車要求情報を取得する
+     * GET chairGetRide
+     * Summary: 椅子がライド情報を取得する
      * Notes: 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
      * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
      * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
+     * @param string $rideId ライドID
      *
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function chairGetRequest(
+    public function chairGetRide(
         ServerRequestInterface $request,
         ResponseInterface $response,
-        string $requestId
+        string $rideId
     ): ResponseInterface {
-        $message = "How about implementing chairGetRequest as a GET method in IsuRide\Api\ChairApi class?";
+        $message = "How about implementing chairGetRide as a GET method in IsuRide\Api\ChairApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 
     /**
-     * POST chairPostActivate
-     * Summary: 椅子が配車受付を開始する
+     * POST chairPostActivity
+     * Summary: 椅子が配車受付を開始・停止する
      * Notes: 
      *
      * @param ServerRequestInterface $request  Request
@@ -90,18 +90,38 @@ abstract class AbstractChairApi
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function chairPostActivate(
+    public function chairPostActivity(
         ServerRequestInterface $request,
         ResponseInterface $response
     ): ResponseInterface {
         $body = $request->getParsedBody();
-        $message = "How about implementing chairPostActivate as a POST method in IsuRide\Api\ChairApi class?";
+        $message = "How about implementing chairPostActivity as a POST method in IsuRide\Api\ChairApi class?";
+        throw new HttpNotImplementedException($request, $message);
+    }
+
+    /**
+     * POST chairPostChairs
+     * Summary: オーナーが椅子の登録を行う
+     * Output-Formats: [application/json]
+     *
+     * @param ServerRequestInterface $request  Request
+     * @param ResponseInterface      $response Response
+     *
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException to force implementation class to override this method
+     */
+    public function chairPostChairs(
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    ): ResponseInterface {
+        $body = $request->getParsedBody();
+        $message = "How about implementing chairPostChairs as a POST method in IsuRide\Api\ChairApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 
     /**
      * POST chairPostCoordinate
-     * Summary: 椅子が位置情報を送信する
+     * Summary: 椅子が自身の位置情報を送信する
      * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
@@ -120,105 +140,24 @@ abstract class AbstractChairApi
     }
 
     /**
-     * POST chairPostDeactivate
-     * Summary: 椅子が配車受付を停止する
-     * Notes: 
+     * POST chairPostRideStatus
+     * Summary: 椅子がライドのステータスを更新する
+     * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
      * @param ResponseInterface      $response Response
+     * @param string $rideId ライドID
      *
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function chairPostDeactivate(
+    public function chairPostRideStatus(
         ServerRequestInterface $request,
-        ResponseInterface $response
+        ResponseInterface $response,
+        string $rideId
     ): ResponseInterface {
         $body = $request->getParsedBody();
-        $message = "How about implementing chairPostDeactivate as a POST method in IsuRide\Api\ChairApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST chairPostRegister
-     * Summary: 椅子登録を行う
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function chairPostRegister(
-        ServerRequestInterface $request,
-        ResponseInterface $response
-    ): ResponseInterface {
-        $body = $request->getParsedBody();
-        $message = "How about implementing chairPostRegister as a POST method in IsuRide\Api\ChairApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST chairPostRequestAccept
-     * Summary: 椅子が配車要求を受理する
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function chairPostRequestAccept(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $requestId
-    ): ResponseInterface {
-        $message = "How about implementing chairPostRequestAccept as a POST method in IsuRide\Api\ChairApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST chairPostRequestDeny
-     * Summary: 椅子が配車要求を拒否する
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function chairPostRequestDeny(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $requestId
-    ): ResponseInterface {
-        $message = "How about implementing chairPostRequestDeny as a POST method in IsuRide\Api\ChairApi class?";
-        throw new HttpNotImplementedException($request, $message);
-    }
-
-    /**
-     * POST chairPostRequestDepart
-     * Summary: 椅子が配車位置から出発する(ユーザーが乗車完了した)
-     * Output-Formats: [application/json]
-     *
-     * @param ServerRequestInterface $request  Request
-     * @param ResponseInterface      $response Response
-     * @param string $requestId 配車要求ID
-     *
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException to force implementation class to override this method
-     */
-    public function chairPostRequestDepart(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $requestId
-    ): ResponseInterface {
-        $message = "How about implementing chairPostRequestDepart as a POST method in IsuRide\Api\ChairApi class?";
+        $message = "How about implementing chairPostRideStatus as a POST method in IsuRide\Api\ChairApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 }

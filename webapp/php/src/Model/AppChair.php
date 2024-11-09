@@ -46,7 +46,6 @@ class AppChair extends BaseModel
 {
   "title" : "AppChair",
   "required" : [ "id", "model", "name", "stats" ],
-  "type" : "object",
   "properties" : {
     "id" : {
       "type" : "string",

@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * AppRide
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class AppRide extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,13 +44,36 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "created_at", "destination_coordinate", "id", "pickup_coordinate", "status", "updated_at" ],
   "properties" : {
-    "language" : {
+    "id" : {
       "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+      "description" : "ライドID"
+    },
+    "pickup_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "destination_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "status" : {
+      "$ref" : "#/components/schemas/RideStatus"
+    },
+    "chair" : {
+      "$ref" : "#/components/schemas/AppChair"
+    },
+    "created_at" : {
+      "type" : "integer",
+      "description" : "配車要求日時",
+      "format" : "int64"
+    },
+    "updated_at" : {
+      "type" : "integer",
+      "description" : "配車要求更新日時",
+      "format" : "int64"
     }
-  }
+  },
+  "description" : "App向けライド情報"
 }
 SCHEMA;
 }

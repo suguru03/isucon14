@@ -45,7 +45,6 @@ class OwnerGetChairs200ResponseChairsInner extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "active", "id", "model", "name", "registered_at", "total_distance" ],
-  "type" : "object",
   "properties" : {
     "id" : {
       "type" : "string",
@@ -64,16 +63,18 @@ class OwnerGetChairs200ResponseChairsInner extends BaseModel
       "description" : "稼働中かどうか"
     },
     "registered_at" : {
-      "type" : "string",
-      "description" : "登録日時"
+      "type" : "integer",
+      "description" : "登録日時",
+      "format" : "int64"
     },
     "total_distance" : {
       "type" : "integer",
       "description" : "総移動距離"
     },
     "total_distance_updated_at" : {
-      "type" : "string",
-      "description" : "総移動距離の更新日時"
+      "type" : "integer",
+      "description" : "総移動距離の更新日時",
+      "format" : "int64"
     }
   }
 }

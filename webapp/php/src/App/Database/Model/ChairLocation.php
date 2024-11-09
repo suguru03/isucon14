@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\Application\Database\Model;
+namespace IsuRide\App\Database\Model;
 
 readonly class ChairLocation
 {

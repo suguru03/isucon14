@@ -46,7 +46,6 @@ class Error extends BaseModel
 {
   "title" : "Error",
   "required" : [ "message" ],
-  "type" : "object",
   "properties" : {
     "message" : {
       "type" : "string"

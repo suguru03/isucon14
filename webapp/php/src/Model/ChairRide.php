@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * ChairRide
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class ChairRide extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,13 +44,26 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "destination_coordinate", "id", "user" ],
   "properties" : {
-    "language" : {
+    "id" : {
       "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+      "description" : "ライドID"
+    },
+    "user" : {
+      "$ref" : "#/components/schemas/User"
+    },
+    "pickup_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "destination_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "status" : {
+      "$ref" : "#/components/schemas/RideStatus"
     }
-  }
+  },
+  "description" : "Chair向けライド情報"
 }
 SCHEMA;
 }

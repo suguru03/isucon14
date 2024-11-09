@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * AppGetNotification200Response
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class AppGetNotification200Response extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,11 +44,37 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "created_at", "destination_coordinate", "pickup_coordinate", "ride_id", "status", "updated_at" ],
   "properties" : {
-    "language" : {
+    "ride_id" : {
       "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+      "description" : "ライドID"
+    },
+    "pickup_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "destination_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "status" : {
+      "$ref" : "#/components/schemas/RideStatus"
+    },
+    "chair" : {
+      "$ref" : "#/components/schemas/AppChair"
+    },
+    "created_at" : {
+      "type" : "integer",
+      "description" : "配車要求日時",
+      "format" : "int64"
+    },
+    "updated_at" : {
+      "type" : "integer",
+      "description" : "配車要求更新日時",
+      "format" : "int64"
+    },
+    "retry_after_ms" : {
+      "type" : "integer",
+      "description" : "次回の通知ポーリングまでの待機時間(ミリ秒単位)"
     }
   }
 }

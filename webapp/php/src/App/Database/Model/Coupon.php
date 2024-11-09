@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace IsuRide\App\Database\Model;
 
-readonly class Owner
+readonly class Coupon
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $accessToken,
+        public string $userId,
+        public string $code,
+        public int $discount,
         public int $createdAt,
-        public int $updatedAt
+        public ?string $usedBy
     ) {
     }
 }

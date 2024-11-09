@@ -46,7 +46,6 @@ class Coordinate extends BaseModel
 {
   "title" : "Coordinate",
   "required" : [ "latitude", "longitude" ],
-  "type" : "object",
   "properties" : {
     "latitude" : {
       "type" : "integer",

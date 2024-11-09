@@ -45,7 +45,6 @@ class OwnerGetSales200ResponseChairsInner extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "id", "name", "sales" ],
-  "type" : "object",
   "properties" : {
     "id" : {
       "type" : "string",

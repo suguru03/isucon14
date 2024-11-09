@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * ChairPostChairs201Response
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class ChairPostChairs201Response extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,11 +44,15 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "id", "owner_id" ],
   "properties" : {
-    "language" : {
+    "id" : {
       "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+      "description" : "椅子ID"
+    },
+    "owner_id" : {
+      "type" : "string",
+      "description" : "オーナーID"
     }
   }
 }

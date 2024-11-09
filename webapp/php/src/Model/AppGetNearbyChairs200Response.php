@@ -45,7 +45,6 @@ class AppGetNearbyChairs200Response extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "chairs", "retrieved_at" ],
-  "type" : "object",
   "properties" : {
     "chairs" : {
       "type" : "array",
@@ -54,8 +53,9 @@ class AppGetNearbyChairs200Response extends BaseModel
       }
     },
     "retrieved_at" : {
-      "type" : "string",
-      "description" : "取得日時"
+      "type" : "integer",
+      "description" : "取得日時",
+      "format" : "int64"
     }
   }
 }
