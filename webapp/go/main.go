@@ -36,7 +36,7 @@ func setup() http.Handler {
 	}
 	_, err := strconv.Atoi(port)
 	if err != nil {
-		panic(fmt.Sprintf("failed to convert DB port number from DB_PORT environment variable into int: %v", err))
+		panic(fmt.Sprintf("failed to convert DB port number from ISUCON_DB_PORT environment variable into int: %v", err))
 	}
 	user := os.Getenv("ISUCON_DB_USER")
 	if user == "" {
