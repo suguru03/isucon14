@@ -12,6 +12,8 @@ services:
         condition: service_healthy
     environment:
       ISUCON_DB_HOST: db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: curl -f http://localhost:8080; if [ $? -ne 22 ]; then exit 1; fi
       start_period: 60s

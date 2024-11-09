@@ -36,7 +36,7 @@ jobs:
       - name: Run bench
         working-directory: ./bench
         run: |
-          task run-local -- --fail-on-error
+          task run-local -- --fail-on-error --payment-url http://host.docker.internal:12345
       - name: Down webapp/go
         working-directory: ./development
         if: ${{ always() }}
