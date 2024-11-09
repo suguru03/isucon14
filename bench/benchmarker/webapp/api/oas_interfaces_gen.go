@@ -41,6 +41,6 @@ type ChairPostRideStatusRes interface {
 	chairPostRideStatusRes()
 }
 
-type OwnerPostRegisterRes interface {
-	ownerPostRegisterRes()
+type OwnerPostOwnersRes interface {
+	ownerPostOwnersRes()
 }

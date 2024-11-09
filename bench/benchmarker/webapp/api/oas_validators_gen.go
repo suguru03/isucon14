@@ -294,9 +294,9 @@ func (s ChairPostRideStatusReqStatus) Validate() error {
 	switch s {
 	case "MATCHING":
 		return nil
-	case "CARRYING":
+	case "ENROUTE":
 		return nil
-	case "CANCELED":
+	case "CARRYING":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

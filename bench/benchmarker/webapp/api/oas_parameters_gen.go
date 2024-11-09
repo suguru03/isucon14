@@ -36,8 +36,8 @@ type ChairPostRideStatusParams struct {
 	RideID string
 }
 
-// OwnerGetChairDetailParams is parameters of owner-get-chair-detail operation.
-type OwnerGetChairDetailParams struct {
+// OwnerGetChairParams is parameters of owner-get-chair operation.
+type OwnerGetChairParams struct {
 	// 椅子ID.
 	ChairID string
 }

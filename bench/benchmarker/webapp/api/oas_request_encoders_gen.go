@@ -131,8 +131,8 @@ func encodeChairPostActivityRequest(
 	return nil
 }
 
-func encodeChairPostCoordinateRequest(
-	req OptCoordinate,
+func encodeChairPostChairsRequest(
+	req OptChairPostChairsReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -151,8 +151,8 @@ func encodeChairPostCoordinateRequest(
 	return nil
 }
 
-func encodeChairPostRegisterRequest(
-	req OptChairPostRegisterReq,
+func encodeChairPostCoordinateRequest(
+	req OptCoordinate,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -191,8 +191,8 @@ func encodeChairPostRideStatusRequest(
 	return nil
 }
 
-func encodeOwnerPostRegisterRequest(
-	req OptOwnerPostRegisterReq,
+func encodeOwnerPostOwnersRequest(
+	req OptOwnerPostOwnersReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

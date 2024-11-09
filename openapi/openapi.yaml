@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   version: "1.0"
   title: ISURIDE API Specification
@@ -462,7 +462,7 @@ paths:
       tags:
         - owner
       summary: 椅子のオーナーが会員登録を行う
-      operationId: owner-post-register
+      operationId: owner-post-owners
       requestBody:
         content:
           application/json:
@@ -627,7 +627,7 @@ paths:
       tags:
         - owner
       summary: 管理している椅子の詳細を取得する
-      operationId: owner-get-chair-detail
+      operationId: owner-get-chair
       parameters:
         - name: chair_id
           in: path
@@ -678,7 +678,7 @@ paths:
       tags:
         - chair
       summary: オーナーが椅子の登録を行う
-      operationId: chair-post-register
+      operationId: chair-post-chairs
       requestBody:
         content:
           application/json:
@@ -844,8 +844,8 @@ paths:
                   type: string
                   enum:
                     - MATCHING
+                    - ENROUTE
                     - CARRYING
-                    - CANCELED
                   description: |
                     ライドの状態
                     MATCHING: マッチングを拒否し、再度マッチング状態に戻す

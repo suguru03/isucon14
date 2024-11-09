@@ -394,7 +394,7 @@ func chairGetRideRequest(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	ride := &Ride{}
-	if err := tx.Get(ride, "SELECT * FROM ride WHERE id = ?", rideID); err != nil {
+	if err := tx.Get(ride, "SELECT * FROM rides WHERE id = ?", rideID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, errors.New("ride not found"))
 			return
@@ -478,17 +478,17 @@ func chairPostRideStatus(w http.ResponseWriter, r *http.Request) {
 	switch req.Status {
 	// Deny matching
 	case "MATCHING":
-		if _, err := tx.Exec("UPDATE rides SET chair_id = NULL, status = 'MATCHING', matched_at = NULL, updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+		if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", rideID, ride.ID, "MATHCING"); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 	// Accept matching
 	case "ENROUTE":
-		if _, err := tx.Exec("UPDATE rides SET status = 'ENROUTE', updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+		if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", rideID, ride.ID, "ENROUTE"); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-	// After Pickin up user
+	// After Picking up user
 	case "CARRYING":
 		status, err := getLatestRideStatus(tx, ride.ID)
 		if err != nil {
@@ -499,7 +499,7 @@ func chairPostRideStatus(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, errors.New("chair has not arrived yet"))
 			return
 		}
-		if _, err := tx.Exec("UPDATE rides SET status = 'CARRYING', updated_at = isu_now() WHERE id = ?", rideID); err != nil {
+		if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", rideID, ride.ID, "CARRYING"); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}

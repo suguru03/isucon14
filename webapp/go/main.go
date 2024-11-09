@@ -106,7 +106,7 @@ func setup() http.Handler {
 		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
 		authedMux.HandleFunc("GET /api/chair/rides/{ride_id}", chairGetRideRequest)
-		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/accept", chairPostRideStatus)
+		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/status", chairPostRideStatus)
 	}
 
 	return mux

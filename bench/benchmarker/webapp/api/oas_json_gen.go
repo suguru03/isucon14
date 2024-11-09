@@ -2908,6 +2908,249 @@ func (s *ChairPostActivityReq) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *ChairPostChairsCreated) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ChairPostChairsCreated) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		e.Str(s.ID)
+	}
+	{
+		e.FieldStart("owner_id")
+		e.Str(s.OwnerID)
+	}
+}
+
+var jsonFieldsNameOfChairPostChairsCreated = [2]string{
+	0: "id",
+	1: "owner_id",
+}
+
+// Decode decodes ChairPostChairsCreated from json.
+func (s *ChairPostChairsCreated) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ChairPostChairsCreated to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.ID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "owner_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.OwnerID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"owner_id\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ChairPostChairsCreated")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfChairPostChairsCreated) {
+					name = jsonFieldsNameOfChairPostChairsCreated[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ChairPostChairsCreated) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ChairPostChairsCreated) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ChairPostChairsReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ChairPostChairsReq) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		e.FieldStart("model")
+		e.Str(s.Model)
+	}
+	{
+		e.FieldStart("chair_register_token")
+		e.Str(s.ChairRegisterToken)
+	}
+}
+
+var jsonFieldsNameOfChairPostChairsReq = [3]string{
+	0: "name",
+	1: "model",
+	2: "chair_register_token",
+}
+
+// Decode decodes ChairPostChairsReq from json.
+func (s *ChairPostChairsReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ChairPostChairsReq to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "model":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Model = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"model\"")
+			}
+		case "chair_register_token":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.ChairRegisterToken = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"chair_register_token\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ChairPostChairsReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfChairPostChairsReq) {
+					name = jsonFieldsNameOfChairPostChairsReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ChairPostChairsReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ChairPostChairsReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *ChairPostCoordinateOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -2999,249 +3242,6 @@ func (s *ChairPostCoordinateOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ChairPostCoordinateOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ChairPostRegisterCreated) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ChairPostRegisterCreated) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("id")
-		e.Str(s.ID)
-	}
-	{
-		e.FieldStart("owner_id")
-		e.Str(s.OwnerID)
-	}
-}
-
-var jsonFieldsNameOfChairPostRegisterCreated = [2]string{
-	0: "id",
-	1: "owner_id",
-}
-
-// Decode decodes ChairPostRegisterCreated from json.
-func (s *ChairPostRegisterCreated) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ChairPostRegisterCreated to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.ID = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"id\"")
-			}
-		case "owner_id":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.OwnerID = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"owner_id\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ChairPostRegisterCreated")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfChairPostRegisterCreated) {
-					name = jsonFieldsNameOfChairPostRegisterCreated[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ChairPostRegisterCreated) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ChairPostRegisterCreated) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ChairPostRegisterReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ChairPostRegisterReq) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("name")
-		e.Str(s.Name)
-	}
-	{
-		e.FieldStart("model")
-		e.Str(s.Model)
-	}
-	{
-		e.FieldStart("chair_register_token")
-		e.Str(s.ChairRegisterToken)
-	}
-}
-
-var jsonFieldsNameOfChairPostRegisterReq = [3]string{
-	0: "name",
-	1: "model",
-	2: "chair_register_token",
-}
-
-// Decode decodes ChairPostRegisterReq from json.
-func (s *ChairPostRegisterReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ChairPostRegisterReq to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "name":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.Name = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"name\"")
-			}
-		case "model":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Model = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"model\"")
-			}
-		case "chair_register_token":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Str()
-				s.ChairRegisterToken = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"chair_register_token\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ChairPostRegisterReq")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfChairPostRegisterReq) {
-					name = jsonFieldsNameOfChairPostRegisterReq[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ChairPostRegisterReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ChairPostRegisterReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3358,10 +3358,10 @@ func (s *ChairPostRideStatusReqStatus) Decode(d *jx.Decoder) error {
 	switch ChairPostRideStatusReqStatus(v) {
 	case ChairPostRideStatusReqStatusMATCHING:
 		*s = ChairPostRideStatusReqStatusMATCHING
+	case ChairPostRideStatusReqStatusENROUTE:
+		*s = ChairPostRideStatusReqStatusENROUTE
 	case ChairPostRideStatusReqStatusCARRYING:
 		*s = ChairPostRideStatusReqStatusCARRYING
-	case ChairPostRideStatusReqStatusCANCELED:
-		*s = ChairPostRideStatusReqStatusCANCELED
 	default:
 		*s = ChairPostRideStatusReqStatus(v)
 	}
@@ -3982,18 +3982,18 @@ func (s *OptChairPostActivityReq) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes ChairPostRegisterReq as json.
-func (o OptChairPostRegisterReq) Encode(e *jx.Encoder) {
+// Encode encodes ChairPostChairsReq as json.
+func (o OptChairPostChairsReq) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	o.Value.Encode(e)
 }
 
-// Decode decodes ChairPostRegisterReq from json.
-func (o *OptChairPostRegisterReq) Decode(d *jx.Decoder) error {
+// Decode decodes ChairPostChairsReq from json.
+func (o *OptChairPostChairsReq) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptChairPostRegisterReq to nil")
+		return errors.New("invalid: unable to decode OptChairPostChairsReq to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -4003,14 +4003,14 @@ func (o *OptChairPostRegisterReq) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptChairPostRegisterReq) MarshalJSON() ([]byte, error) {
+func (s OptChairPostChairsReq) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptChairPostRegisterReq) UnmarshalJSON(data []byte) error {
+func (s *OptChairPostChairsReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -4151,18 +4151,18 @@ func (s *OptInt64) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes OwnerPostRegisterReq as json.
-func (o OptOwnerPostRegisterReq) Encode(e *jx.Encoder) {
+// Encode encodes OwnerPostOwnersReq as json.
+func (o OptOwnerPostOwnersReq) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	o.Value.Encode(e)
 }
 
-// Decode decodes OwnerPostRegisterReq from json.
-func (o *OptOwnerPostRegisterReq) Decode(d *jx.Decoder) error {
+// Decode decodes OwnerPostOwnersReq from json.
+func (o *OptOwnerPostOwnersReq) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptOwnerPostRegisterReq to nil")
+		return errors.New("invalid: unable to decode OptOwnerPostOwnersReq to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -4172,14 +4172,14 @@ func (o *OptOwnerPostRegisterReq) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptOwnerPostRegisterReq) MarshalJSON() ([]byte, error) {
+func (s OptOwnerPostOwnersReq) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptOwnerPostRegisterReq) UnmarshalJSON(data []byte) error {
+func (s *OptOwnerPostOwnersReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -4286,14 +4286,14 @@ func (s *OptString) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *OwnerGetChairDetailOK) Encode(e *jx.Encoder) {
+func (s *OwnerGetChairOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *OwnerGetChairDetailOK) encodeFields(e *jx.Encoder) {
+func (s *OwnerGetChairOK) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("id")
 		e.Str(s.ID)
@@ -4326,7 +4326,7 @@ func (s *OwnerGetChairDetailOK) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfOwnerGetChairDetailOK = [7]string{
+var jsonFieldsNameOfOwnerGetChairOK = [7]string{
 	0: "id",
 	1: "name",
 	2: "model",
@@ -4336,10 +4336,10 @@ var jsonFieldsNameOfOwnerGetChairDetailOK = [7]string{
 	6: "total_distance_updated_at",
 }
 
-// Decode decodes OwnerGetChairDetailOK from json.
-func (s *OwnerGetChairDetailOK) Decode(d *jx.Decoder) error {
+// Decode decodes OwnerGetChairOK from json.
+func (s *OwnerGetChairOK) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode OwnerGetChairDetailOK to nil")
+		return errors.New("invalid: unable to decode OwnerGetChairOK to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -4432,7 +4432,7 @@ func (s *OwnerGetChairDetailOK) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode OwnerGetChairDetailOK")
+		return errors.Wrap(err, "decode OwnerGetChairOK")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -4449,8 +4449,8 @@ func (s *OwnerGetChairDetailOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfOwnerGetChairDetailOK) {
-					name = jsonFieldsNameOfOwnerGetChairDetailOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfOwnerGetChairOK) {
+					name = jsonFieldsNameOfOwnerGetChairOK[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -4471,14 +4471,14 @@ func (s *OwnerGetChairDetailOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *OwnerGetChairDetailOK) MarshalJSON() ([]byte, error) {
+func (s *OwnerGetChairOK) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OwnerGetChairDetailOK) UnmarshalJSON(data []byte) error {
+func (s *OwnerGetChairOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -5181,14 +5181,14 @@ func (s *OwnerGetSalesOKModelsItem) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *OwnerPostRegisterCreated) Encode(e *jx.Encoder) {
+func (s *OwnerPostOwnersCreated) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *OwnerPostRegisterCreated) encodeFields(e *jx.Encoder) {
+func (s *OwnerPostOwnersCreated) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("id")
 		e.Str(s.ID)
@@ -5199,15 +5199,15 @@ func (s *OwnerPostRegisterCreated) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfOwnerPostRegisterCreated = [2]string{
+var jsonFieldsNameOfOwnerPostOwnersCreated = [2]string{
 	0: "id",
 	1: "chair_register_token",
 }
 
-// Decode decodes OwnerPostRegisterCreated from json.
-func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
+// Decode decodes OwnerPostOwnersCreated from json.
+func (s *OwnerPostOwnersCreated) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode OwnerPostRegisterCreated to nil")
+		return errors.New("invalid: unable to decode OwnerPostOwnersCreated to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5242,7 +5242,7 @@ func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode OwnerPostRegisterCreated")
+		return errors.Wrap(err, "decode OwnerPostOwnersCreated")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5259,8 +5259,8 @@ func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfOwnerPostRegisterCreated) {
-					name = jsonFieldsNameOfOwnerPostRegisterCreated[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfOwnerPostOwnersCreated) {
+					name = jsonFieldsNameOfOwnerPostOwnersCreated[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5281,41 +5281,41 @@ func (s *OwnerPostRegisterCreated) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *OwnerPostRegisterCreated) MarshalJSON() ([]byte, error) {
+func (s *OwnerPostOwnersCreated) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OwnerPostRegisterCreated) UnmarshalJSON(data []byte) error {
+func (s *OwnerPostOwnersCreated) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *OwnerPostRegisterReq) Encode(e *jx.Encoder) {
+func (s *OwnerPostOwnersReq) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *OwnerPostRegisterReq) encodeFields(e *jx.Encoder) {
+func (s *OwnerPostOwnersReq) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("name")
 		e.Str(s.Name)
 	}
 }
 
-var jsonFieldsNameOfOwnerPostRegisterReq = [1]string{
+var jsonFieldsNameOfOwnerPostOwnersReq = [1]string{
 	0: "name",
 }
 
-// Decode decodes OwnerPostRegisterReq from json.
-func (s *OwnerPostRegisterReq) Decode(d *jx.Decoder) error {
+// Decode decodes OwnerPostOwnersReq from json.
+func (s *OwnerPostOwnersReq) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode OwnerPostRegisterReq to nil")
+		return errors.New("invalid: unable to decode OwnerPostOwnersReq to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5338,7 +5338,7 @@ func (s *OwnerPostRegisterReq) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode OwnerPostRegisterReq")
+		return errors.Wrap(err, "decode OwnerPostOwnersReq")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5355,8 +5355,8 @@ func (s *OwnerPostRegisterReq) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfOwnerPostRegisterReq) {
-					name = jsonFieldsNameOfOwnerPostRegisterReq[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfOwnerPostOwnersReq) {
+					name = jsonFieldsNameOfOwnerPostOwnersReq[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5377,14 +5377,14 @@ func (s *OwnerPostRegisterReq) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *OwnerPostRegisterReq) MarshalJSON() ([]byte, error) {
+func (s *OwnerPostOwnersReq) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OwnerPostRegisterReq) UnmarshalJSON(data []byte) error {
+func (s *OwnerPostOwnersReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

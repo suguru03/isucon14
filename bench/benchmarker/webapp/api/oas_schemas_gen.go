@@ -954,6 +954,98 @@ func (s *ChairPostActivityReq) SetIsActive(val bool) {
 	s.IsActive = val
 }
 
+type ChairPostChairsCreated struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// オーナーID.
+	OwnerID string `json:"owner_id"`
+}
+
+// GetID returns the value of ID.
+func (s *ChairPostChairsCreated) GetID() string {
+	return s.ID
+}
+
+// GetOwnerID returns the value of OwnerID.
+func (s *ChairPostChairsCreated) GetOwnerID() string {
+	return s.OwnerID
+}
+
+// SetID sets the value of ID.
+func (s *ChairPostChairsCreated) SetID(val string) {
+	s.ID = val
+}
+
+// SetOwnerID sets the value of OwnerID.
+func (s *ChairPostChairsCreated) SetOwnerID(val string) {
+	s.OwnerID = val
+}
+
+// ChairPostChairsCreatedHeaders wraps ChairPostChairsCreated with response headers.
+type ChairPostChairsCreatedHeaders struct {
+	SetCookie OptString
+	Response  ChairPostChairsCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *ChairPostChairsCreatedHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *ChairPostChairsCreatedHeaders) GetResponse() ChairPostChairsCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *ChairPostChairsCreatedHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ChairPostChairsCreatedHeaders) SetResponse(val ChairPostChairsCreated) {
+	s.Response = val
+}
+
+type ChairPostChairsReq struct {
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 椅子をオーナーに紐づけるための椅子登録用トークン.
+	ChairRegisterToken string `json:"chair_register_token"`
+}
+
+// GetName returns the value of Name.
+func (s *ChairPostChairsReq) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *ChairPostChairsReq) GetModel() string {
+	return s.Model
+}
+
+// GetChairRegisterToken returns the value of ChairRegisterToken.
+func (s *ChairPostChairsReq) GetChairRegisterToken() string {
+	return s.ChairRegisterToken
+}
+
+// SetName sets the value of Name.
+func (s *ChairPostChairsReq) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *ChairPostChairsReq) SetModel(val string) {
+	s.Model = val
+}
+
+// SetChairRegisterToken sets the value of ChairRegisterToken.
+func (s *ChairPostChairsReq) SetChairRegisterToken(val string) {
+	s.ChairRegisterToken = val
+}
+
 type ChairPostCoordinateOK struct {
 	// 記録日時.
 	RecordedAt int64 `json:"recorded_at"`
@@ -967,98 +1059,6 @@ func (s *ChairPostCoordinateOK) GetRecordedAt() int64 {
 // SetRecordedAt sets the value of RecordedAt.
 func (s *ChairPostCoordinateOK) SetRecordedAt(val int64) {
 	s.RecordedAt = val
-}
-
-type ChairPostRegisterCreated struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// オーナーID.
-	OwnerID string `json:"owner_id"`
-}
-
-// GetID returns the value of ID.
-func (s *ChairPostRegisterCreated) GetID() string {
-	return s.ID
-}
-
-// GetOwnerID returns the value of OwnerID.
-func (s *ChairPostRegisterCreated) GetOwnerID() string {
-	return s.OwnerID
-}
-
-// SetID sets the value of ID.
-func (s *ChairPostRegisterCreated) SetID(val string) {
-	s.ID = val
-}
-
-// SetOwnerID sets the value of OwnerID.
-func (s *ChairPostRegisterCreated) SetOwnerID(val string) {
-	s.OwnerID = val
-}
-
-// ChairPostRegisterCreatedHeaders wraps ChairPostRegisterCreated with response headers.
-type ChairPostRegisterCreatedHeaders struct {
-	SetCookie OptString
-	Response  ChairPostRegisterCreated
-}
-
-// GetSetCookie returns the value of SetCookie.
-func (s *ChairPostRegisterCreatedHeaders) GetSetCookie() OptString {
-	return s.SetCookie
-}
-
-// GetResponse returns the value of Response.
-func (s *ChairPostRegisterCreatedHeaders) GetResponse() ChairPostRegisterCreated {
-	return s.Response
-}
-
-// SetSetCookie sets the value of SetCookie.
-func (s *ChairPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
-	s.SetCookie = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ChairPostRegisterCreatedHeaders) SetResponse(val ChairPostRegisterCreated) {
-	s.Response = val
-}
-
-type ChairPostRegisterReq struct {
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 椅子をオーナーに紐づけるための椅子登録用トークン.
-	ChairRegisterToken string `json:"chair_register_token"`
-}
-
-// GetName returns the value of Name.
-func (s *ChairPostRegisterReq) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *ChairPostRegisterReq) GetModel() string {
-	return s.Model
-}
-
-// GetChairRegisterToken returns the value of ChairRegisterToken.
-func (s *ChairPostRegisterReq) GetChairRegisterToken() string {
-	return s.ChairRegisterToken
-}
-
-// SetName sets the value of Name.
-func (s *ChairPostRegisterReq) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *ChairPostRegisterReq) SetModel(val string) {
-	s.Model = val
-}
-
-// SetChairRegisterToken sets the value of ChairRegisterToken.
-func (s *ChairPostRegisterReq) SetChairRegisterToken(val string) {
-	s.ChairRegisterToken = val
 }
 
 // ChairPostRideStatusNoContent is response for ChairPostRideStatus operation.
@@ -1092,16 +1092,16 @@ type ChairPostRideStatusReqStatus string
 
 const (
 	ChairPostRideStatusReqStatusMATCHING ChairPostRideStatusReqStatus = "MATCHING"
+	ChairPostRideStatusReqStatusENROUTE  ChairPostRideStatusReqStatus = "ENROUTE"
 	ChairPostRideStatusReqStatusCARRYING ChairPostRideStatusReqStatus = "CARRYING"
-	ChairPostRideStatusReqStatusCANCELED ChairPostRideStatusReqStatus = "CANCELED"
 )
 
 // AllValues returns all ChairPostRideStatusReqStatus values.
 func (ChairPostRideStatusReqStatus) AllValues() []ChairPostRideStatusReqStatus {
 	return []ChairPostRideStatusReqStatus{
 		ChairPostRideStatusReqStatusMATCHING,
+		ChairPostRideStatusReqStatusENROUTE,
 		ChairPostRideStatusReqStatusCARRYING,
-		ChairPostRideStatusReqStatusCANCELED,
 	}
 }
 
@@ -1110,9 +1110,9 @@ func (s ChairPostRideStatusReqStatus) MarshalText() ([]byte, error) {
 	switch s {
 	case ChairPostRideStatusReqStatusMATCHING:
 		return []byte(s), nil
-	case ChairPostRideStatusReqStatusCARRYING:
+	case ChairPostRideStatusReqStatusENROUTE:
 		return []byte(s), nil
-	case ChairPostRideStatusReqStatusCANCELED:
+	case ChairPostRideStatusReqStatusCARRYING:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1125,11 +1125,11 @@ func (s *ChairPostRideStatusReqStatus) UnmarshalText(data []byte) error {
 	case ChairPostRideStatusReqStatusMATCHING:
 		*s = ChairPostRideStatusReqStatusMATCHING
 		return nil
+	case ChairPostRideStatusReqStatusENROUTE:
+		*s = ChairPostRideStatusReqStatusENROUTE
+		return nil
 	case ChairPostRideStatusReqStatusCARRYING:
 		*s = ChairPostRideStatusReqStatusCARRYING
-		return nil
-	case ChairPostRideStatusReqStatusCANCELED:
-		*s = ChairPostRideStatusReqStatusCANCELED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1249,7 +1249,7 @@ func (*Error) appPostRidesEstimatedFareRes() {}
 func (*Error) appPostUsersRes()              {}
 func (*Error) chairGetRideRes()              {}
 func (*Error) chairPostRideStatusRes()       {}
-func (*Error) ownerPostRegisterRes()         {}
+func (*Error) ownerPostOwnersRes()           {}
 
 // NewOptAppChair returns new OptAppChair with value set to v.
 func NewOptAppChair(v AppChair) OptAppChair {
@@ -1573,38 +1573,38 @@ func (o OptChairPostActivityReq) Or(d ChairPostActivityReq) ChairPostActivityReq
 	return d
 }
 
-// NewOptChairPostRegisterReq returns new OptChairPostRegisterReq with value set to v.
-func NewOptChairPostRegisterReq(v ChairPostRegisterReq) OptChairPostRegisterReq {
-	return OptChairPostRegisterReq{
+// NewOptChairPostChairsReq returns new OptChairPostChairsReq with value set to v.
+func NewOptChairPostChairsReq(v ChairPostChairsReq) OptChairPostChairsReq {
+	return OptChairPostChairsReq{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptChairPostRegisterReq is optional ChairPostRegisterReq.
-type OptChairPostRegisterReq struct {
-	Value ChairPostRegisterReq
+// OptChairPostChairsReq is optional ChairPostChairsReq.
+type OptChairPostChairsReq struct {
+	Value ChairPostChairsReq
 	Set   bool
 }
 
-// IsSet returns true if OptChairPostRegisterReq was set.
-func (o OptChairPostRegisterReq) IsSet() bool { return o.Set }
+// IsSet returns true if OptChairPostChairsReq was set.
+func (o OptChairPostChairsReq) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptChairPostRegisterReq) Reset() {
-	var v ChairPostRegisterReq
+func (o *OptChairPostChairsReq) Reset() {
+	var v ChairPostChairsReq
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptChairPostRegisterReq) SetTo(v ChairPostRegisterReq) {
+func (o *OptChairPostChairsReq) SetTo(v ChairPostChairsReq) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptChairPostRegisterReq) Get() (v ChairPostRegisterReq, ok bool) {
+func (o OptChairPostChairsReq) Get() (v ChairPostChairsReq, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1612,7 +1612,7 @@ func (o OptChairPostRegisterReq) Get() (v ChairPostRegisterReq, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptChairPostRegisterReq) Or(d ChairPostRegisterReq) ChairPostRegisterReq {
+func (o OptChairPostChairsReq) Or(d ChairPostChairsReq) ChairPostChairsReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1803,38 +1803,38 @@ func (o OptInt64) Or(d int64) int64 {
 	return d
 }
 
-// NewOptOwnerPostRegisterReq returns new OptOwnerPostRegisterReq with value set to v.
-func NewOptOwnerPostRegisterReq(v OwnerPostRegisterReq) OptOwnerPostRegisterReq {
-	return OptOwnerPostRegisterReq{
+// NewOptOwnerPostOwnersReq returns new OptOwnerPostOwnersReq with value set to v.
+func NewOptOwnerPostOwnersReq(v OwnerPostOwnersReq) OptOwnerPostOwnersReq {
+	return OptOwnerPostOwnersReq{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptOwnerPostRegisterReq is optional OwnerPostRegisterReq.
-type OptOwnerPostRegisterReq struct {
-	Value OwnerPostRegisterReq
+// OptOwnerPostOwnersReq is optional OwnerPostOwnersReq.
+type OptOwnerPostOwnersReq struct {
+	Value OwnerPostOwnersReq
 	Set   bool
 }
 
-// IsSet returns true if OptOwnerPostRegisterReq was set.
-func (o OptOwnerPostRegisterReq) IsSet() bool { return o.Set }
+// IsSet returns true if OptOwnerPostOwnersReq was set.
+func (o OptOwnerPostOwnersReq) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptOwnerPostRegisterReq) Reset() {
-	var v OwnerPostRegisterReq
+func (o *OptOwnerPostOwnersReq) Reset() {
+	var v OwnerPostOwnersReq
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptOwnerPostRegisterReq) SetTo(v OwnerPostRegisterReq) {
+func (o *OptOwnerPostOwnersReq) SetTo(v OwnerPostOwnersReq) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptOwnerPostRegisterReq) Get() (v OwnerPostRegisterReq, ok bool) {
+func (o OptOwnerPostOwnersReq) Get() (v OwnerPostOwnersReq, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1842,7 +1842,7 @@ func (o OptOwnerPostRegisterReq) Get() (v OwnerPostRegisterReq, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptOwnerPostRegisterReq) Or(d OwnerPostRegisterReq) OwnerPostRegisterReq {
+func (o OptOwnerPostOwnersReq) Or(d OwnerPostOwnersReq) OwnerPostOwnersReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1987,7 +1987,7 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
-type OwnerGetChairDetailOK struct {
+type OwnerGetChairOK struct {
 	// 椅子ID.
 	ID string `json:"id"`
 	// 椅子の名前.
@@ -2005,72 +2005,72 @@ type OwnerGetChairDetailOK struct {
 }
 
 // GetID returns the value of ID.
-func (s *OwnerGetChairDetailOK) GetID() string {
+func (s *OwnerGetChairOK) GetID() string {
 	return s.ID
 }
 
 // GetName returns the value of Name.
-func (s *OwnerGetChairDetailOK) GetName() string {
+func (s *OwnerGetChairOK) GetName() string {
 	return s.Name
 }
 
 // GetModel returns the value of Model.
-func (s *OwnerGetChairDetailOK) GetModel() string {
+func (s *OwnerGetChairOK) GetModel() string {
 	return s.Model
 }
 
 // GetActive returns the value of Active.
-func (s *OwnerGetChairDetailOK) GetActive() bool {
+func (s *OwnerGetChairOK) GetActive() bool {
 	return s.Active
 }
 
 // GetRegisteredAt returns the value of RegisteredAt.
-func (s *OwnerGetChairDetailOK) GetRegisteredAt() int64 {
+func (s *OwnerGetChairOK) GetRegisteredAt() int64 {
 	return s.RegisteredAt
 }
 
 // GetTotalDistance returns the value of TotalDistance.
-func (s *OwnerGetChairDetailOK) GetTotalDistance() int {
+func (s *OwnerGetChairOK) GetTotalDistance() int {
 	return s.TotalDistance
 }
 
 // GetTotalDistanceUpdatedAt returns the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairDetailOK) GetTotalDistanceUpdatedAt() OptInt64 {
+func (s *OwnerGetChairOK) GetTotalDistanceUpdatedAt() OptInt64 {
 	return s.TotalDistanceUpdatedAt
 }
 
 // SetID sets the value of ID.
-func (s *OwnerGetChairDetailOK) SetID(val string) {
+func (s *OwnerGetChairOK) SetID(val string) {
 	s.ID = val
 }
 
 // SetName sets the value of Name.
-func (s *OwnerGetChairDetailOK) SetName(val string) {
+func (s *OwnerGetChairOK) SetName(val string) {
 	s.Name = val
 }
 
 // SetModel sets the value of Model.
-func (s *OwnerGetChairDetailOK) SetModel(val string) {
+func (s *OwnerGetChairOK) SetModel(val string) {
 	s.Model = val
 }
 
 // SetActive sets the value of Active.
-func (s *OwnerGetChairDetailOK) SetActive(val bool) {
+func (s *OwnerGetChairOK) SetActive(val bool) {
 	s.Active = val
 }
 
 // SetRegisteredAt sets the value of RegisteredAt.
-func (s *OwnerGetChairDetailOK) SetRegisteredAt(val int64) {
+func (s *OwnerGetChairOK) SetRegisteredAt(val int64) {
 	s.RegisteredAt = val
 }
 
 // SetTotalDistance sets the value of TotalDistance.
-func (s *OwnerGetChairDetailOK) SetTotalDistance(val int) {
+func (s *OwnerGetChairOK) SetTotalDistance(val int) {
 	s.TotalDistance = val
 }
 
 // SetTotalDistanceUpdatedAt sets the value of TotalDistanceUpdatedAt.
-func (s *OwnerGetChairDetailOK) SetTotalDistanceUpdatedAt(val OptInt64) {
+func (s *OwnerGetChairOK) SetTotalDistanceUpdatedAt(val OptInt64) {
 	s.TotalDistanceUpdatedAt = val
 }
 
@@ -2280,7 +2280,7 @@ func (s *OwnerGetSalesOKModelsItem) SetSales(val int) {
 	s.Sales = val
 }
 
-type OwnerPostRegisterCreated struct {
+type OwnerPostOwnersCreated struct {
 	// オーナーID.
 	ID string `json:"id"`
 	// 椅子をオーナーに紐づけるための椅子登録用トークン.
@@ -2288,65 +2288,65 @@ type OwnerPostRegisterCreated struct {
 }
 
 // GetID returns the value of ID.
-func (s *OwnerPostRegisterCreated) GetID() string {
+func (s *OwnerPostOwnersCreated) GetID() string {
 	return s.ID
 }
 
 // GetChairRegisterToken returns the value of ChairRegisterToken.
-func (s *OwnerPostRegisterCreated) GetChairRegisterToken() string {
+func (s *OwnerPostOwnersCreated) GetChairRegisterToken() string {
 	return s.ChairRegisterToken
 }
 
 // SetID sets the value of ID.
-func (s *OwnerPostRegisterCreated) SetID(val string) {
+func (s *OwnerPostOwnersCreated) SetID(val string) {
 	s.ID = val
 }
 
 // SetChairRegisterToken sets the value of ChairRegisterToken.
-func (s *OwnerPostRegisterCreated) SetChairRegisterToken(val string) {
+func (s *OwnerPostOwnersCreated) SetChairRegisterToken(val string) {
 	s.ChairRegisterToken = val
 }
 
-// OwnerPostRegisterCreatedHeaders wraps OwnerPostRegisterCreated with response headers.
-type OwnerPostRegisterCreatedHeaders struct {
+// OwnerPostOwnersCreatedHeaders wraps OwnerPostOwnersCreated with response headers.
+type OwnerPostOwnersCreatedHeaders struct {
 	SetCookie OptString
-	Response  OwnerPostRegisterCreated
+	Response  OwnerPostOwnersCreated
 }
 
 // GetSetCookie returns the value of SetCookie.
-func (s *OwnerPostRegisterCreatedHeaders) GetSetCookie() OptString {
+func (s *OwnerPostOwnersCreatedHeaders) GetSetCookie() OptString {
 	return s.SetCookie
 }
 
 // GetResponse returns the value of Response.
-func (s *OwnerPostRegisterCreatedHeaders) GetResponse() OwnerPostRegisterCreated {
+func (s *OwnerPostOwnersCreatedHeaders) GetResponse() OwnerPostOwnersCreated {
 	return s.Response
 }
 
 // SetSetCookie sets the value of SetCookie.
-func (s *OwnerPostRegisterCreatedHeaders) SetSetCookie(val OptString) {
+func (s *OwnerPostOwnersCreatedHeaders) SetSetCookie(val OptString) {
 	s.SetCookie = val
 }
 
 // SetResponse sets the value of Response.
-func (s *OwnerPostRegisterCreatedHeaders) SetResponse(val OwnerPostRegisterCreated) {
+func (s *OwnerPostOwnersCreatedHeaders) SetResponse(val OwnerPostOwnersCreated) {
 	s.Response = val
 }
 
-func (*OwnerPostRegisterCreatedHeaders) ownerPostRegisterRes() {}
+func (*OwnerPostOwnersCreatedHeaders) ownerPostOwnersRes() {}
 
-type OwnerPostRegisterReq struct {
+type OwnerPostOwnersReq struct {
 	// オーナー名.
 	Name string `json:"name"`
 }
 
 // GetName returns the value of Name.
-func (s *OwnerPostRegisterReq) GetName() string {
+func (s *OwnerPostOwnersReq) GetName() string {
 	return s.Name
 }
 
 // SetName sets the value of Name.
-func (s *OwnerPostRegisterReq) SetName(val string) {
+func (s *OwnerPostOwnersReq) SetName(val string) {
 	s.Name = val
 }
 

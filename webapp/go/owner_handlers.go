@@ -15,17 +15,17 @@ const (
 	farePerDistance = 100
 )
 
-type ownerPostRegisterRequest struct {
+type ownerPostOwnersRequest struct {
 	Name string `json:"name"`
 }
 
-type ownerPostRegisterResponse struct {
+type ownerPostOwnersResponse struct {
 	ID                 string `json:"id"`
 	ChairRegisterToken string `json:"chair_register_token"`
 }
 
 func ownerPostOwners(w http.ResponseWriter, r *http.Request) {
-	req := &ownerPostRegisterRequest{}
+	req := &ownerPostOwnersRequest{}
 	if err := bindJSON(r, req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -54,7 +54,7 @@ func ownerPostOwners(w http.ResponseWriter, r *http.Request) {
 		Value: accessToken,
 	})
 
-	writeJSON(w, http.StatusCreated, &ownerPostRegisterResponse{
+	writeJSON(w, http.StatusCreated, &ownerPostOwnersResponse{
 		ID:                 ownerID,
 		ChairRegisterToken: chairRegisterToken,
 	})
@@ -116,13 +116,13 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 
 	modelSalesByModel := map[string]int{}
 	for _, chair := range chairs {
-		reqs := []Ride{}
-		if err := db.Select(&reqs, "SELECT ride_requests.* FROM ride_requests JOIN ride_request_statuses ON ride_requests.id = ride_request_statuses.ride_request_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
+		rides := []Ride{}
+		if err := db.Select(&rides, "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ?", chair.ID, since, until); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 
-		chairSales := sumSales(reqs)
+		chairSales := sumSales(rides)
 		res.TotalSales += chairSales
 
 		res.Chairs = append(res.Chairs, ChairSales{

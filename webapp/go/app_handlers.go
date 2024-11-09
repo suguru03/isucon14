@@ -317,7 +317,7 @@ func appPostRides(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT INTO ride_statuses (id, ridet_id, status) VALUES (?, ?, ?)`,
+		`INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)`,
 		ulid.Make().String(), rideID, "MATCHING",
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
