@@ -1,0 +1,10 @@
+src/App/RegisterDependencies.php
+src/App/ResponseEmitter.php
+composer.json
+public/*
+config/**
+logs/*
+*.xml.dist
+tests/**
+README.md
+.github/**

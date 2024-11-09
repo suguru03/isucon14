@@ -1,0 +1,3 @@
+invokerPackage: "IsuRide"
+psr7Implementation: "slim-psr7"
+srcBasePath: src
