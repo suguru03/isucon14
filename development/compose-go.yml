@@ -4,12 +4,19 @@ services:
       context: ../webapp/go
     ports:
       - 8080:8080
+    volumes:
+      - ../webapp/sql:/home/isucon/webapp/sql
     working_dir: /home/isucon/webapp/go
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
+      ISUCON_DB_HOST: db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: curl -f http://localhost:8080; if [ $? -ne 22 ]; then exit 1; fi
+      start_period: 60s
   db:
     image: mysql:8
     environment:
@@ -23,3 +30,4 @@ services:
       - ../webapp/sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
+      start_period: 60s
