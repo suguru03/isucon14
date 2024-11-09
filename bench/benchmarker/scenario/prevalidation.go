@@ -47,7 +47,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	userID := ""
 	// POST /api/app/register
 	{
-		result, err := userClient.AppPostRegister(ctx, &api.AppPostRegisterReq{
+		result, err := userClient.AppPostRegister(ctx, &api.AppPostUsersReq{
 			Username:    "hoge",
 			Firstname:   "hoge",
 			Lastname:    "hoge",
@@ -76,7 +76,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	// POST /api/app/requests
 	requestID := ""
 	{
-		result, err := userClient.AppPostRequest(ctx, &api.AppPostRequestReq{
+		result, err := userClient.AppPostRequest(ctx, &api.AppPostRidesReq{
 			PickupCoordinate: api.Coordinate{
 				Latitude:  0,
 				Longitude: 0,
@@ -89,10 +89,10 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		if result.RequestID == "" {
+		if result.RideID == "" {
 			return errors.New("POST /api/app/requests の返却するIDは、空であってはいけません")
 		}
-		requestID = result.RequestID
+		requestID = result.RideID
 	}
 
 	// GET /api/app/requests/:requestID
@@ -101,8 +101,8 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		if result.RequestID != requestID {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, result.RequestID)
+		if result.ID != requestID {
+			return fmt.Errorf("GET /api/app/requests/:requestID の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, result.ID)
 		}
 		if result.PickupCoordinate.Latitude != 0 {
 			return fmt.Errorf("GET /api/app/requests/:requestID の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, result.PickupCoordinate.Latitude)
@@ -130,7 +130,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotification(result, requestID, api.RequestStatusMATCHING); err != nil {
+			if err := validateAppNotification(result, requestID, api.RideStatusMATCHING); err != nil {
 				return err
 			}
 			if result.Chair.Set {
@@ -157,7 +157,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	chairRegisterToken := ""
 	// POST /api/owner/register
 	{
-		result, err := ownerClient.ProviderPostRegister(ctx, &api.OwnerPostRegisterReq{
+		result, err := ownerClient.ProviderPostRegister(ctx, &api.OwnerPostOwnersReq{
 			Name: "hoge",
 		})
 		if err != nil {
@@ -175,7 +175,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	chairID := ""
 	// POST /api/chair/register
 	{
-		result, err := chairClient.ChairPostRegister(ctx, &api.ChairPostRegisterReq{
+		result, err := chairClient.ChairPostRegister(ctx, &api.ChairPostChairsReq{
 			Name:               "hoge",
 			Model:              "A",
 			ChairRegisterToken: chairRegisterToken,
@@ -191,7 +191,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 
 	// POST /api/chair/activate
 	{
-		_, err := chairClient.ChairPostActivate(ctx)
+		_, err := chairClient.ChairPostActivity(ctx, &api.ChairPostActivityReq{
+			IsActive: true,
+		})
 		if err != nil {
 			return err
 		}
@@ -214,7 +216,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RequestStatusMATCHING); err != nil {
+			if err := validateChairNotification(result, requestID, userID, api.RideStatusMATCHING); err != nil {
 				return err
 			}
 			break
@@ -227,7 +229,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotificationWithChair(result, requestID, api.RequestStatusMATCHING, chairID); err != nil {
+			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusMATCHING, chairID); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 0 {
@@ -239,7 +241,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 
 	// POST /api/chair/requests/accept
 	{
-		_, err := chairClient.ChairPostRequestAccept(ctx, requestID)
+		_, err := chairClient.ChairPostRideStatus(ctx, requestID, &api.ChairPostRideStatusReq{
+			Status: api.ChairPostRideStatusReqStatusENROUTE,
+		})
 		if err != nil {
 			return err
 		}
@@ -251,7 +255,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RequestStatusDISPATCHING); err != nil {
+			if err := validateChairNotification(result, requestID, userID, api.RideStatusENROUTE); err != nil {
 				return err
 			}
 			break
@@ -264,7 +268,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotificationWithChair(result, requestID, api.RequestStatusDISPATCHING, chairID); err != nil {
+			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusENROUTE, chairID); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 0 {
@@ -291,7 +295,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RequestStatusDISPATCHED); err != nil {
+			if err := validateChairNotification(result, requestID, userID, api.RideStatusPICKUP); err != nil {
 				return err
 			}
 			break
@@ -304,7 +308,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotificationWithChair(result, requestID, api.RequestStatusDISPATCHED, chairID); err != nil {
+			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusPICKUP, chairID); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 0 {
@@ -316,7 +320,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 
 	// POST /api/chair/requests/depart
 	{
-		_, err := chairClient.ChairPostRequestDepart(ctx, requestID)
+		_, err := chairClient.ChairPostRideStatus(ctx, requestID, &api.ChairPostRideStatusReq{
+			Status: api.ChairPostRideStatusReqStatusCARRYING,
+		})
 		if err != nil {
 			return err
 		}
@@ -328,7 +334,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RequestStatusCARRYING); err != nil {
+			if err := validateChairNotification(result, requestID, userID, api.RideStatusCARRYING); err != nil {
 				return err
 			}
 			break
@@ -341,7 +347,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotificationWithChair(result, requestID, api.RequestStatusCARRYING, chairID); err != nil {
+			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusCARRYING, chairID); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 0 {
@@ -368,7 +374,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RequestStatusARRIVED); err != nil {
+			if err := validateChairNotification(result, requestID, userID, api.RideStatusARRIVED); err != nil {
 				return err
 			}
 			break
@@ -381,7 +387,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotificationWithChair(result, requestID, api.RequestStatusARRIVED, chairID); err != nil {
+			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusARRIVED, chairID); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 0 {
@@ -393,7 +399,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 
 	// POST /api/app/request/:requestID/evaluate
 	{
-		result, err := userClient.AppPostRequestEvaluate(ctx, requestID, &api.AppPostRequestEvaluateReq{
+		result, err := userClient.AppPostRequestEvaluate(ctx, requestID, &api.AppPostRideEvaluationReq{
 			Evaluation: 5,
 		})
 		if err != nil {
@@ -442,7 +448,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateAppNotification(result, requestID, api.RequestStatusCOMPLETED); err != nil {
+			if err := validateAppNotification(result, requestID, api.RideStatusCOMPLETED); err != nil {
 				return err
 			}
 			if len(result.Chair.Value.Stats.RecentRides) != 1 {
@@ -461,9 +467,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	return nil
 }
 
-func validateAppNotification(req *api.AppRequest, requestID string, status api.RequestStatus) error {
-	if req.RequestID != requestID {
-		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RequestID)
+func validateAppNotification(req *api.AppRide, requestID string, status api.RideStatus) error {
+	if req.ID != requestID {
+		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.ID)
 	}
 	if req.PickupCoordinate.Latitude != 0 {
 		return fmt.Errorf("GET /api/app/notification の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, req.PickupCoordinate.Latitude)
@@ -485,7 +491,7 @@ func validateAppNotification(req *api.AppRequest, requestID string, status api.R
 	return nil
 }
 
-func validateAppNotificationWithChair(req *api.AppRequest, requestID string, status api.RequestStatus, chairID string) error {
+func validateAppNotificationWithChair(req *api.AppRide, requestID string, status api.RideStatus, chairID string) error {
 	if err := validateAppNotification(req, requestID, status); err != nil {
 		return err
 	}
@@ -504,9 +510,9 @@ func validateAppNotificationWithChair(req *api.AppRequest, requestID string, sta
 	return nil
 }
 
-func validateChairNotification(req *api.ChairGetNotificationOK, requestID string, userID string, status api.RequestStatus) error {
-	if req.RequestID != requestID {
-		return fmt.Errorf("GET /api/chair/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RequestID)
+func validateChairNotification(req *api.ChairGetNotificationOK, requestID string, userID string, status api.RideStatus) error {
+	if req.RideID != requestID {
+		return fmt.Errorf("GET /api/chair/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RideID)
 	}
 	if req.User.ID != userID {
 		return fmt.Errorf("GET /api/chair/notification の返却するuser.idが、ユーザーIDと一致しません (expected:%s, actual:%s)", userID, req.User.ID)

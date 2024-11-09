@@ -65,10 +65,10 @@ CREATE TABLE payment_tokens
 )
   COMMENT = '決済トークンテーブル';
 
-DROP TABLE IF EXISTS ride_requests;
-CREATE TABLE ride_requests
+DROP TABLE IF EXISTS rides;
+CREATE TABLE rides
 (
-  id                    VARCHAR(26) NOT NULL COMMENT '配車/乗車リクエストID',
+  id                    VARCHAR(26) NOT NULL COMMENT 'ライドID',
   user_id               VARCHAR(26) NOT NULL COMMENT 'ユーザーID',
   chair_id              VARCHAR(26) NULL     COMMENT '割り当てられた椅子ID',
   pickup_latitude       INTEGER     NOT NULL COMMENT '配車位置(経度)',
@@ -80,17 +80,17 @@ CREATE TABLE ride_requests
   updated_at            DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '状態更新日時',
   PRIMARY KEY (id)
 )
-  COMMENT = '配車/乗車リクエスト情報テーブル';
+  COMMENT = 'ライド情報テーブル';
 
-DROP TABLE IF EXISTS ride_request_statuses;
-CREATE TABLE ride_request_statuses
+DROP TABLE IF EXISTS ride_statuses;
+CREATE TABLE ride_statuses
 (
-  id              VARCHAR(26)                                                                        NOT NULL,
-  ride_request_id VARCHAR(26)                                                                        NOT NULL COMMENT '配車/乗車リクエストID',
-  status          ENUM ('MATCHING', 'DISPATCHING', 'DISPATCHED', 'CARRYING', 'ARRIVED', 'COMPLETED') NOT NULL COMMENT '状態',
-  created_at      DATETIME(6)                                                                        NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '状態変更日時'
+  id              VARCHAR(26)                                                                NOT NULL,
+  ride_id VARCHAR(26)                                                                        NOT NULL COMMENT 'ライドID',
+  status          ENUM ('MATCHING', 'ENROUTE', 'PICKUP', 'CARRYING', 'ARRIVED', 'COMPLETED') NOT NULL COMMENT '状態',
+  created_at      DATETIME(6)                                                                NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '状態変更日時'
 )
-  COMMENT = '配車/乗車リクエストの状態変更情報テーブル';
+  COMMENT = 'ライドステータスの変更履歴テーブル';
 
 DROP TABLE IF EXISTS owners;
 CREATE TABLE owners
@@ -115,7 +115,7 @@ CREATE TABLE coupons
   code       VARCHAR(255) NOT NULL COMMENT 'クーポンコード',
   discount   INTEGER      NOT NULL COMMENT '割引額',
   created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '付与日時',
-  used_by    VARCHAR(26)  NULL COMMENT '使用したride_requestのID',
+  used_by    VARCHAR(26)  NULL COMMENT 'クーポンが適用されたライドのID',
   PRIMARY KEY (user_id, code)
 )
   COMMENT 'クーポンテーブル';

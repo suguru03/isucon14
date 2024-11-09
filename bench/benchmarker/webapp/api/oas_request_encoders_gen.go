@@ -31,8 +31,8 @@ func encodeAppPostPaymentMethodsRequest(
 	return nil
 }
 
-func encodeAppPostRegisterRequest(
-	req OptAppPostRegisterReq,
+func encodeAppPostRideEvaluationRequest(
+	req OptAppPostRideEvaluationReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -51,8 +51,8 @@ func encodeAppPostRegisterRequest(
 	return nil
 }
 
-func encodeAppPostRequestRequest(
-	req OptAppPostRequestReq,
+func encodeAppPostRidesRequest(
+	req OptAppPostRidesReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -71,8 +71,8 @@ func encodeAppPostRequestRequest(
 	return nil
 }
 
-func encodeAppPostRequestEstimateRequest(
-	req OptAppPostRequestEstimateReq,
+func encodeAppPostRidesEstimatedFareRequest(
+	req OptAppPostRidesEstimatedFareReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -91,8 +91,48 @@ func encodeAppPostRequestEstimateRequest(
 	return nil
 }
 
-func encodeAppPostRequestEvaluateRequest(
-	req OptAppPostRequestEvaluateReq,
+func encodeAppPostUsersRequest(
+	req OptAppPostUsersReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	if !req.Set {
+		// Keep request with empty body if value is not set.
+		return nil
+	}
+	e := new(jx.Encoder)
+	{
+		if req.Set {
+			req.Encode(e)
+		}
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeChairPostActivityRequest(
+	req OptChairPostActivityReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	if !req.Set {
+		// Keep request with empty body if value is not set.
+		return nil
+	}
+	e := new(jx.Encoder)
+	{
+		if req.Set {
+			req.Encode(e)
+		}
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeChairPostChairsRequest(
+	req OptChairPostChairsReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -131,8 +171,8 @@ func encodeChairPostCoordinateRequest(
 	return nil
 }
 
-func encodeChairPostRegisterRequest(
-	req OptChairPostRegisterReq,
+func encodeChairPostRideStatusRequest(
+	req OptChairPostRideStatusReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -151,8 +191,8 @@ func encodeChairPostRegisterRequest(
 	return nil
 }
 
-func encodeOwnerPostRegisterRequest(
-	req OptOwnerPostRegisterReq,
+func encodeOwnerPostOwnersRequest(
+	req OptOwnerPostOwnersReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

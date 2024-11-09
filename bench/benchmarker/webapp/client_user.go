@@ -16,13 +16,13 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegisterReq) (*api.AppPostRegisterCreated, error) {
+func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostUsersReq) (*api.AppPostUsersCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/app/register", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/app/users", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +33,15 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegist
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/app/registerのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/usersのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /api/app/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/app/usersへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppPostRegisterCreated{}
+	resBody := &api.AppPostUsersCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -49,8 +49,8 @@ func (c *Client) AppPostRegister(ctx context.Context, reqBody *api.AppPostRegist
 	return resBody, nil
 }
 
-func (c *Client) AppGetRequests(ctx context.Context) (*api.AppGetRequestsOK, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, "/api/app/requests", nil)
+func (c *Client) AppGetRequests(ctx context.Context) (*api.AppGetRidesOK, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, "/api/app/rides", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,29 +61,29 @@ func (c *Client) AppGetRequests(ctx context.Context) (*api.AppGetRequestsOK, err
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("GET /app/requests のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /app/rides のリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /app/requests へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /app/rides へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppGetRequestsOK{}
+	resBody := &api.AppGetRidesOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestsのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("ridesのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
 }
 
-func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequestReq) (*api.AppPostRequestAccepted, error) {
+func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRidesReq) (*api.AppPostRidesAccepted, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/app/requests", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/app/rides", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -94,24 +94,24 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRequest
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/app/requestsのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/ridesのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusAccepted {
-		return nil, fmt.Errorf("POST /api/app/requestsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusAccepted, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/app/ridesへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusAccepted, resp.StatusCode)
 	}
 
-	resBody := &api.AppPostRequestAccepted{}
+	resBody := &api.AppPostRidesAccepted{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("rideのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
 }
 
-func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppRequest, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/app/requests/%s", requestID), nil)
+func (c *Client) AppGetRequest(ctx context.Context, rideID string) (*api.AppRide, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/app/rides/%s", rideID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -122,29 +122,29 @@ func (c *Client) AppGetRequest(ctx context.Context, requestID string) (*api.AppR
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("GET /api/app/requests/{request_id}のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}のリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /api/app/requests/{request_id}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppRequest{}
+	resBody := &api.AppRide{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("rideのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
 }
 
-func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, reqBody *api.AppPostRequestEvaluateReq) (*api.AppPostRequestEvaluateOK, error) {
+func (c *Client) AppPostRequestEvaluate(ctx context.Context, rideID string, reqBody *api.AppPostRideEvaluationReq) (*api.AppPostRideEvaluationOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/app/requests/%s/evaluate", requestID), bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/app/rides/%s/evaluation", rideID), bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -155,15 +155,15 @@ func (c *Client) AppPostRequestEvaluate(ctx context.Context, requestID string, r
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/app/requests/{request_id}/evaluateのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/app/rides/{ride_id}/evaluationのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("POST /api/app/requests/{request_id}/evaluateへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/app/rides/{ride_id}/evaluationへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.AppPostRequestEvaluateOK{}
+	resBody := &api.AppPostRideEvaluationOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -200,16 +200,16 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 	return resBody, nil
 }
 
-func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppRequest, error] {
-	return func(yield func(*api.AppRequest, error) bool) {
+func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppRide, error] {
+	return func(yield func(*api.AppRide, error) bool) {
 		for notification, err := range c.appGetNotification(ctx, false) {
 			if notification == nil {
 				if !yield(nil, err) {
 					return
 				}
 			} else {
-				if !yield(&api.AppRequest{
-					RequestID:             notification.RequestID,
+				if !yield(&api.AppRide{
+					ID:                    notification.RideID,
 					PickupCoordinate:      notification.PickupCoordinate,
 					DestinationCoordinate: notification.DestinationCoordinate,
 					Status:                notification.Status,
