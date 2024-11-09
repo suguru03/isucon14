@@ -12,6 +12,7 @@ services:
       ISUCON_DB_HOST: db
     healthcheck:
       test: curl -f http://localhost:8080; if [ $? -ne 22 ]; then exit 1; fi
+      start_period: 60s
   db:
     image: mysql:8
     environment:
@@ -25,3 +26,4 @@ services:
       - ../webapp/sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
+      start_period: 60s
