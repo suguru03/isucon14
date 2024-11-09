@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\Actions;
+namespace IsuRide\Handlers;
 
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Model\PostInitialize200Response;

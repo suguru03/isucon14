@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace IsuRide\Actions\App;
+namespace IsuRide\Handlers\App;
 
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Model\AppPostUsersRequest;
