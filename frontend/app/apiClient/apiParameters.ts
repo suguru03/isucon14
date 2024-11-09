@@ -3,4 +3,4 @@
  *
  * @version 1.0
  */
-export type RequestId = string;
+export type RideId = string;
