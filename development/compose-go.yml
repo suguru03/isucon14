@@ -11,7 +11,7 @@ services:
     environment:
       ISUCON_DB_HOST: db
     healthcheck:
-      test: curl -f http://localhost:8080 || exit 1
+      test: curl -f http://localhost:8080; if [ $? -ne 22 ]; then exit 1; fi
   db:
     image: mysql:8
     environment:
