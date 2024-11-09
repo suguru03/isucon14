@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IsuRide\App\Response;
 
+use Fig\Http\Message\StatusCodeInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ErrorResponse
@@ -21,7 +22,9 @@ class ErrorResponse
         $data = ['message' => $error->getMessage()];
         $json = json_encode($data);
         if ($json === false) {
-            $response = $response->withStatus(500);
+            $response = $response->withStatus(
+                StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR
+            );
             $json = json_encode(['error' => 'marshaling error failed']);
         }
         $response->getBody()->write($json);
