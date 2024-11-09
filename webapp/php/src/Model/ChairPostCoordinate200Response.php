@@ -44,12 +44,12 @@ class ChairPostCoordinate200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "datetime" ],
-  "type" : "object",
+  "required" : [ "recorded_at" ],
   "properties" : {
-    "datetime" : {
-      "type" : "string",
-      "description" : "記録日時"
+    "recorded_at" : {
+      "type" : "integer",
+      "description" : "記録日時",
+      "format" : "int64"
     }
   }
 }

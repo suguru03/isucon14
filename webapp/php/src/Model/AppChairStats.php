@@ -45,7 +45,6 @@ class AppChairStats extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "recent_rides", "total_evaluation_avg", "total_rides_count" ],
-  "type" : "object",
   "properties" : {
     "recent_rides" : {
       "type" : "array",

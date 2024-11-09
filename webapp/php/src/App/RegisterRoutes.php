@@ -75,11 +75,11 @@ class RegisterRoutes
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
-  "description" : "Server Sent Eventsで通知レスポンスが送信されます",
+  "description" : "OK",
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/AppRequest"
+        "$ref" : "#/components/schemas/app_get_notification_200_response"
       }
     }
   }
@@ -87,7 +87,32 @@ class RegisterRoutes
                 ],
                 '204' => [
                     'jsonSchema' => '{
-  "description" : "対象となる配車要求が存在しない場合"
+  "description" : "対象となるライドが存在しない場合"
+}',
+                ],
+            ],
+            'authMethods' => [
+            ],
+        ],
+        [
+            'httpMethod' => 'GET',
+            'basePathWithoutHost' => '/api',
+            'path' => '/app/rides',
+            'apiPackage' => 'IsuRide\Api',
+            'classname' => 'AbstractAppApi',
+            'userClassname' => 'AppApi',
+            'operationId' => 'appGetRides',
+            'responses' => [
+                '200' => [
+                    'jsonSchema' => '{
+  "description" : "OK",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/app_get_rides_200_response"
+      }
+    }
+  }
 }',
                 ],
             ],
@@ -108,6 +133,18 @@ class RegisterRoutes
   "description" : "決済トークンの登録に成功した"
 }',
                 ],
+                '400' => [
+                    'jsonSchema' => '{
+  "description" : "Bad Request",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/Error"
+      }
+    }
+  }
+}',
+                ],
             ],
             'authMethods' => [
             ],
@@ -115,19 +152,68 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/app/register',
+            'path' => '/app/rides',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractAppApi',
             'userClassname' => 'AppApi',
-            'operationId' => 'appPostRegister',
+            'operationId' => 'appPostRides',
             'responses' => [
-                '200' => [
+                '202' => [
                     'jsonSchema' => '{
-  "description" : "ユーザー登録が完了した",
+  "description" : "配車要求を受け付けた",
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/app_post_register_200_response"
+        "$ref" : "#/components/schemas/app_post_rides_202_response"
+      }
+    }
+  }
+}',
+                ],
+                '400' => [
+                    'jsonSchema' => '{
+  "description" : "Bad Request",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/Error"
+      }
+    }
+  }
+}',
+                ],
+                '409' => [
+                    'jsonSchema' => '{
+  "description" : "Conflict",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/Error"
+      }
+    }
+  }
+}',
+                ],
+            ],
+            'authMethods' => [
+            ],
+        ],
+        [
+            'httpMethod' => 'POST',
+            'basePathWithoutHost' => '/api',
+            'path' => '/app/rides/estimated-fare',
+            'apiPackage' => 'IsuRide\Api',
+            'classname' => 'AbstractAppApi',
+            'userClassname' => 'AppApi',
+            'operationId' => 'appPostRidesEstimatedFare',
+            'responses' => [
+                '200' => [
+                    'jsonSchema' => '{
+  "description" : "OK",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/app_post_rides_estimated_fare_200_response"
       }
     }
   }
@@ -152,19 +238,42 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/app/requests',
+            'path' => '/app/users',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractAppApi',
             'userClassname' => 'AppApi',
-            'operationId' => 'appPostRequest',
+            'operationId' => 'appPostUsers',
             'responses' => [
-                '202' => [
+                '201' => [
                     'jsonSchema' => '{
-  "description" : "配車要求を受け付けた",
+  "description" : "ユーザー登録が完了した",
+  "headers" : {
+    "Set-Cookie" : {
+      "description" : "サーバーから返却される Cookie",
+      "style" : "simple",
+      "explode" : false,
+      "schema" : {
+        "type" : "string",
+        "example" : "app_session=<access_token>; Path=/;"
+      }
+    }
+  },
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/app_post_request_202_response"
+        "$ref" : "#/components/schemas/app_post_users_201_response"
+      }
+    }
+  }
+}',
+                ],
+                '400' => [
+                    'jsonSchema' => '{
+  "description" : "Bad Request",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/Error"
       }
     }
   }
@@ -177,11 +286,11 @@ class RegisterRoutes
         [
             'httpMethod' => 'GET',
             'basePathWithoutHost' => '/api',
-            'path' => '/app/requests/{request_id}',
+            'path' => '/app/rides/{ride_id}',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractAppApi',
             'userClassname' => 'AppApi',
-            'operationId' => 'appGetRequest',
+            'operationId' => 'appGetRide',
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
@@ -189,7 +298,7 @@ class RegisterRoutes
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/AppRequest"
+        "$ref" : "#/components/schemas/AppRide"
       }
     }
   }
@@ -214,19 +323,19 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/app/requests/{request_id}/evaluate',
+            'path' => '/app/rides/{ride_id}/evaluation',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractAppApi',
             'userClassname' => 'AppApi',
-            'operationId' => 'appPostRequestEvaluate',
+            'operationId' => 'appPostRideEvaluation',
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
-  "description" : "ユーザーが椅子を評価した",
+  "description" : "ユーザーがライドを評価した",
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/app_post_request_evaluate_200_response"
+        "$ref" : "#/components/schemas/app_post_ride_evaluation_200_response"
       }
     }
   }
@@ -246,7 +355,7 @@ class RegisterRoutes
                 ],
                 '404' => [
                     'jsonSchema' => '{
-  "description" : "存在しない配車要求",
+  "description" : "存在しないライド",
   "content" : {
     "application/json" : {
       "schema" : {
@@ -271,11 +380,11 @@ class RegisterRoutes
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
-  "description" : "自分に割り当てられた最新の配車要求",
+  "description" : "自分に割り当てられた最新のライド",
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/ChairRequest"
+        "$ref" : "#/components/schemas/chair_get_notification_200_response"
       }
     }
   }
@@ -283,7 +392,7 @@ class RegisterRoutes
                 ],
                 '204' => [
                     'jsonSchema' => '{
-  "description" : "割り当てられた配車要求が存在しない場合"
+  "description" : "割り当てられたライドが存在しない場合"
 }',
                 ],
             ],
@@ -293,15 +402,51 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/chair/activate',
+            'path' => '/chair/activity',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractChairApi',
             'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostActivate',
+            'operationId' => 'chairPostActivity',
             'responses' => [
                 '204' => [
                     'jsonSchema' => '{
-  "description" : "サービスが椅子が配車受付を開始したことを了解した"
+  "description" : "椅子の配車受付の開始・停止を受理した"
+}',
+                ],
+            ],
+            'authMethods' => [
+            ],
+        ],
+        [
+            'httpMethod' => 'POST',
+            'basePathWithoutHost' => '/api',
+            'path' => '/chair/chairs',
+            'apiPackage' => 'IsuRide\Api',
+            'classname' => 'AbstractChairApi',
+            'userClassname' => 'ChairApi',
+            'operationId' => 'chairPostChairs',
+            'responses' => [
+                '201' => [
+                    'jsonSchema' => '{
+  "description" : "椅子登録が完了した",
+  "headers" : {
+    "Set-Cookie" : {
+      "description" : "サーバーから返却される Cookie",
+      "style" : "simple",
+      "explode" : false,
+      "schema" : {
+        "type" : "string",
+        "example" : "chair_session=<access_token>; Path=/;"
+      }
+    }
+  },
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/chair_post_chairs_201_response"
+      }
+    }
+  }
 }',
                 ],
             ],
@@ -319,7 +464,7 @@ class RegisterRoutes
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
-  "description" : "サービスが椅子の座標を認識した",
+  "description" : "椅子の座標を更新した",
   "content" : {
     "application/json" : {
       "schema" : {
@@ -334,56 +479,13 @@ class RegisterRoutes
             ],
         ],
         [
-            'httpMethod' => 'POST',
-            'basePathWithoutHost' => '/api',
-            'path' => '/chair/deactivate',
-            'apiPackage' => 'IsuRide\Api',
-            'classname' => 'AbstractChairApi',
-            'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostDeactivate',
-            'responses' => [
-                '204' => [
-                    'jsonSchema' => '{
-  "description" : "サービスが椅子が配車受付を停止したことを了解した"
-}',
-                ],
-            ],
-            'authMethods' => [
-            ],
-        ],
-        [
-            'httpMethod' => 'POST',
-            'basePathWithoutHost' => '/api',
-            'path' => '/chair/register',
-            'apiPackage' => 'IsuRide\Api',
-            'classname' => 'AbstractChairApi',
-            'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostRegister',
-            'responses' => [
-                '201' => [
-                    'jsonSchema' => '{
-  "description" : "椅子登録が完了した",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/chair_post_register_201_response"
-      }
-    }
-  }
-}',
-                ],
-            ],
-            'authMethods' => [
-            ],
-        ],
-        [
             'httpMethod' => 'GET',
             'basePathWithoutHost' => '/api',
-            'path' => '/chair/requests/{request_id}',
+            'path' => '/chair/rides/{ride_id}',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractChairApi',
             'userClassname' => 'ChairApi',
-            'operationId' => 'chairGetRequest',
+            'operationId' => 'chairGetRide',
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{
@@ -391,7 +493,7 @@ class RegisterRoutes
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/ChairRequest"
+        "$ref" : "#/components/schemas/ChairRide"
       }
     }
   }
@@ -399,7 +501,7 @@ class RegisterRoutes
                 ],
                 '404' => [
                     'jsonSchema' => '{
-  "description" : "存在しない配車要求、対象の椅子にマッチングされていない配車要求を取得しようとした場合など",
+  "description" : "存在しないライド、対象の椅子にマッチングされていないライドを取得しようとした場合など",
   "content" : {
     "application/json" : {
       "schema" : {
@@ -416,11 +518,11 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/chair/requests/{request_id}/accept',
+            'path' => '/chair/rides/{ride_id}/status',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractChairApi',
             'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostRequestAccept',
+            'operationId' => 'chairPostRideStatus',
             'responses' => [
                 '204' => [
                     'jsonSchema' => '{
@@ -430,78 +532,6 @@ class RegisterRoutes
                 '404' => [
                     'jsonSchema' => '{
   "description" : "Not Found",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/Error"
-      }
-    }
-  }
-}',
-                ],
-            ],
-            'authMethods' => [
-            ],
-        ],
-        [
-            'httpMethod' => 'POST',
-            'basePathWithoutHost' => '/api',
-            'path' => '/chair/requests/{request_id}/deny',
-            'apiPackage' => 'IsuRide\Api',
-            'classname' => 'AbstractChairApi',
-            'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostRequestDeny',
-            'responses' => [
-                '204' => [
-                    'jsonSchema' => '{
-  "description" : "No Content"
-}',
-                ],
-                '404' => [
-                    'jsonSchema' => '{
-  "description" : "Not Found",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/Error"
-      }
-    }
-  }
-}',
-                ],
-            ],
-            'authMethods' => [
-            ],
-        ],
-        [
-            'httpMethod' => 'POST',
-            'basePathWithoutHost' => '/api',
-            'path' => '/chair/requests/{request_id}/depart',
-            'apiPackage' => 'IsuRide\Api',
-            'classname' => 'AbstractChairApi',
-            'userClassname' => 'ChairApi',
-            'operationId' => 'chairPostRequestDepart',
-            'responses' => [
-                '204' => [
-                    'jsonSchema' => '{
-  "description" : "椅子が出発した"
-}',
-                ],
-                '400' => [
-                    'jsonSchema' => '{
-  "description" : "椅子が乗車位置の座標に居ない、既に出発しているなど",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/Error"
-      }
-    }
-  }
-}',
-                ],
-                '404' => [
-                    'jsonSchema' => '{
-  "description" : "存在しない配車要求",
   "content" : {
     "application/json" : {
       "schema" : {
@@ -568,19 +598,42 @@ class RegisterRoutes
         [
             'httpMethod' => 'POST',
             'basePathWithoutHost' => '/api',
-            'path' => '/owner/register',
+            'path' => '/owner/owners',
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractOwnerApi',
             'userClassname' => 'OwnerApi',
-            'operationId' => 'ownerPostRegister',
+            'operationId' => 'ownerPostOwners',
             'responses' => [
                 '201' => [
                     'jsonSchema' => '{
-  "description" : "椅子のオーナー登録が完了した",
+  "description" : "オーナー登録が完了した",
+  "headers" : {
+    "Set-Cookie" : {
+      "description" : "サーバーから返却される Cookie",
+      "style" : "simple",
+      "explode" : false,
+      "schema" : {
+        "type" : "string",
+        "example" : "owner_session=<access_token>; Path=/;"
+      }
+    }
+  },
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/owner_post_register_201_response"
+        "$ref" : "#/components/schemas/owner_post_owners_201_response"
+      }
+    }
+  }
+}',
+                ],
+                '400' => [
+                    'jsonSchema' => '{
+  "description" : "Bad Request",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/Error"
       }
     }
   }
@@ -597,7 +650,7 @@ class RegisterRoutes
             'apiPackage' => 'IsuRide\Api',
             'classname' => 'AbstractOwnerApi',
             'userClassname' => 'OwnerApi',
-            'operationId' => 'ownerGetChairDetail',
+            'operationId' => 'ownerGetChair',
             'responses' => [
                 '200' => [
                     'jsonSchema' => '{

@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * RideStatus
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class RideStatus extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,13 +44,10 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
-  "properties" : {
-    "language" : {
-      "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
-    }
-  }
+  "title" : "RideStatus",
+  "type" : "string",
+  "description" : "ライドのステータス\n\nMATCHING: サービス上でマッチング処理を行なっていて椅子が確定していない\nENROUTE: 椅子が確定し、乗車位置に向かっている\nPICKUP: 椅子が乗車位置に到着して、ユーザーの乗車を待機している\nCARRYING: ユーザーが乗車し、椅子が目的地に向かっている\nARRIVED: 目的地に到着した\nCOMPLETED: ユーザーの決済・椅子評価が完了した\n",
+  "enum" : [ "MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED", "COMPLETED" ]
 }
 SCHEMA;
 }

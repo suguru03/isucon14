@@ -38,7 +38,7 @@ use Slim\Exception\HttpNotImplementedException;
 abstract class AbstractOwnerApi
 {
     /**
-     * GET ownerGetChairDetail
+     * GET ownerGetChair
      * Summary: 管理している椅子の詳細を取得する
      * Output-Formats: [application/json]
      *
@@ -49,12 +49,12 @@ abstract class AbstractOwnerApi
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function ownerGetChairDetail(
+    public function ownerGetChair(
         ServerRequestInterface $request,
         ResponseInterface $response,
         string $chairId
     ): ResponseInterface {
-        $message = "How about implementing ownerGetChairDetail as a GET method in IsuRide\Api\OwnerApi class?";
+        $message = "How about implementing ownerGetChair as a GET method in IsuRide\Api\OwnerApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 
@@ -100,8 +100,8 @@ abstract class AbstractOwnerApi
     }
 
     /**
-     * POST ownerPostRegister
-     * Summary: 椅子のオーナー自身が登録を行う
+     * POST ownerPostOwners
+     * Summary: 椅子のオーナーが会員登録を行う
      * Output-Formats: [application/json]
      *
      * @param ServerRequestInterface $request  Request
@@ -110,12 +110,12 @@ abstract class AbstractOwnerApi
      * @return ResponseInterface
      * @throws HttpNotImplementedException to force implementation class to override this method
      */
-    public function ownerPostRegister(
+    public function ownerPostOwners(
         ServerRequestInterface $request,
         ResponseInterface $response
     ): ResponseInterface {
         $body = $request->getParsedBody();
-        $message = "How about implementing ownerPostRegister as a POST method in IsuRide\Api\OwnerApi class?";
+        $message = "How about implementing ownerPostOwners as a POST method in IsuRide\Api\OwnerApi class?";
         throw new HttpNotImplementedException($request, $message);
     }
 }

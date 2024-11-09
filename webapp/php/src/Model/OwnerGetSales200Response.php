@@ -45,7 +45,6 @@ class OwnerGetSales200Response extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "chairs", "models", "total_sales" ],
-  "type" : "object",
   "properties" : {
     "total_sales" : {
       "type" : "integer",

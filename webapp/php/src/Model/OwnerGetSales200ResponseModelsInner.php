@@ -45,11 +45,10 @@ class OwnerGetSales200ResponseModelsInner extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "model", "sales" ],
-  "type" : "object",
   "properties" : {
     "model" : {
       "type" : "string",
-      "description" : "椅子モデル"
+      "description" : "モデル"
     },
     "sales" : {
       "type" : "integer",

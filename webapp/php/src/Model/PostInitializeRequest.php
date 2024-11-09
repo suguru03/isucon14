@@ -45,7 +45,6 @@ class PostInitializeRequest extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "payment_server" ],
-  "type" : "object",
   "properties" : {
     "payment_server" : {
       "type" : "string",

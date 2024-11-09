@@ -4,24 +4,18 @@ declare(strict_types=1);
 
 namespace IsuRide\App\Database\Model;
 
-readonly class RideRequest
+readonly class Ride
 {
     public function __construct(
         public string $id,
         public string $userId,
-        public string $driverId,
         public ?string $chairId,
-        public string $status,
         public int $pickupLatitude,
         public int $pickupLongitude,
         public int $destinationLatitude,
         public int $destinationLongitude,
         public ?int $evaluation,
-        public int $requestedAt,
-        public ?int $matchedAt,
-        public ?int $dispatchedAt,
-        public ?int $rodeAt,
-        public ?int $arrivedAt,
+        public int $createdAt,
         public int $updatedAt
     ) {
     }

@@ -46,7 +46,6 @@ class User extends BaseModel
 {
   "title" : "User",
   "required" : [ "id", "name" ],
-  "type" : "object",
   "properties" : {
     "id" : {
       "type" : "string",

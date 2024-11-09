@@ -45,7 +45,6 @@ class OwnerGetChairs200Response extends BaseModel
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
   "required" : [ "chairs" ],
-  "type" : "object",
   "properties" : {
     "chairs" : {
       "type" : "array",

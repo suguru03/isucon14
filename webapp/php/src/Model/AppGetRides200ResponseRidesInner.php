@@ -24,13 +24,13 @@ namespace IsuRide\Model;
 use IsuRide\BaseModel;
 
 /**
- * PostInitialize200Response
+ * AppGetRides200ResponseRidesInner
  *
  * @package IsuRide\Model
  * @author  OpenAPI Generator team
  * @link    https://github.com/openapitools/openapi-generator
  */
-class PostInitialize200Response extends BaseModel
+class AppGetRides200ResponseRidesInner extends BaseModel
 {
     /**
      * @var string Models namespace.
@@ -44,11 +44,38 @@ class PostInitialize200Response extends BaseModel
      */
     protected const MODEL_SCHEMA = <<<'SCHEMA'
 {
-  "required" : [ "language" ],
+  "required" : [ "chair", "completed_at", "destination_coordinate", "evaluation", "fare", "id", "pickup_coordinate", "requested_at" ],
   "properties" : {
-    "language" : {
+    "id" : {
       "type" : "string",
-      "description" : "実装言語\n- go\n- perl\n- php\n- python\n- ruby\n- rust\n- node\n"
+      "description" : "ライドID"
+    },
+    "pickup_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "destination_coordinate" : {
+      "$ref" : "#/components/schemas/Coordinate"
+    },
+    "chair" : {
+      "$ref" : "#/components/schemas/app_get_rides_200_response_rides_inner_chair"
+    },
+    "fare" : {
+      "type" : "integer",
+      "description" : "運賃"
+    },
+    "evaluation" : {
+      "type" : "integer",
+      "description" : "椅子の評価"
+    },
+    "requested_at" : {
+      "type" : "integer",
+      "description" : "配車要求日時",
+      "format" : "int64"
+    },
+    "completed_at" : {
+      "type" : "integer",
+      "description" : "評価まで完了した日時",
+      "format" : "int64"
     }
   }
 }
