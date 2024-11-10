@@ -60,7 +60,7 @@ filter 'app_auth_middleware' => sub ($app) {
             return res_error($c, HTTP_UNAUTHORIZED, 'app_session cookie is required');
         }
 
-        my $user = $app->dbh->select_row(
+        my $user = $self->dbh->select_row(
             'SELECT * FROM users WHERE access_token = ?',
             $access_token
         );
