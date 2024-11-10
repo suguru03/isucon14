@@ -8,6 +8,8 @@ our @EXPORT_OK = qw(
     check_params
 );
 
+use Hash::Util qw(lock_hashref);
+
 use Isuride::Assert qw(ASSERT);
 
 {
@@ -21,7 +23,7 @@ use Isuride::Assert qw(ASSERT);
 
             # 開発環境では、存在しないキーにアクセスした時にエラーになるようにしておく
             if (ASSERT && $flag) {
-                dlock($params);
+                lock_hashref($params);
             }
 
             return 1;

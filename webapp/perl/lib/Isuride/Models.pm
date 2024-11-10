@@ -16,6 +16,6 @@ use constant Chair => {
     model        => Str,
     is_active    => Bool,
     access_token => Str,
-    created_at   => Str,    # XXX: Time::Moment使う?
-    updated_at   => Str,
+    created_at   => Int,
+    updated_at   => Int,
 };
