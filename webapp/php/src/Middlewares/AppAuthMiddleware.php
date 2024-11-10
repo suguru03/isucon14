@@ -42,7 +42,8 @@ readonly class AppAuthMiddleware implements MiddlewareInterface
         }
         try {
             $stmt = $this->db->prepare('SELECT * FROM users WHERE access_token = ?');
-            $stmt->execute([$accessToken]);
+            $stmt->bindValue(1, $accessToken, PDO::PARAM_STR);
+            $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 return (new ErrorResponse())->write(

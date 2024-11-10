@@ -19,8 +19,7 @@ class ErrorResponse
             'application/json;charset=utf-8'
         )
             ->withStatus($statusCode);
-        $data = ['message' => $error->getMessage()];
-        $json = json_encode($data);
+        $json = json_encode(['message' => $error->getMessage()]);
         if ($json === false) {
             $response = $response->withStatus(
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR

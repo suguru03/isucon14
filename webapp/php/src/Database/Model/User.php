@@ -13,8 +13,8 @@ readonly class User
         public string $lastname,
         public string $dateOfBirth,
         public string $accessToken,
-        public int $createdAt,
-        public int $updatedAt
+        public string $createdAt,
+        public string $updatedAt
     ) {
     }
 }

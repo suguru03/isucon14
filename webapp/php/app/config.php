@@ -37,10 +37,13 @@ return [
         return $logger;
     },
     'payment_gateway' => function () use ($resourcePath): PostPayment {
-        return new PostPayment(
-            json_decode(
-                file_get_contents($resourcePath),
-            )['payment_gateway']
-        );
+        $decoded = json_decode(file_get_contents($resourcePath), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Failed to parse JSON: ' . json_last_error_msg());
+        }
+        if (!isset($decoded['payment_server'])) {
+            throw new RuntimeException('payment_server is not defined in config.json');
+        }
+        return new PostPayment($decoded['payment_server']);
     }
 ];

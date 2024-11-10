@@ -21,8 +21,8 @@ readonly class RideRequest
         public ?int $matchedAt,
         public ?int $dispatchedAt,
         public ?int $rodeAt,
-        public ?int $arrivedAt,
-        public int $updatedAt
+        public ?string $arrivedAt,
+        public string $updatedAt
     ) {
     }
 }

@@ -11,7 +11,7 @@ readonly class ChairLocation
         public string $chairId,
         public int $latitude,
         public int $longitude,
-        public int $createdAt
+        public string $createdAt
     ) {
     }
 }

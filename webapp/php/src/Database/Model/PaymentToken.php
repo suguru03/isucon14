@@ -9,7 +9,7 @@ readonly class PaymentToken
     public function __construct(
         public string $userId,
         public string $token,
-        public int $createdAt
+        public string $createdAt
     ) {
     }
 }

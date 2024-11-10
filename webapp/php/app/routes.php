@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use IsuRide\Handlers\PostInitialize;
+use IsuRide\Handlers;
+use IsuRide\Middlewares;
 use IsuRide\PaymentGateway\PostPayment;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -14,6 +15,8 @@ return function (App $app, array $config) {
     $logger = $config['logger'];
     /** @var PostPayment $paymentGateway */
     $paymentGateway = $config['payment_gateway']();
+    /** @var PDO $database */
+    $database = $config['database']();
 
     $app->options('/{routes:.*}', function (Request $request, Response $response) {
         // CORS Pre-Flight OPTIONS Request Handler
@@ -21,9 +24,16 @@ return function (App $app, array $config) {
     });
     $app->post(
         '/api/initialize',
-        new PostInitialize(
+        new Handlers\PostInitialize(
             $config['resource_path'],
-            $app->getResponseFactory()
         )
+    );
+    $app->post('/api/app/users', new Handlers\App\PostUsers($database));
+
+    $app->group('/api/app', function ($app) use ($database) {
+        $app->post('/payment-methods', new Handlers\App\PostPaymentMethods($database));
+        $app->get('/rides', new Handlers\App\GetRides($database));
+    })->addMiddleware(
+        new Middlewares\AppAuthMiddleware($database, $app->getResponseFactory())
     );
 };

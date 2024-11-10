@@ -8,17 +8,15 @@ use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Model\PostInitialize200Response;
 use IsuRide\Model\PostInitializeRequest;
 use IsuRide\Response\ErrorResponse;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Slim\Exception\HttpInternalServerErrorException;
 
-readonly class PostInitialize
+class PostInitialize extends AbstractHttpHandler
 {
     public function __construct(
-        private string $resourcePath,
-        private ResponseFactoryInterface $responseFactory
+        private readonly string $resourcePath,
     ) {
     }
 
@@ -36,7 +34,7 @@ readonly class PostInitialize
         $req = new PostInitializeRequest((array)$request->getParsedBody());
         if (!$req->valid()) {
             return (new ErrorResponse())->write(
-                $this->responseFactory->createResponse(),
+                $response,
                 StatusCodeInterface::STATUS_BAD_REQUEST,
                 new RuntimeException('invalid request')
             );
@@ -47,7 +45,7 @@ readonly class PostInitialize
             ]);
         } catch (RuntimeException $e) {
             return (new ErrorResponse())->write(
-                $this->responseFactory->createResponse(),
+                $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
                 new HttpInternalServerErrorException(
                     request: $request,
@@ -56,21 +54,10 @@ readonly class PostInitialize
                 )
             );
         }
-        $response = $this->responseFactory->createResponse();
-        $response->withHeader(
-            'Content-Type',
-            'application/json;charset=utf-8'
-        )
-            ->withStatus(StatusCodeInterface::STATUS_OK);
-        $response->getBody()->write(
-            json_encode(
-                new PostInitialize200Response([
-                    'language' => 'php',
-                ]),
-            ),
-        );
-        file_put_contents($this->resourcePath, (string) $req);
-        return $response;
+        file_put_contents($this->resourcePath, (string)$req);
+        return $this->writeJson($response, new PostInitialize200Response([
+            'language' => 'php',
+        ]));
     }
 
     private function execCommand(array $command): void
