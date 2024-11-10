@@ -146,16 +146,16 @@ func ownerGetSales(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
-func sumSales(requests []Ride) int {
+func sumSales(rides []Ride) int {
 	sale := 0
-	for _, req := range requests {
-		sale += calculateSale(req)
+	for _, ride := range rides {
+		sale += calculateSale(ride)
 	}
 	return sale
 }
 
-func calculateSale(req Ride) int {
-	return calculateFare(req.PickupLatitude, req.PickupLongitude, req.DestinationLatitude, req.DestinationLongitude)
+func calculateSale(ride Ride) int {
+	return calculateFare(ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
 }
 
 type ChairWithDetail struct {
