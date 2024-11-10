@@ -1072,9 +1072,7 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 }
 
 func calculateFare(pickupLatitude, pickupLongitude, destLatitude, destLongitude int) int {
-	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
-	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
-	meteredFare := farePerDistance * (latDiff + lonDiff)
+	meteredFare := farePerDistance * calculateDistance(pickupLatitude, pickupLongitude, destLatitude, destLongitude)
 	return initialFare + meteredFare
 }
 
@@ -1115,9 +1113,7 @@ func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *Ride, pickupLatitu
 		}
 	}
 
-	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
-	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
-	meteredFare := farePerDistance * (latDiff + lonDiff)
+	meteredFare := farePerDistance * calculateDistance(pickupLatitude, pickupLongitude, destLatitude, destLongitude)
 	discountedMeteredFare := max(meteredFare-discount, 0)
 
 	return initialFare + discountedMeteredFare, nil
