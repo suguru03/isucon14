@@ -2,11 +2,12 @@
   "name": "nodejs",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/main.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.5",
-    "hono": "^4.6.9"
+    "hono": "^4.6.9",
+    "mysql2": "^3.11.4"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
