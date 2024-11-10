@@ -20,10 +20,6 @@ use constant AppPostRegisterResponse => Dict [
     invitation_code => Str,
 ];
 
-sub test ($self, $c) {
-    $c->render_json({ greeting => 'hello' });
-}
-
 sub app_post_register ($app, $c) {
     my $params = $c->req->json_parameters;
 
