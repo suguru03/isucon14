@@ -9,7 +9,7 @@ use HTTP::Status qw(:constants);
 use Isuride::Handler::App;
 
 sub connect_db() {
-    my $host     = $ENV{ISUCON_DB_HOST}     || 'localhost';
+    my $host     = $ENV{ISUCON_DB_HOST}     || '127.0.0.1';
     my $port     = $ENV{ISUCON_DB_PORT}     || '3306';
     my $user     = $ENV{ISUCON_DB_USER}     || 'isucon';
     my $password = $ENV{ISUCON_DB_PASSWORD} || 'isucon';
@@ -54,7 +54,7 @@ sub app_get_resuest ($self, $c) {
 # middleware
 filter 'app_auth_middleware' => sub ($app) {
     sub ($self, $c) {
-        my $access_token = $c->req->cookies('apps_session');
+        my $access_token = $c->req->cookies->{apps_session};
 
         unless ($access_token) {
             return res_error($c, HTTP_UNAUTHORIZED, 'app_session cookie is required');
