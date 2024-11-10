@@ -4,7 +4,8 @@ const baseUrl = __API_BASE_URL__;
 
 export type ErrorWrapper<TError> =
   | TError
-  | { status: "unknown"; payload: string };
+  | { status: "unknown"; payload: string }
+  | { status: number; payload: string };
 
 export type ApiFetcherOptions<TBody, THeaders, TQueryParams, TPathParams> = {
   url: string;
@@ -73,7 +74,10 @@ export async function apiFetch<
     if (!response.ok) {
       let error: ErrorWrapper<TError>;
       try {
-        error = await response.json();
+        error = {
+          status: response.status,
+          payload: await response.text()
+        };
       } catch (e) {
         error = {
           status: "unknown" as const,

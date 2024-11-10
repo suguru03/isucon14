@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useNavigate, useSearchParams } from "@remix-run/react";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import {
   createContext,
@@ -17,7 +17,40 @@ import type {
 } from "~/apiClient/apiSchemas";
 import type { ClientAppRequest } from "~/types";
 
+const isApiFetchError = (
+  obj: unknown,
+): obj is {
+  name: string;
+  message: string;
+  stack: {
+    status: number;
+    payload: string;
+  };
+} => {
+  if (typeof obj === "object" && obj !== null) {
+    const typedError = obj as {
+      name?: unknown;
+      message?: unknown;
+      stack?: {
+        status?: unknown;
+        payload?: unknown;
+      };
+    };
+
+    return (
+      typeof typedError.name === "string" &&
+      typeof typedError.message === "string" &&
+      typeof typedError.stack === "object" &&
+      typedError.stack !== null &&
+      typeof typedError.stack.status === "number" &&
+      typeof typedError.stack.payload === "string"
+    );
+  }
+  return false;
+};
+
 export const useClientAppRequest = (accessToken: string, id?: string) => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
     useState<Omit<ClientAppRequest, "auth" | "user">>();
@@ -127,10 +160,23 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           },
         });
       })().catch((e) => {
+        if (isApiFetchError(e)) {
+          const apiError = e as {
+            name: string;
+            message: string;
+            stack: {
+              status: number;
+              payload: string;
+            };
+          };
+          if (apiError.stack.status === 401) {
+            navigate("/client/register");
+          }
+        }
         console.error(`ERROR: ${JSON.stringify(e)}`);
       });
     }
-  }, [accessToken, setClientAppPayloadWithStatus, isSSE]);
+  }, [accessToken, setClientAppPayloadWithStatus, isSSE, navigate]);
 
   const responseClientAppRequest = useMemo<ClientAppRequest | undefined>(() => {
     const debugStatus =
