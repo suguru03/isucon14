@@ -11,3 +11,5 @@ requires 'DBD::mysql', '5.009';
 requires 'DBIx::Sunny', '0.9993';
 
 requires 'HTTP::Parser::XS', '0.17';
+
+requires 'Data::ULID::XS', '1.000'

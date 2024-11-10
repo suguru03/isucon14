@@ -31,14 +31,15 @@ sub dbh ($self) {
     $self->{dbh} //= connect_db();
 }
 
-use constant AppHandler => [qw(app_auth_middleware)];
+use constant AppHandler => qq(app_auth_middleware);
 
 {
     post '/api/app/register' => sub { };
 
     #  app handlers
-    post '/apo/app/payment-methods' => AppHandler => \&Isuride::Handler::App->app_post_payment_methods;
-    get '/app/requests/{request_id}' => AppHandler => \&app_get_resuest;
+    get '/app/test' => [AppHandler] => \&Isuride::Handler::App::test;
+    post '/app/app/payment-methods' => [AppHandler] => \&Isuride::Handler::App::app_post_payment_methods;
+    get '/app/requests/{request_id}' => [AppHandler] => \&app_get_resuest;
 }
 
 sub default ($self, $c) {
@@ -53,17 +54,16 @@ sub app_get_resuest ($self, $c) {
 # middleware
 filter 'app_auth_middleware' => sub ($app) {
     sub ($self, $c) {
-        my $access_token = $c->req->cookie('apps_session');
+        my $access_token = $c->req->cookies('apps_session');
 
         unless ($access_token) {
-            return res_error($c, HTTP_UNAUTHORIZE ', app_session cookie is required');
+            return res_error($c, HTTP_UNAUTHORIZED, 'app_session cookie is required');
         }
 
-        my $user =
-            $c->dbh->select_row(
+        my $user = $app->dbh->select_row(
             'SELECT * FROM users WHERE access_token = ?',
             $access_token
-            );
+        );
 
         unless ($user) {
             return res_error($c, HTTP_UNAUTHORIZED, 'invalid access_token');
