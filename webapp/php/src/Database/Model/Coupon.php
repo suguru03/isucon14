@@ -10,7 +10,7 @@ readonly class Coupon
         public string $userId,
         public string $code,
         public int $discount,
-        public int $createdAt,
+        public string $createdAt,
         public ?string $usedBy
     ) {
     }

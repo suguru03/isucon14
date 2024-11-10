@@ -13,8 +13,8 @@ readonly class Chair
         public string $accessToken,
         public string $model,
         public bool $isActive,
-        public int $createdAt,
-        public int $updatedAt
+        public string $createdAt,
+        public string $updatedAt
     ) {
     }
 }

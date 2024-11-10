@@ -11,8 +11,8 @@ readonly class Owner
         public string $name,
         public string $accessToken,
         public string $chairRegisterToken,
-        public int $createdAt,
-        public int $updatedAt
+        public string $createdAt,
+        public string $updatedAt
     ) {
     }
 }

@@ -15,8 +15,8 @@ readonly class Ride
         public int $destinationLatitude,
         public int $destinationLongitude,
         public ?int $evaluation,
-        public int $createdAt,
-        public int $updatedAt
+        public string $createdAt,
+        public string $updatedAt
     ) {
     }
 }
