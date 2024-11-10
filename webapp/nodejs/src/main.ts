@@ -1,8 +1,15 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import mysql from "mysql2/promise";
+import type { Environment } from "./types/hono.js";
+import { createMiddleware } from "hono/factory";
+import {
+  appAuthMiddleware,
+  ownerAuthMiddleware,
+  chairAuthMiddleware,
+} from "./middlewares.js";
 
-const connection = mysql.createConnection({
+export const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
   port: Number(process.env.ISUCON_DB_PORT || "3306"),
   user: process.env.ISUCON_DB_USER || "isucon",
@@ -10,7 +17,13 @@ const connection = mysql.createConnection({
   database: process.env.ISUCON_DB_NAME || "isuride",
 });
 
-const app = new Hono();
+const app = new Hono<Environment>();
+app.use(
+  createMiddleware<Environment>(async (ctx, next) => {
+    ctx.set("dbConn", connection);
+    await next();
+  }),
+);
 
 app.post("/api/initialize", postInitialize);
 
