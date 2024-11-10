@@ -1,4 +1,4 @@
-package Isuride::App;
+package Isuride::Web;
 use v5.40;
 use utf8;
 
@@ -79,3 +79,4 @@ sub res_error ($c, $status_code, $err) {
     $res->status($status_code);
     return $res;
 }
+
