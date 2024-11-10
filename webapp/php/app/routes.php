@@ -29,11 +29,18 @@ return function (App $app, array $config) {
         )
     );
     $app->post('/api/app/users', new Handlers\App\PostUsers($database));
-
+    // app handlers
     $app->group('/api/app', function ($app) use ($database) {
         $app->post('/payment-methods', new Handlers\App\PostPaymentMethods($database));
         $app->get('/rides', new Handlers\App\GetRides($database));
     })->addMiddleware(
         new Middlewares\AppAuthMiddleware($database, $app->getResponseFactory())
+    );
+    // owner handlers
+    $app->post('/api/owner/owners', new Handlers\Owner\PostOwners($database));
+    $app->group('/api/owner', function ($app) use ($database) {
+        $app->get('/chairs', new Handlers\Owner\GetChairs($database));
+    })->addMiddleware(
+        new Middlewares\OwnerAuthMiddleware($database, $app->getResponseFactory())
     );
 };

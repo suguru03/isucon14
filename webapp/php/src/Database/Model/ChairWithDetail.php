@@ -7,20 +7,25 @@ namespace IsuRide\Database\Model;
 use DateTimeImmutable;
 use DateTimeZone;
 
-readonly class Ride
+readonly class ChairWithDetail
 {
     public function __construct(
         public string $id,
-        public string $userId,
-        public ?string $chairId,
-        public int $pickupLatitude,
-        public int $pickupLongitude,
-        public int $destinationLatitude,
-        public int $destinationLongitude,
-        public ?int $evaluation,
+        public string $ownerId,
+        public string $name,
+        public string $accessToken,
+        public string $model,
+        public bool $isActive,
         public string $createdAt,
-        public string $updatedAt
+        public string $updatedAt,
+        public int $totalDistance,
+        public ?string $totalDistanceUpdatedAt
     ) {
+    }
+
+    public function isTotalDistanceUpdatedAt(): bool
+    {
+        return $this->totalDistanceUpdatedAt !== null;
     }
 
     /**
@@ -34,9 +39,9 @@ readonly class Ride
     /**
      * @throws \DateMalformedStringException
      */
-    public function updatedAtUnixMilliseconds(): int
+    public function totalDistanceUpdatedAtUnixMilliseconds(): int
     {
-        return $this->toUnixMilliseconds($this->updatedAt);
+        return $this->toUnixMilliseconds($this->totalDistanceUpdatedAt);
     }
 
     /**

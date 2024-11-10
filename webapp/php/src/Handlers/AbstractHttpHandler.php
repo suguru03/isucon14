@@ -10,8 +10,8 @@ use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractHttpHandler
 {
-    const int initialFare = 500;
-    const int farePerDistance = 100;
+    private const int INITIAL_FARE = 500;
+    private const int FARE_PER_DISTANCE = 100;
 
     protected function writeJson(
         ResponseInterface $response,
@@ -62,7 +62,7 @@ abstract class AbstractHttpHandler
     ): int {
         $latDiff = max($destLatitude - $pickupLatitude, $pickupLatitude - $destLatitude);
         $lonDiff = max($destLongitude - $pickupLongitude, $pickupLongitude - $destLongitude);
-        $meteredFare = self::farePerDistance * ($latDiff + $lonDiff);
-        return self::initialFare + $meteredFare;
+        $meteredFare = self::FARE_PER_DISTANCE * ($latDiff + $lonDiff);
+        return self::INITIAL_FARE + $meteredFare;
     }
 }
