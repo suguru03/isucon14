@@ -146,13 +146,13 @@ func bindJSON(r *http.Request, v interface{}) error {
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	buf, err := json.Marshal(v)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(statusCode)
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write(buf)
 }
 
