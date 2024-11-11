@@ -6,7 +6,7 @@ import { TextInput } from "~/components/primitives/form/text";
 export const meta: MetaFunction = () => {
   return [
     { title: "Regiter | ISURIDE" },
-    { name: "description", content: "プロバイダー登録" },
+    { name: "description", content: "オーナー登録" },
   ];
 };
 
