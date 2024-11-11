@@ -43,4 +43,11 @@ return function (App $app, array $config) {
     })->addMiddleware(
         new Middlewares\OwnerAuthMiddleware($database, $app->getResponseFactory())
     );
+
+    // chair handlers
+    $app->group('/api/chair', function ($app) use ($database) {
+        $app->post('activity', new Handlers\Chair\PostActivity($database));
+    })->addMiddleware(
+        new Middlewares\ChairAuthMiddleware($database, $app->getResponseFactory())
+    );
 };
