@@ -32,11 +32,11 @@ jobs:
       - name: Setup webapp/go
         working-directory: ./development
         run: |
-          sudo docker compose -f compose-go.yml up -d --build
+          sudo docker compose -f compose-go.yml up -d --build --wait
       - name: Run bench
         working-directory: ./bench
         run: |
-          task run-local
+          task run-local -- --fail-on-error --payment-url http://host.docker.internal:12345
       - name: Down webapp/go
         working-directory: ./development
         if: ${{ always() }}

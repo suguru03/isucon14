@@ -12,13 +12,13 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPostRegisterReq) (*api.OwnerPostRegisterCreated, error) {
+func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPostOwnersReq) (*api.OwnerPostOwnersCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/owner/register", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/owner/owners", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -29,17 +29,17 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/owner/registerのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/owner/ownersのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /api/owner/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/owner/ownersへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
-	resBody := &api.OwnerPostRegisterCreated{}
+	resBody := &api.OwnerPostOwnersCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/owner/ownersのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -75,7 +75,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 
 	resBody := &api.OwnerGetSalesOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/salesのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
@@ -103,7 +103,7 @@ func (c *Client) ProviderGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, 
 
 	resBody := &api.OwnerGetChairsOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/owner/chairsのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil

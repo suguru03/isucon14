@@ -48,7 +48,7 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.AppPostRegister(c.ctx, &api.AppPostRegisterReq{
+	response, err := client.AppPostRegister(c.ctx, &api.AppPostUsersReq{
 		Username:    data.UserName,
 		Firstname:   data.FirstName,
 		Lastname:    data.LastName,
@@ -73,7 +73,7 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.ProviderPostRegister(c.ctx, &api.OwnerPostRegisterReq{
+	response, err := client.ProviderPostRegister(c.ctx, &api.OwnerPostOwnersReq{
 		Name: data.Name,
 	})
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostRegisterReq{
+	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostChairsReq{
 		Name:               data.Name,
 		Model:              data.Model,
 		ChairRegisterToken: provider.RegisteredData.ChairRegisterToken,
@@ -180,7 +180,9 @@ func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair
 }
 
 func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, req *world.Request) error {
-	_, err := c.client.ChairPostRequestAccept(c.ctx, req.ServerID)
+	_, err := c.client.ChairPostRideStatus(c.ctx, req.ServerID, &api.ChairPostRideStatusReq{
+		Status: api.ChairPostRideStatusReqStatusENROUTE,
+	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostAccept, err)
 	}
@@ -189,7 +191,9 @@ func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 }
 
 func (c *chairClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, serverRequestID string) error {
-	_, err := c.client.ChairPostRequestDeny(c.ctx, serverRequestID)
+	_, err := c.client.ChairPostRideStatus(c.ctx, serverRequestID, &api.ChairPostRideStatusReq{
+		Status: api.ChairPostRideStatusReqStatusMATCHING,
+	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
 	}
@@ -198,7 +202,9 @@ func (c *chairClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, se
 }
 
 func (c *chairClient) SendDepart(ctx *world.Context, req *world.Request) error {
-	_, err := c.client.ChairPostRequestDepart(c.ctx, req.ServerID)
+	_, err := c.client.ChairPostRideStatus(c.ctx, req.ServerID, &api.ChairPostRideStatusReq{
+		Status: api.ChairPostRideStatusReqStatusCARRYING,
+	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDepart, err)
 	}
@@ -207,7 +213,9 @@ func (c *chairClient) SendDepart(ctx *world.Context, req *world.Request) error {
 }
 
 func (c *chairClient) SendActivate(ctx *world.Context, chair *world.Chair) error {
-	_, err := c.client.ChairPostActivate(c.ctx)
+	_, err := c.client.ChairPostActivity(c.ctx, &api.ChairPostActivityReq{
+		IsActive: true,
+	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
 	}
@@ -216,7 +224,9 @@ func (c *chairClient) SendActivate(ctx *world.Context, chair *world.Chair) error
 }
 
 func (c *chairClient) SendDeactivate(ctx *world.Context, chair *world.Chair) error {
-	_, err := c.client.ChairPostDeactivate(c.ctx)
+	_, err := c.client.ChairPostActivity(c.ctx, &api.ChairPostActivityReq{
+		IsActive: false,
+	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
 	}
@@ -249,21 +259,21 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 
 			var event world.NotificationEvent
 			switch r.Status {
-			case api.RequestStatusMATCHING:
+			case api.RideStatusMATCHING:
 				event = &world.ChairNotificationEventMatched{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.RideID,
 				}
-			case api.RequestStatusDISPATCHING:
+			case api.RideStatusENROUTE:
 				// event = &world.ChairNotificationEventDispatching{}
-			case api.RequestStatusDISPATCHED:
+			case api.RideStatusPICKUP:
 				// event = &world.ChairNotificationEventDispatched{}
-			case api.RequestStatusCARRYING:
+			case api.RideStatusCARRYING:
 				// event = &world.ChairNotificationEventCarrying{}
-			case api.RequestStatusARRIVED:
+			case api.RideStatusARRIVED:
 				// event = &world.ChairNotificationEventArrived{}
-			case api.RequestStatusCOMPLETED:
+			case api.RideStatusCOMPLETED:
 				event = &world.ChairNotificationEventCompleted{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.RideID,
 				}
 			}
 			if event == nil {
@@ -280,7 +290,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 }
 
 func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) (*world.SendEvaluationResponse, error) {
-	res, err := c.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRequestEvaluateReq{
+	res, err := c.client.AppPostRequestEvaluate(c.ctx, req.ServerID, &api.AppPostRideEvaluationReq{
 		Evaluation: score,
 	})
 	if err != nil {
@@ -296,7 +306,7 @@ func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, scor
 func (c *userClient) SendCreateRequest(ctx *world.Context, req *world.Request) (*world.SendCreateRequestResponse, error) {
 	pickup := req.PickupPoint
 	destination := req.DestinationPoint
-	response, err := c.client.AppPostRequest(c.ctx, &api.AppPostRequestReq{
+	response, err := c.client.AppPostRequest(c.ctx, &api.AppPostRidesReq{
 		PickupCoordinate: api.Coordinate{
 			Latitude:  pickup.X,
 			Longitude: pickup.Y,
@@ -310,7 +320,7 @@ func (c *userClient) SendCreateRequest(ctx *world.Context, req *world.Request) (
 		return nil, WrapCodeError(ErrorCodeFailedToPostRequest, err)
 	}
 
-	return &world.SendCreateRequestResponse{ServerRequestID: response.RequestID}, nil
+	return &world.SendCreateRequestResponse{ServerRequestID: response.RideID}, nil
 }
 
 func (c *userClient) RegisterPaymentMethods(ctx *world.Context, user *world.User) error {
@@ -327,10 +337,10 @@ func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse
 		return nil, WrapCodeError(ErrorCodeFailedToGetRequests, err)
 	}
 
-	requests := make([]*world.RequestHistory, len(res.Requests))
-	for i, r := range res.Requests {
+	requests := make([]*world.RequestHistory, len(res.Rides))
+	for i, r := range res.Rides {
 		requests[i] = &world.RequestHistory{
-			ID: r.RequestID,
+			ID: r.ID,
 			PickupCoordinate: world.Coordinate{
 				X: r.PickupCoordinate.Latitude,
 				Y: r.PickupCoordinate.Longitude,
@@ -372,27 +382,27 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 
 			var event world.NotificationEvent
 			switch r.Status {
-			case api.RequestStatusMATCHING:
+			case api.RideStatusMATCHING:
 				// event = &world.UserNotificationEventMatching{}
-			case api.RequestStatusDISPATCHING:
+			case api.RideStatusENROUTE:
 				event = &world.UserNotificationEventDispatching{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.ID,
 				}
-			case api.RequestStatusDISPATCHED:
+			case api.RideStatusPICKUP:
 				event = &world.UserNotificationEventDispatched{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.ID,
 				}
-			case api.RequestStatusCARRYING:
+			case api.RideStatusCARRYING:
 				event = &world.UserNotificationEventCarrying{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.ID,
 				}
-			case api.RequestStatusARRIVED:
+			case api.RideStatusARRIVED:
 				event = &world.UserNotificationEventArrived{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.ID,
 				}
-			case api.RequestStatusCOMPLETED:
+			case api.RideStatusCOMPLETED:
 				event = &world.UserNotificationEventCompleted{
-					ServerRequestID: r.RequestID,
+					ServerRequestID: r.ID,
 				}
 			}
 			if event == nil {

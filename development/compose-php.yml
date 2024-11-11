@@ -1,0 +1,45 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ../webapp/php:/home/isucon/webapp/php
+      - ./php/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - "8080:80"
+    depends_on:
+      - webapp
+  webapp:
+    cpus: 2
+    mem_limit: 4g
+    build:
+      context: ../webapp/php
+    init: true
+    container_name: webapp
+    working_dir: /home/isucon/webapp/php
+    volumes:
+      - ../webapp/sql:/home/isucon/webapp/sql
+      - ../webapp/php:/home/isucon/webapp/php
+      - ./php/php-fpm.d/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+    environment:
+      ISUCON_DB_HOST: db
+      ISUCON_DB_PORT: 3306
+      ISUCON_DB_USER: "isucon"
+      ISUCON_DB_PASSWORD: "isucon"
+      ISUCON_DB_NAME: "isuride"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mysql:8
+    environment:
+      ENV: local-dev
+      MYSQL_ROOT_PASSWORD: isucon
+      MYSQL_DATABASE: isucon
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/db:/var/lib/mysql
+      - ../webapp/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon

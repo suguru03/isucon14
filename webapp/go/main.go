@@ -36,7 +36,7 @@ func setup() http.Handler {
 	}
 	_, err := strconv.Atoi(port)
 	if err != nil {
-		panic(fmt.Sprintf("failed to convert DB port number from DB_PORT environment variable into int: %v", err))
+		panic(fmt.Sprintf("failed to convert DB port number from ISUCON_DB_PORT environment variable into int: %v", err))
 	}
 	user := os.Getenv("ISUCON_DB_USER")
 	if user == "" {
@@ -72,15 +72,15 @@ func setup() http.Handler {
 
 	// app handlers
 	{
-		mux.HandleFunc("POST /api/app/register", appPostRegister)
+		mux.HandleFunc("POST /api/app/users", appPostUsers)
 
 		authedMux := mux.With(appAuthMiddleware)
 		authedMux.HandleFunc("POST /api/app/payment-methods", appPostPaymentMethods)
-		authedMux.HandleFunc("GET /api/app/requests", appGetRequests)
-		authedMux.HandleFunc("POST /api/app/requests", appPostRequests)
-		authedMux.HandleFunc("POST /api/app/requests/estimate", appPostRequestEstimate)
-		authedMux.HandleFunc("GET /api/app/requests/{request_id}", appGetRequest)
-		authedMux.HandleFunc("POST /api/app/requests/{request_id}/evaluate", appPostRequestEvaluate)
+		authedMux.HandleFunc("GET /api/app/rides", appGetRides)
+		authedMux.HandleFunc("POST /api/app/rides", appPostRides)
+		authedMux.HandleFunc("POST /api/app/rides/estimated-fare", appPostRidesEstimatedFare)
+		authedMux.HandleFunc("GET /api/app/rides/{ride_id}", appGetRide)
+		authedMux.HandleFunc("POST /api/app/rides/{ride_id}/evaluation", appPostRideEvaluatation)
 		//authedMux.HandleFunc("GET /api/app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/app/notification", appGetNotification)
 		authedMux.HandleFunc("GET /api/app/nearby-chairs", appGetNearbyChairs)
@@ -88,7 +88,7 @@ func setup() http.Handler {
 
 	// owner handlers
 	{
-		mux.HandleFunc("POST /api/owner/register", ownerPostRegister)
+		mux.HandleFunc("POST /api/owner/owners", ownerPostOwners)
 
 		authedMux := mux.With(ownerAuthMiddleware)
 		authedMux.HandleFunc("GET /api/owner/sales", ownerGetSales)
@@ -98,18 +98,15 @@ func setup() http.Handler {
 
 	// chair handlers
 	{
-		mux.HandleFunc("POST /api/chair/register", chairPostRegister)
+		mux.HandleFunc("POST /api/chair/chairs", chairPostChairs)
 
 		authedMux := mux.With(chairAuthMiddleware)
-		authedMux.HandleFunc("POST /api/chair/activate", chairPostActivate)
-		authedMux.HandleFunc("POST /api/chair/deactivate", chairPostDeactivate)
+		authedMux.HandleFunc("POST /api/chair/activity", chairPostActivity)
 		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
 		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
-		authedMux.HandleFunc("GET /api/chair/requests/{request_id}", chairGetRequest)
-		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/accept", chairPostRequestAccept)
-		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/deny", chairPostRequestDeny)
-		authedMux.HandleFunc("POST /api/chair/requests/{request_id}/depart", chairPostRequestDepart)
+		authedMux.HandleFunc("GET /api/chair/rides/{ride_id}", chairGetRideRequest)
+		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/status", chairPostRideStatus)
 	}
 
 	return mux
@@ -149,13 +146,13 @@ func bindJSON(r *http.Request, v interface{}) error {
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	buf, err := json.Marshal(v)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(statusCode)
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write(buf)
 }
 

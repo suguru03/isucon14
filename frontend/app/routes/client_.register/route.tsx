@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
-import { fetchAppPostRegister } from "~/apiClient/apiComponents";
+import { fetchAppPostUsers } from "~/apiClient/apiComponents";
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,7 +11,7 @@ export const meta: MetaFunction = () => {
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-  const data = await fetchAppPostRegister({
+  const data = await fetchAppPostUsers({
     body: {
       date_of_birth: String(formData.get("date_of_birth")),
       username: String(formData.get("username")),

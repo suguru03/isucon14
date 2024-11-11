@@ -1,5 +1,5 @@
 import { FC, useCallback } from "react";
-import { fetchChairPostRequestDepart } from "~/apiClient/apiComponents";
+import { fetchChairPostRideStatus } from "~/apiClient/apiComponents";
 import { CarGreenIcon } from "~/components/icon/car-green";
 import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
@@ -11,12 +11,15 @@ export const Pickup: FC = () => {
   const { auth, payload, status } = useClientChairRequestContext();
 
   const handleDeparture = useCallback(async () => {
-    await fetchChairPostRequestDepart({
+    await fetchChairPostRideStatus({
       headers: {
         Authorization: `Bearer ${auth?.accessToken}`,
       },
+      body: {
+        status: "CARRYING",
+      },
       pathParams: {
-        requestId: payload?.request_id ?? "",
+        rideId: payload?.ride_id ?? "",
       },
     });
   }, [auth, payload]);
@@ -24,7 +27,7 @@ export const Pickup: FC = () => {
   return (
     <>
       <div className="flex flex-col items-center my-8 gap-8">
-        {status === "DISPATCHING" && (
+        {status === "ENROUTE" && (
           <>
             <CarRedIcon className="size-[76px] mb-4" />
             <Text>
@@ -33,7 +36,7 @@ export const Pickup: FC = () => {
             </Text>
           </>
         )}
-        {status === "DISPATCHED" && (
+        {status === "PICKUP" && (
           <>
             <CarGreenIcon className="size-[76px] mb-4" />
             <Text>
@@ -49,7 +52,7 @@ export const Pickup: FC = () => {
           <Text variant="danger" size="sm">
             到着予定時間: 21:58
           </Text>
-          {status === "DISPATCHED" && (
+          {status === "PICKUP" && (
             <Button
               variant="primary"
               className="w-full mt-6"

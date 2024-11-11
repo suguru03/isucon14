@@ -27,8 +27,8 @@ export default function Index() {
           </Link>
         </li>
         <li>
-          <Link to="/provider" className="text-blue-600 hover:underline">
-            Provider Application
+          <Link to="/owner" className="text-blue-600 hover:underline">
+            Owner Application
           </Link>
         </li>
       </ul>

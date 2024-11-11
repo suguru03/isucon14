@@ -1,7 +1,7 @@
 import { Form } from "@remix-run/react";
 import { MouseEventHandler, useCallback, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
-import { fetchAppPostRequestEvaluate } from "~/apiClient/apiComponents";
+import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
 import { ToIcon } from "~/components/icon/to";
 import { Button } from "~/components/primitives/button/button";
 import { Rating } from "~/components/primitives/rating/rating";
@@ -17,12 +17,12 @@ export const Arrived = () => {
     (e) => {
       e.preventDefault();
       try {
-        void fetchAppPostRequestEvaluate({
+        void fetchAppPostRideEvaluation({
           headers: {
             Authorization: `Bearer ${auth?.accessToken}`,
           },
           pathParams: {
-            requestId: payload?.request_id ?? "",
+            rideId: payload?.ride_id ?? "",
           },
           body: {
             evaluation: rating,

@@ -14,13 +14,13 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRegisterReq) (*api.ChairPostRegisterCreated, error) {
+func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostChairsReq) (*api.ChairPostChairsCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/chair/register", bytes.NewReader(reqBodyBuf))
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/chair/chairs", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -31,15 +31,15 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/registerのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/chair/chairsのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("POST /api/chair/registerへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/chair/chairsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusCreated, resp.StatusCode)
 	}
 
-	resBody := &api.ChairPostRegisterCreated{}
+	resBody := &api.ChairPostChairsCreated{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
 		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
 	}
@@ -47,8 +47,13 @@ func (c *Client) ChairPostRegister(ctx context.Context, reqBody *api.ChairPostRe
 	return resBody, nil
 }
 
-func (c *Client) ChairPostActivate(ctx context.Context) (*api.ChairPostActivateNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/chair/activate", nil)
+func (c *Client) ChairPostActivity(ctx context.Context, reqBody *api.ChairPostActivityReq) (*api.ChairPostActivityNoContent, error) {
+	reqBodyBuf, err := reqBody.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.agent.NewRequest(http.MethodPost, "/api/chair/activity", bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -59,39 +64,15 @@ func (c *Client) ChairPostActivate(ctx context.Context) (*api.ChairPostActivateN
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/activateのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/chair/activityのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/chair/activateへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/chair/activityへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.ChairPostActivateNoContent{}
-	return resBody, nil
-}
-
-func (c *Client) ChairPostDeactivate(ctx context.Context) (*api.ChairPostDeactivateNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, "/api/chair/deactivate", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/deactivateのリクエストが失敗しました: %w", err)
-	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/chair/deactivateへのリクエストに対して、期待されたHTTPステータスコードが確認できませませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
-	}
-
-	resBody := &api.ChairPostDeactivateNoContent{}
+	resBody := &api.ChairPostActivityNoContent{}
 	return resBody, nil
 }
 
@@ -122,14 +103,14 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 
 	resBody := &api.ChairPostCoordinateOK{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("registerのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/chair/coordinateのJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
 }
 
-func (c *Client) ChairGetRequest(ctx context.Context, requestID string) (*api.ChairRequest, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/chair/requests/%s", requestID), nil)
+func (c *Client) ChairGetRequest(ctx context.Context, rideID string) (*api.ChairRide, error) {
+	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/chair/rides/%s", rideID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,24 +121,29 @@ func (c *Client) ChairGetRequest(ctx context.Context, requestID string) (*api.Ch
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("GET /api/chair/requests/{requestID}のリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}のリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /api/chair/requests/{requestID}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
+		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
-	resBody := &api.ChairRequest{}
+	resBody := &api.ChairRide{}
 	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}のJSONのdecodeに失敗しました: %w", err)
 	}
 
 	return resBody, nil
 }
 
-func (c *Client) ChairPostRequestAccept(ctx context.Context, requestID string) (*api.ChairPostRequestAcceptNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/chair/requests/%s/accept", requestID), nil)
+func (c *Client) ChairPostRideStatus(ctx context.Context, rideID string, reqBody *api.ChairPostRideStatusReq) (*api.ChairPostRideStatusNoContent, error) {
+	reqBodyBuf, err := reqBody.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/chair/rides/%s/status", rideID), bytes.NewReader(reqBodyBuf))
 	if err != nil {
 		return nil, err
 	}
@@ -168,63 +154,15 @@ func (c *Client) ChairPostRequestAccept(ctx context.Context, requestID string) (
 
 	resp, err := c.agent.Do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/acceptのリクエストが失敗しました: %w", err)
+		return nil, fmt.Errorf("POST /api/chair/rides/{rideID}/statusのリクエストが失敗しました: %w", err)
 	}
 	defer closeBody(resp)
 
 	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/acceptへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
+		return nil, fmt.Errorf("POST /api/chair/rides/{rideID}/statusへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
 	}
 
-	resBody := &api.ChairPostRequestAcceptNoContent{}
-	return resBody, nil
-}
-
-func (c *Client) ChairPostRequestDeny(ctx context.Context, requestID string) (*api.ChairPostRequestDenyNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/chair/requests/%s/deny", requestID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/denyのリクエストが失敗しました: %w", err)
-	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/denyへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
-	}
-
-	resBody := &api.ChairPostRequestDenyNoContent{}
-	return resBody, nil
-}
-
-func (c *Client) ChairPostRequestDepart(ctx context.Context, requestID string) (*api.ChairPostRequestDepartNoContent, error) {
-	req, err := c.agent.NewRequest(http.MethodPost, fmt.Sprintf("/api/chair/requests/%s/depart", requestID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/departのリクエストが失敗しました: %w", err)
-	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("POST /api/chair/requests/{requestID}/departへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusNoContent, resp.StatusCode)
-	}
-
-	resBody := &api.ChairPostRequestDepartNoContent{}
+	resBody := &api.ChairPostRideStatusNoContent{}
 	return resBody, nil
 }
 
@@ -237,7 +175,7 @@ func (c *Client) ChairGetNotification(ctx context.Context) iter.Seq2[*api.ChairG
 				}
 			} else {
 				if !yield(&api.ChairGetNotificationOK{
-					RequestID:             notification.RequestID,
+					RideID:                notification.RideID,
 					User:                  notification.User,
 					PickupCoordinate:      notification.PickupCoordinate,
 					DestinationCoordinate: notification.DestinationCoordinate,
@@ -270,7 +208,7 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return func(yield func(*api.ChairGetNotificationOK, error) bool) {
-			yield(nil, fmt.Errorf("GET /api/chair/notificationsのリクエストが失敗しました: %w", err))
+			yield(nil, fmt.Errorf("GET /api/chair/notificationのリクエストが失敗しました: %w", err))
 		}
 	}
 
@@ -296,10 +234,10 @@ func (c *Client) chairGetNotification(ctx context.Context, nested bool) iter.Seq
 	request := &api.ChairGetNotificationOK{}
 	if resp.StatusCode == http.StatusOK {
 		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
-			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
+			err = fmt.Errorf("GET /api/chair/notificationのJSONのdecodeに失敗しました: %w", err)
 		}
 	} else if resp.StatusCode != http.StatusNoContent {
-		err = fmt.Errorf("GET /api/chair/notificationsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+		err = fmt.Errorf("GET /api/chair/notificationへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
 	}
 
 	if nested {

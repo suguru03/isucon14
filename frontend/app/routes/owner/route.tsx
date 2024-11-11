@@ -6,7 +6,7 @@ import { ProviderProvider } from "~/contexts/provider-context";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "プロバイダー | ISURIDE" },
+    { title: "オーナー | ISURIDE" },
     { name: "description", content: "isucon14" },
   ];
 };
@@ -17,8 +17,8 @@ export default function ProviderLayout() {
       <Outlet />
       <FooterNavigation
         navigationMenus={[
-          { icon: CircleIcon, link: "/provider/", label: "HOME" },
-          { icon: CircleIcon, link: "/provider/sales", label: "SALES" },
+          { icon: CircleIcon, link: "/owner/", label: "HOME" },
+          { icon: CircleIcon, link: "/owner/sales", label: "SALES" },
         ]}
       />
     </ProviderProvider>

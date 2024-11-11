@@ -23,6 +23,8 @@ var (
 	paymentURL string
 	// 負荷走行秒数 (0のときは負荷走行を実行せずprepareのみ実行する)
 	loadTimeoutSeconds int64
+	// エラーが発生した際に非0のexit codeを返すかどうか
+	failOnError bool
 )
 
 var runCmd = &cobra.Command{
@@ -68,19 +70,26 @@ var runCmd = &cobra.Command{
 		}
 		b.AddScenario(s)
 
+		var errors []error
 		if loadTimeoutSeconds == 0 {
 			contestantLogger.Info("prepareのみを実行します")
 			result := b.Start(context.Background())
+			errors = result.Errors.All()
 			contestantLogger.Info("prepareが終了しました",
-				slog.Any("errors", result.Errors.All()),
+				slog.Any("errors", errors),
 			)
 		} else {
 			contestantLogger.Info("負荷走行を開始します")
 			result := b.Start(context.Background())
+			errors = result.Errors.All()
 			contestantLogger.Info("負荷走行が終了しました",
 				slog.Int64("score", s.Score()),
-				slog.Any("errors", result.Errors.All()),
+				slog.Any("errors", errors),
 			)
+		}
+
+		if failOnError && len(errors) > 0 {
+			os.Exit(1)
 		}
 		return nil
 	},
@@ -91,5 +100,6 @@ func init() {
 	runCmd.Flags().StringVar(&targetAddr, "addr", "", "benchmark target ip:port")
 	runCmd.Flags().StringVar(&paymentURL, "payment-url", "http://localhost:12345", "payment server URL")
 	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds (When this value is 0, load does not run and only prepare is run)")
+	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", false, "fail on error")
 	rootCmd.AddCommand(runCmd)
 }
