@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
-import { fetchChairPostRegister } from "~/apiClient/apiComponents";
+import { fetchChairPostChairs } from "~/apiClient/apiComponents";
 import { TextInput } from "~/components/primitives/form/text";
 
 export const meta: MetaFunction = () => {
@@ -16,7 +16,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   //     name: String(formData.get("provider_name")) ?? "",
   //   },
   // });
-  const chair = await fetchChairPostRegister({
+  const chair = await fetchChairPostChairs({
     body: {
       model: String(formData.get("model")) ?? "",
       name: String(formData.get("name")) ?? "",

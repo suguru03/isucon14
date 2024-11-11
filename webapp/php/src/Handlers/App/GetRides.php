@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace IsuRide\Handlers\App;
 
-use DateTimeImmutable;
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\Chair;
 use IsuRide\Database\Model\Owner;
@@ -88,7 +87,11 @@ class GetRides extends AbstractHttpHandler
                 $stmt->execute();
                 $chairResult = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$chairResult) {
-                    throw new \Exception('Chair not found');
+                    return (new ErrorResponse())->write(
+                        $response,
+                        StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                        new \Exception('Chair not found')
+                    );
                 }
                 $chair = new Chair(
                     id: $chairResult['id'],
@@ -143,28 +146,18 @@ class GetRides extends AbstractHttpHandler
                 ]),
                 'chair' => new AppGetRides200ResponseRidesInnerChair([
                     'id' => $chair->id,
-                    'owner' => $ownerResult['name'],
+                    'owner' => $owner->name,
                     'name' => $chair->name,
                     'model' => $chair->model
                 ]),
                 'fare' => $this->calculateSale($ride),
                 'evaluation' => $ride->evaluation,
-                'requested_at' => $this->toUnixMilliseconds($ride->createdAt),
-                'completed_at' => $this->toUnixMilliseconds($ride->updatedAt)
+                'requested_at' => $ride->createdAtUnixMilliseconds(),
+                'completed_at' => $ride->updatedAtUnixMilliseconds()
             ]);
         }
         return $this->writeJson($response, new AppGetRides200Response([
             'rides' => $items
         ]));
-    }
-
-    /**
-     * @throws \DateMalformedStringException
-     */
-    private function toUnixMilliseconds(string $dateTime): int
-    {
-        $dateTimeImmutable = new DateTimeImmutable($dateTime);
-        $dateTimeImmutable->setTimezone(new \DateTimeZone('UTC'));
-        return (int)$dateTimeImmutable->format('Uv');
     }
 }

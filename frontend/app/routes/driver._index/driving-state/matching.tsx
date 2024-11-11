@@ -1,8 +1,5 @@
 import { useCallback, useRef } from "react";
-import {
-  useChairPostRequestAccept,
-  useChairPostRequestDeny,
-} from "~/apiClient/apiComponents";
+import { useChairPostRideStatus } from "~/apiClient/apiComponents";
 import { CarRedIcon } from "~/components/icon/car-red";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Button } from "~/components/primitives/button/button";
@@ -11,10 +8,10 @@ import { useClientChairRequestContext } from "~/contexts/driver-context";
 
 export const Matching = ({
   name,
-  request_id,
+  ride_id,
 }: {
   name?: string;
-  request_id?: string;
+  ride_id?: string;
 }) => {
   const { auth } = useClientChairRequestContext();
   const modalRef = useRef<{ close: () => void }>(null);
@@ -24,25 +21,30 @@ export const Matching = ({
     }
   };
 
-  const { mutate: postChairRequestAccept } = useChairPostRequestAccept();
-  const { mutate: postChairRequestDeny } = useChairPostRequestDeny();
+  const { mutate: postChairRideStatus } = useChairPostRideStatus();
 
   const handleAccept = useCallback(() => {
-    postChairRequestAccept({
-      pathParams: { requestId: request_id || "" },
+    postChairRideStatus({
+      pathParams: { rideId: ride_id || "" },
+      body: {
+        status: "ENROUTE",
+      },
       headers: {
         Authorization: `Bearer ${auth?.accessToken}`,
       },
     });
-  }, [auth, postChairRequestAccept, request_id]);
+  }, [auth, postChairRideStatus, ride_id]);
   const handleDeny = useCallback(() => {
-    postChairRequestDeny({
-      pathParams: { requestId: request_id || "" },
+    postChairRideStatus({
+      pathParams: { rideId: ride_id || "" },
+      body: {
+        status: "MATCHING",
+      },
       headers: {
         Authorization: `Bearer ${auth?.accessToken}`,
       },
     });
-  }, [auth, postChairRequestDeny, request_id]);
+  }, [auth, postChairRideStatus, ride_id]);
 
   return (
     <div className="h-full text-center content-center">
