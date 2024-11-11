@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useRef, useState } from "react";
-import { fetchAppPostRequest } from "~/apiClient/apiComponents";
+import { fetchAppPostRides } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
@@ -62,7 +62,7 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-    await fetchAppPostRequest({
+    await fetchAppPostRides({
       body: {
         pickup_coordinate: currentLocation,
         destination_coordinate: destLocation,
@@ -70,7 +70,7 @@ export default function Index() {
       headers: {
         Authorization: `Bearer ${data.auth?.accessToken}`,
       },
-    }).then((res) => setRequestId(res.request_id));
+    }).then((res) => setRequestId(res.ride_id));
   }, [data, currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
@@ -139,7 +139,7 @@ export default function Index() {
       )}
       {data?.status && (
         <Modal ref={drivingStateModalRef}>
-          {data.status === "DISPATCHED" && (
+          {data.status === "PICKUP" && (
             <Dispatched destLocation={data?.payload?.coordinate?.destination} />
           )}
           {data.status === "CARRYING" && (

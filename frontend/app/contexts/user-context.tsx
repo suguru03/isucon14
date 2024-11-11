@@ -10,12 +10,8 @@ import {
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchAppGetNotification } from "~/apiClient/apiComponents";
-import type {
-  AppRequest,
-  Coordinate,
-  RequestStatus,
-} from "~/apiClient/apiSchemas";
-import type { ClientAppRequest } from "~/types";
+import type { AppRide, Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import type { ClientAppRide } from "~/types";
 
 const isApiFetchError = (
   obj: unknown,
@@ -53,7 +49,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
-    useState<Omit<ClientAppRequest, "auth" | "user">>();
+    useState<Omit<ClientAppRide, "auth" | "user">>();
   const isSSE = localStorage.getItem("isSSE") === "true";
 
   useEffect(() => {
@@ -71,17 +67,17 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       );
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
-          const eventData = JSON.parse(event.data) as AppRequest;
+          const eventData = JSON.parse(event.data) as AppRide;
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
               eventData.status !== preRequest.status ||
-              eventData.request_id !== preRequest.payload?.request_id
+              eventData.id !== preRequest.payload?.ride_id
             ) {
               return {
                 status: eventData.status,
                 payload: {
-                  request_id: eventData.request_id,
+                  ride_id: eventData.id,
                   coordinate: {
                     pickup: eventData.pickup_coordinate,
                     destination: eventData.destination_coordinate,
@@ -115,7 +111,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             if (
               prev?.payload !== undefined &&
               prev?.status === current.status &&
-              prev.payload?.request_id === current.request_id
+              prev.payload?.ride_id === current.ride_id
             ) {
               return prev;
             }
@@ -123,7 +119,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             return {
               status: current.status,
               payload: {
-                request_id: current.request_id,
+                ride_id: current.ride_id,
                 coordinate: {
                   pickup: current.pickup_coordinate,
                   destination: current.destination_coordinate,
@@ -151,7 +147,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         setClientAppPayloadWithStatus({
           status: appRequest.status,
           payload: {
-            request_id: appRequest.request_id,
+            ride_id: appRequest.ride_id,
             coordinate: {
               pickup: appRequest.pickup_coordinate,
               destination: appRequest.destination_coordinate,
@@ -178,9 +174,9 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
     }
   }, [accessToken, setClientAppPayloadWithStatus, isSSE, navigate]);
 
-  const responseClientAppRequest = useMemo<ClientAppRequest | undefined>(() => {
+  const responseClientAppRequest = useMemo<ClientAppRide | undefined>(() => {
     const debugStatus =
-      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
+      (searchParams.get("debug_status") as RideStatus) ?? undefined;
     const debugDestinationCoordinate = ((): Coordinate | undefined => {
       // expected format: 123,456
       const v = searchParams.get("debug_destination_coordinate") ?? "";
@@ -212,7 +208,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   return responseClientAppRequest;
 };
 
-const ClientAppRequestContext = createContext<Partial<ClientAppRequest>>({});
+const ClientAppRequestContext = createContext<Partial<ClientAppRide>>({});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:

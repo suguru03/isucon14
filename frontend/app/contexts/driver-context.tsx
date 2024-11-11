@@ -10,17 +10,13 @@ import {
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchChairGetNotification } from "~/apiClient/apiComponents";
-import type {
-  ChairRequest,
-  Coordinate,
-  RequestStatus,
-} from "~/apiClient/apiSchemas";
-import type { ClientChairRequest } from "~/types";
+import type { ChairRide, Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import type { ClientChairRide } from "~/types";
 
 export const useClientChairRequest = (accessToken: string, id?: string) => {
   const [searchParams] = useSearchParams();
   const [clientChairPayloadWithStatus, setClientChairPayloadWithStatus] =
-    useState<Omit<ClientChairRequest, "auth" | "chair">>();
+    useState<Omit<ClientChairRide, "auth" | "chair">>();
   const [coordinate, SetCoordinate] = useState<Coordinate>();
   const isSSE = localStorage.getItem("isSSE") === "true";
   useEffect(() => {
@@ -38,17 +34,17 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
       );
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
-          const eventData = JSON.parse(event.data) as ChairRequest;
+          const eventData = JSON.parse(event.data) as ChairRide;
           setClientChairPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
               eventData.status !== preRequest.status ||
-              eventData.request_id !== preRequest.payload?.request_id
+              eventData.id !== preRequest.payload?.ride_id
             ) {
               return {
                 status: eventData.status,
                 payload: {
-                  request_id: eventData.request_id,
+                  ride_id: eventData.id,
                   coordinate: {
                     pickup: eventData.destination_coordinate, // TODO: set pickup
                     destination: eventData.destination_coordinate,
@@ -81,7 +77,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
           setClientChairPayloadWithStatus({
             status: appRequest.status,
             payload: {
-              request_id: appRequest.request_id,
+              ride_id: appRequest.ride_id,
               coordinate: {
                 pickup: appRequest.destination_coordinate, // TODO: set pickup
                 destination: appRequest.destination_coordinate,
@@ -101,11 +97,9 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
     }
   }, [accessToken, setClientChairPayloadWithStatus, isSSE]);
 
-  const responseClientAppRequest = useMemo<
-    ClientChairRequest | undefined
-  >(() => {
+  const responseClientAppRequest = useMemo<ClientChairRide | undefined>(() => {
     const debugStatus =
-      (searchParams.get("debug_status") as RequestStatus) ?? undefined;
+      (searchParams.get("debug_status") as RideStatus) ?? undefined;
     const candidateAppRequest = { ...clientChairPayloadWithStatus };
     if (
       coordinate === undefined &&
@@ -120,7 +114,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
     if (debugStatus !== undefined) {
       candidateAppRequest.status = debugStatus;
       candidateAppRequest.payload = { ...candidateAppRequest.payload };
-      candidateAppRequest.payload.request_id = "__DUMMY_REQUEST_ID__";
+      candidateAppRequest.payload.ride_id = "__DUMMY_REQUEST_ID__";
       (candidateAppRequest.payload.user = {
         id: "1234",
         name: "ゆーざー",
@@ -165,9 +159,7 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
   return responseClientAppRequest;
 };
 
-const ClientChairRequestContext = createContext<Partial<ClientChairRequest>>(
-  {},
-);
+const ClientChairRequestContext = createContext<Partial<ClientChairRide>>({});
 
 export const DriverProvider = ({ children }: { children: ReactNode }) => {
   // TODO:

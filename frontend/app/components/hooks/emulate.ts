@@ -68,7 +68,7 @@ export const useEmulator = () => {
       currentCoodinatePost();
 
       switch (status) {
-        case "DISPATCHING":
+        case "ENROUTE":
           if (pickup) {
             setter(move(location, pickup));
           }

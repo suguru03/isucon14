@@ -3,9 +3,9 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
-  AppPostRegisterRequestBody,
-  ChairPostRegisterRequestBody,
-  OwnerPostRegisterRequestBody,
+  AppPostUsersRequestBody,
+  ChairPostChairsRequestBody,
+  OwnerPostOwnersRequestBody,
 } from "~/apiClient/apiComponents";
 import { alternativeURLExpression } from "./api-url.mjs";
 
@@ -37,7 +37,7 @@ const getLoggedInURLForClient = async () => {
       firstname: "isucon",
       lastname: "isucon",
       date_of_birth: "11111111",
-    } satisfies AppPostRegisterRequestBody),
+    } satisfies AppPostUsersRequestBody),
     method: "POST",
   });
   const json = (await response.json()) as APIResponse;
@@ -68,7 +68,7 @@ const getLoggedInURLForDriver = async () => {
     {
       body: JSON.stringify({
         name: "isuconProvider",
-      } satisfies OwnerPostRegisterRequestBody),
+      } satisfies OwnerPostOwnersRequestBody),
       method: "POST",
     },
   );
@@ -81,7 +81,7 @@ const getLoggedInURLForDriver = async () => {
       name: "isuconChair001",
       model: "isuconChair",
       chair_register_token: providerJSON["chair_register_token"],
-    } satisfies ChairPostRegisterRequestBody),
+    } satisfies ChairPostChairsRequestBody),
     method: "POST",
   });
   const json = (await response.json()) as APIResponse;
