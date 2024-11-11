@@ -31,7 +31,7 @@ const getLoggedInURLForClient = async () => {
     );
   }
 
-  const response = await fetch("http://localhost:8080/app/register", {
+  const response = await fetch("http://localhost:8080/api/app/users", {
     body: JSON.stringify({
       username: "testIsuconUser",
       firstname: "isucon",
@@ -64,7 +64,7 @@ const getLoggedInURLForDriver = async () => {
 
   // POST /provider/register => POST /chair/register
   const providerResponse = await fetch(
-    "http://localhost:8080/provider/register",
+    "http://localhost:8080/api/owner/ownsers",
     {
       body: JSON.stringify({
         name: "isuconProvider",
