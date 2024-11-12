@@ -5,6 +5,7 @@ import { Coordinate } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
+import { PriceText } from "~/components/modules/price-text/price-text";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
@@ -58,6 +59,7 @@ export default function Index() {
   // TODO: requestId をベースに配車キャンセルしたい
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
+  const [fare, setFare] = useState<number>();
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
@@ -70,7 +72,10 @@ export default function Index() {
       headers: {
         Authorization: `Bearer ${data.auth?.accessToken}`,
       },
-    }).then((res) => setRequestId(res.ride_id));
+    }).then((res) => {
+      setRequestId(res.ride_id);
+      setFare(res.fare);
+    });
   }, [data, currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
@@ -110,6 +115,15 @@ export default function Index() {
         >
           ISURIDE
         </Button>
+        <p className="mt-2 text-right self-end">
+          {typeof fare === "number" ? (
+            <>
+              予定運賃: <PriceText tagName="span" value={fare} />
+            </>
+          ) : (
+            <>&nbsp;</>
+          )}
+        </p>
       </div>
       {isSelectorModalOpen && (
         <Modal ref={selectorModalRef} onClose={onClose}>
