@@ -1,7 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
-import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
-import { fetchOwnerPostOwners } from "~/apiClient/apiComponents";
-import { TextInput } from "~/components/primitives/form/text";
+import OwnerLoginForm from "./form/login";
+import OwnerRegisterForm from "./form/register";
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,33 +9,11 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
-  const formData = await request.formData();
-  const provider = await fetchOwnerPostOwners({
-    body: {
-      name: String(formData.get("provider_name")) ?? "",
-    },
-  });
-  return redirect(`/provider?id=${provider.id}`);
-};
-
 export default function DriverRegister() {
   return (
     <>
-      <Form
-        className="w-full h-full p-4 bg-white rounded-lg shadow-md flex flex-col gap-4"
-        method="POST"
-      >
-        <div>
-          <TextInput
-            id="provider_name"
-            name="provider_name"
-            label="Provider name:"
-            required
-          />
-        </div>
-        <button type="submit">登録</button>
-      </Form>
+      <OwnerLoginForm />
+      <OwnerRegisterForm />
     </>
   );
 }
