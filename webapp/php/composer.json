@@ -5,6 +5,7 @@
     "ext-json": "*",
     "ext-curl": "*",
     "ext-pdo": "*",
+    "ext-ctype": "*",
     "monolog/monolog": "^3.7",
     "slim/psr7": "^1.5",
     "slim/slim": "^4.10",
