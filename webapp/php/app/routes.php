@@ -39,6 +39,7 @@ return function (App $app, array $config) {
     // owner handlers
     $app->post('/api/owner/owners', new Handlers\Owner\PostOwners($database));
     $app->group('/api/owner', function ($app) use ($database) {
+        $app->get('/sales', new Handlers\Owner\GetSales($database));
         $app->get('/chairs', new Handlers\Owner\GetChairs($database));
     })->addMiddleware(
         new Middlewares\OwnerAuthMiddleware($database, $app->getResponseFactory())
