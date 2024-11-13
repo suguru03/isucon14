@@ -7,11 +7,11 @@ export default function OwnerRegisterForm() {
   const navigate = useNavigate();
   return (
     <div>
-      <p>新しいオーナーを作成する</p>
+      <label htmlFor="ownerName">ownerNameを入力:</label>
       <input
         type="text"
-        id="sessionToken"
-        name="sessionToken"
+        id="ownerName"
+        name="ownerName"
         className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         onChange={(e) => setOwnerName(e.target.value)}
       />

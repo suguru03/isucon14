@@ -7,7 +7,7 @@ export default function OwnerLoginForm() {
   const navigate = useNavigate();
   return (
     <div>
-      <p>特定のオーナーでログインする</p>
+      <label htmlFor="sessionToken">sessionTokenを入力:</label>
       <input
         type="text"
         id="sessionToken"
