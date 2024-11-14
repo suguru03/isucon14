@@ -12,9 +12,9 @@ export default function Index() {
   const { chairs } = useClientProviderContext();
 
   return (
-    <section className="flex-1 mx-4">
-      <h1 className="text-3xl my-4">椅子一覧</h1>
-      <div className="flex items-center justify-end">
+    <section className="flex-1 overflow-hidden flex flex-col mx-4">
+      <div className="flex items-center justify-between border-b">
+        <h1 className="text-3xl my-4">椅子一覧</h1>
         {/* // TODO: UI */}
         <ButtonLink to={"/driver/register"} className="w-32">
           + 追加
@@ -25,6 +25,7 @@ export default function Index() {
           items={chairs}
           keyFn={(chair) => chair.id}
           rowFn={(chair) => <pre>{JSON.stringify(chair, null, 2)}</pre>} // TODO: UI
+          className="overflow-auto"
         />
       ) : (
         <Text>登録されている椅子がありません</Text>
