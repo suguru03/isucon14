@@ -1,7 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
+import { useSearchParams } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { List } from "~/components/modules/list/list";
 import { PriceText } from "~/components/modules/price-text/price-text";
+import { ChairModel } from "~/components/primitives/chair-model/chair-model";
+import { DateInput } from "~/components/primitives/form/date";
 import { Tab } from "~/components/primitives/tab/tab";
 import { useClientProviderContext } from "~/contexts/provider-context";
 
@@ -10,6 +13,8 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const [, setSearchParams] = useSearchParams();
+
   const tabs = [
     { key: "chair", label: "椅子別" },
     { key: "model", label: "モデル別" },
@@ -18,16 +23,34 @@ export default function Index() {
   type Tab = (typeof tabs)[number]["key"];
   const [tab, setTab] = useState<Tab>("chair");
 
-  const { sales } = useClientProviderContext();
+  const { sales, chairs } = useClientProviderContext();
 
   const items = useMemo(() => {
-    if (!sales) {
+    if (!sales || !chairs) {
       return [];
     }
+    const chairModelMap = new Map(chairs.map((c) => [c.id, c.model]));
     return tab === "chair"
-      ? sales.chairs.map((item) => ({ name: item.name, sales: item.sales }))
-      : sales.models.map((item) => ({ name: item.model, sales: item.sales }));
+      ? sales.chairs.map((item) => ({
+          key: item.id,
+          name: item.name,
+          model: chairModelMap.get(item.id) ?? "",
+          sales: item.sales,
+        }))
+      : sales.models.map((item) => ({
+          key: item.model,
+          name: item.model,
+          model: item.model,
+          sales: item.sales,
+        }));
   }, [sales, tab]);
+
+  const updateDate = (key: "since" | "until", value: string) => {
+    setSearchParams((prev) => {
+      prev.set(key, value);
+      return prev;
+    });
+  };
 
   const switchTab = (tab: Tab) => {
     setTab(tab);
@@ -36,6 +59,21 @@ export default function Index() {
   return (
     <section className="flex-1 mx-4">
       <h1 className="text-3xl my-4">売上</h1>
+      <div className="flex items-baseline gap-2 mb-2">
+        <DateInput
+          id="sales-since"
+          name="since"
+          className="w-48"
+          onChange={(e) => updateDate("since", e.target.value)}
+        />
+        →
+        <DateInput
+          id="sales-until"
+          name="until"
+          className="w-48"
+          onChange={(e) => updateDate("until", e.target.value)}
+        />
+      </div>
       {sales ? (
         <>
           <div className="flex">
@@ -49,11 +87,16 @@ export default function Index() {
           <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
           <List
             items={items}
-            keyFn={(item) => item.name}
+            keyFn={(item) => item.key}
             rowFn={(item) => (
-              <div className="flex justify-between">
-                <span>{item.name}</span>
-                <PriceText tagName="span" value={item.sales} />
+              <div className="flex">
+                <ChairModel model={item.model} />
+                <span className="ms-4">{item.name}</span>
+                <PriceText
+                  tagName="span"
+                  value={item.sales}
+                  className="ms-auto"
+                />
               </div>
             )}
           />

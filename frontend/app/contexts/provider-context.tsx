@@ -39,6 +39,8 @@ const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({
   provider: { id: "xxx", name: "hoge" },
 });
 
+const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
+
 export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
@@ -76,10 +78,17 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
         fetchOwnerGetChairs({}, abortController.signal).then((res) =>
           setChairs(res),
         ),
-        fetchOwnerGetSales(
-          { queryParams: { since: Number(since), until: Number(until) } },
-          abortController.signal,
-        ).then((res) => setSales(res)),
+        since && until
+          ? fetchOwnerGetSales(
+              {
+                queryParams: {
+                  since: timestamp(since),
+                  until: timestamp(until),
+                },
+              },
+              abortController.signal,
+            ).then((res) => setSales(res))
+          : Promise.resolve(),
       ]).catch((reason) => {
         if (typeof reason === "string") {
           console.error(`CONSOLE PROMISE ERROR: ${reason}`);
