@@ -1,16 +1,20 @@
 import { createContext, ReactNode, useContext } from "react";
+import { RideStatus } from "~/apiClient/apiSchemas";
 
-type Owner = {
+export type Owner = {
   name: string;
   id: string;
   token: string;
 };
 
-type Chair = {
+
+export type ChairStatus = RideStatus | "NOT_ACTIVATE"
+
+export type Chair = {
   id: string;
   name: string;
   model: string;
-  activate: boolean;
+  status: ChairStatus;
 };
 
 type ChairsByOnwer = Map<Owner, Chair[]>;
@@ -62,19 +66,19 @@ function useChairsByOwner(): ChairsByOnwer {
           id: "01JCNCECH24Q07MBGNXVN14QSQ",
           name: "o1-c1",
           model: "アーロンチェア",
-          activate: true,
+          status: "MATCHING",
         },
         {
           id: "01JCNCG65ZXZX2EF16MREZ8M4V",
           name: "o1-c2",
           model: "コンテッサ",
-          activate: true
+          status: "CARRYING",
         },
         {
           id: "01JCNCH3FWEWKE6N6KF1447R2Y",
           name: "o1-c3",
           model: "エルゴヒューマン",
-          activate: false
+          status: "NOT_ACTIVATE",
         },
       ],
     ],
@@ -89,7 +93,7 @@ function useChairsByOwner(): ChairsByOnwer {
           id: "01JCNCKSGGPF5P659FX66YVSC6",
           name: "o2-c1",
           model: "アクトチェア",
-          activate: false,
+          status: "ENROUTE",
         },
       ],
     ]
