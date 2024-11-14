@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useMemo } from "react";
 import { List } from "~/components/modules/list/list";
-import { Button } from "~/components/primitives/button/button";
+import { ButtonLink } from "~/components/primitives/button/button";
+import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/provider-context";
 
 export const meta: MetaFunction = () => {
@@ -9,30 +9,26 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { sales } = useClientProviderContext();
-
-  const chairs = useMemo(() => {
-    return sales?.chairs ?? [];
-  }, [sales]);
+  const { chairs } = useClientProviderContext();
 
   return (
     <section className="flex-1 mx-4">
       <h1 className="text-3xl my-4">椅子一覧</h1>
       <div className="flex items-center justify-end">
-        <Button size="sm" onClick={() => alert("not implemented")}>
+        {/* // TODO: UI */}
+        <ButtonLink to={"/driver/register"} className="w-32">
           + 追加
-        </Button>
+        </ButtonLink>
       </div>
-      <List
-        items={chairs}
-        keyFn={(chair) => chair.id}
-        rowFn={(chair) => (
-          <div>
-            <span>{chair.name}</span>
-            <span className="ms-2 text-sm text-gray-500">{chair.id}</span>
-          </div>
-        )}
-      />
+      {chairs?.length ? (
+        <List
+          items={chairs}
+          keyFn={(chair) => chair.id}
+          rowFn={(chair) => <pre>{JSON.stringify(chair, null, 2)}</pre>} // TODO: UI
+        />
+      ) : (
+        <Text>登録されている椅子がありません</Text>
+      )}
     </section>
   );
 }
