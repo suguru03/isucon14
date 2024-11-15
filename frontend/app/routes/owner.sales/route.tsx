@@ -58,7 +58,7 @@ export default function Index() {
 
   return (
     <section className="flex-1 overflow-hidden flex flex-col mx-4">
-      <h1 className="text-3xl my-4">売上</h1>
+      <h1 className="text-2xl my-4">売上</h1>
       <div className="flex items-baseline gap-2 mb-2">
         <DateInput
           id="sales-since"

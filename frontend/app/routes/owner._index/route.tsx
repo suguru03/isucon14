@@ -14,7 +14,7 @@ export default function Index() {
   return (
     <section className="flex-1 overflow-hidden flex flex-col mx-4">
       <div className="flex items-center justify-between border-b">
-        <h1 className="text-3xl my-4">椅子一覧</h1>
+        <h1 className="text-2xl my-4">椅子一覧</h1>
         {/* // TODO: UI */}
         <ButtonLink to={"/driver/register"} className="w-32">
           + 追加

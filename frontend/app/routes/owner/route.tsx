@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { CircleIcon } from "~/components/icon/circle";
 import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
+import { OwnerHeader } from "~/components/modules/owner-header/owner-header";
 import {
   ProviderProvider,
   useClientProviderContext,
@@ -19,10 +20,7 @@ export default function ProviderLayout() {
 
   return (
     <ProviderProvider>
-      <div>
-        オーナー名
-        <pre>{JSON.stringify(provider)}</pre>
-      </div>
+      <OwnerHeader />
       <Outlet />
       <FooterNavigation
         navigationMenus={[
