@@ -5,7 +5,6 @@ import { Coordinate } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
-import { PriceText } from "~/components/modules/price-text/price-text";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
@@ -115,15 +114,6 @@ export default function Index() {
         >
           ISURIDE
         </Button>
-        <p className="mt-2 text-right self-end">
-          {typeof fare === "number" ? (
-            <>
-              予定運賃: <PriceText tagName="span" value={fare} />
-            </>
-          ) : (
-            <>&nbsp;</>
-          )}
-        </p>
       </div>
       {isSelectorModalOpen && (
         <Modal ref={selectorModalRef} onClose={onClose}>
@@ -154,10 +144,16 @@ export default function Index() {
       {data?.status && (
         <Modal ref={drivingStateModalRef}>
           {data.status === "PICKUP" && (
-            <Dispatched destLocation={data?.payload?.coordinate?.destination} />
+            <Dispatched
+              destLocation={data?.payload?.coordinate?.destination}
+              fare={fare}
+            />
           )}
           {data.status === "CARRYING" && (
-            <Carrying destLocation={data?.payload?.coordinate?.destination} />
+            <Carrying
+              destLocation={data?.payload?.coordinate?.destination}
+              fare={fare}
+            />
           )}
           {data.status === "ARRIVED" && <Arrived />}
         </Modal>
