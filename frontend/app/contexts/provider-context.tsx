@@ -35,9 +35,7 @@ const DUMMY_DATA = {
   ],
 } as const satisfies OwnerGetSalesResponse;
 
-const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({
-  provider: { id: "xxx", name: "hoge" },
-});
+const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
 
 const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
 
