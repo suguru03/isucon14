@@ -77,7 +77,7 @@ sub app_get_resuest ($self, $c) {
 {
     *Kossy::Connection::halt_json = sub {
         my ($c, $status, $message) = @_;
-        my $res = $c->render_json({ message => $message });
+        my $res = $c->render_json({ message => $message }, { message => JSON_TYPE_STRING });
         die Kossy::Exception->new($status, response => $res);
     };
 

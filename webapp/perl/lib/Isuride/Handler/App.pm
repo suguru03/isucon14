@@ -29,7 +29,7 @@ sub app_post_users ($app, $c) {
     }
 
     if ($params->{username} eq '' || $params->{firstname} eq '' || $params->{lastname} eq '' || $params->{date_of_birth} eq '') {
-        return $c->halt(HTTP_BAD_REQUEST, 'required fields(username, firstname, lastname, date_of_birth) are empty');
+        return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(username, firstname, lastname, date_of_birth) are empty');
     }
 
     my $user_id         = ulid();
@@ -55,14 +55,14 @@ sub app_post_users ($app, $c) {
         my $coupons = $app->dbh->select_all(q{SELECT * FROM coupons WHERE code = ? FOR UPDATE}, "INV_" . $params->{invitation_code});
 
         if (scalar $coupons->@* >= 3) {
-            return $c->halt(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
+            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
         }
 
         # ユーザーチェック
         my $inviter = $app->dbh->select_row(q{SELECT * FROM users WHERE invitation_code = ?}, $params->{invitation_code});
 
         unless ($inviter) {
-            return $c->halt(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
+            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
         }
 
         # 招待クーポン付与
