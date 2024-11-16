@@ -44,7 +44,7 @@ class GetRide extends AbstractHttpHandler
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
-                $this->db->commit();
+                $this->db->rollBack();
                 return (new ErrorResponse())->write(
                     $response,
                     StatusCodeInterface::STATUS_NOT_FOUND,
@@ -84,7 +84,7 @@ class GetRide extends AbstractHttpHandler
                 $stmt->execute();
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$result) {
-                    $this->db->commit();
+                    $this->db->rollBack();
                     return (new ErrorResponse())->write(
                         $response,
                         StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
@@ -102,7 +102,7 @@ class GetRide extends AbstractHttpHandler
                     updatedAt: $result['updated_at']
                 );
                 $chairStats = $this->getChairStats($this->db, $chair->id);
-                $this->db->commit();
+                $this->db->rollBack();
                 if ($chairStats->isError()) {
                     return (new ErrorResponse())->write(
                         $response,
