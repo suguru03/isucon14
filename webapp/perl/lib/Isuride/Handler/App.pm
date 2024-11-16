@@ -25,7 +25,7 @@ sub app_post_users ($app, $c) {
     my $params = $c->req->json_parameters;
 
     unless (check_params($params, AppPostUsersRequest)) {
-        return $c->halt(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
     }
 
     if ($params->{username} eq '' || $params->{firstname} eq '' || $params->{lastname} eq '' || $params->{date_of_birth} eq '') {
@@ -101,11 +101,11 @@ sub app_post_payment_methods ($app, $c) {
     my $params = $c->req->json_parameters;
 
     unless (check_params($params, AppPaymentMethodsRequest)) {
-        return $c->halt(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
     }
 
     if ($params->{token} eq '') {
-        return $c->halt(HTTP_BAD_REQUEST, 'token is required but was empt');
+        return $c->halt_json(HTTP_BAD_REQUEST, 'token is required but was empt');
     }
 
     my $user = $c->stash->{user};

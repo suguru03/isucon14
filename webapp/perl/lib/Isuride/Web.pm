@@ -3,9 +3,18 @@ use v5.40;
 use utf8;
 
 use Kossy;
-use DBIx::Sunny;
-use HTTP::Status qw(:constants);
+use Kossy::Exception;
 
+use DBIx::Sunny;
+use Cpanel::JSON::XS;
+use Cpanel::JSON::XS::Type;
+use Types::Standard -types;
+
+$Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
+
+use Isuride::Payment::Gateway;
+use Isuride::Payment::Example;
+use Isuride::Middleware;
 use Isuride::Handler::App;
 
 sub connect_db() {
@@ -31,18 +40,32 @@ sub dbh ($self) {
     $self->{dbh} //= connect_db();
 }
 
-use constant AppAuthMiddleware => qw(app_auth_middleware);
+use constant AppAuthMiddleware   => qq(app_auth_middleware);
+use constant OwnerAuthMiddleware => qq(owner_auth_middleware);
+use constant ChairAuthMiddleware => qq(chair_auth_middleware);
 
+# middleware
+filter AppAuthMiddleware()   => \&Isuride::Middleware::app_auth_middleware;
+filter OwnerAuthMiddleware() => \&Isuride::Middleware::owner_auth_middleware;
+filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
+
+# router
 {
-    #  app handlers
-    post '/api/app/users' => \&Isuride::Handler::App::app_post_users;
 
-    post '/api/app/payment-methods' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_payment_methods;
-    get '/app/requests/{request_id}' => [AppAuthMiddleware] => \&app_get_resuest;
+    {
+        #  app handlers
+        get '/api/app/debug' => [AppAuthMiddleware] => sub ($self, $c) {
+            $c->render_json({ message => 'debug' });
+        };
+        post '/api/app/users' => \&Isuride::Handler::App::app_post_users;
+
+        post '/api/app/payment-methods' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_payment_methods;
+        get '/app/requests/{request_id}' => [AppAuthMiddleware] => \&app_get_resuest;
+    }
 }
 
 sub default ($self, $c) {
-    $c->render_json({ greeting => 'hello' });
+    $c->render_json({ greeting => '' });
 }
 
 sub app_get_resuest ($self, $c) {
@@ -50,32 +73,12 @@ sub app_get_resuest ($self, $c) {
 
 }
 
-# middleware
-filter 'app_auth_middleware' => sub ($app) {
-    sub ($self, $c) {
-        my $access_token = $c->req->cookies->{apps_session};
-
-        unless ($access_token) {
-            return res_error($c, HTTP_UNAUTHORIZED, 'app_session cookie is required');
-        }
-
-        my $user = $self->dbh->select_row(
-            'SELECT * FROM users WHERE access_token = ?',
-            $access_token
-        );
-
-        unless ($user) {
-            return res_error($c, HTTP_UNAUTHORIZED, 'invalid access_token');
-        }
-
-        $c->stash->{user} = $user;
-        return $app->($self, $c);
+# XXX hack Kossy
+{
+    *Kossy::Connection::halt_json = sub {
+        my ($c, $status, $message) = @_;
+        my $res = $c->render_json({ message => $message });
+        die Kossy::Exception->new($status, response => $res);
     };
-};
 
-sub res_error ($c, $status_code, $err) {
-    my $res = $c->render_json({ message => $err });
-    $res->status($status_code);
-    return $res;
 }
-
