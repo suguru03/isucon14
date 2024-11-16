@@ -4,17 +4,23 @@ declare(strict_types=1);
 
 namespace IsuRide\Result;
 
+use IsuRide\Model\AppChairStats;
 use Throwable;
 
-readonly class Ride
+readonly class ChairStats
 {
     /**
-     * @param \IsuRide\Database\Model\Ride[] $rides
+     * @param AppChairStats $stats
      * @param Throwable|null $error
      */
     public function __construct(
-        public array $rides,
+        public AppChairStats $stats,
         public ?Throwable $error = null
     ) {
+    }
+
+    public function isError(): bool
+    {
+        return $this->error !== null;
     }
 }
