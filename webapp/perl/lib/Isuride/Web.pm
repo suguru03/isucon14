@@ -12,8 +12,6 @@ use Types::Standard -types;
 
 $Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
 
-use Isuride::Payment::Gateway;
-use Isuride::Payment::Example;
 use Isuride::Middleware;
 use Isuride::Handler::App;
 
@@ -54,9 +52,6 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
 
     {
         #  app handlers
-        get '/api/app/debug' => [AppAuthMiddleware] => sub ($self, $c) {
-            $c->render_json({ message => 'debug' });
-        };
         post '/api/app/users' => \&Isuride::Handler::App::app_post_users;
 
         post '/api/app/payment-methods' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_payment_methods;
@@ -75,8 +70,7 @@ sub app_get_resuest ($self, $c) {
 
 # XXX hack Kossy
 {
-    *Kossy::Connection::halt_json = sub {
-        my ($c, $status, $message) = @_;
+    *Kossy::Connection::halt_json = sub ($c, $status, $message) {
         my $res = $c->render_json({ message => $message }, { message => JSON_TYPE_STRING });
         die Kossy::Exception->new($status, response => $res);
     };
