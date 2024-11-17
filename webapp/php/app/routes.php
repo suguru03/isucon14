@@ -32,6 +32,7 @@ return function (App $app, array $config) {
         $app->post('/rides/estimated-fare', new Handlers\App\PostRidesEstimatedFare($database));
         $app->get('/rides/{ride_id}', new Handlers\App\GetRide($database));
         $app->post('/rides/{ride_id}/evaluation', new Handlers\App\PostRideEvaluatation($database, $paymentGateway));
+        $app->get('/notification', new Handlers\App\GetNotification($database));
     })->addMiddleware(
         new Middlewares\AppAuthMiddleware($database, $app->getResponseFactory())
     );
@@ -44,7 +45,6 @@ return function (App $app, array $config) {
     })->addMiddleware(
         new Middlewares\OwnerAuthMiddleware($database, $app->getResponseFactory())
     );
-
     // chair handlers
     $app->post('/api/chair/chairs', new Handlers\Chair\PostChairs($database));
     $app->group('/api/chair', function ($app) use ($database) {

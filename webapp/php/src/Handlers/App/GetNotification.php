@@ -7,9 +7,10 @@ namespace IsuRide\Handlers\App;
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\Chair;
 use IsuRide\Database\Model\Ride;
+use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppChair;
-use IsuRide\Model\AppRide;
+use IsuRide\Model\AppGetNotification200Response;
 use IsuRide\Model\Coordinate;
 use IsuRide\Response\ErrorResponse;
 use PDO;
@@ -17,7 +18,7 @@ use PDOException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class GetRide extends AbstractHttpHandler
+class GetNotification extends AbstractHttpHandler
 {
     public function __construct(
         private readonly PDO $db,
@@ -36,21 +37,17 @@ class GetRide extends AbstractHttpHandler
         ResponseInterface $response,
         array $args
     ): ResponseInterface {
-        $rideId = $args['ride_id'];
-
-        $this->db->beginTransaction();
+        $user = $request->getAttribute('user');
+        assert($user instanceof User);
         try {
-            $stmt = $this->db->prepare('SELECT * FROM rides WHERE id = ?');
-            $stmt->bindValue(1, $rideId, PDO::PARAM_STR);
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1');
+            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
-                return (new ErrorResponse())->write(
-                    $response,
-                    StatusCodeInterface::STATUS_NOT_FOUND,
-                    new \Exception('ride not found')
-                );
+                return $this->writeNoContent($response);
             }
             $ride = new Ride(
                 id: $result['id'],
@@ -65,20 +62,30 @@ class GetRide extends AbstractHttpHandler
                 updatedAt: $result['updated_at']
             );
             $status = $this->getLatestRideStatus($this->db, $ride->id);
-            $res = new AppRide([
-                'id' => $ride->id,
-                'pickup_coordinate' => new Coordinate([
-                    'latitude' => $ride->pickupLatitude,
-                    'longitude' => $ride->pickupLongitude,
-                ]),
-                'destination_coordinate' => new Coordinate([
-                    'latitude' => $ride->destinationLatitude,
-                    'longitude' => $ride->destinationLongitude,
-                ]),
-                'status' => $status,
-                'created_at' => $ride->createdAtUnixMilliseconds(),
-                'updated_at' => $ride->updatedAtUnixMilliseconds(),
-            ]);
+            if ($status === '') {
+                $this->db->rollBack();
+                return (new ErrorResponse())->write(
+                    $response,
+                    StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                    new \Exception('ride status not found')
+                );
+            }
+            $res = new AppGetNotification200Response(
+                [
+                    'ride_id' => $ride->id,
+                    'pickup_coordinate' => new Coordinate([
+                        'latitude' => $ride->pickupLatitude,
+                        'longitude' => $ride->pickupLongitude,
+                    ]),
+                    'destination_coordinate' => new Coordinate([
+                        'latitude' => $ride->destinationLatitude,
+                        'longitude' => $ride->destinationLongitude,
+                    ]),
+                    'status' => $status,
+                    'created_at' => $ride->createdAtUnixMilliseconds(),
+                    'updated_at' => $ride->updatedAtUnixMilliseconds(),
+                ]
+            );
             if ($ride->chairId !== null) {
                 $stmt = $this->db->prepare('SELECT * FROM chairs WHERE id = ?');
                 $stmt->bindValue(1, $ride->chairId, PDO::PARAM_STR);
@@ -103,25 +110,29 @@ class GetRide extends AbstractHttpHandler
                     updatedAt: $result['updated_at']
                 );
                 $chairStats = $this->getChairStats($this->db, $chair->id);
-                $this->db->rollBack();
                 if ($chairStats->isError()) {
+                    $this->db->rollBack();
                     return (new ErrorResponse())->write(
                         $response,
                         StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
                         $chairStats->error
                     );
                 }
-                $res->setChair(new AppChair([
-                    'id' => $chair->id,
-                    'name' => $chair->name,
-                    'model' => $chair->model,
-                    'stats' => $chairStats->stats
-                ]));
+                $res->setChair(
+                    new AppChair([
+                        'id' => $chair->id,
+                        'name' => $chair->name,
+                        'model' => $chair->model,
+                        'stats' => $chairStats->stats
+                    ])
+                );
             }
             $this->db->commit();
             return $this->writeJson($response, $res);
-        } catch (PDOException $e) {
-            $this->db->rollBack();
+        } catch (PDOException  $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return (new ErrorResponse())->write(
                 $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
