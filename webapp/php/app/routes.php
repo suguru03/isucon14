@@ -22,12 +22,7 @@ return function (App $app, array $config) {
         // CORS Pre-Flight OPTIONS Request Handler
         return $response;
     });
-    $app->post(
-        '/api/initialize',
-        new Handlers\PostInitialize(
-            $config['resource_path'],
-        )
-    );
+    $app->post('/api/initialize', new Handlers\PostInitialize($database));
     $app->post('/api/app/users', new Handlers\App\PostUsers($database));
     // app handlers
     $app->group('/api/app', function ($app) use ($database, $paymentGateway) {
