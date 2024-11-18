@@ -15,7 +15,7 @@ export type Chair = {
   token: string; // from static JSON
   active: boolean; // GET /owner/chairs with Owner Cookie
   status: RideStatus; // GET /charis/notifications with chair Cookie
-  coordinates?: Coordinate // Set via application
+  coordinates?: Coordinate; // Set via application
 };
 
 type ChairsByOnwer = Map<Owner, Chair[]>;
@@ -24,11 +24,11 @@ function useChairsByOwner(): ChairsByOnwer {
   // TODO: API 経由で取得するようにする
   return new Map<Owner, Chair[]>([
     [
-      { 
+      {
         name: "o1",
         id: "01JCNCC4EGP0KKB6GKMC03G3BN",
         token: "DUMMY_TOKEN",
-      }, 
+      },
       [
         {
           id: "01JCNCECH24Q07MBGNXVN14QSQ",
@@ -57,11 +57,11 @@ function useChairsByOwner(): ChairsByOnwer {
       ],
     ],
     [
-      { 
+      {
         name: "o2",
         id: "01JCNCKD1BNQ167RKX5K3J5Y9F",
         token: "DUMMY_TOKEN_2",
-      }, 
+      },
       [
         {
           id: "01JCNCKSGGPF5P659FX66YVSC6",
@@ -72,24 +72,22 @@ function useChairsByOwner(): ChairsByOnwer {
           status: "ENROUTE",
         },
       ],
-    ]
+    ],
   ]);
 }
 
 const SimulatorContext = createContext<ChairsByOnwer>(new Map());
 
-export function SimulatorContextProvider(
-  {
-    children
-  } : {
-    children: ReactNode
-  }
-) {
+export function SimulatorContextProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <SimulatorContext.Provider value={useChairsByOwner()}>
       {children}
     </SimulatorContext.Provider>
-  )
+  );
 }
 
 export const useSimulatorContext = () => useContext(SimulatorContext);

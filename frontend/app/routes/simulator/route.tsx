@@ -7,5 +7,5 @@ export default function Layout() {
     <SimulatorContextProvider>
       <Outlet />
     </SimulatorContextProvider>
-  )
+  );
 }

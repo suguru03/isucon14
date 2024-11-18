@@ -3,21 +3,16 @@ type Props = {
   id: string;
   label?: string;
   items: string[];
-  onChange: (selected: string) => void
-}
+  onChange: (selected: string) => void;
+};
 export function PulldownSelector(props: Props) {
   return (
     <div className={`w-full flex items-center ${props.className}`}>
-      {
-        props.label !== undefined
-        ? (
-          <label
-            className="pr-3 font-bold"
-            htmlFor={props.id}
-          >{props.label}</label>
-        )
-        : null
-      }
+      {props.label !== undefined ? (
+        <label className="pr-3 font-bold" htmlFor={props.id}>
+          {props.label}
+        </label>
+      ) : null}
       <select
         className="
           bg-neutral-300 
@@ -26,15 +21,14 @@ export function PulldownSelector(props: Props) {
         "
         name={props.id}
         id={props.id}
-        onChange={e => props.onChange(e.target.value)}
+        onChange={(e) => props.onChange(e.target.value)}
       >
         {props.items.map((value) => (
-          <option 
-            key={value}
-            value={value}
-          >{value}</option>
+          <option key={value} value={value}>
+            {value}
+          </option>
         ))}
       </select>
     </div>
-  )
+  );
 }

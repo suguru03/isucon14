@@ -1,13 +1,13 @@
-import { ComponentProps } from "react"
-import { twMerge } from "tailwind-merge"
+import { ComponentProps } from "react";
+import { twMerge } from "tailwind-merge";
 
 type Props = Omit<
-  ComponentProps<"input">, 
+  ComponentProps<"input">,
   "type" | "name" | "value" | "onChange"
 > & {
-  value: boolean
-  onUpdate: (v: boolean) => void
-}
+  value: boolean;
+  onUpdate: (v: boolean) => void;
+};
 
 export function Toggle(props: Props) {
   return (
@@ -22,11 +22,9 @@ export function Toggle(props: Props) {
         "after:rounded-full",
         "after:absolute after:top-[3px]",
         "after:transition-transform",
-        (
-          props.value
+        props.value
           ? "after:bg-green-500 after:translate-x-full"
-          : "after:bg-slate-50 after:left-[3px]"
-        ),
+          : "after:bg-slate-50 after:left-[3px]",
         props.className,
       )}
     >
@@ -38,5 +36,5 @@ export function Toggle(props: Props) {
         onChange={() => props.onUpdate(!props.value)}
       />
     </label>
-  )
+  );
 }
