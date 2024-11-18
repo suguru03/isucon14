@@ -2,22 +2,32 @@ import { Outlet } from "@remix-run/react";
 import { useCallback, useMemo, useState } from "react";
 import { SimulatorProvider } from "~/contexts/simulator-context";
 
-type DropDownItem = {
-  targetId: string;
+type DropDownItem<T extends undefined | string = undefined | string> = {
+  targetId: T;
   label: string;
 };
 
 export function DropdownMenu({
   items,
   onSelect,
+  undefinedLabel = "新規作成",
 }: {
-  items: DropDownItem[];
-  onSelect: (targetId: string) => void;
+  items: DropDownItem<string>[];
+  onSelect: (targetId: string | undefined) => void;
+  undefinedLabel?: string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DropDownItem>(items[0]);
+  const undefinedItem = useMemo(
+    () => ({ targetId: undefined, label: undefinedLabel }),
+    [undefinedLabel],
+  );
 
-  const targetItems = useMemo(() => [...items], [items]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DropDownItem>(undefinedItem);
+
+  const targetItems = useMemo(
+    () => [...items, undefinedItem],
+    [items, undefinedItem],
+  );
   const selectLabel = useMemo(() => selectedItem.label, [selectedItem]);
 
   const handleToggle = useCallback(() => {
@@ -63,18 +73,25 @@ export default function SimulatorLayout() {
   const list = [
     { label: "テストオーナー1", targetId: "test1" },
     { label: "テストオーナー2", targetId: "test2" },
-  ] satisfies DropDownItem[];
-  const [selected, SetSelected] = useState<string>(list[0].targetId);
-  const onSelect = useCallback((item: string) => {
+  ] satisfies DropDownItem<string>[];
+  const [selected, SetSelected] = useState<string | undefined>();
+  const onSelect = useCallback((item: string | undefined) => {
     SetSelected(item);
   }, []);
 
   const mainContent = (() => {
-    return (
-      <SimulatorProvider providerId={selected}>
-        <Outlet />
-      </SimulatorProvider>
-    );
+    if (selected === undefined) {
+      return (
+        // TODO: シミュレーターと連携できるオーナー新規作成画面
+        <div>オーナー新規作成</div>
+      );
+    } else {
+      return (
+        <SimulatorProvider providerId={selected}>
+          <Outlet />
+        </SimulatorProvider>
+      );
+    }
   })();
 
   return (
