@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { List } from "~/components/modules/list/list";
+import { ListItem } from "~/components/modules/list/list-item";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { DateInput } from "~/components/primitives/form/date";
@@ -85,22 +86,21 @@ export default function Index() {
             />
           </div>
           <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
-          <List
-            items={items}
-            keyFn={(item) => item.key}
-            rowFn={(item) => (
-              <div className="flex">
-                <ChairModel model={item.model} />
-                <span className="ms-4">{item.name}</span>
-                <PriceText
-                  tagName="span"
-                  value={item.sales}
-                  className="ms-auto"
-                />
-              </div>
-            )}
-            className="overflow-auto"
-          />
+          <List className="overflow-auto">
+            {items.map((item) => (
+              <ListItem>
+                <div key={item.key} className="flex">
+                  <ChairModel model={item.model} />
+                  <span className="ms-4">{item.name}</span>
+                  <PriceText
+                    tagName="span"
+                    value={item.sales}
+                    className="ms-auto"
+                  />
+                </div>
+              </ListItem>
+            ))}
+          </List>
         </>
       ) : null}
     </section>

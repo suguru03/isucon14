@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { FC } from "react";
 import { OwnerGetChairsResponse } from "~/apiClient/apiComponents";
 import { List } from "~/components/modules/list/list";
+import { ListItem } from "~/components/modules/list/list-item";
 import { Badge } from "~/components/primitives/badge/badge";
 import { ButtonLink } from "~/components/primitives/button/button";
 import { ChairModel } from "~/components/primitives/chair-model/chair-model";
@@ -62,12 +63,13 @@ export default function Index() {
         </ButtonLink>
       </div>
       {chairs?.length ? (
-        <List
-          items={chairs}
-          keyFn={(chair) => chair.id}
-          rowFn={(chair) => <Chair chair={chair} />}
-          className="overflow-auto"
-        />
+        <List className="overflow-auto">
+          {chairs.map((chair) => (
+            <ListItem key={chair.id}>
+              <Chair chair={chair} />
+            </ListItem>
+          ))}
+        </List>
       ) : (
         <Text>登録されている椅子がありません</Text>
       )}

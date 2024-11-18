@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { List } from "~/components/modules/list/list";
+import { ListItem } from "~/components/modules/list/list-item";
 import { PriceText } from "~/components/modules/price-text/price-text";
 
 export const meta: MetaFunction = () => {
@@ -22,11 +23,9 @@ export default function Index() {
   return (
     <section className="flex-1 mx-4">
       <h2 className="text-2xl my-4">履歴</h2>
-      <List
-        items={items}
-        keyFn={(item) => item.date}
-        rowFn={(item) => (
-          <div className="flex justify-between">
+      <List>
+        {items.map((item) => (
+          <ListItem key={item.date} className="flex justify-between">
             <span>
               <span>{item.date}</span>
               <span className="ms-4">
@@ -34,9 +33,9 @@ export default function Index() {
               </span>
             </span>
             <PriceText value={item.price} />
-          </div>
-        )}
-      />
+          </ListItem>
+        ))}
+      </List>
     </section>
   );
 }

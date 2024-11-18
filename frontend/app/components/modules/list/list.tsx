@@ -1,25 +1,9 @@
-import { PropsWithoutRef, ReactNode } from "react";
+import { ComponentProps, PropsWithChildren } from "react";
 
-type ListProps<T> = PropsWithoutRef<{
-  items: T[];
-  keyFn: (item: T) => string;
-  rowFn: (item: T) => ReactNode;
-  className?: string;
-}>;
-
-export function List<T>({
-  items,
-  keyFn: key,
-  rowFn: row,
+export function List({
+  children,
   className,
-}: ListProps<T>) {
-  return (
-    <ul className={className}>
-      {items.map((item) => (
-        <li key={key(item)} className="px-4 py-3 border-b">
-          {row(item)}
-        </li>
-      ))}
-    </ul>
-  );
+  ...props
+}: PropsWithChildren<ComponentProps<"ul">>) {
+  return <ul {...props} className={className}></ul>;
 }
