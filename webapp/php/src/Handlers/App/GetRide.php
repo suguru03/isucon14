@@ -118,10 +118,11 @@ class GetRide extends AbstractHttpHandler
                     'stats' => $chairStats->stats
                 ]));
             }
-            $this->db->commit();
             return $this->writeJson($response, $res);
         } catch (PDOException $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return (new ErrorResponse())->write(
                 $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
