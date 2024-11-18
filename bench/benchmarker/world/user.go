@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"slices"
+	"sync"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
@@ -46,6 +47,8 @@ type User struct {
 	Rand *rand.Rand
 	// Invited 招待されたユーザーか
 	Invited bool
+	// InvitingLock 招待ロック
+	InvitingLock sync.Mutex
 	// InvCodeUsedCount 招待コードの使用回数
 	InvCodeUsedCount int
 	// UnusedInvCoupons 未使用の招待クーポンの数
@@ -227,6 +230,9 @@ func (u *User) CreateRequest(ctx *Context) error {
 	if u.Request != nil {
 		panic("ユーザーに進行中のリクエストがあるのにも関わらず、リクエストを新規作成しようとしている")
 	}
+
+	u.InvitingLock.Lock()
+	defer u.InvitingLock.Unlock()
 
 	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)

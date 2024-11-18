@@ -170,6 +170,8 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	}
 	if args.Inviter != nil {
 		req.InvitationCode = args.Inviter.RegisteredData.InvitationCode
+		args.Inviter.InvitingLock.Lock()
+		defer args.Inviter.InvitingLock.Unlock()
 	}
 
 	res, err := w.Client.RegisterUser(ctx, req)
