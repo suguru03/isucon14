@@ -156,39 +156,50 @@ func (w *World) Tick(ctx *Context) error {
 type CreateUserArgs struct {
 	// Region ユーザーを配置する地域
 	Region *Region
+	// Inviter 招待したユーザー
+	Inviter *User
 }
 
 // CreateUser 仮想世界にユーザーを作成する
 func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
-	registeredData := RegisteredUserData{
+	req := &RegisterUserRequest{
 		UserName:    random.GenerateUserName(),
 		FirstName:   random.GenerateFirstName(),
 		LastName:    random.GenerateLastName(),
 		DateOfBirth: random.GenerateDateOfBirth(),
 	}
+	if args.Inviter != nil {
+		req.InvitationCode = args.Inviter.RegisteredData.InvitationCode
+	}
 
-	res, err := w.Client.RegisterUser(ctx, &RegisterUserRequest{
-		UserName:    registeredData.UserName,
-		FirstName:   registeredData.FirstName,
-		LastName:    registeredData.LastName,
-		DateOfBirth: registeredData.DateOfBirth,
-	})
+	res, err := w.Client.RegisterUser(ctx, req)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
 
+	if args.Inviter != nil {
+		args.Inviter.InvCodeUsedCount++
+		args.Inviter.UnusedInvCoupons++
+	}
+
 	u := &User{
-		ServerID:          res.ServerUserID,
-		World:             w,
-		Region:            args.Region,
-		State:             UserStatePaymentMethodsNotRegister,
-		RegisteredData:    registeredData,
+		ServerID: res.ServerUserID,
+		World:    w,
+		Region:   args.Region,
+		State:    UserStatePaymentMethodsNotRegister,
+		RegisteredData: RegisteredUserData{
+			UserName:       req.UserName,
+			FirstName:      req.FirstName,
+			LastName:       req.LastName,
+			DateOfBirth:    req.DateOfBirth,
+			InvitationCode: req.InvitationCode,
+		},
 		PaymentToken:      random.GeneratePaymentToken(),
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(w.RootRand),
+		Invited:           args.Inviter != nil,
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
-	u.RegisteredData.InvitationCode = res.InvitationCode
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
 	args.Region.AddUser(u)

@@ -44,6 +44,12 @@ type User struct {
 	Client UserClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
+	// Invited 招待されたユーザーか
+	Invited bool
+	// InvCodeUsedCount 招待コードの使用回数
+	InvCodeUsedCount int
+	// UnusedInvCoupons 未使用の招待クーポンの数
+	UnusedInvCoupons int
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
 	// notificationConn 通知ストリームコネクション
@@ -238,9 +244,20 @@ func (u *User) CreateRequest(ctx *Context) error {
 		},
 	}
 
+	useInvCoupon := false
+	switch {
 	// 初回利用の割引を適用
-	if len(u.RequestHistory) == 0 {
+	case len(u.RequestHistory) == 0:
 		req.Discount = 3000
+
+	// 招待された側のクーポンを適用
+	case len(u.RequestHistory) == 1 && u.Invited:
+		req.Discount = 1500
+
+	// 招待した側のクーポンを適用
+	case u.UnusedInvCoupons > 0:
+		req.Discount = 1000
+		useInvCoupon = true
 	}
 
 	res, err := u.Client.SendCreateRequest(ctx, req)
@@ -251,6 +268,9 @@ func (u *User) CreateRequest(ctx *Context) error {
 	u.Request = req
 	u.RequestHistory = append(u.RequestHistory, req)
 	u.World.RequestDB.Create(req)
+	if useInvCoupon {
+		u.UnusedInvCoupons--
+	}
 	return nil
 }
 
