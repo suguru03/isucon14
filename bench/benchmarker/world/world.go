@@ -61,8 +61,8 @@ type World struct {
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, client WorldClient, contestantLogger *slog.Logger) *World {
 	return &World{
 		Regions: []*Region{
-			NewRegion("A", 0, 0, 100, 100),
-			NewRegion("B", 300, 300, 100, 100),
+			NewRegion("チェアタウン", 0, 0, 100, 100),
+			NewRegion("コシカケシティ", 300, 300, 100, 100),
 		},
 		UserDB:               NewGenericDB[UserID, *User](),
 		ProviderDB:           NewGenericDB[ProviderID, *Provider](),
