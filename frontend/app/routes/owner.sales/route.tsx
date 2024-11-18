@@ -44,7 +44,7 @@ export default function Index() {
           model: item.model,
           sales: item.sales,
         }));
-  }, [sales, tab]);
+  }, [sales, chairs, tab]);
 
   const updateDate = (key: "since" | "until", value: string) => {
     setSearchParams((prev) => {
@@ -88,16 +88,14 @@ export default function Index() {
           <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
           <List className="overflow-auto">
             {items.map((item) => (
-              <ListItem>
-                <div key={item.key} className="flex">
-                  <ChairModel model={item.model} />
-                  <span className="ms-4">{item.name}</span>
-                  <PriceText
-                    tagName="span"
-                    value={item.sales}
-                    className="ms-auto"
-                  />
-                </div>
+              <ListItem key={item.key} className="flex">
+                <ChairModel model={item.model} />
+                <span className="ms-4">{item.name}</span>
+                <PriceText
+                  tagName="span"
+                  value={item.sales}
+                  className="ms-auto"
+                />
               </ListItem>
             ))}
           </List>

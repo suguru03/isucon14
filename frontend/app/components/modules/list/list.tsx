@@ -5,5 +5,9 @@ export function List({
   className,
   ...props
 }: PropsWithChildren<ComponentProps<"ul">>) {
-  return <ul {...props} className={className}></ul>;
+  return (
+    <ul {...props} className={className}>
+      {children}
+    </ul>
+  );
 }
