@@ -2,8 +2,6 @@ use crate::models::Ride;
 use crate::Error;
 use std::future::Future;
 
-pub const PAYMENT_URL: &str = "http://localhost:12345";
-
 #[derive(Debug, thiserror::Error)]
 pub enum PaymentGatewayError {
     #[error("reqwest error: {0}")]
@@ -45,7 +43,7 @@ where
 }
 
 pub async fn request_payment_gateway_post_payment<F>(
-    payment_url: &str,
+    payment_gateway_url: &str,
     token: &str,
     param: &PaymentGatewayPostPaymentRequest,
     tx: &mut sqlx::MySqlConnection,
@@ -62,7 +60,7 @@ where
     loop {
         let result = async {
             let res = reqwest::Client::new()
-                .post(format!("{payment_url}/payments"))
+                .post(format!("{payment_gateway_url}/payments"))
                 .bearer_auth(token)
                 .json(param)
                 .send()
@@ -72,7 +70,7 @@ where
             if res.status() != reqwest::StatusCode::NO_CONTENT {
                 // エラーが返ってきても成功している場合があるので、社内決済マイクロサービスに問い合わせ
                 let get_res = reqwest::Client::new()
-                    .get(format!("{payment_url}/payments"))
+                    .get(format!("{payment_gateway_url}/payments"))
                     .bearer_auth(token)
                     .send()
                     .await

@@ -1,10 +1,8 @@
 use axum::{http::StatusCode, response::Response};
-use std::sync::{Arc, RwLock};
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub pool: sqlx::MySqlPool,
-    pub payment_url: Arc<RwLock<String>>,
 }
 
 #[derive(Debug, thiserror::Error)]

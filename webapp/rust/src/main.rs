@@ -1,9 +1,6 @@
 use axum::extract::State;
 use isuride::{AppState, Error};
-use std::{
-    net::SocketAddr,
-    sync::{Arc, RwLock},
-};
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -35,12 +32,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-    let app_state = AppState {
-        pool,
-        payment_url: Arc::new(RwLock::new(
-            isuride::payment_gateway::PAYMENT_URL.to_owned(),
-        )),
-    };
+    let app_state = AppState { pool };
 
     let app = axum::Router::new()
         .route("/api/initialize", axum::routing::post(post_initialize))
@@ -72,7 +64,7 @@ struct PostInitializeResponse {
 }
 
 async fn post_initialize(
-    State(AppState { payment_url, .. }): State<AppState>,
+    State(AppState { pool, .. }): State<AppState>,
     axum::Json(req): axum::Json<PostInitializeRequest>,
 ) -> Result<axum::Json<PostInitializeResponse>, Error> {
     let output = tokio::process::Command::new("../sql/init.sh")
@@ -85,10 +77,10 @@ async fn post_initialize(
         });
     }
 
-    let mut payment_url = payment_url
-        .write()
-        .expect("payment_url rwlock was poisoned");
-    *payment_url = req.payment_server;
+    sqlx::query("UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'")
+        .bind(req.payment_server)
+        .execute(&pool)
+        .await?;
 
     Ok(axum::Json(PostInitializeResponse { language: "rust" }))
 }
