@@ -137,7 +137,8 @@ type RegisterUserRequest struct {
 }
 
 type RegisterUserResponse struct {
-	ServerUserID string
+	ServerUserID   string
+	InvitationCode string
 
 	Client UserClient
 }

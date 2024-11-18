@@ -59,7 +59,8 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 	}
 
 	return &world.RegisterUserResponse{
-		ServerUserID: response.ID,
+		ServerUserID:   response.ID,
+		InvitationCode: response.InvitationCode,
 		Client: &userClient{
 			ctx:    c.ctx,
 			client: client,

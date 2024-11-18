@@ -53,10 +53,11 @@ type User struct {
 }
 
 type RegisteredUserData struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
+	UserName       string
+	FirstName      string
+	LastName       string
+	DateOfBirth    string
+	InvitationCode string
 }
 
 func (u *User) String() string {

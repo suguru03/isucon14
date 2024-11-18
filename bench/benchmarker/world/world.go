@@ -188,6 +188,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		Rand:              random.CreateChildRand(w.RootRand),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
+	u.RegisteredData.InvitationCode = res.InvitationCode
 	w.PaymentDB.PaymentTokens.Set(u.PaymentToken, u)
 	result := w.UserDB.Create(u)
 	args.Region.AddUser(u)
