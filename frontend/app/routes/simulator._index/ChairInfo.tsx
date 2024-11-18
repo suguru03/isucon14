@@ -1,10 +1,12 @@
-import { useCallback, useRef, useState } from "react"
+import { ComponentProps, useCallback, useRef, useState } from "react"
+import { twMerge } from "tailwind-merge"
 
 import { RideStatus } from "~/apiClient/apiSchemas"
 import { LocationButton } from "~/components/modules/location-button/location-button"
 import { Map } from "~/components/modules/map/map"
 import { Avatar } from "~/components/primitives/avatar/avatar"
 import { Button } from "~/components/primitives/button/button"
+import { Toggle } from "~/components/primitives/form/toggle"
 import { Modal } from "~/components/primitives/modal/modal"
 import { Chair } from "~/contexts/simulator-context"
 import { Coordinate } from "~/types"
@@ -13,7 +15,7 @@ type Props = {
   chair: Chair
 }
 
-function Statuses({ currentStatus }: {
+function Statuses(props: ComponentProps<"div"> & {
   currentStatus: RideStatus
 }) {
   const labelByStatus: Record<RideStatus, [label: string, colorClass: string]> = {
@@ -25,11 +27,13 @@ function Statuses({ currentStatus }: {
     COMPLETED: ["完了", "text-green-600"],
   }
   
-  const [label, colorClass] = labelByStatus[currentStatus];
+  const [label, colorClass] = labelByStatus[props.currentStatus];
   return (
-    <div className="text-xs my-2">
-      <span className={`mr-2 ${colorClass}`}>●</span>
-      <span className={`font-bold ${colorClass}`}>{label}</span>
+    <div className={twMerge(
+      `font-bold ${colorClass}`,
+      props.className,
+    )}>
+      <span className="before:content-['●'] before:mr-2">{label}</span>
     </div>
   )
 }
@@ -84,6 +88,7 @@ function CoordinatePickup(
 
 export function ChairInfo(props: Props) {
   const location = useState<Coordinate>();
+  const [activate, setActivate] = useState<boolean>(false);
   
   return (
     <div 
@@ -92,14 +97,24 @@ export function ChairInfo(props: Props) {
         flex
       "
     >
-      <Avatar className="mx-3 my-auto"/>
-      <div className="m-3 flex-grow">
-        <div className="font-bold">
-          <span>{props.chair.name}</span>
-          <span className="ml-1 text-xs font-normal text-neutral-500">{props.chair.model}</span>
+      <Avatar className="left-container mx-3 my-auto"/>
+      <div className="right-container m-3 flex-grow">
+        <div className="right-top flex">
+          <div className="right-top-left flex-grow">
+            <div className="chair-name font-bold">
+              <span>{props.chair.name}</span>
+              <span className="ml-1 text-xs font-normal text-neutral-500">{props.chair.model}</span>
+            </div>
+            <Statuses className="my-2" currentStatus={props.chair.status} />
+          </div>
+          <div className="right-top-right flex items-center">
+            <span className="text-xs font-bold text-neutral-500 mr-3">配車受付</span>
+            <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+          </div>
         </div>
-        <Statuses currentStatus={props.chair.status} />
-        <CoordinatePickup location={location}/>
+        <div className="right-bottom">
+          <CoordinatePickup location={location}/>
+        </div>
       </div>
     </div>
   )
