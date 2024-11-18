@@ -2,10 +2,11 @@ import logging
 import random
 import string
 import subprocess
+from typing import Annotated
 
 import sqlalchemy
 from fastapi import FastAPI
-from pydantic import BaseModel, constr
+from pydantic import BaseModel, StringConstraints
 from sqlalchemy import text
 from ulid import ULID
 
@@ -30,7 +31,7 @@ def post_initialize() -> dict[str, str]:
 
 # owner_handlers.go
 class PostOwnerRegisterRequest(BaseModel):
-    name: constr(min_length=1)
+    name: Annotated[str, StringConstraints(min_length=1)]
 
 
 class PostOwnerRegisterResponse(BaseModel):

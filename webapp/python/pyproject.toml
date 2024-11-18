@@ -22,7 +22,13 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "gunicorn>=23.0.0",
+    "nox>=2024.10.9",
 ]
+
+# インデックスを明示的に指定しておく
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
 
 [tool.ruff.lint]
 extend-select = [
