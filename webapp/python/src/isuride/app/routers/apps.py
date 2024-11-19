@@ -126,7 +126,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             # 招待した人にもRewardを付与
             conn.execute(
-                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)",
+                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, CONCAT(:code_prefix, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), :discount)",
                 {
                     "user_id": inviter.id,
                     "code": "RWD_" + r.invitation_code,
