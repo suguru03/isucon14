@@ -915,7 +915,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				if err := writeSSE(w, "matched", &appGetNotificationResponse{
+				if err := writeSSE(w, &appGetNotificationResponse{
 					RideID: ride.ID,
 					PickupCoordinate: Coordinate{
 						Latitude:  ride.PickupLatitude,
