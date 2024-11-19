@@ -1,8 +1,8 @@
 name: Build AMI with Packer
 
 on:
-  # schedule:
-  #   - cron: '0 18 * * *'
+  schedule:
+    - cron: '0 18 * * *'
   workflow_dispatch:
     inputs:
       environment:
@@ -90,5 +90,5 @@ jobs:
         run: |
           PREFIX="isucon14_contestant-"
           aws ec2 describe-images --owners self --filters "Name=name,Values=${PREFIX}*" --query 'Images[*].[ImageId,CreationDate]' --output json | \
-          jq -r 'sort_by(.[1]) | reverse | .[3:] | .[0]' | \
+          jq -r 'sort_by(.[1]) | reverse | .[3:] | .[][0]' | \
           xargs -I {} aws ec2 deregister-image --image-id {}
