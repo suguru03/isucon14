@@ -37,8 +37,8 @@
   become: true
   shell: |
     mysql -uroot -e "
-      DROP DATABASE IF EXISTS isucon;
-      CREATE DATABASE IF NOT EXISTS isucon;
+      DROP DATABASE IF EXISTS isuride;
+      CREATE DATABASE IF NOT EXISTS isuride;
     "
 - name: initialize tables
   become: true
