@@ -17,3 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: wntrblm/nox@2024.04.15
+      - name: Run nox
+        working-directory: ./webapp/python
+        run: |
+          nox
