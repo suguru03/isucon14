@@ -1,4 +1,9 @@
-import { ComponentProps, useCallback, useRef, useState } from "react";
+import {
+  ComponentProps,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import { twMerge } from "tailwind-merge";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
@@ -8,11 +13,11 @@ import { Avatar } from "~/components/primitives/avatar/avatar";
 import { Button } from "~/components/primitives/button/button";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
-import { Chair } from "~/contexts/simulator-context";
+import { SimulatorChair } from "~/contexts/simulator-context";
 import { Coordinate } from "~/types";
 
 type Props = {
-  chair: Chair;
+  chair: SimulatorChair;
 };
 
 function Statuses(
@@ -88,6 +93,7 @@ function CoordinatePickup(props: {
 export function ChairInfo(props: Props) {
   const location = useState<Coordinate>();
   const [activate, setActivate] = useState<boolean>(false);
+  const [rideStatus] = useState<RideStatus>("MATCHING"); // TODO fetch処理
 
   return (
     <div
@@ -106,7 +112,7 @@ export function ChairInfo(props: Props) {
                 {props.chair.model}
               </span>
             </div>
-            <Statuses className="my-2" currentStatus={props.chair.status} />
+            <Statuses className="my-2" currentStatus={rideStatus} />
           </div>
           <div className="right-top-right flex items-center">
             <span className="text-xs font-bold text-neutral-500 mr-3">

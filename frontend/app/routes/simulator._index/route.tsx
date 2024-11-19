@@ -5,15 +5,13 @@ import { useSimulatorContext } from "~/contexts/simulator-context";
 import { ChairInfo } from "./ChairInfo";
 
 export default function Index() {
-  const {owners} = useSimulatorContext();
+  const { owners } = useSimulatorContext();
   const ownerNames = [...owners].map((o) => o.name);
   const getOwnerByName = (name: string) => {
-    return owners.find(o => o.name === name)
+    return owners.find((o) => o.name === name);
   };
 
-  const [targetOwner, setTargetOwner] = useState(
-    getOwnerByName(ownerNames[0]),
-  );
+  const [targetOwner, setTargetOwner] = useState(getOwnerByName(ownerNames[0]));
 
   return (
     <div className="p-6">

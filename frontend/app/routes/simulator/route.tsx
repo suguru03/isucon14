@@ -1,11 +1,11 @@
 import { Outlet } from "@remix-run/react";
 
-import { SimulatorContextProvider } from "~/contexts/simulator-context";
+import { SimulatorProvider } from "~/contexts/simulator-context";
 
 export default function Layout() {
   return (
-    <SimulatorContextProvider>
+    <SimulatorProvider>
       <Outlet />
-    </SimulatorContextProvider>
+    </SimulatorProvider>
   );
 }
