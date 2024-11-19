@@ -264,6 +264,11 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 			case api.RideStatusMATCHING:
 				event = &world.ChairNotificationEventMatched{
 					ServerRequestID: r.RideID,
+					User: world.ChairNotificationEventUserPayload{
+						ID:   r.User.ID,
+						Name: r.User.Name,
+					},
+					Destination: world.C(r.DestinationCoordinate.Latitude, r.DestinationCoordinate.Longitude),
 				}
 			case api.RideStatusENROUTE:
 				// event = &world.ChairNotificationEventDispatching{}
