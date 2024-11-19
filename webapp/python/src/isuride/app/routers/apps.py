@@ -64,13 +64,17 @@ class AppPostRidesResponse(BaseModel):
 
 
 def get_latest_ride_status(conn, ride_id: str) -> str:
-    status = conn.execute(
+    row = conn.execute(
         text(
             "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
         ),
         {"ride_id": ride_id},
-    ).scalar()
-    return status
+    ).fetchOne()
+
+    if not row:
+        return ""
+
+    return row.status
 
 
 @router.post("/rides", status_code=202)
@@ -91,7 +95,7 @@ def app_post_rides(
 
         continuing_ride_count: int = 0
         for ride in rides:
-            status = get_latest_ride_status(conn, ride)
+            status = get_latest_ride_status(conn, ride.id)
             if status != "COMPLETED" and status != "CANCELED":
                 continuing_ride_count += 1
 
