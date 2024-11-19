@@ -2,7 +2,6 @@
 - hosts: application
   roles:
     - isuadmin-user
-    - globalip
     - mysql
     - nginx
     - envcheck
