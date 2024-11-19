@@ -236,16 +236,6 @@ func (c *chairClient) SendDeactivate(ctx *world.Context, chair *world.Chair) err
 	return nil
 }
 
-func (c *chairClient) GetRequestByChair(ctx *world.Context, chair *world.Chair, serverRequestID string) (*world.GetRequestByChairResponse, error) {
-	_, err := c.client.ChairGetRequest(c.ctx, serverRequestID)
-	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetChairRequest, err)
-	}
-
-	// TODO: GetRequestByChairResponse の中身入れる
-	return &world.GetRequestByChairResponse{}, nil
-}
-
 func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *world.Chair, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
 

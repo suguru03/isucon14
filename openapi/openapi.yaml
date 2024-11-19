@@ -800,28 +800,6 @@ paths:
                   - status
         "204":
           description: 割り当てられたライドが存在しない場合
-  "/chair/rides/{ride_id}":
-    get:
-      tags:
-        - chair
-      summary: 椅子がライド情報を取得する
-      description: 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
-      operationId: chair-get-ride
-      parameters:
-        - $ref: "#/components/parameters/ride_id"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChairRide"
-        "404":
-          description: 存在しないライド、対象の椅子にマッチングされていないライドを取得しようとした場合など
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
   "/chair/rides/{ride_id}/status":
     post:
       tags:

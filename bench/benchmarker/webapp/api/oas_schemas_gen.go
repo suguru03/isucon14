@@ -1124,69 +1124,6 @@ func (s *ChairPostRideStatusReqStatus) UnmarshalText(data []byte) error {
 	}
 }
 
-// Chair向けライド情報.
-// Ref: #/components/schemas/ChairRide
-type ChairRide struct {
-	// ライドID.
-	ID                    string        `json:"id"`
-	User                  User          `json:"user"`
-	PickupCoordinate      OptCoordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate    `json:"destination_coordinate"`
-	Status                OptRideStatus `json:"status"`
-}
-
-// GetID returns the value of ID.
-func (s *ChairRide) GetID() string {
-	return s.ID
-}
-
-// GetUser returns the value of User.
-func (s *ChairRide) GetUser() User {
-	return s.User
-}
-
-// GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *ChairRide) GetPickupCoordinate() OptCoordinate {
-	return s.PickupCoordinate
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *ChairRide) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetStatus returns the value of Status.
-func (s *ChairRide) GetStatus() OptRideStatus {
-	return s.Status
-}
-
-// SetID sets the value of ID.
-func (s *ChairRide) SetID(val string) {
-	s.ID = val
-}
-
-// SetUser sets the value of User.
-func (s *ChairRide) SetUser(val User) {
-	s.User = val
-}
-
-// SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *ChairRide) SetPickupCoordinate(val OptCoordinate) {
-	s.PickupCoordinate = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *ChairRide) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ChairRide) SetStatus(val OptRideStatus) {
-	s.Status = val
-}
-
-func (*ChairRide) chairGetRideRes() {}
-
 // 座標情報.
 // Ref: #/components/schemas/Coordinate
 type Coordinate struct {
@@ -1235,7 +1172,6 @@ func (*Error) appGetRideRes()                {}
 func (*Error) appPostPaymentMethodsRes()     {}
 func (*Error) appPostRidesEstimatedFareRes() {}
 func (*Error) appPostUsersRes()              {}
-func (*Error) chairGetRideRes()              {}
 func (*Error) chairPostRideStatusRes()       {}
 func (*Error) ownerPostOwnersRes()           {}
 
@@ -1877,52 +1813,6 @@ func (o OptPostInitializeReq) Get() (v PostInitializeReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPostInitializeReq) Or(d PostInitializeReq) PostInitializeReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRideStatus returns new OptRideStatus with value set to v.
-func NewOptRideStatus(v RideStatus) OptRideStatus {
-	return OptRideStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRideStatus is optional RideStatus.
-type OptRideStatus struct {
-	Value RideStatus
-	Set   bool
-}
-
-// IsSet returns true if OptRideStatus was set.
-func (o OptRideStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRideStatus) Reset() {
-	var v RideStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRideStatus) SetTo(v RideStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRideStatus) Get() (v RideStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRideStatus) Or(d RideStatus) RideStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}

@@ -33,10 +33,6 @@ type ChairGetNotificationRes interface {
 	chairGetNotificationRes()
 }
 
-type ChairGetRideRes interface {
-	chairGetRideRes()
-}
-
 type ChairPostRideStatusRes interface {
 	chairPostRideStatusRes()
 }
