@@ -904,7 +904,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				}
 
 				chair := &Chair{}
-				stats := appChairStats{}
+				stats := appChairStats{RecentRides: make([]recentRide, 0)}
 				if ride.ChairID.Valid {
 					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 						return err
