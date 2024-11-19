@@ -81,6 +81,10 @@ func (u *User) SetID(id UserID) {
 	u.ID = id
 }
 
+func (u *User) GetServerID() string {
+	return u.ServerID
+}
+
 func (u *User) Tick(ctx *Context) error {
 	if u.tickDone.DoOrSkip() {
 		return nil
