@@ -5,14 +5,13 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
 TODO: このdocstringを消す
 """
 
-import random
-import string
 from http.client import HTTPException
 from pydantic import BaseModel
 from fastapi import APIRouter, Response
 from ulid import ULID
 from ..sql import engine
 from sqlalchemy import text
+from ..utils import secure_random_str
 
 
 router = APIRouter(prefix="/api/app")
@@ -62,10 +61,9 @@ class AppPostUsersResponse(BaseModel):
 
 @router.post("/users", response_model=AppPostUsersResponse, status_code=201)
 def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRequest:
-    # TODO: should mimic secureRandomStr
     user_id = str(ULID())
-    access_token = "".join(random.sample(string.ascii_letters + string.digits, 32))
-    invitation_code = "".join(random.sample(string.ascii_letters + string.digits, 15))
+    access_token = secure_random_str(32)
+    invitation_code = secure_random_str(15)
 
     # start transaction
     with engine.begin() as conn:

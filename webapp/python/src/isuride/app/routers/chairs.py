@@ -10,6 +10,7 @@ import string
 
 from fastapi import APIRouter
 from ulid import ULID
+from ..utils import secure_random_str
 
 router = APIRouter(prefix="/api/chair")
 
@@ -21,7 +22,7 @@ def chair_post_register():
 
     chair_id = str(ULID())
     # TODO: should mimic secureRandomStr
-    access_token = "".join(random.sample(string.ascii_letters + string.digits, 32))
+    access_token = secure_random_str(32)
     return {"access_token": access_token, "id": chair_id}
 
 
