@@ -1,17 +1,22 @@
 import { useState } from "react";
 
 import { PulldownSelector } from "~/components/primitives/menu/pulldown";
-import { useSimulatorContext } from "~/contexts/simulator-context";
+import {
+  SimulatorChair,
+  useSimulatorContext,
+} from "~/contexts/simulator-context";
 import { ChairInfo } from "./ChairInfo";
 
 export default function Index() {
   const { owners } = useSimulatorContext();
-  const ownerNames = [...owners].map((o) => o.name);
-  const getOwnerByName = (name: string) => {
-    return owners.find((o) => o.name === name);
+  const ownerNames = [...owners].map((o) => ({ id: o.id, name: o.name }));
+  const getOwnerById = (id: string) => {
+    return owners.find((o) => o.id === id);
   };
 
-  const [targetOwner, setTargetOwner] = useState(getOwnerByName(ownerNames[0]));
+  const [targetOwner, setTargetOwner] = useState<{ chairs: SimulatorChair[] }>(
+    owners[0],
+  );
 
   return (
     <div className="p-6">
@@ -20,7 +25,7 @@ export default function Index() {
         id="ownerNames"
         label="オーナー"
         items={ownerNames}
-        onChange={(name) => setTargetOwner(getOwnerByName(name))}
+        onChange={(id) => setTargetOwner(getOwnerById(id) ?? { chairs: [] })}
       />
       {targetOwner !== undefined
         ? targetOwner.chairs?.map((c) => <ChairInfo key={c.id} chair={c} />)

@@ -2,7 +2,7 @@ type Props = {
   className?: string;
   id: string;
   label?: string;
-  items: string[];
+  items: { id: string; name: string }[];
   onChange: (selected: string) => void;
 };
 export function PulldownSelector(props: Props) {
@@ -24,8 +24,8 @@ export function PulldownSelector(props: Props) {
         onChange={(e) => props.onChange(e.target.value)}
       >
         {props.items.map((value) => (
-          <option key={value} value={value}>
-            {value}
+          <option key={value.name} value={value.id}>
+            {value.name}
           </option>
         ))}
       </select>

@@ -28,11 +28,12 @@ function Statuses(
       CARRYING: ["賃走", "text-red-600"],
       ARRIVED: ["到着", "text-green-600"],
       COMPLETED: ["完了", "text-green-600"],
-    };
+    } as const;
 
-  const [label, colorClass] = labelByStatus[props.currentStatus];
+  const { currentStatus, className, ...rest } = props;
+  const [label, colorClass] = labelByStatus[currentStatus];
   return (
-    <div className={twMerge(`font-bold ${colorClass}`, props.className)}>
+    <div className={twMerge(`font-bold ${colorClass}`, className)} {...rest}>
       <span className="before:content-['●'] before:mr-2">{label}</span>
     </div>
   );
