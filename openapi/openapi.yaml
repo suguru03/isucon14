@@ -346,15 +346,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  fare:
-                    type: integer
-                    description: 割引後運賃
                   completed_at:
                     type: integer
                     format: int64
                     description: 完了日時
                 required:
-                  - fare
                   - completed_at
         "400":
           description: 椅子が目的地に到着していない、ユーザーが乗車していない、すでに到着しているなど

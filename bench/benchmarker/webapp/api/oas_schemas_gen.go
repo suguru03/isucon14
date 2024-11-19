@@ -490,25 +490,13 @@ type AppPostRideEvaluationNotFound Error
 func (*AppPostRideEvaluationNotFound) appPostRideEvaluationRes() {}
 
 type AppPostRideEvaluationOK struct {
-	// 割引後運賃.
-	Fare int `json:"fare"`
 	// 完了日時.
 	CompletedAt int64 `json:"completed_at"`
-}
-
-// GetFare returns the value of Fare.
-func (s *AppPostRideEvaluationOK) GetFare() int {
-	return s.Fare
 }
 
 // GetCompletedAt returns the value of CompletedAt.
 func (s *AppPostRideEvaluationOK) GetCompletedAt() int64 {
 	return s.CompletedAt
-}
-
-// SetFare sets the value of Fare.
-func (s *AppPostRideEvaluationOK) SetFare(val int) {
-	s.Fare = val
 }
 
 // SetCompletedAt sets the value of CompletedAt.
