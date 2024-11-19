@@ -22,9 +22,9 @@ type SimulatorOwner = {
 
 type ClientSimulatorContextType = { owners: SimulatorOwner[] };
 
-const ClientSimulatorContext = createContext<
-  Partial<ClientSimulatorContextType>
->({});
+const ClientSimulatorContext = createContext<ClientSimulatorContextType>({
+  owners: [],
+});
 
 export const SimulatorProvider = ({
   children,
