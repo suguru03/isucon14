@@ -302,9 +302,12 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				status, err := getLatestRideStatus(tx, ride.ID)
-				if err != nil {
-					return err
+				var status string
+				if found {
+					status, err = getLatestRideStatus(tx, ride.ID)
+					if err != nil {
+						return err
+					}
 				}
 
 				if !found || status == "COMPLETED" || status == "CANCELED" {
