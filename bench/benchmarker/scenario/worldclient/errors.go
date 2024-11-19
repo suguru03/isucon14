@@ -40,6 +40,8 @@ const (
 	ErrorCodeFailedToPostPaymentMethods
 	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗したエラー
 	ErrorCodeFailedToGetProviderSales
+	// ErrorCodeFailedToPostRidesEstimatedFare ライド料金の見積もりの取得に失敗したエラー
+	ErrorCodeFailedToPostRidesEstimatedFare
 )
 
 type codeError struct {

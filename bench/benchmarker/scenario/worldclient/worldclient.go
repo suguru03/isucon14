@@ -369,6 +369,26 @@ func (c *userClient) GetRequests(ctx *world.Context) (*world.GetRequestsResponse
 	}, nil
 }
 
+func (c *userClient) GetEstimatedFare(ctx *world.Context, pickup world.Coordinate, dest world.Coordinate) (*world.GetEstimatedFareResponse, error) {
+	res, err := c.client.AppPostRidesEstimatedFare(c.ctx, &api.AppPostRidesEstimatedFareReq{
+		PickupCoordinate: api.Coordinate{
+			Latitude:  pickup.X,
+			Longitude: pickup.Y,
+		},
+		DestinationCoordinate: api.Coordinate{
+			Latitude:  dest.X,
+			Longitude: dest.Y,
+		},
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToPostRidesEstimatedFare, err)
+	}
+	return &world.GetEstimatedFareResponse{
+		Fare:     res.Fare,
+		Discount: res.Discount,
+	}, nil
+}
+
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
 

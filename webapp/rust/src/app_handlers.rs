@@ -411,7 +411,7 @@ async fn app_post_rides_estimated_fare(
             req.pickup_coordinate.longitude,
             req.destination_coordinate.latitude,
             req.destination_coordinate.longitude,
-        )
+        ) - discounted
     }))
 }
 

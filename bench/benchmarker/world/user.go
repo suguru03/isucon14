@@ -1,6 +1,7 @@
 package world
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -264,6 +265,14 @@ func (u *User) CreateRequest(ctx *Context) error {
 	case u.UnusedInvCoupons > 0:
 		req.Discount = 1000
 		useInvCoupon = true
+	}
+
+	estimation, err := u.Client.GetEstimatedFare(ctx, pickup, dest)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+	}
+	if req.ActualDiscount() != estimation.Discount || req.Fare() != estimation.Fare {
+		return WrapCodeError(ErrorCodeFailedToCreateRequest, errors.New("ライド料金の見積もり金額が誤っています"))
 	}
 
 	res, err := u.Client.SendCreateRequest(ctx, req)
