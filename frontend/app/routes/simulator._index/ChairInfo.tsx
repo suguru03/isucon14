@@ -1,9 +1,4 @@
-import {
-  ComponentProps,
-  useCallback,
-  useRef,
-  useState,
-} from "react";
+import { ComponentProps, useCallback, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
