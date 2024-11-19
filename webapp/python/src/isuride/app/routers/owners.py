@@ -27,7 +27,7 @@ class PostOwnerRegisterResponse(BaseModel):
     id: str
 
 
-@router.post("/register", status_code=201)
+@router.post("/owners", status_code=201)
 def owner_post_register(r: PostOwnerRegisterRequest) -> PostOwnerRegisterResponse:
     # TODO: implement
     # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/owner_handlers.go#L20
@@ -46,6 +46,16 @@ def owner_post_register(r: PostOwnerRegisterRequest) -> PostOwnerRegisterRespons
         return PostOwnerRegisterResponse(id=owner_id)
 
 
-@router.get("/api/owner/chairs", status_code=200)
+@router.get("/sales")
+def owner_get_sales():
+    pass
+
+
+@router.get("/chairs", status_code=200)
 def owner_get_chairs():
     return {"chairs": []}
+
+
+@router.get("/chairs/{chair_id}")
+def owner_get_chair_detail():
+    pass
