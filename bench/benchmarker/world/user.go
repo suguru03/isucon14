@@ -143,10 +143,6 @@ func (u *User) Tick(ctx *Context) error {
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
 
-				if res.Fare != u.Request.Fare() {
-					return CodeError(ErrorCodeIncorrectAmountOfFareCharged)
-				}
-
 				// サーバーが評価を受理したので完了状態になるのを待機する
 				u.Request.CompletedAt = ctx.CurrentTime()
 				u.Request.ServerCompletedAt = res.CompletedAt

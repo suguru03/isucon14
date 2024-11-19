@@ -145,7 +145,6 @@ type SendChairCoordinateResponse struct {
 }
 
 type SendEvaluationResponse struct {
-	Fare        int
 	CompletedAt time.Time
 }
 

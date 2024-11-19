@@ -1450,18 +1450,13 @@ func (s *AppPostRideEvaluationOK) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *AppPostRideEvaluationOK) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("fare")
-		e.Int(s.Fare)
-	}
-	{
 		e.FieldStart("completed_at")
 		e.Int64(s.CompletedAt)
 	}
 }
 
-var jsonFieldsNameOfAppPostRideEvaluationOK = [2]string{
-	0: "fare",
-	1: "completed_at",
+var jsonFieldsNameOfAppPostRideEvaluationOK = [1]string{
+	0: "completed_at",
 }
 
 // Decode decodes AppPostRideEvaluationOK from json.
@@ -1473,20 +1468,8 @@ func (s *AppPostRideEvaluationOK) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "fare":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int()
-				s.Fare = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"fare\"")
-			}
 		case "completed_at":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Int64()
 				s.CompletedAt = int64(v)
@@ -1507,7 +1490,7 @@ func (s *AppPostRideEvaluationOK) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

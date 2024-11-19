@@ -662,7 +662,6 @@ type appPostRideEvaluationRequest struct {
 }
 
 type appPostRideEvaluationResponse struct {
-	Fare        int   `json:"fare"`
 	CompletedAt int64 `json:"completed_at"`
 }
 
@@ -784,7 +783,6 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &appPostRideEvaluationResponse{
-		Fare:        fare,
 		CompletedAt: ride.UpdatedAt.UnixMilli(),
 	})
 }

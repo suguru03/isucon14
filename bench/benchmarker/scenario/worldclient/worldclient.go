@@ -300,7 +300,6 @@ func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, scor
 	}
 
 	return &world.SendEvaluationResponse{
-		Fare:        res.Fare,
 		CompletedAt: time.UnixMilli(res.CompletedAt),
 	}, nil
 }
