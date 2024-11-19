@@ -194,7 +194,7 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 			FirstName:      req.FirstName,
 			LastName:       req.LastName,
 			DateOfBirth:    req.DateOfBirth,
-			InvitationCode: req.InvitationCode,
+			InvitationCode: res.InvitationCode,
 		},
 		PaymentToken:      random.GeneratePaymentToken(),
 		Client:            res.Client,
@@ -307,6 +307,14 @@ func (w *World) PublishEvent(e Event) {
 	switch data := e.(type) {
 	case *EventRequestCompleted:
 		w.CompletedRequestChan <- data.Request
+		go func() {
+			if data.Request.User.InvCodeUsedCount < 3 {
+				_, err := w.CreateUser(nil, &CreateUserArgs{Region: data.Request.User.Region, Inviter: data.Request.User})
+				if err != nil {
+					w.handleTickError(err)
+				}
+			}
+		}()
 	case *EventUserLeave:
 		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
 	}
