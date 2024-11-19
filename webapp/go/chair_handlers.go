@@ -341,7 +341,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 
-				if err := writeSSE(w, "matched", &chairGetNotificationResponse{
+				if err := writeSSE(w, &chairGetNotificationResponse{
 					RideID: ride.ID,
 					User: simpleUser{
 						ID:   user.ID,

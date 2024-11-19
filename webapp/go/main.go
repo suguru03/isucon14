@@ -159,12 +159,7 @@ func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	w.Write(buf)
 }
 
-func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
-	_, err := w.Write([]byte("event: " + event + "\n"))
-	if err != nil {
-		return err
-	}
-
+func writeSSE(w http.ResponseWriter, data interface{}) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err
