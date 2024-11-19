@@ -18,7 +18,7 @@ type APIResponse = Record<string, string>;
 
 const intialOwnerData = existsSync("./initial-owner-data.json")
   ? (JSON.parse(
-      readFileSync("./client.login-cache.json").toString(),
+      readFileSync("./initial-owner-data.json").toString(),
     ) as unknown)
   : undefined;
 

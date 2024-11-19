@@ -2,7 +2,7 @@ import { ReactNode, createContext, useContext } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
 import { getOwners } from "~/initialDataClient/getter";
 
-type SimulatorChair = {
+export type SimulatorChair = {
   id: string;
   name: string;
   model: string;
@@ -13,7 +13,7 @@ type SimulatorChair = {
   };
 };
 
-type SimulatorOwner = {
+export type SimulatorOwner = {
   id: string;
   name: string;
   token: string;
@@ -22,16 +22,11 @@ type SimulatorOwner = {
 
 type ClientSimulatorContextType = { owners: SimulatorOwner[] };
 
-const ClientSimulatorContext = createContext<
-  Partial<ClientSimulatorContextType>
->({});
+const ClientSimulatorContext = createContext<ClientSimulatorContextType>({
+  owners: [],
+});
 
-export const SimulatorProvider = ({
-  children,
-}: {
-  children: ReactNode;
-  providerId: string;
-}) => {
+export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const owners = getOwners().map(
     (owner) =>
       ({
