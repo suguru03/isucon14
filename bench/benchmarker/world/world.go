@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"log/slog"
 	"math"
 	"math/rand/v2"
@@ -284,7 +285,19 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 }
 
 func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, response *GetNearbyChairsResponse) error {
-	// TODO
+	for _, chair := range response.Chairs {
+		c := w.ChairDB.GetByServerID(chair.ID)
+		if c == nil {
+			return fmt.Errorf("ID:%sの椅子は存在しません", chair.ID)
+		}
+		if c.RegisteredData.Name != chair.Name {
+			return fmt.Errorf("ID:%sの椅子の名前が一致しません", chair.ID)
+		}
+		if c.Model.Name != chair.Model {
+			return fmt.Errorf("ID:%sの椅子のモデルが一致しません", chair.ID)
+		}
+		// TODO 位置バリデーション
+	}
 	return nil
 }
 
