@@ -20,6 +20,8 @@ type UserClient interface {
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
 	// GetRequests サーバーからリクエスト一覧を取得する
 	GetRequests(ctx *Context) (*GetRequestsResponse, error)
+	// GetEstimatedFare サーバーから料金の見積もりを取る
+	GetEstimatedFare(ctx *Context, pickup Coordinate, dest Coordinate) (*GetEstimatedFareResponse, error)
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
 	SendEvaluation(ctx *Context, req *Request, score int) (*SendEvaluationResponse, error)
 	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
@@ -60,6 +62,11 @@ type SendCreateRequestResponse struct {
 
 type GetRequestsResponse struct {
 	Requests []*RequestHistory
+}
+
+type GetEstimatedFareResponse struct {
+	Fare     int
+	Discount int
 }
 
 type RequestHistory struct {
