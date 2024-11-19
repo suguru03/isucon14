@@ -82,8 +82,8 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 }
 
 func (w *World) Tick(ctx *Context) error {
-	if !w.prevTimeout {
-		// 前回タイムアウトしなかったら地域毎に増加させる
+	if w.Time%60 == 59 {
+		// 定期的に地域毎に増加させる
 		for _, region := range w.Regions {
 			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
 			if increase > 0 {
@@ -308,7 +308,8 @@ func (w *World) PublishEvent(e Event) {
 	case *EventRequestCompleted:
 		w.CompletedRequestChan <- data.Request
 		go func() {
-			if data.Request.User.InvCodeUsedCount < 3 {
+			if data.Request.CalculateEvaluation().Score() > 2 && data.Request.User.InvCodeUsedCount < 3 {
+				w.contestantLogger.Info("既存Userからの招待によってUserが増加します", slog.String("region", data.Request.User.Region.Name))
 				_, err := w.CreateUser(nil, &CreateUserArgs{Region: data.Request.User.Region, Inviter: data.Request.User})
 				if err != nil {
 					w.handleTickError(err)
