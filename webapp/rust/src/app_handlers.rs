@@ -388,7 +388,7 @@ async fn app_post_rides_estimated_fare(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(user): axum::Extension<User>,
     axum::Json(req): axum::Json<AppPostRidesEstimatedFareRequest>,
-) -> Result<(StatusCode, axum::Json<AppPostRidesEstimatedFareResponse>), Error> {
+) -> Result<axum::Json<AppPostRidesEstimatedFareResponse>, Error> {
     let mut tx = pool.begin().await?;
 
     let discounted = calculate_discounted_fare(
@@ -404,18 +404,15 @@ async fn app_post_rides_estimated_fare(
 
     tx.commit().await?;
 
-    Ok((
-        StatusCode::ACCEPTED,
-        axum::Json(AppPostRidesEstimatedFareResponse {
-            fare: discounted,
-            discount: crate::calculate_fare(
-                req.pickup_coordinate.latitude,
-                req.pickup_coordinate.longitude,
-                req.destination_coordinate.latitude,
-                req.destination_coordinate.longitude,
-            ),
-        }),
-    ))
+    Ok(axum::Json(AppPostRidesEstimatedFareResponse {
+        fare: discounted,
+        discount: crate::calculate_fare(
+            req.pickup_coordinate.latitude,
+            req.pickup_coordinate.longitude,
+            req.destination_coordinate.latitude,
+            req.destination_coordinate.longitude,
+        )
+    }))
 }
 
 #[derive(Debug, serde::Serialize)]
