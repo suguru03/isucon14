@@ -24,12 +24,6 @@ type AppPostRideEvaluationParams struct {
 	RideID string
 }
 
-// ChairGetRideParams is parameters of chair-get-ride operation.
-type ChairGetRideParams struct {
-	// ライドID.
-	RideID string
-}
-
 // ChairPostRideStatusParams is parameters of chair-post-ride-status operation.
 type ChairPostRideStatusParams struct {
 	// ライドID.

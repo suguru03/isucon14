@@ -109,34 +109,6 @@ func (c *Client) ChairPostCoordinate(ctx context.Context, reqBody *api.Coordinat
 	return resBody, nil
 }
 
-func (c *Client) ChairGetRequest(ctx context.Context, rideID string) (*api.ChairRide, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/chair/rides/%s", rideID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}のリクエストが失敗しました: %w", err)
-	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
-	}
-
-	resBody := &api.ChairRide{}
-	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("GET /api/chair/rides/{rideID}のJSONのdecodeに失敗しました: %w", err)
-	}
-
-	return resBody, nil
-}
-
 func (c *Client) ChairPostRideStatus(ctx context.Context, rideID string, reqBody *api.ChairPostRideStatusReq) (*api.ChairPostRideStatusNoContent, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
