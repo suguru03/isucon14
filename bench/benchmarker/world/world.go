@@ -283,6 +283,11 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	return result, nil
 }
 
+func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, response *GetNearbyChairsResponse) error {
+	// TODO
+	return nil
+}
+
 func (w *World) handleTickError(err error) {
 	if errs, ok := UnwrapMultiError(err); ok {
 		for _, err2 := range errs {
