@@ -84,7 +84,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
             },
         )
 
-        # insert a coupon for the first registration campaign
+        # 初回登録キャンペーンのクーポンを付与
         conn.execute(
             text(
                 "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
@@ -92,9 +92,9 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
             {"user_id": user_id, "code": "CP_NEW2024", "discount": 3000},
         )
 
-        # Verify if invitation code is valid
+        # 招待コードを使った登録
         if r.invitation_code:
-            # Check the number of times the coupons has been used
+            # 招待する側の招待数をチェック
             coupons = conn.execute(
                 "SELECT * FROM coupons WHERE code = :code FOR UPDATE",
                 {"code": "INV_" + r.invitation_code},
@@ -105,7 +105,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                     status_code=400, detail="この招待コードは使用できません"
                 )
 
-            # Validate inviter existance
+            # ユーザーチェック
             inviter = conn.execute(
                 "SELECT * FROM users WHERE invitation_code = :invitation_code",
                 {"invitation_code": r.invitation_code},
@@ -116,7 +116,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                     status_code=400, detail="この招待コードは使用できません。"
                 )
 
-            # insert an invitation coupon to newcomer
+            # 招待クーポン付与
             conn.execute(
                 "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)",
                 {
@@ -126,7 +126,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 },
             )
 
-            # insert a reward coupon to inviter
+            # 招待した人にもRewardを付与
             conn.execute(
                 "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)",
                 {
