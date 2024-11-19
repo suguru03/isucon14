@@ -267,6 +267,18 @@ func (u *User) CreateRequest(ctx *Context) error {
 		useInvCoupon = true
 	}
 
+	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, 50)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+	}
+	if err := u.World.checkNearbyChairsResponse(pickup, 50, nearby); err != nil {
+		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+	}
+	if len(nearby.Chairs) == 0 {
+		// 近くに椅子が無いので配車をやめる
+		return nil
+	}
+
 	estimation, err := u.Client.GetEstimatedFare(ctx, pickup, dest)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)

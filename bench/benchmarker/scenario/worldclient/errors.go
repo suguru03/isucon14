@@ -42,6 +42,8 @@ const (
 	ErrorCodeFailedToGetProviderSales
 	// ErrorCodeFailedToPostRidesEstimatedFare ライド料金の見積もりの取得に失敗したエラー
 	ErrorCodeFailedToPostRidesEstimatedFare
+	// ErrorCodeFailedToGetNearbyChairs 近くの椅子情報の取得に失敗したエラー
+	ErrorCodeFailedToGetNearbyChairs
 )
 
 type codeError struct {
