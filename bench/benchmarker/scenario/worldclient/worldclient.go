@@ -389,6 +389,27 @@ func (c *userClient) GetEstimatedFare(ctx *world.Context, pickup world.Coordinat
 	}, nil
 }
 
+func (c *userClient) GetNearbyChairs(ctx *world.Context, current world.Coordinate, distance int) (*world.GetNearbyChairsResponse, error) {
+	res, err := c.client.AppGetNearbyChairs(c.ctx, &api.AppGetNearbyChairsParams{
+		Latitude:  current.X,
+		Longitude: current.Y,
+		Distance:  api.NewOptInt(distance),
+	})
+	if err != nil {
+		return nil, WrapCodeError(ErrorCodeFailedToGetNearbyChairs, err)
+	}
+	return &world.GetNearbyChairsResponse{
+		RetrievedAt: time.UnixMilli(res.RetrievedAt),
+		Chairs: lo.Map(res.Chairs, func(chair api.AppChair, _ int) *world.AppChair {
+			return &world.AppChair{
+				ID:    chair.ID,
+				Name:  chair.Name,
+				Model: chair.Model,
+			}
+		}),
+	}, nil
+}
+
 func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *world.User, receiver world.NotificationReceiverFunc) (world.NotificationStream, error) {
 	sseContext, cancel := context.WithCancel(c.ctx)
 
