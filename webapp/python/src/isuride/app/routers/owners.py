@@ -10,7 +10,7 @@ from collections.abc import MutableMapping
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, StringConstraints
 from sqlalchemy import text
 from ulid import ULID
@@ -233,6 +233,70 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
     return res
 
 
+class OwnerGetChairDetailResponse(BaseModel):
+    id: str
+    name: str
+    model: str
+    active: bool
+    registered_at: int
+    total_distance: int
+    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも
+
+
 @router.get("/chairs/{chair_id}")
-def owner_get_chair_detail():
-    pass
+def owner_get_chair_detail(
+    chair_id: str,
+    owner: Owner = Depends(owner_auth_middleware),
+) -> OwnerGetChairDetailResponse:
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT id,
+                       owner_id,
+                       name,
+                       access_token,
+                       model,
+                       is_active,
+                       created_at,
+                       updated_at,
+                       IFNULL(total_distance, 0) AS total_distance,
+                       total_distance_updated_at
+                FROM chairs
+                       LEFT JOIN (SELECT chair_id,
+                                          SUM(IFNULL(distance, 0)) AS total_distance,
+                                          MAX(created_at)          AS total_distance_updated_at
+                                   FROM (SELECT chair_id,
+                                                created_at,
+                                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
+                                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
+                                         FROM chair_locations) tmp
+                                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
+                WHERE owner_id = :owner_id AND id = :id
+                """
+            ),
+            {"owner_id": owner.id, "id": chair_id},
+        )
+
+        row = rows.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="chair not found")
+        else:
+            chair = ChairWithDetail(**row)
+
+    resp = OwnerGetChairDetailResponse(
+        id=chair.id,
+        name=chair.name,
+        model=chair.model,
+        active=chair.is_active,
+        # TODO: ミリ秒への変換はこれで良いのだろうか
+        registered_at=int(chair.created_at.timestamp() * 1000),
+        total_distance=chair.total_distance,
+        total_distance_updated_at=None,
+    )
+    if chair.total_distance_updated_at is not None:
+        # TODO: ミリ秒への変換はこれで良いのだろうか
+        t = int(chair.total_distance_updated_at.timestamp() * 1000)
+        resp.total_distance_updated_at = t
+
+    return resp
