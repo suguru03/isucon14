@@ -11,9 +11,10 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import chair_auth_middleware
-from ..models import Chair, Owner
+from ..models import Chair, ChairLocation, Owner, Ride
 from ..sql import engine
 from ..utils import secure_random_str
+from .apps import get_latest_ride_status
 
 router = APIRouter(prefix="/api/chair")
 
@@ -89,9 +90,75 @@ def chair_post_activity(
         )
 
 
+# TODO: Requestの構造体がないの、紛らわしいので要検討
+class Coordinate(BaseModel):
+    latitude: int
+    longitude: int
+
+
+class ChairPostCoordinateResponse(BaseModel):
+    recorded_at: int
+
+
 @router.post("/coordinate")
-def chair_post_coordinate():
-    return {"datetime": "2024-11-01T00:00:00Z"}  # RFC3339
+def chair_post_coordinate(
+    req: Coordinate, chair: Chair = Depends(chair_auth_middleware)
+):
+    with engine.begin() as conn:
+        chair_location_id = str(ULID())
+        conn.execute(
+            text(
+                "INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (:id, :chair_id, :latitude, :longitude)"
+            )
+        )
+
+        row = conn.execute(
+            text("SELECT * FROM chair_locations WHERE id = :id"),
+            {"id": chair_location_id},
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        location = ChairLocation(**row)
+
+        row = conn.execute(
+            text(
+                "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC LIMIT 1"
+            ),
+            {"chair_id": chair.id},
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        ride = Ride(**row)
+        ride_status = get_latest_ride_status(conn, ride_id=ride.id)
+        if ride_status != "COMPLETED" and ride_status != "CANCELLED":
+            if (
+                req.latitude == ride.pickup_latitude
+                and req.longitude == ride.pickup_longitude
+                and ride_status == "ENROUTE"
+            ):
+                conn.execute(
+                    text(
+                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+                    ),
+                    {"id": str(ULID()), "ride_id": ride.id, "status": "PICKUP"},
+                )
+
+            if (
+                req.latitude == ride.destination_latitude
+                and req.longitude == ride.destination_longitude
+                and ride_status == "CARRYING"
+            ):
+                conn.execute(
+                    text(
+                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status) "
+                    ),
+                    {"id": str(ULID()), "ride_id": ride.id, "status": "ARRIVED"},
+                )
+
+    return ChairPostCoordinateResponse(
+        recorded_at=int(location.created_at.timestamp() * 1000)
+    )
 
 
 @router.get("/notification", status_code=204)
