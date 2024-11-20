@@ -158,6 +158,9 @@ paths:
                           $ref: "#/components/schemas/Coordinate"
                         destination_coordinate:
                           $ref: "#/components/schemas/Coordinate"
+                        fare:
+                          type: integer
+                          description: 運賃
                         chair:
                           type: object
                           properties:
@@ -178,9 +181,6 @@ paths:
                             - owner
                             - name
                             - model
-                        fare:
-                          type: integer
-                          description: 運賃
                         evaluation:
                           type: integer
                           description: 椅子の評価
@@ -196,8 +196,8 @@ paths:
                         - id
                         - pickup_coordinate
                         - destination_coordinate
-                        - chair
                         - fare
+                        - chair
                         - evaluation
                         - requested_at
                         - completed_at
@@ -296,27 +296,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  "/app/rides/{ride_id}":
-    get:
-      tags:
-        - app
-      summary: ユーザーがライドの詳細を確認する
-      operationId: app-get-ride
-      parameters:
-        - $ref: "#/components/parameters/ride_id"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppRide"
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
   "/app/rides/{ride_id}/evaluation":
     post:
       tags:
@@ -386,6 +365,9 @@ paths:
                     $ref: "#/components/schemas/Coordinate"
                   destination_coordinate:
                     $ref: "#/components/schemas/Coordinate"
+                  fare:
+                    type: integer
+                    description: 運賃
                   status:
                     $ref: "#/components/schemas/RideStatus"
                   chair:
@@ -405,6 +387,7 @@ paths:
                   - ride_id
                   - pickup_coordinate
                   - destination_coordinate
+                  - fare
                   - status
                   - created_at
                   - updated_at
