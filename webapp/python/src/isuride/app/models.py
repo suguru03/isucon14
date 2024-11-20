@@ -1,5 +1,37 @@
-from pydantic import BaseModel
+"""
+以下の移植
+https://github.com/isucon/isucon14/blob/main/webapp/go/models.go
+
+TODO: このdocstringを消す
+"""
+
 from datetime import datetime
+
+from pydantic import BaseModel
+
+
+class Chair(BaseModel):
+    id: str
+    owner_id: str
+    name: str
+    model: str
+    is_active: bool
+    access_token: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChairModel(BaseModel):
+    name: str
+    speed: int
+
+
+class ChairLocation(BaseModel):
+    id: str
+    chair_id: str
+    latitude: int
+    longitude: int
+    created_at: datetime
 
 
 class User(BaseModel):
@@ -14,6 +46,12 @@ class User(BaseModel):
     updated_at: datetime
 
 
+class PaymentToken(BaseModel):
+    user_id: str
+    token: str
+    created_at: datetime
+
+
 class Ride(BaseModel):
     id: str
     user_id: str
@@ -25,3 +63,27 @@ class Ride(BaseModel):
     evaluation: int | None
     created_at: datetime
     updated_at: datetime
+
+
+class RideStatus(BaseModel):
+    id: str
+    ride_id: str
+    status: str
+    created_at: datetime
+
+
+class Owner(BaseModel):
+    id: str
+    name: str
+    access_token: str
+    chair_register_token: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class Coupon(BaseModel):
+    user_id: str
+    code: str
+    discount: int
+    created_at: datetime
+    used_by: str | None
