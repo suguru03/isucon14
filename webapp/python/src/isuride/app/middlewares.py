@@ -22,14 +22,14 @@ def app_auth_middleware(app_session=Cookie(default=None)) -> User:
         return user
 
 
-def owner_auth_middleware(app_session=Cookie(default=None)) -> Owner:
-    if not app_session:
+def owner_auth_middleware(owner_session=Cookie(default=None)) -> Owner:
+    if not owner_session:
         raise HTTPException(status_code=401, detail="owner_session cookie is required")
 
     with engine.begin() as conn:
         row = conn.execute(
             text("SELECT * FROM owners WHERE access_token = :access_token"),
-            {"access_token": app_session},
+            {"access_token": owner_session},
         ).fetchone()
 
         if not row:
