@@ -445,7 +445,24 @@ paths:
                   chairs:
                     type: array
                     items:
-                      $ref: "#/components/schemas/AppChair"
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 椅子ID
+                        name:
+                          type: string
+                          description: 椅子の名前
+                        model:
+                          type: string
+                          description: 椅子のモデル
+                        current_coordinate:
+                          $ref: "#/components/schemas/Coordinate"
+                      required:
+                        - id
+                        - name
+                        - model
+                        - current_coordinate
                   retrieved_at:
                     type: integer
                     format: int64
@@ -898,36 +915,6 @@ components:
           type: object
           description: 椅子の統計情報
           properties:
-            recent_rides:
-              type: array
-              description: 最近の乗車情報
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: ライドID
-                  pickup_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  destination_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  distance:
-                    type: integer
-                    description: 移動距離
-                  duration:
-                    type: integer
-                    format: int64
-                    description: 移動時間 (ミリ秒)
-                  evaluation:
-                    type: integer
-                    description: 評価
-                required:
-                  - id
-                  - pickup_coordinate
-                  - destination_coordinate
-                  - distance
-                  - duration
-                  - evaluation
             total_rides_count:
               type: integer
               description: 総乗車回数
@@ -935,7 +922,6 @@ components:
               type: number
               description: 総評価平均
           required:
-            - recent_rides
             - total_rides_count
             - total_evaluation_avg
       required:
