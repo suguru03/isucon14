@@ -5,8 +5,6 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/owner_handlers.go
 TODO: このdocstringを消す
 """
 
-import random
-import string
 from typing import Annotated
 
 from fastapi import APIRouter, Response
@@ -15,6 +13,7 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..sql import engine
+from ..utils import secure_random_str
 
 router = APIRouter(prefix="/api/owner")
 
@@ -39,11 +38,8 @@ def owner_post_owners(
     # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/owner_handlers.go#L20
 
     owner_id = str(ULID())
-    # TODO: should mimic secureRandomStr
-    access_token = "".join(random.sample(string.ascii_letters + string.digits, 32))
-    chair_register_token = "".join(
-        random.sample(string.ascii_letters + string.digits, 32)
-    )
+    access_token = secure_random_str(32)
+    chair_register_token = secure_random_str(32)
 
     with engine.begin() as conn:
         conn.execute(
