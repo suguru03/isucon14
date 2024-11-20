@@ -18,7 +18,7 @@ func init() {
 	_ = gimei.NewName()
 }
 
-func GenerateProviderName() string {
+func GenerateOwnerName() string {
 	company := gofakeit.Company()
 	if len(company) > 30 {
 		company = company[:30]

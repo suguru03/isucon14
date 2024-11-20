@@ -48,24 +48,24 @@ const (
 	ErrorCodeFailedToGetRequestDetail
 	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗した
 	ErrorCodeFailedToRegisterUser
-	// ErrorCodeFailedToRegisterProvider プロバイダー登録に失敗した
-	ErrorCodeFailedToRegisterProvider
+	// ErrorCodeFailedToRegisterOwner オーナー登録に失敗した
+	ErrorCodeFailedToRegisterOwner
 	// ErrorCodeFailedToRegisterChair 椅子登録に失敗した
 	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToConnectNotificationStream 通知ストリームへの接続に失敗した
 	ErrorCodeFailedToConnectNotificationStream
 	// ErrorCodeFailedToRegisterPaymentMethods ユーザーの支払い情報の登録に失敗した
 	ErrorCodeFailedToRegisterPaymentMethods
-	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗した
-	ErrorCodeFailedToGetProviderSales
+	// ErrorCodeFailedToGetOwnerSales オーナーの売り上げ情報の取得に失敗した
+	ErrorCodeFailedToGetOwnerSales
 	// ErrorCodeIncorrectAmountOfFareCharged ユーザーのリクエストに対して誤った金額が請求されました
 	ErrorCodeIncorrectAmountOfFareCharged
-	// ErrorCodeSalesMismatched 取得したプロバイダーの売り上げ情報が想定しているものとズレています
+	// ErrorCodeSalesMismatched 取得したオーナーの売り上げ情報が想定しているものとズレています
 	ErrorCodeSalesMismatched
-	// ErrorCodeFailedToGetProviderChairs プロバイダーの椅子一覧の取得に失敗した
-	ErrorCodeFailedToGetProviderChairs
-	// ErrorCodeIncorrectProviderChairsData 取得したプロバイダーの椅子一覧の情報が合ってない
-	ErrorCodeIncorrectProviderChairsData
+	// ErrorCodeFailedToGetOwnerChairs オーナーの椅子一覧の取得に失敗した
+	ErrorCodeFailedToGetOwnerChairs
+	// ErrorCodeIncorrectOwnerChairsData 取得したオーナーの椅子一覧の情報が合ってない
+	ErrorCodeIncorrectOwnerChairsData
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
