@@ -28,8 +28,8 @@ type Chair struct {
 	World *World
 	// Region 椅子がいる地域
 	Region *Region
-	// Provider 椅子を所有している事業者
-	Provider *Provider
+	// Owner 椅子を所有しているオーナー
+	Owner *Owner
 	// Model 椅子のモデル
 	Model *ChairModel
 	// State 椅子の状態

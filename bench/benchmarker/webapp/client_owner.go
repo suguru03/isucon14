@@ -12,7 +12,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPostOwnersReq) (*api.OwnerPostOwnersCreated, error) {
+func (c *Client) OwnerPostRegister(ctx context.Context, reqBody *api.OwnerPostOwnersReq) (*api.OwnerPostOwnersCreated, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (c *Client) ProviderPostRegister(ctx context.Context, reqBody *api.OwnerPos
 	return resBody, nil
 }
 
-func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSalesParams) (*api.OwnerGetSalesOK, error) {
+func (c *Client) OwnerGetSales(ctx context.Context, params *api.OwnerGetSalesParams) (*api.OwnerGetSalesOK, error) {
 	q := url.Values{}
 	if params.Since.IsSet() {
 		q.Set("since", strconv.FormatInt(params.Since.Value, 10))
@@ -81,7 +81,7 @@ func (c *Client) ProviderGetSales(ctx context.Context, params *api.OwnerGetSales
 	return resBody, nil
 }
 
-func (c *Client) ProviderGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, error) {
+func (c *Client) OwnerGetChairs(ctx context.Context) (*api.OwnerGetChairsOK, error) {
 	req, err := c.agent.NewRequest(http.MethodGet, "/api/owner/chairs", nil)
 	if err != nil {
 		return nil, err

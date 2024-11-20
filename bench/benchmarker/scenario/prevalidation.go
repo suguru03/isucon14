@@ -130,7 +130,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	chairRegisterToken := ""
 	// POST /api/owner/register
 	{
-		result, err := ownerClient.ProviderPostRegister(ctx, &api.OwnerPostOwnersReq{
+		result, err := ownerClient.OwnerPostRegister(ctx, &api.OwnerPostOwnersReq{
 			Name: "hoge",
 		})
 		if err != nil {

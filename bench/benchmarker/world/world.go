@@ -28,8 +28,8 @@ type World struct {
 	Regions []*Region
 	// UserDB 全ユーザーDB
 	UserDB *GenericDB[UserID, *User]
-	// ProviderDB 全プロバイダーDB
-	ProviderDB *GenericDB[ProviderID, *Provider]
+	// OwnerDB 全オーナーDB
+	OwnerDB *GenericDB[OwnerID, *Owner]
 	// ChairDB 全椅子DB
 	ChairDB *GenericDB[ChairID, *Chair]
 	// RequestDB 全リクエストDB
@@ -66,7 +66,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 			NewRegion("コシカケシティ", 300, 300, 100, 100),
 		},
 		UserDB:               NewGenericDB[UserID, *User](),
-		ProviderDB:           NewGenericDB[ProviderID, *Provider](),
+		OwnerDB:              NewGenericDB[OwnerID, *Owner](),
 		ChairDB:              NewGenericDB[ChairID, *Chair](),
 		RequestDB:            NewRequestDB(),
 		PaymentDB:            NewPaymentDB(),
@@ -123,7 +123,7 @@ func (w *World) Tick(ctx *Context) error {
 			}
 		}()
 	}
-	for _, p := range w.ProviderDB.Iter() {
+	for _, p := range w.OwnerDB.Iter() {
 		w.waitingTickCount.Add(1)
 		go func() {
 			defer w.waitingTickCount.Add(-1)
@@ -210,27 +210,27 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 	return result, nil
 }
 
-type CreateProviderArgs struct {
+type CreateOwnerArgs struct {
 	// Region 椅子を配置する地域
 	Region *Region
 }
 
-// CreateProvider 仮想世界に椅子のプロバイダーを作成する
-func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provider, error) {
-	registeredData := RegisteredProviderData{
-		Name: random.GenerateProviderName(),
+// CreateOwner 仮想世界に椅子のオーナーを作成する
+func (w *World) CreateOwner(ctx *Context, args *CreateOwnerArgs) (*Owner, error) {
+	registeredData := RegisteredOwnerData{
+		Name: random.GenerateOwnerName(),
 	}
 
-	res, err := w.Client.RegisterProvider(ctx, &RegisterProviderRequest{
+	res, err := w.Client.RegisterOwner(ctx, &RegisterOwnerRequest{
 		Name: registeredData.Name,
 	})
 	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
 	}
 	registeredData.ChairRegisterToken = res.ChairRegisteredToken
 
-	p := &Provider{
-		ServerID:           res.ServerProviderID,
+	p := &Owner{
+		ServerID:           res.ServerOwnerID,
 		World:              w,
 		Region:             args.Region,
 		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
@@ -240,12 +240,12 @@ func (w *World) CreateProvider(ctx *Context, args *CreateProviderArgs) (*Provide
 		Rand:               random.CreateChildRand(w.RootRand),
 		chairCountPerModel: map[*ChairModel]int{},
 	}
-	return w.ProviderDB.Create(p), nil
+	return w.OwnerDB.Create(p), nil
 }
 
 type CreateChairArgs struct {
-	// Provider 椅子のプロバイダー
-	Provider *Provider
+	// Owner 椅子のオーナー
+	Owner *Owner
 	// InitialCoordinate 椅子の初期位置
 	InitialCoordinate Coordinate
 	// Model 椅子モデル
@@ -258,7 +258,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		Name: random.GenerateChairName(),
 	}
 
-	res, err := w.Client.RegisterChair(ctx, args.Provider, &RegisterChairRequest{
+	res, err := w.Client.RegisterChair(ctx, args.Owner, &RegisterChairRequest{
 		Name:  registeredData.Name,
 		Model: args.Model.Name,
 	})
@@ -269,18 +269,18 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	c := &Chair{
 		ServerID:          res.ServerChairID,
 		World:             w,
-		Region:            args.Provider.Region,
-		Provider:          args.Provider,
+		Region:            args.Owner.Region,
+		Owner:             args.Owner,
 		Model:             args.Model,
 		Location:          ChairLocation{Initial: args.InitialCoordinate},
 		State:             ChairStateInactive,
 		RegisteredData:    registeredData,
 		Client:            res.Client,
-		Rand:              random.CreateChildRand(args.Provider.Rand),
+		Rand:              random.CreateChildRand(args.Owner.Rand),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	result := w.ChairDB.Create(c)
-	args.Provider.AddChair(c)
+	args.Owner.AddChair(c)
 	return result, nil
 }
 
