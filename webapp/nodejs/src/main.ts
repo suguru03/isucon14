@@ -10,7 +10,6 @@ import {
 import type { Environment } from "./types/hono.js";
 import { exec } from "./utils/exec.js";
 
-
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
   port: Number(process.env.ISUCON_DB_PORT || "3306"),
@@ -85,16 +84,19 @@ serve(
 );
 
 async function postInitialize(ctx: Context<Environment>) {
-  const body = await ctx.req.json<{payment_server: string}>();
+  const body = await ctx.req.json<{ payment_server: string }>();
   try {
-    await exec(["../sql/init.sh"])
+    await exec(["../sql/init.sh"]);
   } catch (error) {
-    return ctx.text(`Failed to initialize\n${error}`, 500)
+    return ctx.text(`Failed to initialize\n${error}`, 500);
   }
   try {
-  await ctx.var.dbConn.query("UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'", [body.payment_server])
+    await ctx.var.dbConn.query(
+      "UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'",
+      [body.payment_server],
+    );
   } catch (error) {
     return ctx.text(`Internal Server Error\n${error}`, 500);
   }
-  return ctx.json({language: "node"});
+  return ctx.json({ language: "node" });
 }
