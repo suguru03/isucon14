@@ -132,6 +132,56 @@ export type AppRide = {
 };
 
 /**
+ * App向けライド履歴情報
+ */
+export type AppRideHistory = {
+  /**
+   * ライドID
+   */
+  id: string;
+  pickup_coordinate: Coordinate;
+  destination_coordinate: Coordinate;
+  chair: {
+    /**
+     * 椅子ID
+     */
+    id: string;
+    /**
+     * オーナー名
+     */
+    owner: string;
+    /**
+     * 椅子の名前
+     */
+    name: string;
+    /**
+     * 椅子のモデル
+     */
+    model: string;
+  };
+  /**
+   * 運賃
+   */
+  fare: number;
+  /**
+   * 椅子の評価
+   */
+  evaluation: number;
+  /**
+   * 配車要求日時
+   *
+   * @format int64
+   */
+  requested_at: number;
+  /**
+   * 評価まで完了した日時
+   *
+   * @format int64
+   */
+  completed_at: number;
+};
+
+/**
  * Chair向けライド情報
  */
 export type ChairRide = {

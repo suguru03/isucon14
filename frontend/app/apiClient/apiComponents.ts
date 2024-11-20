@@ -4,7 +4,7 @@
  * @version 1.0
  */
 import * as reactQuery from "@tanstack/react-query";
-import { useApiContext, ApiContext } from "./apiContext";
+import { ApiContext, useApiContext } from "./apiContext";
 import type * as Fetcher from "./apiFetcher";
 import { apiFetch } from "./apiFetcher";
 import type * as Schemas from "./apiSchemas";
@@ -203,52 +203,7 @@ export const useAppPostPaymentMethods = (
 export type AppGetRidesError = Fetcher.ErrorWrapper<undefined>;
 
 export type AppGetRidesResponse = {
-  rides: {
-    /**
-     * ライドID
-     */
-    id: string;
-    pickup_coordinate: Schemas.Coordinate;
-    destination_coordinate: Schemas.Coordinate;
-    chair: {
-      /**
-       * 椅子ID
-       */
-      id: string;
-      /**
-       * オーナー名
-       */
-      owner: string;
-      /**
-       * 椅子の名前
-       */
-      name: string;
-      /**
-       * 椅子のモデル
-       */
-      model: string;
-    };
-    /**
-     * 運賃
-     */
-    fare: number;
-    /**
-     * 椅子の評価
-     */
-    evaluation: number;
-    /**
-     * 配車要求日時
-     *
-     * @format int64
-     */
-    requested_at: number;
-    /**
-     * 評価まで完了した日時
-     *
-     * @format int64
-     */
-    completed_at: number;
-  }[];
+  rides: Schemas.AppRideHistory[];
 };
 
 export type AppGetRidesVariables = ApiContext["fetcherOptions"];
@@ -492,10 +447,6 @@ export type AppPostRideEvaluationError = Fetcher.ErrorWrapper<
 >;
 
 export type AppPostRideEvaluationResponse = {
-  /**
-   * 割引後運賃
-   */
-  fare: number;
   /**
    * 完了日時
    *
@@ -1268,62 +1219,6 @@ export const useChairGetNotification = <TData = ChairGetNotificationResponse,>(
   });
 };
 
-export type ChairGetRidePathParams = {
-  /**
-   * ライドID
-   */
-  rideId: string;
-};
-
-export type ChairGetRideError = Fetcher.ErrorWrapper<{
-  status: 404;
-  payload: Schemas.Error;
-}>;
-
-export type ChairGetRideVariables = {
-  pathParams: ChairGetRidePathParams;
-} & ApiContext["fetcherOptions"];
-
-/**
- * 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
- */
-export const fetchChairGetRide = (
-  variables: ChairGetRideVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    Schemas.ChairRide,
-    ChairGetRideError,
-    undefined,
-    {},
-    {},
-    ChairGetRidePathParams
-  >({ url: "/chair/rides/{rideId}", method: "get", ...variables, signal });
-
-/**
- * 椅子向け通知エンドポイントから通知されたidの情報を取得する想定
- */
-export const useChairGetRide = <TData = Schemas.ChairRide,>(
-  variables: ChairGetRideVariables,
-  options?: Omit<
-    reactQuery.UseQueryOptions<Schemas.ChairRide, ChairGetRideError, TData>,
-    "queryKey" | "queryFn" | "initialData"
-  >,
-) => {
-  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
-  return reactQuery.useQuery<Schemas.ChairRide, ChairGetRideError, TData>({
-    queryKey: queryKeyFn({
-      path: "/chair/rides/{rideId}",
-      operationId: "chairGetRide",
-      variables,
-    }),
-    queryFn: ({ signal }) =>
-      fetchChairGetRide({ ...fetcherOptions, ...variables }, signal),
-    ...options,
-    ...queryOptions,
-  });
-};
-
 export type ChairPostRideStatusPathParams = {
   /**
    * ライドID
@@ -1431,9 +1326,4 @@ export type QueryOperation =
       path: "/chair/notification";
       operationId: "chairGetNotification";
       variables: ChairGetNotificationVariables;
-    }
-  | {
-      path: "/chair/rides/{rideId}";
-      operationId: "chairGetRide";
-      variables: ChairGetRideVariables;
     };

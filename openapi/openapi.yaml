@@ -149,58 +149,7 @@ paths:
                   rides:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: ライドID
-                        pickup_coordinate:
-                          $ref: "#/components/schemas/Coordinate"
-                        destination_coordinate:
-                          $ref: "#/components/schemas/Coordinate"
-                        chair:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              description: 椅子ID
-                            owner:
-                              type: string
-                              description: オーナー名
-                            name:
-                              type: string
-                              description: 椅子の名前
-                            model:
-                              type: string
-                              description: 椅子のモデル
-                          required:
-                            - id
-                            - owner
-                            - name
-                            - model
-                        fare:
-                          type: integer
-                          description: 運賃
-                        evaluation:
-                          type: integer
-                          description: 椅子の評価
-                        requested_at:
-                          type: integer
-                          format: int64
-                          description: 配車要求日時
-                        completed_at:
-                          type: integer
-                          format: int64
-                          description: 評価まで完了した日時
-                      required:
-                        - id
-                        - pickup_coordinate
-                        - destination_coordinate
-                        - chair
-                        - fare
-                        - evaluation
-                        - requested_at
-                        - completed_at
+                      $ref: "#/components/schemas/AppRideHistory"
                 required:
                   - rides
     post:
@@ -987,6 +936,60 @@ components:
         - status
         - created_at
         - updated_at
+    AppRideHistory:
+      description: App向けライド履歴情報
+      type: object
+      properties:
+        id:
+          type: string
+          description: ライドID
+        pickup_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        destination_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        chair:
+          type: object
+          properties:
+            id:
+              type: string
+              description: 椅子ID
+            owner:
+              type: string
+              description: オーナー名
+            name:
+              type: string
+              description: 椅子の名前
+            model:
+              type: string
+              description: 椅子のモデル
+          required:
+            - id
+            - owner
+            - name
+            - model
+        fare:
+          type: integer
+          description: 運賃
+        evaluation:
+          type: integer
+          description: 椅子の評価
+        requested_at:
+          type: integer
+          format: int64
+          description: 配車要求日時
+        completed_at:
+          type: integer
+          format: int64
+          description: 評価まで完了した日時
+      required:
+        - id
+        - pickup_coordinate
+        - destination_coordinate
+        - chair
+        - fare
+        - evaluation
+        - requested_at
+        - completed_at
     ChairRide:
       description: Chair向けライド情報
       type: object
