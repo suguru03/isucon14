@@ -399,14 +399,11 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 
 	// POST /api/app/request/:requestID/evaluate
 	{
-		result, err := userClient.AppPostRequestEvaluate(ctx, requestID, &api.AppPostRideEvaluationReq{
+		_, err := userClient.AppPostRequestEvaluate(ctx, requestID, &api.AppPostRideEvaluationReq{
 			Evaluation: 5,
 		})
 		if err != nil {
 			return err
-		}
-		if result.Fare != 500 {
-			return fmt.Errorf("POST /api/app/request/:requestID/evaluate の返却するfareが正しくありません (expected:%d, actual:%d)", 500, result.Fare)
 		}
 	}
 

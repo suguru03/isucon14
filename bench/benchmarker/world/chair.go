@@ -38,8 +38,8 @@ type Chair struct {
 	Location ChairLocation
 	// RegisteredData サーバーに登録されている椅子情報
 	RegisteredData RegisteredChairData
-	// ServerRequestID 進行中のリクエストのサーバー上でのID
-	ServerRequestID null.String
+	// matchingData マッチング通知情報
+	matchingData *ChairNotificationEventMatched
 	// Request 進行中のリクエスト
 	Request *Request
 	// RequestHistory 引き受けたリクエストの履歴
@@ -124,7 +124,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				// サーバーに要求を拒否の通知が通ったので状態をリセット
 				c.Request = nil
-				c.ServerRequestID = null.String{}
+				c.matchingData = nil
 			}
 
 		case RequestStatusDispatching:
@@ -183,30 +183,26 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
-			c.ServerRequestID = null.String{}
+			c.matchingData = nil
 		}
 
 	// オファーされたリクエストが存在するが、詳細を未取得
-	case c.Request == nil && c.ServerRequestID.Valid:
-		req := c.World.RequestDB.GetByServerID(c.ServerRequestID.String)
+	case c.Request == nil && c.matchingData != nil:
+		req := c.World.RequestDB.GetByServerID(c.matchingData.ServerRequestID)
 		if req == nil {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
-			err := c.Client.SendDenyRequest(ctx, c, c.ServerRequestID.String)
+			err := c.Client.SendDenyRequest(ctx, c, c.matchingData.ServerRequestID)
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
 			}
 
-			c.ServerRequestID = null.String{}
-		} else {
-			// TODO detailレスポンス検証
-			_, err := c.Client.GetRequestByChair(ctx, c, c.ServerRequestID.String)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToGetRequestDetail, err)
-			}
-
-			// 椅子がリクエストを正常に認識する
-			c.Request = req
+			c.matchingData = nil
+			break
 		}
+		// TODO: matchingDataのUserとDestinationのバリデーション
+
+		// 椅子がリクエストを正常に認識する
+		c.Request = req
 
 	// 進行中のリクエストが存在せず、稼働中
 	case c.State == ChairStateActive:
@@ -260,15 +256,6 @@ func (c *Chair) Tick(ctx *Context) error {
 		c.Location.SetServerTime(res.RecordedAt) // FIXME: ここの反映(ロック)が遅れて、総移動距離の計算が１つずれる場合がある
 		c.Location.ResetDirtyFlag()
 	}
-	return nil
-}
-
-func (c *Chair) AssignRequest(serverRequestID string) error {
-	if c.ServerRequestID.Valid && c.ServerRequestID.String != serverRequestID {
-		// 椅子が別のリクエストを保持している
-		return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.ServerRequestID.String, c.Request, serverRequestID))
-	}
-	c.ServerRequestID = null.StringFrom(serverRequestID)
 	return nil
 }
 
@@ -401,10 +388,11 @@ func (c *Chair) moveRandom() (to Coordinate) {
 func (c *Chair) HandleNotification(event NotificationEvent) error {
 	switch data := event.(type) {
 	case *ChairNotificationEventMatched:
-		err := c.AssignRequest(data.ServerRequestID)
-		if err != nil {
-			return err
+		if c.matchingData != nil && c.matchingData.ServerRequestID != data.ServerRequestID {
+			// 椅子が別のリクエストを保持している
+			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.matchingData.ServerRequestID, c.Request, data.ServerRequestID))
 		}
+		c.matchingData = data
 
 	case *ChairNotificationEventCompleted:
 		request := c.Request

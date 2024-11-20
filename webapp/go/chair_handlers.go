@@ -302,9 +302,12 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				status, err := getLatestRideStatus(tx, ride.ID)
-				if err != nil {
-					return err
+				var status string
+				if found {
+					status, err = getLatestRideStatus(tx, ride.ID)
+					if err != nil {
+						return err
+					}
 				}
 
 				if !found || status == "COMPLETED" || status == "CANCELED" {
@@ -341,7 +344,7 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 
-				if err := writeSSE(w, "matched", &chairGetNotificationResponse{
+				if err := writeSSE(w, &chairGetNotificationResponse{
 					RideID: ride.ID,
 					User: simpleUser{
 						ID:   user.ID,
@@ -373,69 +376,6 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-}
-
-type chairGetRideResponse struct {
-	ID                    string     `json:"id"`
-	User                  simpleUser `json:"user"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Status                string     `json:"status"`
-}
-
-func chairGetRideRequest(w http.ResponseWriter, r *http.Request) {
-	rideID := r.PathValue("ride_id")
-
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	defer tx.Rollback()
-
-	ride := &Ride{}
-	if err := tx.Get(ride, "SELECT * FROM rides WHERE id = ?", rideID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("ride not found"))
-			return
-		}
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	status, err := getLatestRideStatus(tx, ride.ID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	user := &User{}
-	if err := tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err := tx.Commit(); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, &chairGetRideResponse{
-		ID: ride.ID,
-		User: simpleUser{
-			ID:   user.ID,
-			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
-		},
-		PickupCoordinate: Coordinate{
-			Latitude:  ride.PickupLatitude,
-			Longitude: ride.PickupLongitude,
-		},
-		DestinationCoordinate: Coordinate{
-			Latitude:  ride.DestinationLatitude,
-			Longitude: ride.DestinationLongitude,
-		},
-		Status: status,
-	})
 }
 
 type postChairRidesRideIDStatusRequest struct {

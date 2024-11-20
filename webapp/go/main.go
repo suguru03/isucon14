@@ -105,7 +105,6 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
 		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
-		authedMux.HandleFunc("GET /api/chair/rides/{ride_id}", chairGetRideRequest)
 		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/status", chairPostRideStatus)
 	}
 
@@ -160,12 +159,7 @@ func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	w.Write(buf)
 }
 
-func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
-	_, err := w.Write([]byte("event: " + event + "\n"))
-	if err != nil {
-		return err
-	}
-
+func writeSSE(w http.ResponseWriter, data interface{}) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err

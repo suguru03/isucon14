@@ -52,8 +52,6 @@ type ChairClient interface {
 	SendActivate(ctx *Context, chair *Chair) error
 	// SendDeactivate サーバーにリクエストの受付停止を通知する
 	SendDeactivate(ctx *Context, chair *Chair) error
-	// GetRequestByChair サーバーからリクエストの詳細を取得する(椅子側)
-	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
 	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する
 	ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error)
 }
@@ -100,8 +98,6 @@ type RequestHistoryChair struct {
 	Model string
 }
 
-type GetRequestByChairResponse struct{}
-
 type GetProviderSalesRequest struct {
 	Since time.Time
 	Until time.Time
@@ -145,7 +141,6 @@ type SendChairCoordinateResponse struct {
 }
 
 type SendEvaluationResponse struct {
-	Fare        int
 	CompletedAt time.Time
 }
 

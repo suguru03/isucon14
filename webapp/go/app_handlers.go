@@ -662,7 +662,6 @@ type appPostRideEvaluationRequest struct {
 }
 
 type appPostRideEvaluationResponse struct {
-	Fare        int   `json:"fare"`
 	CompletedAt int64 `json:"completed_at"`
 }
 
@@ -784,7 +783,6 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &appPostRideEvaluationResponse{
-		Fare:        fare,
 		CompletedAt: ride.UpdatedAt.UnixMilli(),
 	})
 }
@@ -906,7 +904,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				}
 
 				chair := &Chair{}
-				stats := appChairStats{}
+				stats := appChairStats{RecentRides: make([]recentRide, 0)}
 				if ride.ChairID.Valid {
 					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 						return err
@@ -917,7 +915,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				if err := writeSSE(w, "matched", &appGetNotificationResponse{
+				if err := writeSSE(w, &appGetNotificationResponse{
 					RideID: ride.ID,
 					PickupCoordinate: Coordinate{
 						Latitude:  ride.PickupLatitude,
