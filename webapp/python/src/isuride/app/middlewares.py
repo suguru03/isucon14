@@ -1,8 +1,9 @@
 from http.client import HTTPException
+
 from fastapi import Cookie
 from sqlalchemy import text
-from .models import User
 
+from .models import User
 from .sql import engine
 
 

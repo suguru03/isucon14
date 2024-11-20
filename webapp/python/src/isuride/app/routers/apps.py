@@ -6,15 +6,17 @@ TODO: このdocstringを消す
 """
 
 from http.client import HTTPException
+
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
-from fastapi import APIRouter, Response, Depends
-from ulid import ULID
-from ..sql import engine
 from sqlalchemy import text
-from ..utils import secure_random_str
+from ulid import ULID
+
 from ..middlewares import app_auth_middleware
 from ..models import Ride, User
-from .owners import initial_fare, fare_per_distance
+from ..sql import engine
+from ..utils import secure_random_str
+from .owners import fare_per_distance, initial_fare
 
 router = APIRouter(prefix="/api/app")
 
