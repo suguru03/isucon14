@@ -343,3 +343,84 @@ def calculate_discounted_fare(
 
     discounted_metered_fare: int = max(metered_fare - discount, 0)
     return initial_fare + discounted_metered_fare
+
+
+class RecentRide(BaseModel):
+    id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    distance: int
+    duration: int
+    evaluation: int
+
+
+class AppChairStats(BaseModel):
+    # 最近の乗車履歴
+    recent_rides: list[RecentRide]
+
+    # 累計の情報
+    total_rides_count: int
+    total_evaluation_avg: float
+
+
+class AppChair(BaseModel):
+    id: str
+    name: str
+    model: str
+    stats: AppChairStats
+
+
+class AppGetRideResponse(BaseModel):
+    id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    status: str
+    chair: AppChair | None = None
+    created_at: int
+    updated_at: int
+
+
+@router.get(
+    "/rides/{ride_id}",
+    response_model=AppGetRideResponse,
+    status_code=200,
+    response_model_exclude_none=True,
+)
+def app_get_ride(
+    ride_id: str, user: User = Depends(app_auth_middleware)
+) -> AppGetRideResponse:
+    with engine.begin() as conn:
+        ride = conn.execute(
+            text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
+        ).fetchone()
+        if not ride:
+            raise HTTPException(status_code=404, detail="ride not found")
+        status = get_latest_ride_status(conn, ride.id)
+
+        response = AppGetRideResponse(
+            id=ride.id,
+            pickup_coordinate=Coordinate(
+                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+            ),
+            destination_coordinate=Coordinate(
+                latitude=ride.destination_latitude, longitude=ride.destination_longitude
+            ),
+            status=status,
+            created_at=int(ride.created_at.timestamp() * 1000),
+            updated_at=int(ride.updated_at.timestamp() * 1000),
+        )
+
+        if ride.chair_id:
+            chair = conn.execute(
+                "SELECT * FROM chairs WHERE id = :chair_id", {"chair_id": ride.chair_id}
+            ).fetchone()
+
+            # TODO: stats = get_chair_stats(chair.id)
+            stats = AppChairStats(
+                recent_rides=[], total_rides_count=1, total_evaluation_avg=0.1
+            )
+            response.chair = AppChair(
+                id=chair.id, name=chair.name, model=chair.model, stats=stats
+            )
+
+    return response
