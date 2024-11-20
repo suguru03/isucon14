@@ -69,7 +69,7 @@ def get_latest_ride_status(conn, ride_id: str) -> str:
             "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
         ),
         {"ride_id": ride_id},
-    ).fetchOne()
+    ).fetchone()
 
     if not row:
         return ""
@@ -321,7 +321,7 @@ def calculate_discounted_fare(
                 "SELECT * FROM coupons WHERE user_id = :user_id AND code = 'CP_NEW2024' AND used_by IS NULL"
             ),
             {"user_id": user_id},
-        ).fetchOne()
+        ).fetchone()
 
         if not coupon:
             # 無いなら他のクーポンを付与された順番に使う
@@ -330,7 +330,7 @@ def calculate_discounted_fare(
                     "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1"
                 ),
                 {"user_id": user_id},
-            ).fetchOne()
+            ).fetchone()
 
         if coupon:
             discount = coupon.discount
