@@ -143,34 +143,6 @@ func (c *Client) AppPostRequest(ctx context.Context, reqBody *api.AppPostRidesRe
 	return resBody, nil
 }
 
-func (c *Client) AppGetRequest(ctx context.Context, rideID string) (*api.AppRide, error) {
-	req, err := c.agent.NewRequest(http.MethodGet, fmt.Sprintf("/api/app/rides/%s", rideID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, modifier := range c.requestModifiers {
-		modifier(req)
-	}
-
-	resp, err := c.agent.Do(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}のリクエストが失敗しました: %w", err)
-	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}へのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
-	}
-
-	resBody := &api.AppRide{}
-	if err := json.NewDecoder(resp.Body).Decode(resBody); err != nil {
-		return nil, fmt.Errorf("GET /api/app/rides/{ride_id}のJSONのdecodeに失敗しました: %w", err)
-	}
-
-	return resBody, nil
-}
-
 func (c *Client) AppPostRequestEvaluate(ctx context.Context, rideID string, reqBody *api.AppPostRideEvaluationReq) (*api.AppPostRideEvaluationOK, error) {
 	reqBodyBuf, err := reqBody.MarshalJSON()
 	if err != nil {
@@ -233,16 +205,16 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 	return resBody, nil
 }
 
-func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppRide, error] {
-	return func(yield func(*api.AppRide, error) bool) {
+func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppGetNotificationOK, error] {
+	return func(yield func(*api.AppGetNotificationOK, error) bool) {
 		for notification, err := range c.appGetNotification(ctx, false) {
 			if notification == nil {
 				if !yield(nil, err) {
 					return
 				}
 			} else {
-				if !yield(&api.AppRide{
-					ID:                    notification.RideID,
+				if !yield(&api.AppGetNotificationOK{
+					RideID:                notification.RideID,
 					PickupCoordinate:      notification.PickupCoordinate,
 					DestinationCoordinate: notification.DestinationCoordinate,
 					Status:                notification.Status,

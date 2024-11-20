@@ -12,12 +12,6 @@ type AppGetNearbyChairsParams struct {
 	Distance OptInt
 }
 
-// AppGetRideParams is parameters of app-get-ride operation.
-type AppGetRideParams struct {
-	// ライドID.
-	RideID string
-}
-
 // AppPostRideEvaluationParams is parameters of app-post-ride-evaluation operation.
 type AppPostRideEvaluationParams struct {
 	// ライドID.

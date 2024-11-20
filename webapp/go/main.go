@@ -79,7 +79,6 @@ func setup() http.Handler {
 		authedMux.HandleFunc("GET /api/app/rides", appGetRides)
 		authedMux.HandleFunc("POST /api/app/rides", appPostRides)
 		authedMux.HandleFunc("POST /api/app/rides/estimated-fare", appPostRidesEstimatedFare)
-		authedMux.HandleFunc("GET /api/app/rides/{ride_id}", appGetRide)
 		authedMux.HandleFunc("POST /api/app/rides/{ride_id}/evaluation", appPostRideEvaluatation)
 		//authedMux.HandleFunc("GET /api/app/notification", appGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/app/notification", appGetNotification)

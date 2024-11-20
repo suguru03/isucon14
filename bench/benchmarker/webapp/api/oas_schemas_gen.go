@@ -6,87 +6,6 @@ import (
 	"github.com/go-faster/errors"
 )
 
-// App向けの椅子情報.
-// Ref: #/components/schemas/AppChair
-type AppChair struct {
-	// 椅子ID.
-	ID string `json:"id"`
-	// 椅子の名前.
-	Name string `json:"name"`
-	// 椅子のモデル.
-	Model string `json:"model"`
-	// 椅子の統計情報.
-	Stats AppChairStats `json:"stats"`
-}
-
-// GetID returns the value of ID.
-func (s *AppChair) GetID() string {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *AppChair) GetName() string {
-	return s.Name
-}
-
-// GetModel returns the value of Model.
-func (s *AppChair) GetModel() string {
-	return s.Model
-}
-
-// GetStats returns the value of Stats.
-func (s *AppChair) GetStats() AppChairStats {
-	return s.Stats
-}
-
-// SetID sets the value of ID.
-func (s *AppChair) SetID(val string) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *AppChair) SetName(val string) {
-	s.Name = val
-}
-
-// SetModel sets the value of Model.
-func (s *AppChair) SetModel(val string) {
-	s.Model = val
-}
-
-// SetStats sets the value of Stats.
-func (s *AppChair) SetStats(val AppChairStats) {
-	s.Stats = val
-}
-
-// 椅子の統計情報.
-type AppChairStats struct {
-	// 総乗車回数.
-	TotalRidesCount int `json:"total_rides_count"`
-	// 総評価平均.
-	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
-}
-
-// GetTotalRidesCount returns the value of TotalRidesCount.
-func (s *AppChairStats) GetTotalRidesCount() int {
-	return s.TotalRidesCount
-}
-
-// GetTotalEvaluationAvg returns the value of TotalEvaluationAvg.
-func (s *AppChairStats) GetTotalEvaluationAvg() float64 {
-	return s.TotalEvaluationAvg
-}
-
-// SetTotalRidesCount sets the value of TotalRidesCount.
-func (s *AppChairStats) SetTotalRidesCount(val int) {
-	s.TotalRidesCount = val
-}
-
-// SetTotalEvaluationAvg sets the value of TotalEvaluationAvg.
-func (s *AppChairStats) SetTotalEvaluationAvg(val float64) {
-	s.TotalEvaluationAvg = val
-}
-
 type AppGetNearbyChairsOK struct {
 	Chairs []AppGetNearbyChairsOKChairsItem `json:"chairs"`
 	// 取得日時.
@@ -170,11 +89,14 @@ func (*AppGetNotificationNoContent) appGetNotificationRes() {}
 
 type AppGetNotificationOK struct {
 	// ライドID.
-	RideID                string      `json:"ride_id"`
-	PickupCoordinate      Coordinate  `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate  `json:"destination_coordinate"`
-	Status                RideStatus  `json:"status"`
-	Chair                 OptAppChair `json:"chair"`
+	RideID                string     `json:"ride_id"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+	// 運賃.
+	Fare   int        `json:"fare"`
+	Status RideStatus `json:"status"`
+	// 椅子情報.
+	Chair OptAppGetNotificationOKChair `json:"chair"`
 	// 配車要求日時.
 	CreatedAt int64 `json:"created_at"`
 	// 配車要求更新日時.
@@ -198,13 +120,18 @@ func (s *AppGetNotificationOK) GetDestinationCoordinate() Coordinate {
 	return s.DestinationCoordinate
 }
 
+// GetFare returns the value of Fare.
+func (s *AppGetNotificationOK) GetFare() int {
+	return s.Fare
+}
+
 // GetStatus returns the value of Status.
 func (s *AppGetNotificationOK) GetStatus() RideStatus {
 	return s.Status
 }
 
 // GetChair returns the value of Chair.
-func (s *AppGetNotificationOK) GetChair() OptAppChair {
+func (s *AppGetNotificationOK) GetChair() OptAppGetNotificationOKChair {
 	return s.Chair
 }
 
@@ -238,13 +165,18 @@ func (s *AppGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
 	s.DestinationCoordinate = val
 }
 
+// SetFare sets the value of Fare.
+func (s *AppGetNotificationOK) SetFare(val int) {
+	s.Fare = val
+}
+
 // SetStatus sets the value of Status.
 func (s *AppGetNotificationOK) SetStatus(val RideStatus) {
 	s.Status = val
 }
 
 // SetChair sets the value of Chair.
-func (s *AppGetNotificationOK) SetChair(val OptAppChair) {
+func (s *AppGetNotificationOK) SetChair(val OptAppGetNotificationOKChair) {
 	s.Chair = val
 }
 
@@ -265,6 +197,86 @@ func (s *AppGetNotificationOK) SetRetryAfterMs(val OptInt) {
 
 func (*AppGetNotificationOK) appGetNotificationRes() {}
 
+// 椅子情報.
+type AppGetNotificationOKChair struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model string `json:"model"`
+	// 椅子の統計情報.
+	Stats AppGetNotificationOKChairStats `json:"stats"`
+}
+
+// GetID returns the value of ID.
+func (s *AppGetNotificationOKChair) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AppGetNotificationOKChair) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *AppGetNotificationOKChair) GetModel() string {
+	return s.Model
+}
+
+// GetStats returns the value of Stats.
+func (s *AppGetNotificationOKChair) GetStats() AppGetNotificationOKChairStats {
+	return s.Stats
+}
+
+// SetID sets the value of ID.
+func (s *AppGetNotificationOKChair) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AppGetNotificationOKChair) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *AppGetNotificationOKChair) SetModel(val string) {
+	s.Model = val
+}
+
+// SetStats sets the value of Stats.
+func (s *AppGetNotificationOKChair) SetStats(val AppGetNotificationOKChairStats) {
+	s.Stats = val
+}
+
+// 椅子の統計情報.
+type AppGetNotificationOKChairStats struct {
+	// 総乗車回数.
+	TotalRidesCount int `json:"total_rides_count"`
+	// 総評価平均.
+	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
+}
+
+// GetTotalRidesCount returns the value of TotalRidesCount.
+func (s *AppGetNotificationOKChairStats) GetTotalRidesCount() int {
+	return s.TotalRidesCount
+}
+
+// GetTotalEvaluationAvg returns the value of TotalEvaluationAvg.
+func (s *AppGetNotificationOKChairStats) GetTotalEvaluationAvg() float64 {
+	return s.TotalEvaluationAvg
+}
+
+// SetTotalRidesCount sets the value of TotalRidesCount.
+func (s *AppGetNotificationOKChairStats) SetTotalRidesCount(val int) {
+	s.TotalRidesCount = val
+}
+
+// SetTotalEvaluationAvg sets the value of TotalEvaluationAvg.
+func (s *AppGetNotificationOKChairStats) SetTotalEvaluationAvg(val float64) {
+	s.TotalEvaluationAvg = val
+}
+
 type AppGetRidesOK struct {
 	Rides []AppGetRidesOKRidesItem `json:"rides"`
 }
@@ -281,12 +293,12 @@ func (s *AppGetRidesOK) SetRides(val []AppGetRidesOKRidesItem) {
 
 type AppGetRidesOKRidesItem struct {
 	// ライドID.
-	ID                    string                      `json:"id"`
-	PickupCoordinate      Coordinate                  `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate                  `json:"destination_coordinate"`
-	Chair                 AppGetRidesOKRidesItemChair `json:"chair"`
+	ID                    string     `json:"id"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
 	// 運賃.
-	Fare int `json:"fare"`
+	Fare  int                         `json:"fare"`
+	Chair AppGetRidesOKRidesItemChair `json:"chair"`
 	// 椅子の評価.
 	Evaluation int `json:"evaluation"`
 	// 配車要求日時.
@@ -310,14 +322,14 @@ func (s *AppGetRidesOKRidesItem) GetDestinationCoordinate() Coordinate {
 	return s.DestinationCoordinate
 }
 
-// GetChair returns the value of Chair.
-func (s *AppGetRidesOKRidesItem) GetChair() AppGetRidesOKRidesItemChair {
-	return s.Chair
-}
-
 // GetFare returns the value of Fare.
 func (s *AppGetRidesOKRidesItem) GetFare() int {
 	return s.Fare
+}
+
+// GetChair returns the value of Chair.
+func (s *AppGetRidesOKRidesItem) GetChair() AppGetRidesOKRidesItemChair {
+	return s.Chair
 }
 
 // GetEvaluation returns the value of Evaluation.
@@ -350,14 +362,14 @@ func (s *AppGetRidesOKRidesItem) SetDestinationCoordinate(val Coordinate) {
 	s.DestinationCoordinate = val
 }
 
-// SetChair sets the value of Chair.
-func (s *AppGetRidesOKRidesItem) SetChair(val AppGetRidesOKRidesItemChair) {
-	s.Chair = val
-}
-
 // SetFare sets the value of Fare.
 func (s *AppGetRidesOKRidesItem) SetFare(val int) {
 	s.Fare = val
+}
+
+// SetChair sets the value of Chair.
+func (s *AppGetRidesOKRidesItem) SetChair(val AppGetRidesOKRidesItemChair) {
+	s.Chair = val
 }
 
 // SetEvaluation sets the value of Evaluation.
@@ -724,93 +736,6 @@ func (s *AppPostUsersReq) SetInvitationCode(val OptString) {
 	s.InvitationCode = val
 }
 
-// App向けライド情報.
-// Ref: #/components/schemas/AppRide
-type AppRide struct {
-	// ライドID.
-	ID                    string      `json:"id"`
-	PickupCoordinate      Coordinate  `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate  `json:"destination_coordinate"`
-	Status                RideStatus  `json:"status"`
-	Chair                 OptAppChair `json:"chair"`
-	// 配車要求日時.
-	CreatedAt int64 `json:"created_at"`
-	// 配車要求更新日時.
-	UpdatedAt int64 `json:"updated_at"`
-}
-
-// GetID returns the value of ID.
-func (s *AppRide) GetID() string {
-	return s.ID
-}
-
-// GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *AppRide) GetPickupCoordinate() Coordinate {
-	return s.PickupCoordinate
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *AppRide) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetStatus returns the value of Status.
-func (s *AppRide) GetStatus() RideStatus {
-	return s.Status
-}
-
-// GetChair returns the value of Chair.
-func (s *AppRide) GetChair() OptAppChair {
-	return s.Chair
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *AppRide) GetCreatedAt() int64 {
-	return s.CreatedAt
-}
-
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *AppRide) GetUpdatedAt() int64 {
-	return s.UpdatedAt
-}
-
-// SetID sets the value of ID.
-func (s *AppRide) SetID(val string) {
-	s.ID = val
-}
-
-// SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *AppRide) SetPickupCoordinate(val Coordinate) {
-	s.PickupCoordinate = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *AppRide) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetStatus sets the value of Status.
-func (s *AppRide) SetStatus(val RideStatus) {
-	s.Status = val
-}
-
-// SetChair sets the value of Chair.
-func (s *AppRide) SetChair(val OptAppChair) {
-	s.Chair = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *AppRide) SetCreatedAt(val int64) {
-	s.CreatedAt = val
-}
-
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *AppRide) SetUpdatedAt(val int64) {
-	s.UpdatedAt = val
-}
-
-func (*AppRide) appGetRideRes() {}
-
 // ChairGetNotificationNoContent is response for ChairGetNotification operation.
 type ChairGetNotificationNoContent struct{}
 
@@ -1133,45 +1058,44 @@ func (s *Error) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*Error) appGetRideRes()                {}
 func (*Error) appPostPaymentMethodsRes()     {}
 func (*Error) appPostRidesEstimatedFareRes() {}
 func (*Error) appPostUsersRes()              {}
 func (*Error) chairPostRideStatusRes()       {}
 func (*Error) ownerPostOwnersRes()           {}
 
-// NewOptAppChair returns new OptAppChair with value set to v.
-func NewOptAppChair(v AppChair) OptAppChair {
-	return OptAppChair{
+// NewOptAppGetNotificationOKChair returns new OptAppGetNotificationOKChair with value set to v.
+func NewOptAppGetNotificationOKChair(v AppGetNotificationOKChair) OptAppGetNotificationOKChair {
+	return OptAppGetNotificationOKChair{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptAppChair is optional AppChair.
-type OptAppChair struct {
-	Value AppChair
+// OptAppGetNotificationOKChair is optional AppGetNotificationOKChair.
+type OptAppGetNotificationOKChair struct {
+	Value AppGetNotificationOKChair
 	Set   bool
 }
 
-// IsSet returns true if OptAppChair was set.
-func (o OptAppChair) IsSet() bool { return o.Set }
+// IsSet returns true if OptAppGetNotificationOKChair was set.
+func (o OptAppGetNotificationOKChair) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptAppChair) Reset() {
-	var v AppChair
+func (o *OptAppGetNotificationOKChair) Reset() {
+	var v AppGetNotificationOKChair
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptAppChair) SetTo(v AppChair) {
+func (o *OptAppGetNotificationOKChair) SetTo(v AppGetNotificationOKChair) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptAppChair) Get() (v AppChair, ok bool) {
+func (o OptAppGetNotificationOKChair) Get() (v AppGetNotificationOKChair, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1179,7 +1103,7 @@ func (o OptAppChair) Get() (v AppChair, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptAppChair) Or(d AppChair) AppChair {
+func (o OptAppGetNotificationOKChair) Or(d AppGetNotificationOKChair) AppGetNotificationOKChair {
 	if v, ok := o.Get(); ok {
 		return v
 	}

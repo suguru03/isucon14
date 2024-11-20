@@ -5,10 +5,6 @@ type AppGetNotificationRes interface {
 	appGetNotificationRes()
 }
 
-type AppGetRideRes interface {
-	appGetRideRes()
-}
-
 type AppPostPaymentMethodsRes interface {
 	appPostPaymentMethodsRes()
 }

@@ -451,162 +451,6 @@ func appPostRidesEstimatedFare(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type appChairStats struct {
-	TotalRidesCount    int     `json:"total_rides_count"`
-	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
-}
-
-type appChair struct {
-	ID    string        `json:"id"`
-	Name  string        `json:"name"`
-	Model string        `json:"model"`
-	Stats appChairStats `json:"stats"`
-}
-
-type appGetRideResponse struct {
-	ID                    string     `json:"id"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Status                string     `json:"status"`
-	Chair                 *appChair  `json:"chair,omitempty"`
-	CreatedAt             int64      `json:"created_at"`
-	UpdateAt              int64      `json:"updated_at"`
-}
-
-func appGetRide(w http.ResponseWriter, r *http.Request) {
-	rideID := r.PathValue("ride_id")
-
-	tx, err := db.Beginx()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	defer tx.Rollback()
-
-	ride := &Ride{}
-	err = tx.Get(
-		ride,
-		`SELECT * FROM rides WHERE id = ?`,
-		rideID,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, errors.New("ride not found"))
-			return
-		}
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	status, err := getLatestRideStatus(tx, ride.ID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	response := &appGetRideResponse{
-		ID:                    ride.ID,
-		PickupCoordinate:      Coordinate{Latitude: ride.PickupLatitude, Longitude: ride.PickupLongitude},
-		DestinationCoordinate: Coordinate{Latitude: ride.DestinationLatitude, Longitude: ride.DestinationLongitude},
-		Status:                status,
-		CreatedAt:             ride.CreatedAt.UnixMilli(),
-		UpdateAt:              ride.UpdatedAt.UnixMilli(),
-	}
-
-	if ride.ChairID.Valid {
-		chair := &Chair{}
-		err := tx.Get(
-			chair,
-			`SELECT * FROM chairs WHERE id = ?`,
-			ride.ChairID,
-		)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		stats, err := getChairStats(tx, chair.ID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		response.Chair = &appChair{
-			ID:    chair.ID,
-			Name:  chair.Name,
-			Model: chair.Model,
-			Stats: stats,
-		}
-	}
-
-	writeJSON(w, http.StatusOK, response)
-}
-
-func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
-	stats := appChairStats{}
-
-	rides := []Ride{}
-	err := tx.Select(
-		&rides,
-		`SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC`,
-		chairID,
-	)
-	if err != nil {
-		return stats, err
-	}
-
-	totalRideCount := len(rides)
-	totalEvaluation := 0.0
-	for _, ride := range rides {
-		chairLocations := []ChairLocation{}
-		err := tx.Select(
-			&chairLocations,
-			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at`,
-			chairID, ride.CreatedAt, ride.UpdatedAt,
-		)
-		if err != nil {
-			return stats, err
-		}
-
-		rideStatuses := []RideStatus{}
-		err = tx.Select(
-			&rideStatuses,
-			`SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at`,
-			ride.ID,
-		)
-		if err != nil {
-			return stats, err
-		}
-
-		var arrivedAt, pickupedAt *time.Time
-		var isCompleted bool
-		for _, status := range rideStatuses {
-			if status.Status == "ARRIVED" {
-				arrivedAt = &status.CreatedAt
-			} else if status.Status == "CARRYING" {
-				pickupedAt = &status.CreatedAt
-			}
-			if status.Status == "COMPLETED" {
-				isCompleted = true
-			}
-		}
-		if arrivedAt == nil || pickupedAt == nil {
-			continue
-		}
-		if !isCompleted {
-			continue
-		}
-
-		totalEvaluation += float64(*ride.Evaluation)
-	}
-
-	stats.TotalRidesCount = totalRideCount
-	if totalRideCount > 0 {
-		stats.TotalEvaluationAvg = totalEvaluation / float64(totalRideCount)
-	}
-
-	return stats, nil
-}
-
 // マンハッタン距離を求める
 func calculateDistance(aLatitude, aLongitude, bLatitude, bLongitude int) int {
 	return abs(aLatitude-bLatitude) + abs(aLongitude-bLongitude)
@@ -749,13 +593,26 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 }
 
 type appGetNotificationResponse struct {
-	RideID                string     `json:"ride_id"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Status                string     `json:"status"`
-	Chair                 *appChair  `json:"chair,omitempty"`
-	CreatedAt             int64      `json:"created_at"`
-	UpdateAt              int64      `json:"updated_at"`
+	RideID                string                           `json:"ride_id"`
+	PickupCoordinate      Coordinate                       `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate                       `json:"destination_coordinate"`
+	Fare                  int                              `json:"fare"`
+	Status                string                           `json:"status"`
+	Chair                 *appGetNotificationResponseChair `json:"chair,omitempty"`
+	CreatedAt             int64                            `json:"created_at"`
+	UpdateAt              int64                            `json:"updated_at"`
+}
+
+type appGetNotificationResponseChair struct {
+	ID    string                               `json:"id"`
+	Name  string                               `json:"name"`
+	Model string                               `json:"model"`
+	Stats appGetNotificationResponseChairStats `json:"stats"`
+}
+
+type appGetNotificationResponseChairStats struct {
+	TotalRidesCount    int     `json:"total_rides_count"`
+	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
 }
 
 func appGetNotification(w http.ResponseWriter, r *http.Request) {
@@ -784,6 +641,12 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	response := &appGetNotificationResponse{
 		RideID: ride.ID,
 		PickupCoordinate: Coordinate{
@@ -794,6 +657,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Latitude:  ride.DestinationLatitude,
 			Longitude: ride.DestinationLongitude,
 		},
+		Fare:      fare,
 		Status:    status,
 		CreatedAt: ride.CreatedAt.UnixMilli(),
 		UpdateAt:  ride.UpdatedAt.UnixMilli(),
@@ -812,7 +676,7 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response.Chair = &appChair{
+		response.Chair = &appGetNotificationResponseChair{
 			ID:    chair.ID,
 			Name:  chair.Name,
 			Model: chair.Model,
@@ -821,6 +685,72 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, response)
+}
+
+func getChairStats(tx *sqlx.Tx, chairID string) (appGetNotificationResponseChairStats, error) {
+	stats := appGetNotificationResponseChairStats{}
+
+	rides := []Ride{}
+	err := tx.Select(
+		&rides,
+		`SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC`,
+		chairID,
+	)
+	if err != nil {
+		return stats, err
+	}
+
+	totalRideCount := len(rides)
+	totalEvaluation := 0.0
+	for _, ride := range rides {
+		chairLocations := []ChairLocation{}
+		err := tx.Select(
+			&chairLocations,
+			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at`,
+			chairID, ride.CreatedAt, ride.UpdatedAt,
+		)
+		if err != nil {
+			return stats, err
+		}
+
+		rideStatuses := []RideStatus{}
+		err = tx.Select(
+			&rideStatuses,
+			`SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at`,
+			ride.ID,
+		)
+		if err != nil {
+			return stats, err
+		}
+
+		var arrivedAt, pickupedAt *time.Time
+		var isCompleted bool
+		for _, status := range rideStatuses {
+			if status.Status == "ARRIVED" {
+				arrivedAt = &status.CreatedAt
+			} else if status.Status == "CARRYING" {
+				pickupedAt = &status.CreatedAt
+			}
+			if status.Status == "COMPLETED" {
+				isCompleted = true
+			}
+		}
+		if arrivedAt == nil || pickupedAt == nil {
+			continue
+		}
+		if !isCompleted {
+			continue
+		}
+
+		totalEvaluation += float64(*ride.Evaluation)
+	}
+
+	stats.TotalRidesCount = totalRideCount
+	if totalRideCount > 0 {
+		stats.TotalEvaluationAvg = totalEvaluation / float64(totalRideCount)
+	}
+
+	return stats, nil
 }
 
 func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
@@ -864,8 +794,13 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					return nil
 				}
 
+				fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
+				if err != nil {
+					return err
+				}
+
 				chair := &Chair{}
-				stats := appChairStats{}
+				stats := appGetNotificationResponseChairStats{}
 				if ride.ChairID.Valid {
 					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 						return err
@@ -886,8 +821,9 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 						Latitude:  ride.DestinationLatitude,
 						Longitude: ride.DestinationLongitude,
 					},
+					Fare:   fare,
 					Status: status,
-					Chair: &appChair{
+					Chair: &appGetNotificationResponseChair{
 						ID:    chair.ID,
 						Name:  chair.Name,
 						Model: chair.Model,
