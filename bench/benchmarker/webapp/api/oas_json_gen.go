@@ -167,14 +167,6 @@ func (s *AppChairStats) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *AppChairStats) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("recent_rides")
-		e.ArrStart()
-		for _, elem := range s.RecentRides {
-			elem.Encode(e)
-		}
-		e.ArrEnd()
-	}
-	{
 		e.FieldStart("total_rides_count")
 		e.Int(s.TotalRidesCount)
 	}
@@ -184,10 +176,9 @@ func (s *AppChairStats) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfAppChairStats = [3]string{
-	0: "recent_rides",
-	1: "total_rides_count",
-	2: "total_evaluation_avg",
+var jsonFieldsNameOfAppChairStats = [2]string{
+	0: "total_rides_count",
+	1: "total_evaluation_avg",
 }
 
 // Decode decodes AppChairStats from json.
@@ -199,26 +190,8 @@ func (s *AppChairStats) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "recent_rides":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				s.RecentRides = make([]AppChairStatsRecentRidesItem, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem AppChairStatsRecentRidesItem
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.RecentRides = append(s.RecentRides, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"recent_rides\"")
-			}
 		case "total_rides_count":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Int()
 				s.TotalRidesCount = int(v)
@@ -230,7 +203,7 @@ func (s *AppChairStats) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"total_rides_count\"")
 			}
 		case "total_evaluation_avg":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Float64()
 				s.TotalEvaluationAvg = float64(v)
@@ -251,7 +224,7 @@ func (s *AppChairStats) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -298,183 +271,6 @@ func (s *AppChairStats) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *AppChairStatsRecentRidesItem) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *AppChairStatsRecentRidesItem) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("id")
-		e.Str(s.ID)
-	}
-	{
-		e.FieldStart("pickup_coordinate")
-		s.PickupCoordinate.Encode(e)
-	}
-	{
-		e.FieldStart("destination_coordinate")
-		s.DestinationCoordinate.Encode(e)
-	}
-	{
-		e.FieldStart("distance")
-		e.Int(s.Distance)
-	}
-	{
-		e.FieldStart("duration")
-		e.Int64(s.Duration)
-	}
-	{
-		e.FieldStart("evaluation")
-		e.Int(s.Evaluation)
-	}
-}
-
-var jsonFieldsNameOfAppChairStatsRecentRidesItem = [6]string{
-	0: "id",
-	1: "pickup_coordinate",
-	2: "destination_coordinate",
-	3: "distance",
-	4: "duration",
-	5: "evaluation",
-}
-
-// Decode decodes AppChairStatsRecentRidesItem from json.
-func (s *AppChairStatsRecentRidesItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AppChairStatsRecentRidesItem to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.ID = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"id\"")
-			}
-		case "pickup_coordinate":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.PickupCoordinate.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"pickup_coordinate\"")
-			}
-		case "destination_coordinate":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.DestinationCoordinate.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"destination_coordinate\"")
-			}
-		case "distance":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.Distance = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"distance\"")
-			}
-		case "duration":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				v, err := d.Int64()
-				s.Duration = int64(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"duration\"")
-			}
-		case "evaluation":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := d.Int()
-				s.Evaluation = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"evaluation\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode AppChairStatsRecentRidesItem")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfAppChairStatsRecentRidesItem) {
-					name = jsonFieldsNameOfAppChairStatsRecentRidesItem[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AppChairStatsRecentRidesItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AppChairStatsRecentRidesItem) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
 func (s *AppGetNearbyChairsOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -514,9 +310,9 @@ func (s *AppGetNearbyChairsOK) Decode(d *jx.Decoder) error {
 		case "chairs":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Chairs = make([]AppChair, 0)
+				s.Chairs = make([]AppGetNearbyChairsOKChairsItem, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem AppChair
+					var elem AppGetNearbyChairsOKChairsItem
 					if err := elem.Decode(d); err != nil {
 						return err
 					}
@@ -593,6 +389,151 @@ func (s *AppGetNearbyChairsOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *AppGetNearbyChairsOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *AppGetNearbyChairsOKChairsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AppGetNearbyChairsOKChairsItem) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		e.Str(s.ID)
+	}
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		e.FieldStart("model")
+		e.Str(s.Model)
+	}
+	{
+		e.FieldStart("current_coordinate")
+		s.CurrentCoordinate.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfAppGetNearbyChairsOKChairsItem = [4]string{
+	0: "id",
+	1: "name",
+	2: "model",
+	3: "current_coordinate",
+}
+
+// Decode decodes AppGetNearbyChairsOKChairsItem from json.
+func (s *AppGetNearbyChairsOKChairsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AppGetNearbyChairsOKChairsItem to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.ID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "model":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.Model = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"model\"")
+			}
+		case "current_coordinate":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.CurrentCoordinate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_coordinate\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AppGetNearbyChairsOKChairsItem")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAppGetNearbyChairsOKChairsItem) {
+					name = jsonFieldsNameOfAppGetNearbyChairsOKChairsItem[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AppGetNearbyChairsOKChairsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AppGetNearbyChairsOKChairsItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

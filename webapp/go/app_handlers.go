@@ -451,20 +451,7 @@ func appPostRidesEstimatedFare(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type recentRide struct {
-	ID                    string     `json:"id"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Distance              int        `json:"distance"`
-	Duration              int64      `json:"duration"`
-	Evaluation            int        `json:"evaluation"`
-}
-
 type appChairStats struct {
-	// 最近の乗車履歴
-	RecentRides []recentRide `json:"recent_rides"`
-
-	// 累計の情報
 	TotalRidesCount    int     `json:"total_rides_count"`
 	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
 }
@@ -555,9 +542,8 @@ func appGetRide(w http.ResponseWriter, r *http.Request) {
 }
 
 func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
-	stats := appChairStats{RecentRides: make([]recentRide, 0)}
+	stats := appChairStats{}
 
-	// 最近の乗車履歴
 	rides := []Ride{}
 	err := tx.Select(
 		&rides,
@@ -591,51 +577,26 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appChairStats, error) {
 			return stats, err
 		}
 
-		var arrivedAt, rodeAt *time.Time
+		var arrivedAt, pickupedAt *time.Time
 		var isCompleted bool
 		for _, status := range rideStatuses {
 			if status.Status == "ARRIVED" {
 				arrivedAt = &status.CreatedAt
 			} else if status.Status == "CARRYING" {
-				rodeAt = &status.CreatedAt
+				pickupedAt = &status.CreatedAt
 			}
 			if status.Status == "COMPLETED" {
 				isCompleted = true
 			}
 		}
-		if arrivedAt == nil || rodeAt == nil {
+		if arrivedAt == nil || pickupedAt == nil {
 			continue
 		}
 		if !isCompleted {
 			continue
 		}
 
-		distance := 0
-		lastLocation := ChairLocation{
-			Latitude:  ride.PickupLatitude,
-			Longitude: ride.PickupLongitude,
-		}
-		for _, location := range chairLocations {
-			distance += calculateDistance(lastLocation.Latitude, lastLocation.Longitude, location.Latitude, location.Longitude)
-			lastLocation = location
-		}
-		distance += calculateDistance(lastLocation.Latitude, lastLocation.Longitude, ride.DestinationLatitude, ride.DestinationLongitude)
-
-		stats.RecentRides = append(stats.RecentRides, recentRide{
-			ID:                    ride.ID,
-			PickupCoordinate:      Coordinate{Latitude: ride.PickupLatitude, Longitude: ride.PickupLongitude},
-			DestinationCoordinate: Coordinate{Latitude: ride.DestinationLatitude, Longitude: ride.DestinationLongitude},
-			Distance:              distance,
-			Duration:              arrivedAt.Sub(*rodeAt).Milliseconds(),
-			Evaluation:            *ride.Evaluation,
-		})
-
 		totalEvaluation += float64(*ride.Evaluation)
-	}
-
-	// 5件以上の履歴がある場合は5件までにする
-	if totalRideCount > 5 {
-		stats.RecentRides = stats.RecentRides[:5]
 	}
 
 	stats.TotalRidesCount = totalRideCount
@@ -904,7 +865,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				}
 
 				chair := &Chair{}
-				stats := appChairStats{RecentRides: make([]recentRide, 0)}
+				stats := appChairStats{}
 				if ride.ChairID.Valid {
 					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 						return err
@@ -952,8 +913,15 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 }
 
 type appGetNearbyChairsResponse struct {
-	Chairs      []appChair `json:"chairs"`
-	RetrievedAt int64      `json:"retrieved_at"`
+	Chairs      []appGetNearbyChairsResponseChair `json:"chairs"`
+	RetrievedAt int64                             `json:"retrieved_at"`
+}
+
+type appGetNearbyChairsResponseChair struct {
+	ID                string     `json:"id"`
+	Name              string     `json:"name"`
+	Model             string     `json:"model"`
+	CurrentCoordinate Coordinate `json:"current_coordinate"`
 }
 
 func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
@@ -1005,21 +973,20 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nearbyChairs := []appChair{}
+	nearbyChairs := []appGetNearbyChairsResponseChair{}
 	for _, chair := range chairs {
-		// 現在進行中のリクエストがある場合はスキップ
 		ride := &Ride{}
-		err := tx.Get(
+		if err := tx.Get(
 			ride,
 			`SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1`,
 			chair.ID,
-		)
-		if err != nil {
+		); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 		} else {
+			// 過去にライドが存在し、かつ、それが完了していない場合はスキップ
 			status, err := getLatestRideStatus(tx, ride.ID)
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, err)
@@ -1046,17 +1013,14 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if calculateDistance(coordinate.Latitude, coordinate.Longitude, chairLocation.Latitude, chairLocation.Longitude) <= distance {
-			stats, err := getChairStats(tx, chair.ID)
-			if err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-
-			nearbyChairs = append(nearbyChairs, appChair{
+			nearbyChairs = append(nearbyChairs, appGetNearbyChairsResponseChair{
 				ID:    chair.ID,
 				Name:  chair.Name,
 				Model: chair.Model,
-				Stats: stats,
+				CurrentCoordinate: Coordinate{
+					Latitude:  chairLocation.Latitude,
+					Longitude: chairLocation.Longitude,
+				},
 			})
 		}
 	}
