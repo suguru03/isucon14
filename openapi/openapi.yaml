@@ -371,7 +371,36 @@ paths:
                   status:
                     $ref: "#/components/schemas/RideStatus"
                   chair:
-                    $ref: "#/components/schemas/AppChair"
+                    type: object
+                    description: 椅子情報
+                    properties:
+                      id:
+                        type: string
+                        description: 椅子ID
+                      name:
+                        type: string
+                        description: 椅子の名前
+                      model:
+                        type: string
+                        description: 椅子のモデル
+                      stats:
+                        type: object
+                        description: 椅子の統計情報
+                        properties:
+                          total_rides_count:
+                            type: integer
+                            description: 総乗車回数
+                          total_evaluation_avg:
+                            type: number
+                            description: 総評価平均
+                        required:
+                          - total_rides_count
+                          - total_evaluation_avg
+                    required:
+                      - id
+                      - name
+                      - model
+                      - stats
                   created_at:
                     type: integer
                     format: int64
@@ -880,38 +909,6 @@ components:
         CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
         ARRIVED: 目的地に到着した
         COMPLETED: ユーザーの決済・椅子評価が完了した
-    AppChair:
-      type: object
-      title: AppChair
-      description: App向けの椅子情報
-      properties:
-        id:
-          type: string
-          description: 椅子ID
-        name:
-          type: string
-          description: 椅子の名前
-        model:
-          type: string
-          description: 椅子のモデル
-        stats:
-          type: object
-          description: 椅子の統計情報
-          properties:
-            total_rides_count:
-              type: integer
-              description: 総乗車回数
-            total_evaluation_avg:
-              type: number
-              description: 総評価平均
-          required:
-            - total_rides_count
-            - total_evaluation_avg
-      required:
-        - id
-        - name
-        - model
-        - stats
     User:
       type: object
       title: User
@@ -926,36 +923,6 @@ components:
       required:
         - id
         - name
-    AppRide:
-      description: App向けライド情報
-      type: object
-      properties:
-        id:
-          type: string
-          description: ライドID
-        pickup_coordinate:
-          $ref: "#/components/schemas/Coordinate"
-        destination_coordinate:
-          $ref: "#/components/schemas/Coordinate"
-        status:
-          $ref: "#/components/schemas/RideStatus"
-        chair:
-          $ref: "#/components/schemas/AppChair"
-        created_at:
-          type: integer
-          format: int64
-          description: 配車要求日時
-        updated_at:
-          type: integer
-          format: int64
-          description: 配車要求更新日時
-      required:
-        - id
-        - pickup_coordinate
-        - destination_coordinate
-        - status
-        - created_at
-        - updated_at
     ChairRide:
       description: Chair向けライド情報
       type: object
