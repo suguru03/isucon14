@@ -32,8 +32,8 @@ export default function Index() {
       {targetOwner !== undefined ? (
         <List>
           {targetOwner.chairs?.map((c) => (
-            <ListItem>
-              <ChairInfo key={c.id} chair={c} />
+            <ListItem key={c.id}>
+              <ChairInfo chair={c} />
             </ListItem>
           ))}
         </List>
