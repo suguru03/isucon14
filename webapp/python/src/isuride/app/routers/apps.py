@@ -60,7 +60,7 @@ class AppPostUsersResponse(BaseModel):
 
 
 @router.post("/users", response_model=AppPostUsersResponse, status_code=201)
-def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRequest:
+def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
     invitation_code = secure_random_str(15)
