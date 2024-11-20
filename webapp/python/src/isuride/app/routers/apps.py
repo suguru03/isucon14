@@ -5,9 +5,7 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
 TODO: このdocstringを消す
 """
 
-from http.client import HTTPException
-
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -148,7 +146,7 @@ def app_post_rides(
                 )
             else:
                 # 無ければ他のクーポンを付与された順番に使う
-                coupon = conn.execute(
+                coupon = conn.execute(  # type: ignore
                     text(
                         "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                     ),
@@ -180,12 +178,12 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride(**row._mapping)
+        ride: Ride = Ride(**row._mapping)  # type: ignore
 
         fare = calculate_discounted_fare(
             conn,
             user.id,
-            ride,
+            ride,  # type: ignore
             r.pickup_coordinate.latitude,
             r.pickup_coordinate.longitude,
             r.destination_coordinate.latitude,
@@ -249,7 +247,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
         if r.invitation_code:
             # 招待する側の招待数をチェック
             coupons = conn.execute(
-                "SELECT * FROM coupons WHERE code = :code FOR UPDATE",
+                text("SELECT * FROM coupons WHERE code = :code FOR UPDATE"),
                 {"code": "INV_" + r.invitation_code},
             ).fetchall()
 
@@ -260,7 +258,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             # ユーザーチェック
             inviter = conn.execute(
-                "SELECT * FROM users WHERE invitation_code = :invitation_code",
+                text("SELECT * FROM users WHERE invitation_code = :invitation_code"),
                 {"invitation_code": r.invitation_code},
             ).fetchone()
 
@@ -271,7 +269,9 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             # 招待クーポン付与
             conn.execute(
-                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)",
+                text(
+                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
+                ),
                 {
                     "user_id": user_id,
                     "code": "INV_" + r.invitation_code,
@@ -281,7 +281,9 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             # 招待した人にもRewardを付与
             conn.execute(
-                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, CONCAT(:code_prefix, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), :discount)",
+                text(
+                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, CONCAT(:code_prefix, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), :discount)"
+                ),
                 {
                     "user_id": inviter.id,
                     "code": "RWD_" + r.invitation_code,
@@ -412,7 +414,8 @@ def app_get_ride(
 
         if ride.chair_id:
             chair = conn.execute(
-                "SELECT * FROM chairs WHERE id = :chair_id", {"chair_id": ride.chair_id}
+                text("SELECT * FROM chairs WHERE id = :chair_id"),
+                {"chair_id": ride.chair_id},
             ).fetchone()
 
             # TODO: stats = get_chair_stats(chair.id)
@@ -420,7 +423,10 @@ def app_get_ride(
                 recent_rides=[], total_rides_count=1, total_evaluation_avg=0.1
             )
             response.chair = AppChair(
-                id=chair.id, name=chair.name, model=chair.model, stats=stats
+                id=chair.id,  # type: ignore
+                name=chair.name,  # type: ignore
+                model=chair.model,  # type: ignore
+                stats=stats,  # type: ignore
             )
 
     return response
