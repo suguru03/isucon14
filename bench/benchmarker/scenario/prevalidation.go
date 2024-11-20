@@ -232,9 +232,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusMATCHING, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -270,9 +267,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusENROUTE, chairID); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
 			}
 			break
 		}
@@ -311,9 +305,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusPICKUP, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -349,9 +340,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusCARRYING, chairID); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
 			}
 			break
 		}
@@ -390,9 +378,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusARRIVED, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -428,14 +413,11 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if result.Chairs[0].Model != "A" {
 			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのmodelが正しくありません (expected:%s, actual:%s)", "A", result.Chairs[0].Model)
 		}
-		if len(result.Chairs[0].Stats.RecentRides) != 1 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのrecent_ridesが正しくありません (expected:%d, actual:%d)", 1, len(result.Chairs[0].Stats.RecentRides))
+		if result.Chairs[0].CurrentCoordinate.Latitude != 10 {
+			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのcurrent_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 10, result.Chairs[0].CurrentCoordinate.Latitude)
 		}
-		if result.Chairs[0].Stats.TotalEvaluationAvg != 5 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_evaluation_avgが正しくありません (expected:%f, actual:%f)", 5.0, result.Chairs[0].Stats.TotalEvaluationAvg)
-		}
-		if result.Chairs[0].Stats.TotalRidesCount != 1 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_rides_countが正しくありません (expected:%d, actual:%d)", 1, result.Chairs[0].Stats.TotalRidesCount)
+		if result.Chairs[0].CurrentCoordinate.Longitude != 10 {
+			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのcurrent_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 10, result.Chairs[0].CurrentCoordinate.Longitude)
 		}
 	}
 
@@ -447,9 +429,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotification(result, requestID, api.RideStatusCOMPLETED); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 1 {
-				return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのrecent_ridesが正しくありません (expected:%d, actual:%d)", 1, len(result.Chair.Value.Stats.RecentRides))
 			}
 			if result.Chair.Value.Stats.TotalEvaluationAvg != 5 {
 				return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_evaluation_avgが正しくありません (expected:%f, actual:%f)", 5.0, result.Chair.Value.Stats.TotalEvaluationAvg)

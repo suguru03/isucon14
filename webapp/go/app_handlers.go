@@ -985,16 +985,16 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
-		}
-
-		status, err := getLatestRideStatus(tx, ride.ID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		// 以前のライドが完了していない場合はスキップ
-		if status != "COMPLETED" {
-			continue
+		} else {
+			// 過去にライドが存在し、かつ、それが完了していない場合はスキップ
+			status, err := getLatestRideStatus(tx, ride.ID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+			if status != "COMPLETED" {
+				continue
+			}
 		}
 
 		// 5分以内に更新されている最新の位置情報を取得

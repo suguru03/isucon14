@@ -61,17 +61,10 @@ func (s *AppChair) SetStats(val AppChairStats) {
 
 // 椅子の統計情報.
 type AppChairStats struct {
-	// 最近の乗車情報.
-	RecentRides []AppChairStatsRecentRidesItem `json:"recent_rides"`
 	// 総乗車回数.
 	TotalRidesCount int `json:"total_rides_count"`
 	// 総評価平均.
 	TotalEvaluationAvg float64 `json:"total_evaluation_avg"`
-}
-
-// GetRecentRides returns the value of RecentRides.
-func (s *AppChairStats) GetRecentRides() []AppChairStatsRecentRidesItem {
-	return s.RecentRides
 }
 
 // GetTotalRidesCount returns the value of TotalRidesCount.
@@ -84,11 +77,6 @@ func (s *AppChairStats) GetTotalEvaluationAvg() float64 {
 	return s.TotalEvaluationAvg
 }
 
-// SetRecentRides sets the value of RecentRides.
-func (s *AppChairStats) SetRecentRides(val []AppChairStatsRecentRidesItem) {
-	s.RecentRides = val
-}
-
 // SetTotalRidesCount sets the value of TotalRidesCount.
 func (s *AppChairStats) SetTotalRidesCount(val int) {
 	s.TotalRidesCount = val
@@ -99,87 +87,14 @@ func (s *AppChairStats) SetTotalEvaluationAvg(val float64) {
 	s.TotalEvaluationAvg = val
 }
 
-type AppChairStatsRecentRidesItem struct {
-	// ライドID.
-	ID                    string     `json:"id"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	// 移動距離.
-	Distance int `json:"distance"`
-	// 移動時間 (ミリ秒).
-	Duration int64 `json:"duration"`
-	// 評価.
-	Evaluation int `json:"evaluation"`
-}
-
-// GetID returns the value of ID.
-func (s *AppChairStatsRecentRidesItem) GetID() string {
-	return s.ID
-}
-
-// GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *AppChairStatsRecentRidesItem) GetPickupCoordinate() Coordinate {
-	return s.PickupCoordinate
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *AppChairStatsRecentRidesItem) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetDistance returns the value of Distance.
-func (s *AppChairStatsRecentRidesItem) GetDistance() int {
-	return s.Distance
-}
-
-// GetDuration returns the value of Duration.
-func (s *AppChairStatsRecentRidesItem) GetDuration() int64 {
-	return s.Duration
-}
-
-// GetEvaluation returns the value of Evaluation.
-func (s *AppChairStatsRecentRidesItem) GetEvaluation() int {
-	return s.Evaluation
-}
-
-// SetID sets the value of ID.
-func (s *AppChairStatsRecentRidesItem) SetID(val string) {
-	s.ID = val
-}
-
-// SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *AppChairStatsRecentRidesItem) SetPickupCoordinate(val Coordinate) {
-	s.PickupCoordinate = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *AppChairStatsRecentRidesItem) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetDistance sets the value of Distance.
-func (s *AppChairStatsRecentRidesItem) SetDistance(val int) {
-	s.Distance = val
-}
-
-// SetDuration sets the value of Duration.
-func (s *AppChairStatsRecentRidesItem) SetDuration(val int64) {
-	s.Duration = val
-}
-
-// SetEvaluation sets the value of Evaluation.
-func (s *AppChairStatsRecentRidesItem) SetEvaluation(val int) {
-	s.Evaluation = val
-}
-
 type AppGetNearbyChairsOK struct {
-	Chairs []AppChair `json:"chairs"`
+	Chairs []AppGetNearbyChairsOKChairsItem `json:"chairs"`
 	// 取得日時.
 	RetrievedAt int64 `json:"retrieved_at"`
 }
 
 // GetChairs returns the value of Chairs.
-func (s *AppGetNearbyChairsOK) GetChairs() []AppChair {
+func (s *AppGetNearbyChairsOK) GetChairs() []AppGetNearbyChairsOKChairsItem {
 	return s.Chairs
 }
 
@@ -189,13 +104,63 @@ func (s *AppGetNearbyChairsOK) GetRetrievedAt() int64 {
 }
 
 // SetChairs sets the value of Chairs.
-func (s *AppGetNearbyChairsOK) SetChairs(val []AppChair) {
+func (s *AppGetNearbyChairsOK) SetChairs(val []AppGetNearbyChairsOKChairsItem) {
 	s.Chairs = val
 }
 
 // SetRetrievedAt sets the value of RetrievedAt.
 func (s *AppGetNearbyChairsOK) SetRetrievedAt(val int64) {
 	s.RetrievedAt = val
+}
+
+type AppGetNearbyChairsOKChairsItem struct {
+	// 椅子ID.
+	ID string `json:"id"`
+	// 椅子の名前.
+	Name string `json:"name"`
+	// 椅子のモデル.
+	Model             string     `json:"model"`
+	CurrentCoordinate Coordinate `json:"current_coordinate"`
+}
+
+// GetID returns the value of ID.
+func (s *AppGetNearbyChairsOKChairsItem) GetID() string {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AppGetNearbyChairsOKChairsItem) GetName() string {
+	return s.Name
+}
+
+// GetModel returns the value of Model.
+func (s *AppGetNearbyChairsOKChairsItem) GetModel() string {
+	return s.Model
+}
+
+// GetCurrentCoordinate returns the value of CurrentCoordinate.
+func (s *AppGetNearbyChairsOKChairsItem) GetCurrentCoordinate() Coordinate {
+	return s.CurrentCoordinate
+}
+
+// SetID sets the value of ID.
+func (s *AppGetNearbyChairsOKChairsItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AppGetNearbyChairsOKChairsItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetModel sets the value of Model.
+func (s *AppGetNearbyChairsOKChairsItem) SetModel(val string) {
+	s.Model = val
+}
+
+// SetCurrentCoordinate sets the value of CurrentCoordinate.
+func (s *AppGetNearbyChairsOKChairsItem) SetCurrentCoordinate(val Coordinate) {
+	s.CurrentCoordinate = val
 }
 
 // AppGetNotificationNoContent is response for AppGetNotification operation.
