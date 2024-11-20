@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { List } from "~/components/modules/list/list";
+import { ListItem } from "~/components/modules/list/list-item";
 import { PulldownSelector } from "~/components/primitives/menu/pulldown";
 import {
   SimulatorChair,
@@ -27,9 +29,15 @@ export default function Index() {
         items={ownerNames}
         onChange={(id) => setTargetOwner(getOwnerById(id) ?? { chairs: [] })}
       />
-      {targetOwner !== undefined
-        ? targetOwner.chairs?.map((c) => <ChairInfo key={c.id} chair={c} />)
-        : null}
+      {targetOwner !== undefined ? (
+        <List>
+          {targetOwner.chairs?.map((c) => (
+            <ListItem>
+              <ChairInfo key={c.id} chair={c} />
+            </ListItem>
+          ))}
+        </List>
+      ) : null}
     </div>
   );
 }
