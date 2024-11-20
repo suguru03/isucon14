@@ -5,11 +5,9 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/chair_handlers.go
 TODO: このdocstringを消す
 """
 
-import random
-import string
-
 from fastapi import APIRouter
 from ulid import ULID
+
 from ..utils import secure_random_str
 
 router = APIRouter(prefix="/api/chair")
