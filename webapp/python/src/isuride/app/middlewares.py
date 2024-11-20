@@ -1,7 +1,14 @@
-from fastapi import Cookie, HTTPException
+"""
+以下の移植
+https://github.com/isucon/isucon14/blob/main/webapp/go/middlewares.go
+
+TODO: このdocstringを消す
+"""
+
+from fastapi import Cookie, HTTPException, status
 from sqlalchemy import text
 
-from .models import Owner, User
+from .models import Chair, Owner, User
 from .sql import engine
 
 
@@ -37,3 +44,22 @@ def owner_auth_middleware(owner_session=Cookie(default=None)) -> Owner:
 
         # TODO: _mapping より良いアトリビュートは無いか
         return Owner(**row._mapping)
+
+
+def chair_auth_middleware(chair_session=Cookie(default=None)) -> Chair:
+    if not chair_session:
+        raise HTTPException(status_code=401, detail="chair_session cookie is required")
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT * FROM chairs WHERE access_token = :access_token"),
+            {"access_token": chair_session},
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid access token"
+            )
+
+        # TODO: _mapping より良いアトリビュートは無いか
+        return Chair(**row._mapping)

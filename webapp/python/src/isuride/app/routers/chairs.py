@@ -5,12 +5,13 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/chair_handlers.go
 TODO: このdocstringを消す
 """
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
 
-from ..models import Owner
+from ..middlewares import chair_auth_middleware
+from ..models import Chair, Owner
 from ..sql import engine
 from ..utils import secure_random_str
 
@@ -73,9 +74,19 @@ def chair_post_chairs(
     return ChairPostChairsResponse(id=chair_id, owner_id=owner.id)
 
 
-@router.post("/activity")
-def chair_post_activity():
-    pass
+class PostChairActivityRequest(BaseModel):
+    is_active: bool
+
+
+@router.post("/activity", status_code=status.HTTP_204_NO_CONTENT)
+def chair_post_activity(
+    req: PostChairActivityRequest, chair: Chair = Depends(chair_auth_middleware)
+):
+    with engine.begin() as conn:
+        conn.execute(
+            text("UPDATE chairs SET is_active = :is_active WHERE id = :id"),
+            {"is_active": req.is_active, "id": chair.id},
+        )
 
 
 @router.post("/coordinate")
