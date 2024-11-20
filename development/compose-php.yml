@@ -44,3 +44,8 @@ services:
       - ../webapp/sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
+  paymentmock:
+    build:
+      context: ../webapp/payment_mock
+    ports:
+      - 12345:12345
