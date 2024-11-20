@@ -11,8 +11,8 @@ def app_auth_middleware(app_session=Cookie(default=None)) -> User:
 
     with engine.begin() as conn:
         row = conn.execute(
-            text("SELECT * FROM users WHERE access_token = :accesss_token"),
-            {"accesss_token": app_session},
+            text("SELECT * FROM users WHERE access_token = :access_token"),
+            {"access_token": app_session},
         ).fetchone()
 
         if not row:
