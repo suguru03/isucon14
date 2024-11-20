@@ -1,15 +1,17 @@
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import mysql from "mysql2/promise";
-import type { Environment } from "./types/hono.js";
+import { Hono, type Context } from "hono";
 import { createMiddleware } from "hono/factory";
+import mysql from "mysql2/promise";
 import {
   appAuthMiddleware,
-  ownerAuthMiddleware,
   chairAuthMiddleware,
+  ownerAuthMiddleware,
 } from "./middlewares.js";
+import type { Environment } from "./types/hono.js";
+import { exec } from "./utils/exec.js";
 
-export const connection = await mysql.createConnection({
+
+const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
   port: Number(process.env.ISUCON_DB_PORT || "3306"),
   user: process.env.ISUCON_DB_USER || "isucon",
@@ -81,3 +83,18 @@ serve(
     console.log(`Server is running on http://localhost:${addr.port}`);
   },
 );
+
+async function postInitialize(ctx: Context<Environment>) {
+  const body = await ctx.req.json<{payment_server: string}>();
+  try {
+    await exec(["../sql/init.sh"])
+  } catch (error) {
+    return ctx.text(`Failed to initialize\n${error}`, 500)
+  }
+  try {
+  await ctx.var.dbConn.query("UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'", [body.payment_server])
+  } catch (error) {
+    return ctx.text(`Internal Server Error\n${error}`, 500);
+  }
+  return ctx.json({language: "node"});
+}
