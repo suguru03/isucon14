@@ -14,7 +14,7 @@ export const Matching: FC<{
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <CarYellowIcon className="size-[76px] mb-4" />
       <Text size="xl" className="mb-6">
-        配車しています
+        マッチングしています
       </Text>
       <LocationButton label="現在地" location={pickup} className="w-80" />
       <Text size="xl">↓</Text>
