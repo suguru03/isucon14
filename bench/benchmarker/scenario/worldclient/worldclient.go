@@ -423,23 +423,23 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				// event = &world.UserNotificationEventMatching{}
 			case api.RideStatusENROUTE:
 				event = &world.UserNotificationEventDispatching{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusPICKUP:
 				event = &world.UserNotificationEventDispatched{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusCARRYING:
 				event = &world.UserNotificationEventCarrying{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusARRIVED:
 				event = &world.UserNotificationEventArrived{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusCOMPLETED:
 				event = &world.UserNotificationEventCompleted{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			}
 			if event == nil {

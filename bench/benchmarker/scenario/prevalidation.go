@@ -95,34 +95,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		requestID = result.RideID
 	}
 
-	// GET /api/app/requests/:requestID
-	{
-		result, err := userClient.AppGetRequest(ctx, requestID)
-		if err != nil {
-			return err
-		}
-		if result.ID != requestID {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, result.ID)
-		}
-		if result.PickupCoordinate.Latitude != 0 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, result.PickupCoordinate.Latitude)
-		}
-		if result.PickupCoordinate.Longitude != 0 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するpickup_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 0, result.PickupCoordinate.Longitude)
-		}
-		if result.DestinationCoordinate.Latitude != 10 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するdestination_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 10, result.DestinationCoordinate.Latitude)
-		}
-		if result.DestinationCoordinate.Longitude != 10 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するdestination_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 10, result.DestinationCoordinate.Longitude)
-		}
-		if result.Status != "MATCHING" {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するstatusが正しくありません (expected:%s, actual:%s)", "MATCHING", result.Status)
-		}
-		if result.Chair.Set {
-			return errors.New("GET /api/app/requests/:requestID の返却するchairがセットされているべきではありません")
-		}
-	}
+	// TODO: 登録された直後の椅子の状態を確認する
 
 	// GET /api/app/notifications
 	{
@@ -443,9 +416,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	return nil
 }
 
-func validateAppNotification(req *api.AppRide, requestID string, status api.RideStatus) error {
-	if req.ID != requestID {
-		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.ID)
+func validateAppNotification(req *api.AppGetNotificationOK, requestID string, status api.RideStatus) error {
+	if req.RideID != requestID {
+		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RideID)
 	}
 	if req.PickupCoordinate.Latitude != 0 {
 		return fmt.Errorf("GET /api/app/notification の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, req.PickupCoordinate.Latitude)
@@ -467,7 +440,7 @@ func validateAppNotification(req *api.AppRide, requestID string, status api.Ride
 	return nil
 }
 
-func validateAppNotificationWithChair(req *api.AppRide, requestID string, status api.RideStatus, chairID string) error {
+func validateAppNotificationWithChair(req *api.AppGetNotificationOK, requestID string, status api.RideStatus, chairID string) error {
 	if err := validateAppNotification(req, requestID, status); err != nil {
 		return err
 	}
