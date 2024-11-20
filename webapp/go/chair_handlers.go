@@ -437,13 +437,7 @@ func chairPostRideStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch req.Status {
-	// Deny matching
-	case "MATCHING":
-		if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", ulid.Make().String(), ride.ID, "MATCHING"); err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-	// Accept matching
+	// Acknowledge the ride
 	case "ENROUTE":
 		if _, err := tx.Exec("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)", ulid.Make().String(), ride.ID, "ENROUTE"); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
