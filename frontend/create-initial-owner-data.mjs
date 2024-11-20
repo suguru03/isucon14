@@ -13,16 +13,9 @@ const  getCookieValue = (cookieString, cookieName) => {
 const create = async() => {
   const candidates = [
     {name: "オーナー1", chairs: [{
-      name: "chair1", model: "model1"
-    }, {
-      name: "chair2", model: "model2"
-    }, {
-      name: "chair3", model: "model3"
-    }]},
+      name: "chair1", model: "model1"},
+  ]},
     {name: "オーナー2", chairs: [
-      {
-        name: "chair1", model: "model1"
-      }
     ]},
     {name: "オーナー3", chairs: []}
   ]

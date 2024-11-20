@@ -16,6 +16,8 @@ import { useClientAppRequestContext } from "~/contexts/user-context";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Dispatched } from "./driving-state/dispatched";
+import { Enroute } from "./driving-state/enroute";
+import { Matching } from "./driving-state/matching";
 
 export const meta: MetaFunction = () => {
   return [
@@ -178,15 +180,31 @@ export default function Index() {
       )}
       {data?.status && (
         <Modal ref={drivingStateModalRef}>
+          {data.status === "MATCHING" && (
+            <Enroute
+              destLocation={data?.payload?.coordinate?.destination}
+              pickup={data?.payload?.coordinate?.pickup}
+              fare={fare}
+            />
+          )}
+          {data.status === "ENROUTE" && (
+            <Matching
+              destLocation={data?.payload?.coordinate?.destination}
+              pickup={data?.payload?.coordinate?.pickup}
+              fare={fare}
+            />
+          )}
           {data.status === "PICKUP" && (
             <Dispatched
               destLocation={data?.payload?.coordinate?.destination}
+              pickup={data?.payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
           {data.status === "CARRYING" && (
             <Carrying
               destLocation={data?.payload?.coordinate?.destination}
+              pickup={data?.payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
