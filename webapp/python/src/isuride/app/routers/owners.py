@@ -152,9 +152,85 @@ def calculate_sale(ride: Ride) -> int:
     return 10
 
 
+class ChairWithDetail(BaseModel):
+    id: str
+    owner_id: str
+    name: str
+    access_token: str
+    model: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    total_distance: int
+    total_distance_updated_at: datetime  # TODO: sql.NullTimeに対応する型は？
+
+
+class OwnerChair(BaseModel):
+    id: str
+    name: str
+    model: str
+    active: bool
+    registered_at: int
+    total_distance: int
+    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも
+
+
+class OwnerGetChairResponse(BaseModel):
+    chairs: list[OwnerChair]
+
+
 @router.get("/chairs", status_code=200)
-def owner_get_chairs():
-    return {"chairs": []}
+def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT id,
+                       owner_id,
+                       name,
+                       access_token,
+                       model,
+                       is_active,
+                       created_at,
+                       updated_at,
+                       IFNULL(total_distance, 0) AS total_distance,
+                       total_distance_updated_at
+                FROM chairs
+                       LEFT JOIN (SELECT chair_id,
+                                          SUM(IFNULL(distance, 0)) AS total_distance,
+                                          MAX(created_at)          AS total_distance_updated_at
+                                   FROM (SELECT chair_id,
+                                                created_at,
+                                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
+                                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
+                                         FROM chair_locations) tmp
+                                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
+                WHERE owner_id = :owner_id
+        """
+            ),
+            {"owner_id": owner.id},
+        )
+        chairs = [ChairWithDetail(**r) for r in rows.mappings()]
+
+    res = OwnerGetChairResponse(chairs=[])
+    for chair in chairs:
+        c = OwnerChair(
+            id=chair.id,
+            name=chair.name,
+            model=chair.model,
+            active=chair.is_active,
+            # TODO: ミリ秒への変換はこれで良いのだろうか
+            registered_at=int(chair.created_at.timestamp() * 1000),
+            total_distance=chair.total_distance,
+            total_distance_updated_at=None,
+        )
+        if chair.total_distance_updated_at is not None:
+            # TODO: ミリ秒への変換はこれで良いのだろうか
+            t = int(chair.total_distance_updated_at.timestamp() * 1000)
+            c.total_distance_updated_at = t
+        res.chairs.append(c)
+
+    return res
 
 
 @router.get("/chairs/{chair_id}")
