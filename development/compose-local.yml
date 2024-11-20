@@ -20,3 +20,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  paymentmock:
+    build:
+      context: ../webapp/payment_mock
+    ports:
+      - 12345:12345

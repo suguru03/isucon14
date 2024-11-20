@@ -20,6 +20,10 @@ type UserClient interface {
 	SendCreateRequest(ctx *Context, req *Request) (*SendCreateRequestResponse, error)
 	// GetRequests サーバーからリクエスト一覧を取得する
 	GetRequests(ctx *Context) (*GetRequestsResponse, error)
+	// GetNearbyChairs サーバーから近くの椅子の情報を取得する
+	GetNearbyChairs(ctx *Context, current Coordinate, distance int) (*GetNearbyChairsResponse, error)
+	// GetEstimatedFare サーバーから料金の見積もりを取る
+	GetEstimatedFare(ctx *Context, pickup Coordinate, dest Coordinate) (*GetEstimatedFareResponse, error)
 	// SendEvaluation サーバーに今回の送迎の評価を送信する
 	SendEvaluation(ctx *Context, req *Request, score int) (*SendEvaluationResponse, error)
 	// RegisterPaymentMethods サーバーにユーザーの支払い情報を登録する
@@ -48,8 +52,6 @@ type ChairClient interface {
 	SendActivate(ctx *Context, chair *Chair) error
 	// SendDeactivate サーバーにリクエストの受付停止を通知する
 	SendDeactivate(ctx *Context, chair *Chair) error
-	// GetRequestByChair サーバーからリクエストの詳細を取得する(椅子側)
-	GetRequestByChair(ctx *Context, chair *Chair, serverRequestID string) (*GetRequestByChairResponse, error)
 	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する
 	ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error)
 }
@@ -60,6 +62,22 @@ type SendCreateRequestResponse struct {
 
 type GetRequestsResponse struct {
 	Requests []*RequestHistory
+}
+
+type GetEstimatedFareResponse struct {
+	Fare     int
+	Discount int
+}
+
+type GetNearbyChairsResponse struct {
+	RetrievedAt time.Time
+	Chairs      []*AppChair
+}
+
+type AppChair struct {
+	ID    string
+	Name  string
+	Model string
 }
 
 type RequestHistory struct {
@@ -79,8 +97,6 @@ type RequestHistoryChair struct {
 	Name  string
 	Model string
 }
-
-type GetRequestByChairResponse struct{}
 
 type GetProviderSalesRequest struct {
 	Since time.Time
@@ -125,19 +141,20 @@ type SendChairCoordinateResponse struct {
 }
 
 type SendEvaluationResponse struct {
-	Fare        int
 	CompletedAt time.Time
 }
 
 type RegisterUserRequest struct {
-	UserName    string
-	FirstName   string
-	LastName    string
-	DateOfBirth string
+	UserName       string
+	FirstName      string
+	LastName       string
+	DateOfBirth    string
+	InvitationCode string
 }
 
 type RegisterUserResponse struct {
-	ServerUserID string
+	ServerUserID   string
+	InvitationCode string
 
 	Client UserClient
 }

@@ -1,0 +1,23 @@
+name: Python CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - webapp/python/**/*
+      - .github/workflows/python.yml
+  pull_request:
+    paths:
+      - webapp/python/**/*
+      - .github/workflows/python.yml
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wntrblm/nox@2024.04.15
+      - name: Run nox
+        working-directory: ./webapp/python
+        run: |
+          nox

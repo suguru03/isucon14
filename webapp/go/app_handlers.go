@@ -102,7 +102,7 @@ func appPostUsers(w http.ResponseWriter, r *http.Request) {
 		}
 		// 招待した人にもRewardを付与
 		_, err = tx.Exec(
-			"INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
+			"INSERT INTO coupons (user_id, code, discount) VALUES (?, CONCAT(?, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), ?)",
 			inviter.ID, "RWD_"+*req.InvitationCode, 1000,
 		)
 		if err != nil {
@@ -445,7 +445,7 @@ func appPostRidesEstimatedFare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusAccepted, &appPostRidesEstimatedFareResponse{
+	writeJSON(w, http.StatusOK, &appPostRidesEstimatedFareResponse{
 		Fare:     discounted,
 		Discount: calculateFare(req.PickupCoordinate.Latitude, req.PickupCoordinate.Longitude, req.DestinationCoordinate.Latitude, req.DestinationCoordinate.Longitude) - discounted,
 	})
@@ -662,7 +662,6 @@ type appPostRideEvaluationRequest struct {
 }
 
 type appPostRideEvaluationResponse struct {
-	Fare        int   `json:"fare"`
 	CompletedAt int64 `json:"completed_at"`
 }
 
@@ -756,7 +755,14 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 	paymentGatewayRequest := &paymentGatewayPostPaymentRequest{
 		Amount: fare,
 	}
-	if err := requestPaymentGatewayPostPayment(paymentToken.Token, paymentGatewayRequest, func() ([]Ride, error) {
+
+	var paymentGatewayURL string
+	if err := tx.Get(&paymentGatewayURL, "SELECT value FROM settings WHERE name = 'payment_gateway_url'"); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := requestPaymentGatewayPostPayment(paymentGatewayURL, paymentToken.Token, paymentGatewayRequest, func() ([]Ride, error) {
 		rides := []Ride{}
 		if err := tx.Select(&rides, `SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC`, ride.UserID); err != nil {
 			return nil, err
@@ -777,7 +783,6 @@ func appPostRideEvaluatation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &appPostRideEvaluationResponse{
-		Fare:        fare,
 		CompletedAt: ride.UpdatedAt.UnixMilli(),
 	})
 }
@@ -899,7 +904,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 				}
 
 				chair := &Chair{}
-				stats := appChairStats{}
+				stats := appChairStats{RecentRides: make([]recentRide, 0)}
 				if ride.ChairID.Valid {
 					if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 						return err
@@ -910,7 +915,7 @@ func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				if err := writeSSE(w, "matched", &appGetNotificationResponse{
+				if err := writeSSE(w, &appGetNotificationResponse{
 					RideID: ride.ID,
 					PickupCoordinate: Coordinate{
 						Latitude:  ride.PickupLatitude,
@@ -1014,14 +1019,15 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
-		}
-		status, err := getLatestRideStatus(tx, ride.ID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-		if status != "COMPLETED" {
-			continue
+		} else {
+			status, err := getLatestRideStatus(tx, ride.ID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+			if status != "COMPLETED" {
+				continue
+			}
 		}
 
 		// 5分以内に更新されている最新の位置情報を取得
@@ -1072,23 +1078,21 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 }
 
 func calculateFare(pickupLatitude, pickupLongitude, destLatitude, destLongitude int) int {
-	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
-	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
-	meteredFare := farePerDistance * (latDiff + lonDiff)
+	meteredFare := farePerDistance * calculateDistance(pickupLatitude, pickupLongitude, destLatitude, destLongitude)
 	return initialFare + meteredFare
 }
 
-func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *Ride, pickupLatitude, pickupLongitude, destLatitude, destLongitude int) (int, error) {
+func calculateDiscountedFare(tx *sqlx.Tx, userID string, ride *Ride, pickupLatitude, pickupLongitude, destLatitude, destLongitude int) (int, error) {
 	var coupon Coupon
 	discount := 0
-	if req != nil {
-		destLatitude = req.DestinationLatitude
-		destLongitude = req.DestinationLongitude
-		pickupLatitude = req.PickupLatitude
-		pickupLongitude = req.PickupLongitude
+	if ride != nil {
+		destLatitude = ride.DestinationLatitude
+		destLongitude = ride.DestinationLongitude
+		pickupLatitude = ride.PickupLatitude
+		pickupLongitude = ride.PickupLongitude
 
 		// すでにクーポンが紐づいているならそれの割引額を参照
-		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE used_by = ?", req.ID); err != nil {
+		if err := tx.Get(&coupon, "SELECT * FROM coupons WHERE used_by = ?", ride.ID); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return 0, err
 			}
@@ -1115,9 +1119,7 @@ func calculateDiscountedFare(tx *sqlx.Tx, userID string, req *Ride, pickupLatitu
 		}
 	}
 
-	latDiff := max(destLatitude-pickupLatitude, pickupLatitude-destLatitude)
-	lonDiff := max(destLongitude-pickupLongitude, pickupLongitude-destLongitude)
-	meteredFare := farePerDistance * (latDiff + lonDiff)
+	meteredFare := farePerDistance * calculateDistance(pickupLatitude, pickupLongitude, destLatitude, destLongitude)
 	discountedMeteredFare := max(meteredFare-discount, 0)
 
 	return initialFare + discountedMeteredFare, nil

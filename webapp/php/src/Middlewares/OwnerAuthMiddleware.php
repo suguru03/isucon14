@@ -52,7 +52,7 @@ readonly class OwnerAuthMiddleware implements MiddlewareInterface
                 'owner',
                 new Owner(
                     id: $result['id'],
-                    name: $result['username'],
+                    name: $result['name'],
                     accessToken: $result['access_token'],
                     chairRegisterToken: $result['chair_register_token'],
                     createdAt: $result['created_at'],

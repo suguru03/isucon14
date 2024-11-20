@@ -2,6 +2,7 @@ services:
   webapp:
     build:
       context: ../webapp/go
+    image: webapp-go
     ports:
       - 8080:8080
     volumes:
@@ -31,3 +32,8 @@ services:
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
       start_period: 60s
+  paymentmock:
+    build:
+      context: ../webapp/payment_mock
+    ports:
+      - 12345:12345

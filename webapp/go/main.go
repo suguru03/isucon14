@@ -105,7 +105,6 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /api/chair/coordinate", chairPostCoordinate)
 		//authedMux.HandleFunc("GET /api/chair/notification", chairGetNotificationSSE)
 		authedMux.HandleFunc("GET /api/chair/notification", chairGetNotification)
-		authedMux.HandleFunc("GET /api/chair/rides/{ride_id}", chairGetRideRequest)
 		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/status", chairPostRideStatus)
 	}
 
@@ -132,7 +131,11 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paymentURL = req.PaymentServer
+	if _, err := db.Exec("UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'", req.PaymentServer); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	writeJSON(w, http.StatusOK, postInitializeResponse{Language: "go"})
 }
 
@@ -146,22 +149,17 @@ func bindJSON(r *http.Request, v interface{}) error {
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	buf, err := json.Marshal(v)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(statusCode)
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Write(buf)
 }
 
-func writeSSE(w http.ResponseWriter, event string, data interface{}) error {
-	_, err := w.Write([]byte("event: " + event + "\n"))
-	if err != nil {
-		return err
-	}
-
+func writeSSE(w http.ResponseWriter, data interface{}) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err

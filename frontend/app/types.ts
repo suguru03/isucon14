@@ -1,18 +1,18 @@
-import { RequestId } from "./apiClient/apiParameters";
 import type { Dispatch, SetStateAction } from "react";
+import { RideId } from "./apiClient/apiParameters";
 import {
   Coordinate as ApiCoodinate,
   AppChair,
-  RequestStatus,
+  RideStatus,
   User,
 } from "./apiClient/apiSchemas";
 
 export type AccessToken = string;
 
-export type ClientAppRequest = {
-  status?: RequestStatus;
+export type ClientAppRide = {
+  status?: RideStatus;
   payload?: Partial<{
-    request_id: RequestId;
+    ride_id: RideId;
     coordinate: Partial<{
       pickup: Coordinate;
       destination: Coordinate;
@@ -28,10 +28,10 @@ export type ClientAppRequest = {
   };
 };
 
-export type ClientChairRequest = {
-  status?: RequestStatus;
+export type ClientChairRide = {
+  status?: RideStatus;
   payload?: Partial<{
-    request_id: RequestId;
+    ride_id: RideId;
     coordinate: Partial<{
       pickup: Coordinate;
       destination: Coordinate;

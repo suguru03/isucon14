@@ -1,11 +1,11 @@
 import { vitePlugin as remix } from "@remix-run/dev";
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
-  AppPostRegisterRequestBody,
-  ChairPostRegisterRequestBody,
-  OwnerPostRegisterRequestBody,
+  AppPostUsersRequestBody,
+  ChairPostChairsRequestBody,
+  OwnerPostOwnersRequestBody,
 } from "~/apiClient/apiComponents";
 import { alternativeURLExpression } from "./api-url.mjs";
 
@@ -15,6 +15,12 @@ const DEFAULT_PORT = 3000;
 const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
 type APIResponse = Record<string, string>;
+
+const intialOwnerData = existsSync("./initial-owner-data.json")
+  ? (JSON.parse(
+      readFileSync("./initial-owner-data.json").toString(),
+    ) as unknown)
+  : undefined;
 
 const getLoggedInURLForClient = async () => {
   const generateURL = (r: APIResponse) => {
@@ -31,13 +37,13 @@ const getLoggedInURLForClient = async () => {
     );
   }
 
-  const response = await fetch("http://localhost:8080/app/register", {
+  const response = await fetch("http://localhost:8080/api/app/users", {
     body: JSON.stringify({
       username: "testIsuconUser",
       firstname: "isucon",
       lastname: "isucon",
       date_of_birth: "11111111",
-    } satisfies AppPostRegisterRequestBody),
+    } satisfies AppPostUsersRequestBody),
     method: "POST",
   });
   const json = (await response.json()) as APIResponse;
@@ -64,11 +70,11 @@ const getLoggedInURLForDriver = async () => {
 
   // POST /provider/register => POST /chair/register
   const providerResponse = await fetch(
-    "http://localhost:8080/provider/register",
+    "http://localhost:8080/api/owner/ownsers",
     {
       body: JSON.stringify({
         name: "isuconProvider",
-      } satisfies OwnerPostRegisterRequestBody),
+      } satisfies OwnerPostOwnersRequestBody),
       method: "POST",
     },
   );
@@ -81,7 +87,7 @@ const getLoggedInURLForDriver = async () => {
       name: "isuconChair001",
       model: "isuconChair",
       chair_register_token: providerJSON["chair_register_token"],
-    } satisfies ChairPostRegisterRequestBody),
+    } satisfies ChairPostChairsRequestBody),
     method: "POST",
   });
   const json = (await response.json()) as APIResponse;
@@ -122,6 +128,7 @@ export const config = {
   ],
   define: {
     [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
+    __INITIAL_OWNER_DATA__: intialOwnerData,
   },
   server: {
     proxy: {

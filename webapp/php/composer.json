@@ -5,6 +5,7 @@
     "ext-json": "*",
     "ext-curl": "*",
     "ext-pdo": "*",
+    "ext-ctype": "*",
     "monolog/monolog": "^3.7",
     "slim/psr7": "^1.5",
     "slim/slim": "^4.10",
@@ -37,7 +38,7 @@
   },
   "scripts": {
     "generate": [
-      "openapi-generator generate -i ../../openapi/openapi.yaml -g php-slim4 -o ./ --config config.yaml"
+      "openapi-generator generate -i ../../openapi/openapi.yaml -g php -o ./ --config config.yaml"
     ]
   }
 }

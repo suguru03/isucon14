@@ -22,8 +22,6 @@ const (
 	ErrorCodeFailedToPostActivate
 	// ErrorCodeFailedToPostDeactivate 配車受付の停止に失敗したエラー
 	ErrorCodeFailedToPostDeactivate
-	// ErrorCodeFailedToGetChairRequest 椅子のリクエスト取得に失敗したエラー
-	ErrorCodeFailedToGetChairRequest
 	// ErrorCodeFailedToCreateWebappClient WebappClientの作成に失敗したエラー
 	ErrorCodeFailedToCreateWebappClient
 	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗したエラー
@@ -40,6 +38,10 @@ const (
 	ErrorCodeFailedToPostPaymentMethods
 	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗したエラー
 	ErrorCodeFailedToGetProviderSales
+	// ErrorCodeFailedToPostRidesEstimatedFare ライド料金の見積もりの取得に失敗したエラー
+	ErrorCodeFailedToPostRidesEstimatedFare
+	// ErrorCodeFailedToGetNearbyChairs 近くの椅子情報の取得に失敗したエラー
+	ErrorCodeFailedToGetNearbyChairs
 )
 
 type codeError struct {

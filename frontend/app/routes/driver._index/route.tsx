@@ -1,10 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useNavigate } from "@remix-run/react";
 import { useCallback, useRef, useState } from "react";
-import {
-  useChairPostActivate,
-  useChairPostDeactivate,
-} from "~/apiClient/apiComponents";
+import { useChairPostActivity } from "~/apiClient/apiComponents";
 import { useEmulator } from "~/components/hooks/emulate";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
@@ -23,8 +20,7 @@ export const meta: MetaFunction = () => {
 export default function DriverRequestWrapper() {
   const data = useClientChairRequestContext();
   const navigate = useNavigate();
-  const { mutate: postChairActivate } = useChairPostActivate();
-  const { mutate: postChairDeactivate } = useChairPostDeactivate();
+  const { mutate: postChairActivity } = useChairPostActivity();
   const modalRef = useRef<{ close: () => void }>(null);
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
@@ -55,21 +51,27 @@ export default function DriverRequestWrapper() {
 
   const onClickActivate = useCallback(() => {
     setIsActivated(true);
-    void postChairActivate({
+    void postChairActivity({
+      body: {
+        is_active: true,
+      },
       headers: {
         Authorization: `Bearer ${data.auth?.accessToken}`,
       },
     });
-  }, [data, postChairActivate]);
+  }, [data, postChairActivity]);
 
   const onClickDeactivate = useCallback(() => {
     setIsActivated(false);
-    void postChairDeactivate({
+    void postChairActivity({
+      body: {
+        is_active: false,
+      },
       headers: {
         Authorization: `Bearer ${data.auth?.accessToken}`,
       },
     });
-  }, [data, postChairDeactivate]);
+  }, [data, postChairActivity]);
 
   const onClose = useCallback(() => {
     setCurrentLocation(selectedLocation);
@@ -119,11 +121,11 @@ export default function DriverRequestWrapper() {
           {data.status === "MATCHING" && (
             <Matching
               name={data?.payload?.user?.name}
-              request_id={data?.payload?.request_id}
+              ride_id={data?.payload?.ride_id}
             />
           )}
-          {(data.status === "DISPATCHING" ||
-            data.status === "DISPATCHED" ||
+          {(data.status === "ENROUTE" ||
+            data.status === "PICKUP" ||
             data.status === "CARRYING") && <Pickup />}
           {data.status === "ARRIVED" && <Arrived onComplete={handleComplete} />}
         </Modal>

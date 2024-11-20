@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace IsuRide\Handlers\App;
 
-use DateTimeImmutable;
 use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\Chair;
 use IsuRide\Database\Model\Owner;
 use IsuRide\Database\Model\Ride;
+use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppGetRides200Response;
 use IsuRide\Model\AppGetRides200ResponseRidesInner;
@@ -40,26 +40,12 @@ class GetRides extends AbstractHttpHandler
         array $args
     ): ResponseInterface {
         $user = $request->getAttribute('user');
-        $rides = [];
+        assert($user instanceof User);
         try {
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC');
             $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
             $stmt->execute();
-            $rideResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($rideResult as $row) {
-                $rides[] = new Ride(
-                    id: $row['id'],
-                    userId: $row['user_id'],
-                    chairId: $row['chair_id'],
-                    pickupLatitude: $row['pickup_latitude'],
-                    pickupLongitude: $row['pickup_longitude'],
-                    destinationLatitude: $row['destination_latitude'],
-                    destinationLongitude: $row['destination_longitude'],
-                    evaluation: $row['evaluation'],
-                    createdAt: $row['created_at'],
-                    updatedAt: $row['updated_at']
-                );
-            }
+            $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
                 $response,
@@ -68,7 +54,19 @@ class GetRides extends AbstractHttpHandler
             );
         }
         $items = [];
-        foreach ($rides as $ride) {
+        foreach ($rides as $row) {
+            $ride = new Ride(
+                id: $row['id'],
+                userId: $row['user_id'],
+                chairId: $row['chair_id'],
+                pickupLatitude: $row['pickup_latitude'],
+                pickupLongitude: $row['pickup_longitude'],
+                destinationLatitude: $row['destination_latitude'],
+                destinationLongitude: $row['destination_longitude'],
+                evaluation: $row['evaluation'],
+                createdAt: $row['created_at'],
+                updatedAt: $row['updated_at']
+            );
             try {
                 $status = $this->getLatestRideStatus($this->db, $ride->id);
             } catch (PDOException $e) {
@@ -88,7 +86,11 @@ class GetRides extends AbstractHttpHandler
                 $stmt->execute();
                 $chairResult = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$chairResult) {
-                    throw new \Exception('Chair not found');
+                    return (new ErrorResponse())->write(
+                        $response,
+                        StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                        new \Exception('Chair not found')
+                    );
                 }
                 $chair = new Chair(
                     id: $chairResult['id'],
@@ -143,28 +145,18 @@ class GetRides extends AbstractHttpHandler
                 ]),
                 'chair' => new AppGetRides200ResponseRidesInnerChair([
                     'id' => $chair->id,
-                    'owner' => $ownerResult['name'],
+                    'owner' => $owner->name,
                     'name' => $chair->name,
                     'model' => $chair->model
                 ]),
                 'fare' => $this->calculateSale($ride),
                 'evaluation' => $ride->evaluation,
-                'requested_at' => $this->toUnixMilliseconds($ride->createdAt),
-                'completed_at' => $this->toUnixMilliseconds($ride->updatedAt)
+                'requested_at' => $ride->createdAtUnixMilliseconds(),
+                'completed_at' => $ride->updatedAtUnixMilliseconds()
             ]);
         }
         return $this->writeJson($response, new AppGetRides200Response([
             'rides' => $items
         ]));
-    }
-
-    /**
-     * @throws \DateMalformedStringException
-     */
-    private function toUnixMilliseconds(string $dateTime): int
-    {
-        $dateTimeImmutable = new DateTimeImmutable($dateTime);
-        $dateTimeImmutable->setTimezone(new \DateTimeZone('UTC'));
-        return (int)$dateTimeImmutable->format('Uv');
     }
 }

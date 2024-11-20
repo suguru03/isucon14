@@ -18,19 +18,19 @@ export type Coordinate = {
 };
 
 /**
- * 配車要求ステータス
+ * ライドのステータス
  *
  * MATCHING: サービス上でマッチング処理を行なっていて椅子が確定していない
- * DISPATCHING: 椅子が確定し、乗車位置に向かっている
- * DISPATCHED: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
+ * ENROUTE: 椅子が確定し、乗車位置に向かっている
+ * PICKUP: 椅子が乗車位置に到着して、ユーザーの乗車を待機している
  * CARRYING: ユーザーが乗車し、椅子が目的地に向かっている
  * ARRIVED: 目的地に到着した
  * COMPLETED: ユーザーの決済・椅子評価が完了した
  */
-export type RequestStatus =
+export type RideStatus =
   | "MATCHING"
-  | "DISPATCHING"
-  | "DISPATCHED"
+  | "ENROUTE"
+  | "PICKUP"
   | "CARRYING"
   | "ARRIVED"
   | "COMPLETED";
@@ -60,7 +60,7 @@ export type AppChair = {
      */
     recent_rides: {
       /**
-       * 配車要求ID
+       * ライドID
        */
       id: string;
       pickup_coordinate: Coordinate;
@@ -106,16 +106,16 @@ export type User = {
 };
 
 /**
- * App向け配車要求情報
+ * App向けライド情報
  */
-export type AppRequest = {
+export type AppRide = {
   /**
-   * 配車要求ID
+   * ライドID
    */
-  request_id: string;
+  id: string;
   pickup_coordinate: Coordinate;
   destination_coordinate: Coordinate;
-  status: RequestStatus;
+  status: RideStatus;
   chair?: AppChair;
   /**
    * 配車要求日時
@@ -132,17 +132,17 @@ export type AppRequest = {
 };
 
 /**
- * Chair向け配車要求情報
+ * Chair向けライド情報
  */
-export type ChairRequest = {
+export type ChairRide = {
   /**
-   * 配車要求ID
+   * ライドID
    */
-  request_id: string;
+  id: string;
   user: User;
   pickup_coordinate?: Coordinate;
   destination_coordinate: Coordinate;
-  status?: RequestStatus;
+  status?: RideStatus;
 };
 
 export type Error = {
