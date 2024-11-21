@@ -190,6 +190,56 @@ def app_post_rides(
     return AppPostRidesResponse(ride_id=ride_id, fare=fare)
 
 
+class AppPostRidesEstimatedFareRequest(BaseModel):
+    pickup_coordinate: Coordinate | None = None
+    destination_coordinate: Coordinate | None = None
+
+
+class AppPostRidesEstimatedFareResponse(BaseModel):
+    fare: int
+    discount: int
+
+
+@router.post(
+    "/api/app/rides/estimated-fare",
+    response_model=AppPostRidesEstimatedFareResponse,
+    status_code=200,
+)
+def app_post_rides_estimated_fare(
+    r: AppPostRidesEstimatedFareRequest, user: User = Depends(app_auth_middleware)
+) -> AppPostRidesEstimatedFareResponse:
+    if r.pickup_coordinate is None or r.destination_coordinate is None:
+        raise HTTPException(
+            status_code=400,
+            detail="required fields(pickup_coordinate, destination_coordinate) are empty",
+        )
+
+    with engine.begin() as conn:
+        discounted = calculate_discounted_fare(
+            conn,
+            user.id,
+            None,
+            r.pickup_coordinate.latitude,
+            r.pickup_coordinate.longitude,
+            r.destination_coordinate.latitude,
+            r.destination_coordinate.longitude,
+        )
+
+    return AppPostRidesEstimatedFareResponse(
+        fare=discounted,
+        discount=calculate_discounted_fare(
+            conn,
+            user.id,
+            None,
+            r.pickup_coordinate.latitude,
+            r.pickup_coordinate.longitude,
+            r.destination_coordinate.latitude,
+            r.destination_coordinate.longitude,
+        )
+        - discounted,
+    )
+
+
 def calculate_distance(
     a_latitude: int, a_longitude: int, b_latitude: int, b_longitude: int
 ) -> int:
@@ -334,7 +384,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 def calculate_discounted_fare(
     conn,
     user_id: str,
-    ride: Ride,
+    ride: Ride | None,
     pickup_latitude: int,
     pickup_longitude: int,
     dest_latitude: int,
