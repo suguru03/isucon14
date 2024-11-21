@@ -13,7 +13,11 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import app_auth_middleware
-from ..models import Chair, ChairLocation, Ride, RideStatus, User
+from ..models import Chair, ChairLocation, PaymentToken, Ride, RideStatus, User
+from ..payment_gateway import (
+    PaymentGatewayPostPaymentRequest,
+    request_payment_gateway_post_payment,
+)
 from ..sql import engine
 from ..utils import secure_random_str
 from .owners import calculate_sale, fare_per_distance, initial_fare
@@ -353,9 +357,9 @@ class AppPostRideEvaluationResponse(BaseModel):
     status_code=200,
 )
 def app_post_ride_evaluation(
-    r: AppPostRideEvaluationRequest, ride_id: str
+    req: AppPostRideEvaluationRequest, ride_id: str
 ) -> AppPostRideEvaluationResponse:
-    if r.evaluation < 1 or r.evaluation > 5:
+    if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
             status_code=400, detail="evaluation must be between 1 and 5"
         )
@@ -373,8 +377,76 @@ def app_post_ride_evaluation(
         if status != "ARRIVED":
             raise HTTPException(status_code=400, detail="not arrived yet")
 
-        # TODO: write a rest here
-        response = AppPostRideEvaluationResponse(completed_at=10000)
+        result = conn.execute(
+            text("UPDATE rides SET evaluation = :evaluation WHERE id = :id"),
+            {"evaluation": req.evaluation, "id": ride_id},
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="ride not found")
+
+        conn.execute(
+            text(
+                "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+            ),
+            {"id": str(ULID()), "ride_id": ride.id, "status": "COMPLETED"},
+        )
+
+        row = conn.execute(
+            text("SELECT * FROM rides WHERE id = :id"), {"id": ride_id}
+        ).fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
+            )
+
+        row = conn.execute(
+            text("SELECT * FROM payment_tokens WHERE user_id = :user_id"),
+            {"user_id": ride.user_id},
+        ).fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="payment token not registered",
+            )
+        payment_token = PaymentToken(**row._mapping)
+
+        fare = calculate_discounted_fare(
+            conn,
+            ride.user_id,
+            ride,
+            ride.pickup_latitude,
+            ride.pickup_longitude,
+            ride.destination_latitude,
+            ride.destination_longitude,
+        )
+
+        payment_gateway_request = PaymentGatewayPostPaymentRequest(amount=fare)
+        payment_gateway_url = conn.execute(
+            text("SELECT value FROM settings WHERE name = 'payment_gateway_url'")
+        ).scalar()
+        if not isinstance(payment_gateway_url, str):
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+        def retrieve_rides_order_by_created_at_asc():
+            rows = conn.execute(
+                text(
+                    "SELECT * FROM rides WHERE user_id = :user_id ORDER BY created_at ASC",
+                ),
+                {"user_id": ride.user_id},
+            ).fetchall()
+            return [Ride(**r._mapping) for r in rows]
+
+        request_payment_gateway_post_payment(
+            payment_gateway_url,
+            payment_token.token,
+            payment_gateway_request,
+            retrieve_rides_order_by_created_at_asc,
+        )
+        # TODO: BadGatewayのケースを実装する
+
+        response = AppPostRideEvaluationResponse(
+            completed_at=int(ride.updated_at.timestamp() * 1000)
+        )
     return response
 
 
