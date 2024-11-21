@@ -51,7 +51,7 @@ def chair_post_chairs(
             raise HTTPException(
                 status_code=status.UNAUTHORIZED, detail="invalid chair_register_token"
             )
-        owner = Owner(**row)
+        owner = Owner(**row._mapping)
 
     chair_id = str(ULID())
     access_token = secure_random_str(32)
@@ -109,7 +109,8 @@ def chair_post_coordinate(
         conn.execute(
             text(
                 "INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (:id, :chair_id, :latitude, :longitude)"
-            )
+            ),
+            {} # TODO: here
         )
 
         row = conn.execute(

@@ -432,6 +432,7 @@ class AppGetNotificationResponse(BaseModel):
     ride_id: str
     pickup_coordinate: Coordinate
     destination_coordinate: Coordinate
+    fare: int
     status: str
     chair: AppChair | None = None
     created_at: int
@@ -465,6 +466,7 @@ def app_get_notification(
             ride_id=ride.id,
             pickup_coordinate=Coordinate(latitude=0, longitude=0),
             destination_coordinate=Coordinate(latitude=10, longitude=10),
+            fare=100,
             status=status,
             chair=None,
             created_at=1000,
