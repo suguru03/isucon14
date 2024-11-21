@@ -133,7 +133,7 @@ def chair_post_coordinate(
             {"chair_id": chair.id},
         ).fetchone()
         if row is not None:
-            ride = Ride(**row)
+            ride = Ride(**row._mapping)
             ride_status = get_latest_ride_status(conn, ride_id=ride.id)
             if ride_status != "COMPLETED" and ride_status != "CANCELLED":
                 if (
