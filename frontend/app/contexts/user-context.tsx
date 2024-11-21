@@ -10,8 +10,8 @@ import {
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import { fetchAppGetNotification } from "~/apiClient/apiComponents";
-import type { AppRide, Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import type { ClientAppRide } from "~/types";
+import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import type { ClientAppNotification, ClientAppRide } from "~/types";
 
 const isApiFetchError = (
   obj: unknown,
@@ -67,7 +67,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       );
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
-          const eventData = JSON.parse(event.data) as AppRide;
+          const eventData = JSON.parse(event.data) as ClientAppNotification;
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
