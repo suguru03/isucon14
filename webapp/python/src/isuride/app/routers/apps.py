@@ -27,11 +27,26 @@ def app_post_register():
     return {"id": user_id}
 
 
-@router.post("/payment-methods", status_code=204)
-def app_post_payment_methods():
-    # TODO: implement
-    # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/app_handlers.go#L64
-    pass
+class AppPostPaymentMethodsRequest(BaseModel):
+    token: str
+
+
+@router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
+def app_post_payment_methods(
+    req: AppPostPaymentMethodsRequest, user: User = Depends(app_auth_middleware)
+):
+    if req.token == "":
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="token is required but was empty"
+        )
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO payment_tokens (user_id, token) VALUES (:user_id, :token)"
+            ),
+            {"user_id": user.id, "token": req.token},
+        )
 
 
 @router.post("/requests", status_code=202)
