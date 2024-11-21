@@ -16,9 +16,19 @@ export const Enroute: FC<{
       <Text size="xl" className="mb-6">
         配車しています
       </Text>
-      <LocationButton label="現在地" location={pickup} className="w-80" />
+      <LocationButton
+        label="現在地"
+        location={pickup}
+        className="w-80"
+        disabled
+      />
       <Text size="xl">↓</Text>
-      <LocationButton label="目的地" location={destLocation} className="w-80" />
+      <LocationButton
+        label="目的地"
+        location={destLocation}
+        className="w-80"
+        disabled
+      />
       <p className="mt-8">
         {typeof fare === "number" ? (
           <>

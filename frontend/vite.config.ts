@@ -142,6 +142,12 @@ export const config = {
     strictPort: true,
   },
   preview: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
     host: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
     strictPort: true,
