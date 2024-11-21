@@ -76,7 +76,7 @@ class ChairSales(BaseModel):
 
 
 class ModelSales(BaseModel):
-    mode: str
+    model: str
     sales: int
 
 
@@ -132,7 +132,7 @@ def owner_get_sales(
 
         model_sales = []
         for model, sales in model_sales_by_model.items():
-            model_sales.append(ModelSales(mode=model, sales=sales))
+            model_sales.append(ModelSales(model=model, sales=sales))
 
         res.models = model_sales
 

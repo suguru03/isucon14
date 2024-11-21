@@ -13,7 +13,7 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import app_auth_middleware
-from ..models import Chair, ChairLocation, PaymentToken, Ride, RideStatus, User
+from ..models import Chair, ChairLocation, Owner, PaymentToken, Ride, RideStatus, User
 from ..payment_gateway import (
     PaymentGatewayPostPaymentRequest,
     request_payment_gateway_post_payment,
@@ -128,7 +128,8 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
 
     items = []
     for ride in rides:
-        status = get_latest_ride_status(conn, ride.id)
+        with engine.begin() as conn:
+            status = get_latest_ride_status(conn, ride.id)
         if status != "COMPLETED":
             continue
 
@@ -146,7 +147,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-            owner = Chair(**row._mapping)
+            owner = Owner(**row._mapping)
 
         # TODO: 参照実装みたいにpartialに作るべき？
         item = GetAppRidesResponseItem(
@@ -155,7 +156,8 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
                 latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
             ),
             destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude, longitude=ride.destination_longitude
+                latitude=ride.destination_latitude,
+                longitude=ride.destination_longitude,
             ),
             chair=GetAppRidesResponseItemChair(
                 id=chair.id, owner=owner.name, name=chair.name, model=chair.model
@@ -298,7 +300,7 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 
 
 @router.post(
-    "/api/app/rides/estimated-fare",
+    "/rides/estimated-fare",
     response_model=AppPostRidesEstimatedFareResponse,
     status_code=200,
 )
@@ -322,19 +324,16 @@ def app_post_rides_estimated_fare(
             r.destination_coordinate.longitude,
         )
 
-    return AppPostRidesEstimatedFareResponse(
-        fare=discounted,
-        discount=calculate_discounted_fare(
-            conn,
-            user.id,
-            None,
-            r.pickup_coordinate.latitude,
-            r.pickup_coordinate.longitude,
-            r.destination_coordinate.latitude,
-            r.destination_coordinate.longitude,
+        return AppPostRidesEstimatedFareResponse(
+            fare=discounted,
+            discount=calculate_fare(
+                r.pickup_coordinate.latitude,
+                r.pickup_coordinate.longitude,
+                r.destination_coordinate.latitude,
+                r.destination_coordinate.longitude,
+            )
+            - discounted,
         )
-        - discounted,
-    )
 
 
 def calculate_distance(
@@ -544,58 +543,6 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
     response.set_cookie(key="app_session", value=access_token, path="/")
     return AppPostUsersResponse(id=user_id, invitation_code=invitation_code)
-
-
-def calculate_discounted_fare(
-    conn,
-    user_id: str,
-    ride: Ride | None,
-    pickup_latitude: int,
-    pickup_longitude: int,
-    dest_latitude: int,
-    dest_longitude: int,
-) -> int:
-    discount: int = 0
-
-    if ride:
-        dest_latitude = ride.destination_latitude
-        dest_longitude = ride.destination_longitude
-        pickup_latitude = ride.pickup_latitude
-        pickup_longitude = ride.pickup_longitude
-
-        # すでにクーポンが紐づいているならそれの割引額を参照
-        coupon = conn.execute(
-            text("SELECT * FROM coupons WHERE used_by = :ride_id"), {"ride_id": ride.id}
-        ).fetchone()
-        if coupon:
-            discount = coupon.discount
-    else:
-        # 初回利用クーポンを最優先で使う
-        coupon = conn.execute(
-            text(
-                "SELECT * FROM coupons WHERE user_id = :user_id AND code = 'CP_NEW2024' AND used_by IS NULL"
-            ),
-            {"user_id": user_id},
-        ).fetchone()
-
-        if not coupon:
-            # 無いなら他のクーポンを付与された順番に使う
-            coupon = conn.execute(
-                text(
-                    "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1"
-                ),
-                {"user_id": user_id},
-            ).fetchone()
-
-        if coupon:
-            discount = coupon.discount
-
-    metered_fare: int = fare_per_distance * calculate_distance(
-        dest_latitude, dest_longitude, pickup_latitude, pickup_longitude
-    )
-
-    discounted_metered_fare: int = max(metered_fare - discount, 0)
-    return initial_fare + discounted_metered_fare
 
 
 class RecentRide(BaseModel):
@@ -899,3 +846,62 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
     return AppGetNearByChairsResponse(
         chairs=near_by_chairs, retrieved_at=int(retrieved_at.timestamp() * 1000)
     )
+
+
+def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
+    metered_fare = fare_per_distance * calculate_distance(
+        pickup_latitude, pickup_longitude, dest_latitude, dest_longitude
+    )
+    return initial_fare + metered_fare
+
+
+def calculate_discounted_fare(
+    conn,
+    user_id: str,
+    ride: Ride | None,
+    pickup_latitude: int,
+    pickup_longitude: int,
+    dest_latitude: int,
+    dest_longitude: int,
+) -> int:
+    discount: int = 0
+
+    if ride:
+        dest_latitude = ride.destination_latitude
+        dest_longitude = ride.destination_longitude
+        pickup_latitude = ride.pickup_latitude
+        pickup_longitude = ride.pickup_longitude
+
+        # すでにクーポンが紐づいているならそれの割引額を参照
+        coupon = conn.execute(
+            text("SELECT * FROM coupons WHERE used_by = :ride_id"), {"ride_id": ride.id}
+        ).fetchone()
+        if coupon:
+            discount = coupon.discount
+    else:
+        # 初回利用クーポンを最優先で使う
+        coupon = conn.execute(
+            text(
+                "SELECT * FROM coupons WHERE user_id = :user_id AND code = 'CP_NEW2024' AND used_by IS NULL"
+            ),
+            {"user_id": user_id},
+        ).fetchone()
+
+        if not coupon:
+            # 無いなら他のクーポンを付与された順番に使う
+            coupon = conn.execute(
+                text(
+                    "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1"
+                ),
+                {"user_id": user_id},
+            ).fetchone()
+
+        if coupon:
+            discount = coupon.discount
+
+    metered_fare: int = fare_per_distance * calculate_distance(
+        dest_latitude, dest_longitude, pickup_latitude, pickup_longitude
+    )
+
+    discounted_metered_fare: int = max(metered_fare - discount, 0)
+    return initial_fare + discounted_metered_fare
