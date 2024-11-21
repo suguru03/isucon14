@@ -4,7 +4,6 @@ import { OwnerGetChairsResponse } from "~/apiClient/apiComponents";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { Badge } from "~/components/primitives/badge/badge";
-import { ButtonLink } from "~/components/primitives/button/button";
 import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/provider-context";
@@ -55,12 +54,8 @@ export default function Index() {
 
   return (
     <section className="flex-1 overflow-hidden flex flex-col mx-4">
-      <div className="flex items-center justify-between border-b">
-        <h1 className="text-2xl my-4">椅子一覧</h1>
-        {/* // TODO: UI */}
-        <ButtonLink to={"/driver/register"} className="w-32">
-          + 追加
-        </ButtonLink>
+      <div className="flex items-center border-b my-4">
+        <h1 className="text-2xl pb-4">椅子一覧</h1>
       </div>
       {chairs?.length ? (
         <List className="overflow-auto">
