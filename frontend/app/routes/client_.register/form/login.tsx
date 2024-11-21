@@ -63,7 +63,7 @@ export default function ClientLoginForm() {
           onChange={(e) => setDateOfBirth(e.target.value)}
         />
       </div>
-      <Button onClick={handleSubmit}>登録</Button>
+      <Button onClick={() => void handleSubmit()}>登録</Button>
     </div>
   );
 }
