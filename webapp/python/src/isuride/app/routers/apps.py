@@ -13,7 +13,7 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import app_auth_middleware
-from ..models import Chair, Ride, User
+from ..models import Chair, ChairLocation, Ride, RideStatus, User
 from ..sql import engine
 from ..utils import secure_random_str
 from .owners import calculate_sale, fare_per_distance, initial_fare
@@ -677,13 +677,15 @@ def app_get_notification(
                 text("SELECT * FROM chairs WHERE id = :chair_id"),
                 {"chair_id": ride.chair_id},
             ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
             chair: Chair = Chair(**row._mapping)
 
             stats = get_chair_stats(conn, ride.chair_id)
 
             notification_response.chair = AppGetNotificationResponseChair(
-                id=chair.id, name=chair.name, model=chair.model, stats=chair.stats
+                id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
         # TODO: check the chair is here
@@ -691,15 +693,15 @@ def app_get_notification(
 
 
 def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats:
-    rides = engine.execute(
+    rides = conn.execute(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
     ).fetchall()
-    total_ride_count: int = len(rides)
-    total_evaluation: float = 0.0
+    total_ride_count: int = len(rides)  # noqa
+    total_evaluation: float = 0.0  # noqa
 
     for ride in rides:
-        chair_locations = conn.execute(
+        rows = conn.execute(  # noqa
             text(
                 "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at BETWEEN :created_at AND :updated_at ORDER BY created_at"
             ),
@@ -708,12 +710,44 @@ def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats
                 "created_at": ride.created_at,
                 "updated_at": ride.updated_at,
             },
+        ).fetchall()
+        # TODO: 質問中
+        chair_locations = [ChairLocation(**row._mapping) for row in rows]  # noqa
+
+        rows = conn.execute(
+            text(
+                "SELECT * FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at"
+            ),
+            {"ride_id": ride.id},
         )
+        ride_statuses = [RideStatus(**row._mapping) for row in rows]
 
+        arrived_at = None
+        pickuped_at = None
+        is_completed = None
+        for status in ride_statuses:
+            if status.status == "ARRIVED":
+                arrived_at = status.created_at
+            elif status.status == "CARRYING":
+                pickuped_at = status.created_at
+            if status.status == "COMPLETED":
+                is_completed = True
 
-class AppGetNearByChairsResponse(BaseModel):
-    chairs: list[AppChair]
-    retrieved_at: int
+        if (arrived_at is None) or (pickuped_at is None):
+            continue
+        if not is_completed:
+            continue
+
+        total_evaluation += float(ride.evaluation)
+
+    if total_ride_count > 0:
+        total_evaluation_avg = total_evaluation / total_ride_count
+    else:
+        total_evaluation_avg = 0.0
+
+    return AppGetNotificationResponseChairStats(
+        total_rides_count=total_ride_count, total_evaluation_avg=total_evaluation_avg
+    )
 
 
 class AppGetNearbyChairsResponseChair(BaseModel):
@@ -723,13 +757,18 @@ class AppGetNearbyChairsResponseChair(BaseModel):
     current_coordinate: Coordinate
 
 
+class AppGetNearByChairsResponse(BaseModel):
+    chairs: list[AppGetNearbyChairsResponseChair]
+    retrieved_at: int
+
+
 @router.get(
     "/nearby-chairs",
     response_model=AppGetNearByChairsResponse,
     status_code=200,
 )
 def app_get_near_by_chairs(latitude: int, longitude: int, distance: int = 50):
-    coordinate = Coordinate(latitude, longitude)
+    coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
         chairs = conn.execute(
             text("SELECT * FROM chairs"),
@@ -738,7 +777,9 @@ def app_get_near_by_chairs(latitude: int, longitude: int, distance: int = 50):
         near_by_chairs = []
         for chair in chairs:
             ride = conn.execute(
-                "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1",
+                text(
+                    "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
+                ),
                 {"chair_id": chair.id},
             ).fetchone()
 
@@ -749,10 +790,16 @@ def app_get_near_by_chairs(latitude: int, longitude: int, distance: int = 50):
                     continue
 
             # 5分以内に更新されている最新の位置情報を取得
-            chair_location = conn.execute(
-                "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1",
+            row = conn.execute(
+                text(
+                    "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1"
+                ),
                 {"chair_id": chair.id},
             ).fetchone()
+            if row is None:
+                continue
+
+            chair_location = ChairLocation(**row._mapping)
 
             if (
                 calculate_distance(
@@ -775,5 +822,8 @@ def app_get_near_by_chairs(latitude: int, longitude: int, distance: int = 50):
                     )
                 )
         retrieved_at = conn.execute(text("SELECT CURRENT_TIMESTAMP(6)")).scalar()
+        assert retrieved_at is not None
 
-    return AppGetNearByChairsResponse(chairs=near_by_chairs, retrieved_at=retrieved_at)
+    return AppGetNearByChairsResponse(
+        chairs=near_by_chairs, retrieved_at=int(retrieved_at.timestamp() * 1000)
+    )
