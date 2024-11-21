@@ -1,4 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
+import { useEffect, useState } from "react";
+import {
+  AppGetRidesResponse,
+  fetchAppGetRides,
+} from "~/apiClient/apiComponents";
+import { DateText } from "~/components/modules/date-text/date-text";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { PriceText } from "~/components/modules/price-text/price-text";
@@ -11,30 +17,43 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const items = [
-    {
-      date: "2024/08/24",
-      from: "xxx",
-      to: "yyy",
-      price: 1234,
-    },
-  ];
+  const [data, setData] = useState<AppGetRidesResponse>();
+  useEffect(() => {
+    const abortController = new AbortController();
+    (async () => {
+      try {
+        const res = await fetchAppGetRides({}, abortController.signal);
+        setData(res);
+      } catch (err) {
+        console.error(err);
+        setData({ rides: [] });
+      }
+    })().catch(console.error);
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
 
   return (
     <section className="flex-1 mx-4">
       <h2 className="text-2xl my-4">履歴</h2>
-      <List>
-        {items.map((item) => (
-          <ListItem key={item.date} className="flex justify-between">
-            <span>
-              <span>{item.date}</span>
-              <span className="ms-4">
-                {item.from} → {item.to}
+      <List className="my-16">
+        {data &&
+          data.rides.map((item) => (
+            <ListItem key={item.id} className="flex justify-between">
+              <span>
+                <DateText value={item.completed_at} tagName="span" />
+                <span className="ms-4">
+                  ({item.pickup_coordinate.latitude},{" "}
+                  {item.pickup_coordinate.longitude}) → (
+                  {item.destination_coordinate.latitude},{" "}
+                  {item.destination_coordinate.longitude})
+                </span>
               </span>
-            </span>
-            <PriceText value={item.price} />
-          </ListItem>
-        ))}
+              <PriceText value={item.fare} />
+            </ListItem>
+          ))}
       </List>
     </section>
   );

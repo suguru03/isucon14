@@ -2,12 +2,21 @@ import type { Dispatch, SetStateAction } from "react";
 import { RideId } from "./apiClient/apiParameters";
 import {
   Coordinate as ApiCoodinate,
-  AppChair,
   RideStatus,
   User,
 } from "./apiClient/apiSchemas";
 
 export type AccessToken = string;
+
+export type ClientAppChair = {
+  id: string;
+  name: string;
+  model: string;
+  stats: Partial<{
+    total_rides_count: number;
+    total_evaluation_avg: number;
+  }>;
+};
 
 export type ClientAppRide = {
   status?: RideStatus;
@@ -17,7 +26,7 @@ export type ClientAppRide = {
       pickup: Coordinate;
       destination: Coordinate;
     }>;
-    chair?: AppChair;
+    chair?: ClientAppChair;
   }>;
   auth: {
     accessToken: AccessToken;

@@ -36,62 +36,6 @@ export type RideStatus =
   | "COMPLETED";
 
 /**
- * App向けの椅子情報
- */
-export type AppChair = {
-  /**
-   * 椅子ID
-   */
-  id: string;
-  /**
-   * 椅子の名前
-   */
-  name: string;
-  /**
-   * 椅子のモデル
-   */
-  model: string;
-  /**
-   * 椅子の統計情報
-   */
-  stats: {
-    /**
-     * 最近の乗車情報
-     */
-    recent_rides: {
-      /**
-       * ライドID
-       */
-      id: string;
-      pickup_coordinate: Coordinate;
-      destination_coordinate: Coordinate;
-      /**
-       * 移動距離
-       */
-      distance: number;
-      /**
-       * 移動時間 (ミリ秒)
-       *
-       * @format int64
-       */
-      duration: number;
-      /**
-       * 評価
-       */
-      evaluation: number;
-    }[];
-    /**
-     * 総乗車回数
-     */
-    total_rides_count: number;
-    /**
-     * 総評価平均
-     */
-    total_evaluation_avg: number;
-  };
-};
-
-/**
  * 簡易ユーザー情報
  */
 export type User = {
@@ -103,32 +47,6 @@ export type User = {
    * ユーザー名
    */
   name: string;
-};
-
-/**
- * App向けライド情報
- */
-export type AppRide = {
-  /**
-   * ライドID
-   */
-  id: string;
-  pickup_coordinate: Coordinate;
-  destination_coordinate: Coordinate;
-  status: RideStatus;
-  chair?: AppChair;
-  /**
-   * 配車要求日時
-   *
-   * @format int64
-   */
-  created_at: number;
-  /**
-   * 配車要求更新日時
-   *
-   * @format int64
-   */
-  updated_at: number;
 };
 
 /**
