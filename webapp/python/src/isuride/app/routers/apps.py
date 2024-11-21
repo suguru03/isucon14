@@ -5,7 +5,8 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
 TODO: このdocstringを消す
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from http.client import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -36,11 +37,6 @@ def app_post_payment_methods():
 def app_post_requests():
     request_id = str(ULID())
     return {"request_id": request_id}
-
-
-@router.get("/notification", status_code=204)
-def app_get_notification():
-    pass
 
 
 @router.get("/users", status_code=200)
@@ -430,3 +426,67 @@ def app_get_ride(
             )
 
     return response
+
+
+class AppGetNotificationResponse(BaseModel):
+    ride_id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    fare: int
+    status: str
+    chair: AppChair | None = None
+    created_at: int
+    updated_at: int
+
+
+@router.get(
+    "/notification",
+    response_model=AppGetNotificationResponse,
+    status_code=200,
+    response_model_exclude_none=True,
+)
+def app_get_notification(
+    response: Response, user: User = Depends(app_auth_middleware)
+) -> AppGetNotificationResponse | Response:
+    with engine.begin() as conn:
+        row = conn.execute(
+            text(
+                "SELECT * FROM rides WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1"
+            ),
+            {"user_id": user.id},
+        ).fetchone()
+        if not row:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            return response
+
+        ride: Ride = Ride(**row._mapping)
+        status = get_latest_ride_status(conn, ride.id)
+
+        response = AppGetNotificationResponse(
+            ride_id=ride.id,
+            pickup_coordinate=Coordinate(latitude=0, longitude=0),
+            destination_coordinate=Coordinate(latitude=10, longitude=10),
+            fare=100,
+            status=status,
+            chair=None,
+            created_at=1000,
+            updated_at=10000,
+        )
+
+        # TODO: check the chair is here
+    return response
+
+
+class AppGetNearByChairsResponse(BaseModel):
+    chairs: list[AppChair]
+    retrieved_at: int
+
+
+@router.get(
+    "/nearby-chairs",
+    response_model=AppGetNearByChairsResponse,
+    status_code=200,
+)
+def app_get_near_by_chairs():
+    # TODO: 先にエンドポイントだけ用意しておく
+    return AppGetNearByChairsResponse(chairs=[], retrieved_at=100)
