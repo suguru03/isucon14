@@ -19,15 +19,20 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const [data, setData] = useState<AppGetRidesResponse>();
   useEffect(() => {
+    const abortController = new AbortController();
     (async () => {
       try {
-        const res = await fetchAppGetRides({});
+        const res = await fetchAppGetRides({}, abortController.signal);
         setData(res);
       } catch (err) {
         console.error(err);
         setData({ rides: [] });
       }
     })().catch(console.error);
+
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   return (
