@@ -644,6 +644,10 @@ def app_get_notification(
 
         ride: Ride = Ride(**row._mapping)
         status = get_latest_ride_status(conn, ride.id)
+        # fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
+        # 	if err != nil {
+        # 		writeError(w, http.StatusInternalServerError, err)
+        # 		return
 
         notification_response = AppGetNotificationResponse(
             ride_id=ride.id,
