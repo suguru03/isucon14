@@ -37,16 +37,6 @@ export type ClientAppRide = {
   };
 };
 
-export type ClientAppNotification = {
-  id: string;
-  pickup_coordinate: Coordinate;
-  destination_coordinate: Coordinate;
-  status: RideStatus;
-  chair?: ClientAppChair;
-  created_at: number;
-  updated_at: number;
-};
-
 export type ClientChairRide = {
   status?: RideStatus;
   payload?: Partial<{

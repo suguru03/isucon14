@@ -9,9 +9,9 @@ import {
   type ReactNode,
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
-import { fetchAppGetNotification } from "~/apiClient/apiComponents";
+import { AppGetNotificationResponse, fetchAppGetNotification } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import type { ClientAppNotification, ClientAppRide } from "~/types";
+import type { ClientAppRide } from "~/types";
 
 const isApiFetchError = (
   obj: unknown,
@@ -67,17 +67,17 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       );
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
-          const eventData = JSON.parse(event.data) as ClientAppNotification;
+          const eventData = JSON.parse(event.data) as AppGetNotificationResponse;
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
               eventData.status !== preRequest.status ||
-              eventData.id !== preRequest.payload?.ride_id
+              eventData.ride_id !== preRequest.payload?.ride_id
             ) {
               return {
                 status: eventData.status,
                 payload: {
-                  ride_id: eventData.id,
+                  ride_id: eventData.ride_id,
                   coordinate: {
                     pickup: eventData.pickup_coordinate,
                     destination: eventData.destination_coordinate,
