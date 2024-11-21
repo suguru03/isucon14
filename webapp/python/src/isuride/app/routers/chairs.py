@@ -110,7 +110,12 @@ def chair_post_coordinate(
             text(
                 "INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (:id, :chair_id, :latitude, :longitude)"
             ),
-            {},  # TODO: here
+            {
+                "id": chair_location_id,
+                "chair_id": chair.id,
+                "latitude": req.latitude,
+                "longitude": req.longitude,
+            },
         )
 
         row = conn.execute(
@@ -119,7 +124,7 @@ def chair_post_coordinate(
         ).fetchone()
         if row is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        location = ChairLocation(**row)
+        location = ChairLocation(**row._mapping)
 
         row = conn.execute(
             text(
@@ -127,35 +132,33 @@ def chair_post_coordinate(
             ),
             {"chair_id": chair.id},
         ).fetchone()
-        if row is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if row is not None:
+            ride = Ride(**row)
+            ride_status = get_latest_ride_status(conn, ride_id=ride.id)
+            if ride_status != "COMPLETED" and ride_status != "CANCELLED":
+                if (
+                    req.latitude == ride.pickup_latitude
+                    and req.longitude == ride.pickup_longitude
+                    and ride_status == "ENROUTE"
+                ):
+                    conn.execute(
+                        text(
+                            "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+                        ),
+                        {"id": str(ULID()), "ride_id": ride.id, "status": "PICKUP"},
+                    )
 
-        ride = Ride(**row)
-        ride_status = get_latest_ride_status(conn, ride_id=ride.id)
-        if ride_status != "COMPLETED" and ride_status != "CANCELLED":
-            if (
-                req.latitude == ride.pickup_latitude
-                and req.longitude == ride.pickup_longitude
-                and ride_status == "ENROUTE"
-            ):
-                conn.execute(
-                    text(
-                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
-                    ),
-                    {"id": str(ULID()), "ride_id": ride.id, "status": "PICKUP"},
-                )
-
-            if (
-                req.latitude == ride.destination_latitude
-                and req.longitude == ride.destination_longitude
-                and ride_status == "CARRYING"
-            ):
-                conn.execute(
-                    text(
-                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status) "
-                    ),
-                    {"id": str(ULID()), "ride_id": ride.id, "status": "ARRIVED"},
-                )
+                if (
+                    req.latitude == ride.destination_latitude
+                    and req.longitude == ride.destination_longitude
+                    and ride_status == "CARRYING"
+                ):
+                    conn.execute(
+                        text(
+                            "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status) "
+                        ),
+                        {"id": str(ULID()), "ride_id": ride.id, "status": "ARRIVED"},
+                    )
 
     return ChairPostCoordinateResponse(
         recorded_at=int(location.created_at.timestamp() * 1000)
@@ -175,7 +178,7 @@ class ChairGetNotificationResponse(BaseModel):
     status: str
 
 
-@router.get("/notification", status_code=204)
+@router.get("/notification")
 def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
     with engine.begin() as conn:
         conn.execute(
@@ -195,7 +198,7 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
 
         if found:
             assert row is not None
-            ride = Ride(**row)
+            ride = Ride(**row._mapping)
             ride_status = get_latest_ride_status(conn, ride.id)
 
         if (not found) or ride_status == "COMPLETED" or ride_status == "CANCELLED":
@@ -207,7 +210,7 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
-            matched = Ride(**row)
+            matched = Ride(**row._mapping)
 
             conn.execute(
                 text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
@@ -223,7 +226,7 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
         ).fetchone()
         if row is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        user = User(**row)
+        user = User(**row._mapping)
 
     return ChairGetNotificationResponse(
         ride_id=ride.id,
@@ -256,7 +259,7 @@ def chair_post_ride_status(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="ride not found"
             )
-        ride = Ride(**row)
+        ride = Ride(**row._mapping)
 
         if ride.chair_id != chair.id:
             raise HTTPException(
