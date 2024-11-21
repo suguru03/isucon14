@@ -9,7 +9,10 @@ import {
   type ReactNode,
 } from "react";
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
-import { AppGetNotificationResponse, fetchAppGetNotification } from "~/apiClient/apiComponents";
+import {
+  AppGetNotificationResponse,
+  fetchAppGetNotification,
+} from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import type { ClientAppRide } from "~/types";
 
@@ -67,7 +70,9 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       );
       eventSource.onmessage = (event) => {
         if (typeof event.data === "string") {
-          const eventData = JSON.parse(event.data) as AppGetNotificationResponse;
+          const eventData = JSON.parse(
+            event.data,
+          ) as AppGetNotificationResponse;
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||

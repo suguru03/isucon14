@@ -1,5 +1,9 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useAppGetRides } from "~/apiClient/apiComponents";
+import { useEffect, useState } from "react";
+import {
+  AppGetRidesResponse,
+  fetchAppGetRides,
+} from "~/apiClient/apiComponents";
 import { DateText } from "~/components/modules/date-text/date-text";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
@@ -13,7 +17,18 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { data } = useAppGetRides({});
+  const [data, setData] = useState<AppGetRidesResponse>();
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetchAppGetRides({});
+        setData(res);
+      } catch (err) {
+        console.error(err);
+        setData({ rides: [] });
+      }
+    })().catch(console.error);
+  }, []);
 
   return (
     <section className="flex-1 mx-4">
