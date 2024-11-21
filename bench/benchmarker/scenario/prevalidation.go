@@ -95,34 +95,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		requestID = result.RideID
 	}
 
-	// GET /api/app/requests/:requestID
-	{
-		result, err := userClient.AppGetRequest(ctx, requestID)
-		if err != nil {
-			return err
-		}
-		if result.ID != requestID {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, result.ID)
-		}
-		if result.PickupCoordinate.Latitude != 0 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, result.PickupCoordinate.Latitude)
-		}
-		if result.PickupCoordinate.Longitude != 0 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するpickup_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 0, result.PickupCoordinate.Longitude)
-		}
-		if result.DestinationCoordinate.Latitude != 10 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するdestination_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 10, result.DestinationCoordinate.Latitude)
-		}
-		if result.DestinationCoordinate.Longitude != 10 {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するdestination_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 10, result.DestinationCoordinate.Longitude)
-		}
-		if result.Status != "MATCHING" {
-			return fmt.Errorf("GET /api/app/requests/:requestID の返却するstatusが正しくありません (expected:%s, actual:%s)", "MATCHING", result.Status)
-		}
-		if result.Chair.Set {
-			return errors.New("GET /api/app/requests/:requestID の返却するchairがセットされているべきではありません")
-		}
-	}
+	// TODO: 登録された直後の椅子の状態を確認する
 
 	// GET /api/app/notifications
 	{
@@ -157,7 +130,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	chairRegisterToken := ""
 	// POST /api/owner/register
 	{
-		result, err := ownerClient.ProviderPostRegister(ctx, &api.OwnerPostOwnersReq{
+		result, err := ownerClient.OwnerPostRegister(ctx, &api.OwnerPostOwnersReq{
 			Name: "hoge",
 		})
 		if err != nil {
@@ -232,9 +205,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusMATCHING, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -270,9 +240,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusENROUTE, chairID); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
 			}
 			break
 		}
@@ -311,9 +278,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusPICKUP, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -349,9 +313,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusCARRYING, chairID); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
 			}
 			break
 		}
@@ -390,9 +351,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err := validateAppNotificationWithChair(result, requestID, api.RideStatusARRIVED, chairID); err != nil {
 				return err
 			}
-			if len(result.Chair.Value.Stats.RecentRides) != 0 {
-				return fmt.Errorf("GET /api/app/notification の返却するchair.stats.recent_ridesの数が正しくありません (expected:%d, actual:%d)", 0, len(result.Chair.Value.Stats.RecentRides))
-			}
 			break
 		}
 	}
@@ -428,14 +386,11 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if result.Chairs[0].Model != "A" {
 			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのmodelが正しくありません (expected:%s, actual:%s)", "A", result.Chairs[0].Model)
 		}
-		if len(result.Chairs[0].Stats.RecentRides) != 1 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのrecent_ridesが正しくありません (expected:%d, actual:%d)", 1, len(result.Chairs[0].Stats.RecentRides))
+		if result.Chairs[0].CurrentCoordinate.Latitude != 10 {
+			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのcurrent_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 10, result.Chairs[0].CurrentCoordinate.Latitude)
 		}
-		if result.Chairs[0].Stats.TotalEvaluationAvg != 5 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_evaluation_avgが正しくありません (expected:%f, actual:%f)", 5.0, result.Chairs[0].Stats.TotalEvaluationAvg)
-		}
-		if result.Chairs[0].Stats.TotalRidesCount != 1 {
-			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_rides_countが正しくありません (expected:%d, actual:%d)", 1, result.Chairs[0].Stats.TotalRidesCount)
+		if result.Chairs[0].CurrentCoordinate.Longitude != 10 {
+			return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのcurrent_coordinateのlongitudeが正しくありません (expected:%d, actual:%d)", 10, result.Chairs[0].CurrentCoordinate.Longitude)
 		}
 	}
 
@@ -447,9 +402,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			}
 			if err := validateAppNotification(result, requestID, api.RideStatusCOMPLETED); err != nil {
 				return err
-			}
-			if len(result.Chair.Value.Stats.RecentRides) != 1 {
-				return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのrecent_ridesが正しくありません (expected:%d, actual:%d)", 1, len(result.Chair.Value.Stats.RecentRides))
 			}
 			if result.Chair.Value.Stats.TotalEvaluationAvg != 5 {
 				return fmt.Errorf("GET /api/app/nearby-chairs の返却するchairのstatsのtotal_evaluation_avgが正しくありません (expected:%f, actual:%f)", 5.0, result.Chair.Value.Stats.TotalEvaluationAvg)
@@ -464,9 +416,9 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 	return nil
 }
 
-func validateAppNotification(req *api.AppRide, requestID string, status api.RideStatus) error {
-	if req.ID != requestID {
-		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.ID)
+func validateAppNotification(req *api.AppGetNotificationOK, requestID string, status api.RideStatus) error {
+	if req.RideID != requestID {
+		return fmt.Errorf("GET /api/app/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RideID)
 	}
 	if req.PickupCoordinate.Latitude != 0 {
 		return fmt.Errorf("GET /api/app/notification の返却するpickup_coordinateのlatitudeが正しくありません (expected:%d, actual:%d)", 0, req.PickupCoordinate.Latitude)
@@ -488,7 +440,7 @@ func validateAppNotification(req *api.AppRide, requestID string, status api.Ride
 	return nil
 }
 
-func validateAppNotificationWithChair(req *api.AppRide, requestID string, status api.RideStatus, chairID string) error {
+func validateAppNotificationWithChair(req *api.AppGetNotificationOK, requestID string, status api.RideStatus, chairID string) error {
 	if err := validateAppNotification(req, requestID, status); err != nil {
 		return err
 	}

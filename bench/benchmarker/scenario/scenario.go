@@ -94,21 +94,21 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		return nil
 	})))
 	lo.Must1(meter.Int64ObservableGauge("world.chairs.num", metric.WithDescription("Number of chairs"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		for _, p := range w.ProviderDB.Iter() {
+		for _, p := range w.OwnerDB.Iter() {
 			chairs := p.ChairDB.ToSlice()
 			insideRegion := lo.CountBy(chairs, func(c *world.Chair) bool { return c.Location.Current().Within(p.Region) })
-			o.Observe(int64(insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", true)))
-			o.Observe(int64(len(chairs)-insideRegion), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", false)))
+			o.Observe(int64(insideRegion), metric.WithAttributes(attribute.Int("owner", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", true)))
+			o.Observe(int64(len(chairs)-insideRegion), metric.WithAttributes(attribute.Int("owner", int(p.ID)), attribute.String("region", p.Region.Name), attribute.Bool("inside_region", false)))
 		}
 		return nil
 	})))
-	lo.Must1(meter.Int64ObservableCounter("world.providers.num", metric.WithDescription("Number of providers"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		o.Observe(int64(w.ProviderDB.Size()))
+	lo.Must1(meter.Int64ObservableCounter("world.owners.num", metric.WithDescription("Number of owners"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		o.Observe(int64(w.OwnerDB.Size()))
 		return nil
 	})))
-	lo.Must1(meter.Int64ObservableCounter("world.providers.sales", metric.WithDescription("Sales of provider"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
-		for _, p := range w.ProviderDB.Iter() {
-			o.Observe(p.TotalSales.Load(), metric.WithAttributes(attribute.Int("provider", int(p.ID)), attribute.String("region", p.Region.Name)))
+	lo.Must1(meter.Int64ObservableCounter("world.owners.sales", metric.WithDescription("Sales of owner"), metric.WithUnit("1"), metric.WithInt64Callback(func(ctx context.Context, o metric.Int64Observer) error {
+		for _, p := range w.OwnerDB.Iter() {
+			o.Observe(p.TotalSales.Load(), metric.WithAttributes(attribute.Int("owner", int(p.ID)), attribute.String("region", p.Region.Name)))
 		}
 		return nil
 	})))
@@ -195,23 +195,23 @@ func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) er
 	}
 
 	const (
-		initialProvidersNum         = 5
-		initialChairsNumPerProvider = 10
-		initialUsersNum             = 10
+		initialOwnersNum         = 5
+		initialChairsNumPerOwner = 10
+		initialUsersNum          = 10
 	)
 
-	for i := range initialProvidersNum {
-		provider, err := s.world.CreateProvider(s.worldCtx, &world.CreateProviderArgs{
+	for i := range initialOwnersNum {
+		owner, err := s.world.CreateOwner(s.worldCtx, &world.CreateOwnerArgs{
 			Region: s.world.Regions[i%len(s.world.Regions)],
 		})
 		if err != nil {
 			return err
 		}
 
-		for range initialChairsNumPerProvider {
+		for range initialChairsNumPerOwner {
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
-				Provider:          provider,
-				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(provider.Region, provider.Rand),
+				Owner:             owner,
+				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(owner.Region, owner.Rand),
 				Model:             world.ChairModelA,
 			})
 			if err != nil {
@@ -260,7 +260,7 @@ LOOP:
 }
 
 func (s *Scenario) Score() int64 {
-	return lo.SumBy(s.world.ProviderDB.ToSlice(), func(p *world.Provider) int64 { return p.TotalSales.Load() })
+	return lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.TotalSales.Load() })
 }
 
 func (s *Scenario) TotalDiscount() int64 {

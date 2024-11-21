@@ -28,12 +28,6 @@ type Invoker interface {
 	//
 	// GET /app/notification
 	AppGetNotification(ctx context.Context) (AppGetNotificationRes, error)
-	// AppGetRide invokes app-get-ride operation.
-	//
-	// ユーザーがライドの詳細を確認する.
-	//
-	// GET /app/rides/{ride_id}
-	AppGetRide(ctx context.Context, params AppGetRideParams) (AppGetRideRes, error)
 	// AppGetRides invokes app-get-rides operation.
 	//
 	// ユーザーが完了済みのライド一覧を取得する.
@@ -289,60 +283,6 @@ func (c *Client) sendAppGetNotification(ctx context.Context) (res AppGetNotifica
 	defer resp.Body.Close()
 
 	result, err := decodeAppGetNotificationResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// AppGetRide invokes app-get-ride operation.
-//
-// ユーザーがライドの詳細を確認する.
-//
-// GET /app/rides/{ride_id}
-func (c *Client) AppGetRide(ctx context.Context, params AppGetRideParams) (AppGetRideRes, error) {
-	res, err := c.sendAppGetRide(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendAppGetRide(ctx context.Context, params AppGetRideParams) (res AppGetRideRes, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/app/rides/"
-	{
-		// Encode "ride_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "ride_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.RideID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeAppGetRideResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

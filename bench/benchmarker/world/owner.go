@@ -11,12 +11,12 @@ import (
 	"github.com/samber/lo"
 )
 
-type ProviderID int
+type OwnerID int
 
-type Provider struct {
-	// ID ベンチマーカー内部プロバイダーID
-	ID ProviderID
-	// ServerID サーバー上でのプロバイダーID
+type Owner struct {
+	// ID ベンチマーカー内部オーナーID
+	ID OwnerID
+	// ServerID サーバー上でのオーナーID
 	ServerID string
 	// World Worldへの逆参照
 	World *World
@@ -29,11 +29,11 @@ type Provider struct {
 	// CompletedRequest 管理している椅子が完了したリクエスト
 	CompletedRequest *concurrent.SimpleSlice[*Request]
 
-	// RegisteredData サーバーに登録されているプロバイダー情報
-	RegisteredData RegisteredProviderData
+	// RegisteredData サーバーに登録されているオーナー情報
+	RegisteredData RegisteredOwnerData
 
 	// Client webappへのクライアント
-	Client ProviderClient
+	Client OwnerClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
 	// tickDone 行動が完了しているかどうか
@@ -44,55 +44,55 @@ type Provider struct {
 	createChairTryCount int
 }
 
-type RegisteredProviderData struct {
+type RegisteredOwnerData struct {
 	Name               string
 	ChairRegisterToken string
 }
 
-func (p *Provider) String() string {
+func (p *Owner) String() string {
 	return fmt.Sprintf("Owner{id=%d}", p.ID)
 }
 
-func (p *Provider) SetID(id ProviderID) {
+func (p *Owner) SetID(id OwnerID) {
 	p.ID = id
 }
 
-func (p *Provider) GetServerID() string {
+func (p *Owner) GetServerID() string {
 	return p.ServerID
 }
 
-func (p *Provider) Tick(ctx *Context) error {
+func (p *Owner) Tick(ctx *Context) error {
 	if p.tickDone.DoOrSkip() {
 		return nil
 	}
 	defer p.tickDone.Done()
 
 	if ctx.CurrentTime()%LengthOfHour == LengthOfHour/2 {
-		res, err := p.Client.GetProviderChairs(ctx, &GetProviderChairsRequest{})
+		res, err := p.Client.GetOwnerChairs(ctx, &GetOwnerChairsRequest{})
 		if err != nil {
-			return WrapCodeError(ErrorCodeFailedToGetProviderChairs, err)
+			return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
 		}
 		if err := p.ValidateChairs(res); err != nil {
-			return WrapCodeError(ErrorCodeIncorrectProviderChairsData, err)
+			return WrapCodeError(ErrorCodeIncorrectOwnerChairsData, err)
 		}
 	} else if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		last := lo.MaxBy(p.CompletedRequest.ToSlice(), func(a *Request, b *Request) bool { return a.ServerCompletedAt.After(b.ServerCompletedAt) })
 		if last != nil {
-			res, err := p.Client.GetProviderSales(ctx, &GetProviderSalesRequest{
+			res, err := p.Client.GetOwnerSales(ctx, &GetOwnerSalesRequest{
 				Until: last.ServerCompletedAt.Add(1 * time.Millisecond), // webapp側のDBの精度との違いを吸収するために1ms追加して取る
 			})
 			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
+				return WrapCodeError(ErrorCodeFailedToGetOwnerSales, err)
 			}
 			if err := p.ValidateSales(last.ServerCompletedAt, res); err != nil {
 				return WrapCodeError(ErrorCodeSalesMismatched, err)
 			}
 			if increase := res.Total/15000 - p.createChairTryCount; increase > 0 {
-				ctx.ContestantLogger().Info("一定の売上が立ったためProviderのChairが増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
+				ctx.ContestantLogger().Info("一定の売上が立ったためOwnerのChairが増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
 				for range increase {
 					p.createChairTryCount++
 					_, err := p.World.CreateChair(ctx, &CreateChairArgs{
-						Provider:          p,
+						Owner:             p,
 						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
 						Model:             ChairModels[(p.createChairTryCount-1)%len(ChairModels)],
 					})
@@ -107,12 +107,12 @@ func (p *Provider) Tick(ctx *Context) error {
 	return nil
 }
 
-func (p *Provider) AddChair(c *Chair) {
+func (p *Owner) AddChair(c *Chair) {
 	p.ChairDB.Set(c.ID, c)
 	p.chairCountPerModel[c.Model]++
 }
 
-func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesResponse) error {
+func (p *Owner) ValidateSales(until time.Time, serverSide *GetOwnerSalesResponse) error {
 	totals := 0
 	perChairs := lo.Associate(p.ChairDB.ToSlice(), func(c *Chair) (string, *ChairSales) {
 		return c.ServerID, &ChairSales{
@@ -183,11 +183,11 @@ func (p *Provider) ValidateSales(until time.Time, serverSide *GetProviderSalesRe
 	return nil
 }
 
-func (p *Provider) ValidateChairs(serverSide *GetProviderChairsResponse) error {
+func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 	if p.ChairDB.Len() != len(serverSide.Chairs) {
-		return fmt.Errorf("プロバイダーの椅子の数が一致していません")
+		return fmt.Errorf("オーナーの椅子の数が一致していません")
 	}
-	mapped := lo.Associate(serverSide.Chairs, func(c *ProviderChair) (string, *ProviderChair) { return c.ID, c })
+	mapped := lo.Associate(serverSide.Chairs, func(c *OwnerChair) (string, *OwnerChair) { return c.ID, c })
 	for _, chair := range p.ChairDB.Iter() {
 		data, ok := mapped[chair.ServerID]
 		if !ok {

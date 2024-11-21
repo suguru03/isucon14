@@ -9,10 +9,10 @@ import (
 type WorldClient interface {
 	// RegisterUser サーバーにユーザーを登録する
 	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
-	// RegisterProvider サーバーにプロバイダーを登録する
-	RegisterProvider(ctx *Context, data *RegisterProviderRequest) (*RegisterProviderResponse, error)
+	// RegisterOwner サーバーにオーナーを登録する
+	RegisterOwner(ctx *Context, data *RegisterOwnerRequest) (*RegisterOwnerResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
-	RegisterChair(ctx *Context, provider *Provider, data *RegisterChairRequest) (*RegisterChairResponse, error)
+	RegisterChair(ctx *Context, owner *Owner, data *RegisterChairRequest) (*RegisterChairResponse, error)
 }
 
 type UserClient interface {
@@ -32,11 +32,11 @@ type UserClient interface {
 	ConnectUserNotificationStream(ctx *Context, user *User, receiver NotificationReceiverFunc) (NotificationStream, error)
 }
 
-type ProviderClient interface {
-	// GetProviderSales サーバーからプロバイダーの売り上げ情報を取得する
-	GetProviderSales(ctx *Context, args *GetProviderSalesRequest) (*GetProviderSalesResponse, error)
-	// GetProviderChairs サーバーからプロバイダーの椅子一覧を取得する
-	GetProviderChairs(ctx *Context, args *GetProviderChairsRequest) (*GetProviderChairsResponse, error)
+type OwnerClient interface {
+	// GetOwnerSales サーバーからオーナーの売り上げ情報を取得する
+	GetOwnerSales(ctx *Context, args *GetOwnerSalesRequest) (*GetOwnerSalesResponse, error)
+	// GetOwnerChairs サーバーからオーナーの椅子一覧を取得する
+	GetOwnerChairs(ctx *Context, args *GetOwnerChairsRequest) (*GetOwnerChairsResponse, error)
 }
 
 type ChairClient interface {
@@ -98,12 +98,12 @@ type RequestHistoryChair struct {
 	Model string
 }
 
-type GetProviderSalesRequest struct {
+type GetOwnerSalesRequest struct {
 	Since time.Time
 	Until time.Time
 }
 
-type GetProviderSalesResponse struct {
+type GetOwnerSalesResponse struct {
 	Total  int
 	Chairs []*ChairSales
 	Models []*ChairSalesPerModel
@@ -120,13 +120,13 @@ type ChairSalesPerModel struct {
 	Sales int
 }
 
-type GetProviderChairsRequest struct{}
+type GetOwnerChairsRequest struct{}
 
-type GetProviderChairsResponse struct {
-	Chairs []*ProviderChair
+type GetOwnerChairsResponse struct {
+	Chairs []*OwnerChair
 }
 
-type ProviderChair struct {
+type OwnerChair struct {
 	ID                     string
 	Name                   string
 	Model                  string
@@ -159,15 +159,15 @@ type RegisterUserResponse struct {
 	Client UserClient
 }
 
-type RegisterProviderRequest struct {
+type RegisterOwnerRequest struct {
 	Name string
 }
 
-type RegisterProviderResponse struct {
-	ServerProviderID     string
+type RegisterOwnerResponse struct {
+	ServerOwnerID        string
 	ChairRegisteredToken string
 
-	Client ProviderClient
+	Client OwnerClient
 }
 
 type RegisterChairRequest struct {

@@ -19,7 +19,7 @@ type userClient struct {
 	client *webapp.Client
 }
 
-type providerClient struct {
+type ownerClient struct {
 	ctx                context.Context
 	client             *webapp.Client
 	webappClientConfig webapp.ClientConfig
@@ -69,23 +69,23 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 	}, nil
 }
 
-func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterProviderRequest) (*world.RegisterProviderResponse, error) {
+func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwnerRequest) (*world.RegisterOwnerResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 
-	response, err := client.ProviderPostRegister(c.ctx, &api.OwnerPostOwnersReq{
+	response, err := client.OwnerPostRegister(c.ctx, &api.OwnerPostOwnersReq{
 		Name: data.Name,
 	})
 	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToRegisterProvider, err)
+		return nil, WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
 	}
 
-	return &world.RegisterProviderResponse{
-		ServerProviderID:     response.ID,
+	return &world.RegisterOwnerResponse{
+		ServerOwnerID:        response.ID,
 		ChairRegisteredToken: response.ChairRegisterToken,
-		Client: &providerClient{
+		Client: &ownerClient{
 			ctx:                c.ctx,
 			client:             client,
 			webappClientConfig: c.webappClientConfig,
@@ -93,7 +93,7 @@ func (c *WorldClient) RegisterProvider(ctx *world.Context, data *world.RegisterP
 	}, nil
 }
 
-func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
+func (c *WorldClient) RegisterChair(ctx *world.Context, owner *world.Owner, data *world.RegisterChairRequest) (*world.RegisterChairResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
@@ -102,7 +102,7 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 	response, err := client.ChairPostRegister(c.ctx, &api.ChairPostChairsReq{
 		Name:               data.Name,
 		Model:              data.Model,
-		ChairRegisterToken: provider.RegisteredData.ChairRegisterToken,
+		ChairRegisterToken: owner.RegisteredData.ChairRegisterToken,
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterChair, err)
@@ -118,7 +118,7 @@ func (c *WorldClient) RegisterChair(ctx *world.Context, provider *world.Provider
 	}, nil
 }
 
-func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetProviderSalesRequest) (*world.GetProviderSalesResponse, error) {
+func (c *ownerClient) GetOwnerSales(ctx *world.Context, args *world.GetOwnerSalesRequest) (*world.GetOwnerSalesResponse, error) {
 	params := api.OwnerGetSalesParams{}
 	if !args.Since.IsZero() {
 		params.Since.SetTo(args.Since.UnixMilli())
@@ -127,12 +127,12 @@ func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetPro
 		params.Until.SetTo(args.Until.UnixMilli())
 	}
 
-	response, err := c.client.ProviderGetSales(c.ctx, &params)
+	response, err := c.client.OwnerGetSales(c.ctx, &params)
 	if err != nil {
-		return nil, WrapCodeError(ErrorCodeFailedToGetProviderSales, err)
+		return nil, WrapCodeError(ErrorCodeFailedToGetOwnerSales, err)
 	}
 
-	return &world.GetProviderSalesResponse{
+	return &world.GetOwnerSalesResponse{
 		Total: response.TotalSales,
 		Chairs: lo.Map(response.Chairs, func(v api.OwnerGetSalesOKChairsItem, _ int) *world.ChairSales {
 			return &world.ChairSales{
@@ -150,14 +150,14 @@ func (c *providerClient) GetProviderSales(ctx *world.Context, args *world.GetPro
 	}, nil
 }
 
-func (c *providerClient) GetProviderChairs(ctx *world.Context, args *world.GetProviderChairsRequest) (*world.GetProviderChairsResponse, error) {
-	response, err := c.client.ProviderGetChairs(c.ctx)
+func (c *ownerClient) GetOwnerChairs(ctx *world.Context, args *world.GetOwnerChairsRequest) (*world.GetOwnerChairsResponse, error) {
+	response, err := c.client.OwnerGetChairs(c.ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &world.GetProviderChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.ProviderChair {
-		return &world.ProviderChair{
+	return &world.GetOwnerChairsResponse{Chairs: lo.Map(response.Chairs, func(v api.OwnerGetChairsOKChairsItem, _ int) *world.OwnerChair {
+		return &world.OwnerChair{
 			ID:                     v.ID,
 			Name:                   v.Name,
 			Model:                  v.Model,
@@ -394,7 +394,7 @@ func (c *userClient) GetNearbyChairs(ctx *world.Context, current world.Coordinat
 	}
 	return &world.GetNearbyChairsResponse{
 		RetrievedAt: time.UnixMilli(res.RetrievedAt),
-		Chairs: lo.Map(res.Chairs, func(chair api.AppChair, _ int) *world.AppChair {
+		Chairs: lo.Map(res.Chairs, func(chair api.AppGetNearbyChairsOKChairsItem, _ int) *world.AppChair {
 			return &world.AppChair{
 				ID:    chair.ID,
 				Name:  chair.Name,
@@ -423,23 +423,23 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				// event = &world.UserNotificationEventMatching{}
 			case api.RideStatusENROUTE:
 				event = &world.UserNotificationEventDispatching{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusPICKUP:
 				event = &world.UserNotificationEventDispatched{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusCARRYING:
 				event = &world.UserNotificationEventCarrying{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusARRIVED:
 				event = &world.UserNotificationEventArrived{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			case api.RideStatusCOMPLETED:
 				event = &world.UserNotificationEventCompleted{
-					ServerRequestID: r.ID,
+					ServerRequestID: r.RideID,
 				}
 			}
 			if event == nil {

@@ -26,8 +26,8 @@ const (
 	ErrorCodeFailedToCreateWebappClient
 	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗したエラー
 	ErrorCodeFailedToRegisterUser
-	// ErrorCodeFailedToRegisterProvider プロバイダー登録に失敗したエラー
-	ErrorCodeFailedToRegisterProvider
+	// ErrorCodeFailedToRegisterOwner オーナー登録に失敗したエラー
+	ErrorCodeFailedToRegisterOwner
 	// ErrorCodeFailedToRegisterChair 椅子の登録に失敗したエラー
 	ErrorCodeFailedToRegisterChair
 	// ErrorCodeFailedToPostRequest リクエスト送信に失敗したエラー
@@ -36,8 +36,8 @@ const (
 	ErrorCodeFailedToGetRequests
 	// ErrorCodeFailedToPostPaymentMethods ユーザー支払い情報登録に失敗したエラー
 	ErrorCodeFailedToPostPaymentMethods
-	// ErrorCodeFailedToGetProviderSales プロバイダーの売り上げ情報の取得に失敗したエラー
-	ErrorCodeFailedToGetProviderSales
+	// ErrorCodeFailedToGetOwnerSales オーナーの売り上げ情報の取得に失敗したエラー
+	ErrorCodeFailedToGetOwnerSales
 	// ErrorCodeFailedToPostRidesEstimatedFare ライド料金の見積もりの取得に失敗したエラー
 	ErrorCodeFailedToPostRidesEstimatedFare
 	// ErrorCodeFailedToGetNearbyChairs 近くの椅子情報の取得に失敗したエラー
