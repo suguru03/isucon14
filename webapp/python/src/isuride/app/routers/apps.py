@@ -195,6 +195,45 @@ def calculate_distance(
     return abs(a_latitude - b_latitude) + abs(a_longitude - b_longitude)
 
 
+class AppPostRideEvaluationRequest(BaseModel):
+    evaluation: int
+
+
+class AppPostRideEvaluationResponse(BaseModel):
+    completed_at: int
+
+
+@router.post(
+    "/rides/{ride_id}/evaluation",
+    response_model=AppPostRideEvaluationResponse,
+    status_code=200,
+)
+def app_post_ride_evaluatation(
+    r: AppPostRideEvaluationRequest, ride_id: str
+) -> AppPostRideEvaluationResponse:
+    if r.evaluation < 1 or r.evaluation > 5:
+        raise HTTPException(
+            status_code=400, detail="evaluation must be between 1 and 5"
+        )
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="ride not found")
+        ride = Ride(**row._mapping)
+        status = get_latest_ride_status(conn, ride.id)
+
+        if status != "ARRIVED":
+            raise HTTPException(status_code=400, detail="not arrived yet")
+
+        # TODO: write a rest here
+        response = AppPostRideEvaluationResponse(completed_at=10000)
+    return response
+
+
 class AppPostUsersRequest(BaseModel):
     username: str
     firstname: str
