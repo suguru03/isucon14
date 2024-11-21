@@ -23,6 +23,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "gunicorn>=23.0.0",
+    "icecream>=2.1.3",
     "nox>=2024.10.9",
 ]
 
