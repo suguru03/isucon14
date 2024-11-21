@@ -5,8 +5,9 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
 TODO: このdocstringを消す
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from http.client import HTTPException
+from http import HTTPStatus
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -193,6 +194,45 @@ def calculate_distance(
     a_latitude: int, a_longitude: int, b_latitude: int, b_longitude: int
 ) -> int:
     return abs(a_latitude - b_latitude) + abs(a_longitude - b_longitude)
+
+
+class AppPostRideEvaluationRequest(BaseModel):
+    evaluation: int
+
+
+class AppPostRideEvaluationResponse(BaseModel):
+    completed_at: int
+
+
+@router.post(
+    "/rides/{ride_id}/evaluation",
+    response_model=AppPostRideEvaluationResponse,
+    status_code=200,
+)
+def app_post_ride_evaluatation(
+    r: AppPostRideEvaluationRequest, ride_id: str
+) -> AppPostRideEvaluationResponse:
+    if r.evaluation < 1 or r.evaluation > 5:
+        raise HTTPException(
+            status_code=400, detail="evaluation must be between 1 and 5"
+        )
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="ride not found")
+        ride = Ride(**row._mapping)
+        status = get_latest_ride_status(conn, ride.id)
+
+        if status != "ARRIVED":
+            raise HTTPException(status_code=400, detail="not arrived yet")
+
+        # TODO: write a rest here
+        response = AppPostRideEvaluationResponse(completed_at=10000)
+    return response
 
 
 class AppPostUsersRequest(BaseModel):
@@ -456,13 +496,13 @@ def app_get_notification(
             {"user_id": user.id},
         ).fetchone()
         if not row:
-            response.status_code = status.HTTP_204_NO_CONTENT
+            response.status_code = HTTPStatus.NO_CONTENT
             return response
 
         ride: Ride = Ride(**row._mapping)
         status = get_latest_ride_status(conn, ride.id)
 
-        response = AppGetNotificationResponse(
+        notification_response = AppGetNotificationResponse(
             ride_id=ride.id,
             pickup_coordinate=Coordinate(latitude=0, longitude=0),
             destination_coordinate=Coordinate(latitude=10, longitude=10),
@@ -474,7 +514,7 @@ def app_get_notification(
         )
 
         # TODO: check the chair is here
-    return response
+    return notification_response
 
 
 class AppGetNearByChairsResponse(BaseModel):

@@ -110,7 +110,7 @@ def chair_post_coordinate(
             text(
                 "INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (:id, :chair_id, :latitude, :longitude)"
             ),
-            {} # TODO: here
+            {},  # TODO: here
         )
 
         row = conn.execute(
