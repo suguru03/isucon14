@@ -13,10 +13,10 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import app_auth_middleware
-from ..models import Ride, User
+from ..models import Chair, Ride, User
 from ..sql import engine
 from ..utils import secure_random_str
-from .owners import fare_per_distance, initial_fare
+from .owners import calculate_sale, fare_per_distance, initial_fare
 
 router = APIRouter(prefix="/api/app")
 
@@ -87,6 +87,84 @@ def get_latest_ride_status(conn, ride_id: str) -> str:
         return ""
 
     return row.status
+
+
+class GetAppRidesResponseItemChair(BaseModel):
+    id: str
+    owner: str
+    name: str
+    model: str
+
+
+class GetAppRidesResponseItem(BaseModel):
+    id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    chair: GetAppRidesResponseItemChair
+    fare: int
+    evaluation: int
+    requested_at: int
+    completed_at: int
+
+
+class GetAppRidesResponse(BaseModel):
+    rides: list[GetAppRidesResponseItem]
+
+
+@router.get("/rides")
+def app_get_rides(user: User = Depends(app_auth_middleware)):
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                "SELECT * FROM rides WHERE user_id = :user_id ORDER BY created_at DESC"
+            ),
+            {"user_id": user.id},
+        ).fetchall()
+        rides = [Ride(**row._mapping) for row in rows]
+
+    items = []
+    for ride in rides:
+        status = get_latest_ride_status(conn, ride.id)
+        if status != "COMPLETED":
+            continue
+
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("SELECT * FROM chairs WHERE id = :id"), {"id": ride.chair_id}
+            ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+            chair = Chair(**row._mapping)
+
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("SELECT * FROM owners WHERE id = :id"), {"id": chair.owner_id}
+            ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+            owner = Chair(**row._mapping)
+
+        # TODO: 参照実装みたいにpartialに作るべき？
+        item = GetAppRidesResponseItem(
+            id=ride.id,
+            pickup_coordinate=Coordinate(
+                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+            ),
+            destination_coordinate=Coordinate(
+                latitude=ride.destination_latitude, longitude=ride.destination_longitude
+            ),
+            chair=GetAppRidesResponseItemChair(
+                id=chair.id, owner=owner.name, name=chair.name, model=chair.model
+            ),
+            fare=calculate_sale(ride),
+            # TODO: 型エラーを修正
+            evaluation=ride.evaluation,  # type: ignore[arg-type]
+            requested_at=int(ride.created_at.timestamp() * 1000),
+            completed_at=int(ride.updated_at.timestamp() * 1000),
+        )
+        items.append(item)
+
+    return GetAppRidesResponse(rides=items)
 
 
 @router.post("/rides", status_code=202)
