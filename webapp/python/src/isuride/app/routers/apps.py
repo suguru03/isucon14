@@ -352,7 +352,7 @@ class AppPostRideEvaluationResponse(BaseModel):
     response_model=AppPostRideEvaluationResponse,
     status_code=200,
 )
-def app_post_ride_evaluatation(
+def app_post_ride_evaluation(
     r: AppPostRideEvaluationRequest, ride_id: str
 ) -> AppPostRideEvaluationResponse:
     if r.evaluation < 1 or r.evaluation > 5:
@@ -767,7 +767,7 @@ class AppGetNearByChairsResponse(BaseModel):
     response_model=AppGetNearByChairsResponse,
     status_code=200,
 )
-def app_get_near_by_chairs(latitude: int, longitude: int, distance: int = 50):
+def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
         chairs = conn.execute(
