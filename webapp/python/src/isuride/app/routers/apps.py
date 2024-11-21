@@ -5,8 +5,9 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
 TODO: このdocstringを消す
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from http.client import HTTPException
+from http import HTTPStatus
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -495,13 +496,13 @@ def app_get_notification(
             {"user_id": user.id},
         ).fetchone()
         if not row:
-            response.status_code = status.HTTP_204_NO_CONTENT
+            response.status_code = HTTPStatus.NO_CONTENT
             return response
 
         ride: Ride = Ride(**row._mapping)
         status = get_latest_ride_status(conn, ride.id)
 
-        response = AppGetNotificationResponse(
+        notification_response = AppGetNotificationResponse(
             ride_id=ride.id,
             pickup_coordinate=Coordinate(latitude=0, longitude=0),
             destination_coordinate=Coordinate(latitude=10, longitude=10),
@@ -513,7 +514,7 @@ def app_get_notification(
         )
 
         # TODO: check the chair is here
-    return response
+    return notification_response
 
 
 class AppGetNearByChairsResponse(BaseModel):
