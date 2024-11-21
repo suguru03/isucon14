@@ -11,7 +11,7 @@ from sqlalchemy import text
 from ulid import ULID
 
 from ..middlewares import chair_auth_middleware
-from ..models import Chair, ChairLocation, Owner, Ride
+from ..models import Chair, ChairLocation, Owner, Ride, User
 from ..sql import engine
 from ..utils import secure_random_str
 from .apps import get_latest_ride_status
@@ -161,11 +161,80 @@ def chair_post_coordinate(
     )
 
 
+class SimpleUser(BaseModel):
+    id: str
+    name: str
+
+
+class ChairGetNotificationResponse(BaseModel):
+    ride_id: str
+    user: SimpleUser
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    status: str
+
+
 @router.get("/notification", status_code=204)
-def char_get_notification():
-    # TODO: implement
-    # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/chair_handlers.go#L141
-    pass
+def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
+    with engine.begin() as conn:
+        conn.execute(
+            text("SELECT * FROM chairs WHERE id = :id FOR UPDATE"), {"id": chair.id}
+        )
+
+        found = True
+        ride_status = ""
+        row = conn.execute(
+            text(
+                "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC LIMIT 1"
+            ),
+            {"chair_id": chair.id},
+        ).fetchone()
+        if row is None:
+            found = False
+
+        if found:
+            assert row is not None
+            ride = Ride(**row)
+            ride_status = get_latest_ride_status(conn, ride.id)
+
+        if (not found) or ride_status == "COMPLETED" or ride_status == "CANCELLED":
+            # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
+            row = conn.execute(
+                text(
+                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+                )
+            ).fetchone()
+            if row is None:
+                raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
+            matched = Ride(**row)
+
+            conn.execute(
+                text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
+                {"chair_id": chair.id, "id": matched.id},
+            )
+
+            if not found:
+                ride = matched
+                ride_status = "MATCHING"
+
+        row = conn.execute(
+            text("SELECT * FROM users WHERE id = :id FOR SHARE"), {"id": ride.user_id}
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user = User(**row)
+
+    return ChairGetNotificationResponse(
+        ride_id=ride.id,
+        user=SimpleUser(id=user.id, name=f"{user.firstname} {user.lastname}"),
+        pickup_coordinate=Coordinate(
+            latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+        ),
+        destination_coordinate=Coordinate(
+            latitude=ride.destination_latitude, longitude=ride.destination_longitude
+        ),
+        status=ride_status,
+    )
 
 
 @router.post("/rides/{ride_id}/status")
