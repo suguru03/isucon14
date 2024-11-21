@@ -237,6 +237,63 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
     )
 
 
-@router.post("/rides/{ride_id}/status")
-def chair_post_ride_status():
-    pass
+class PostChairRidesRideIDStatusRequest(BaseModel):
+    status: str
+
+
+@router.post("/rides/{ride_id}/status", status_code=status.HTTP_204_NO_CONTENT)
+def chair_post_ride_status(
+    ride_id: str,
+    req: PostChairRidesRideIDStatusRequest,
+    chair: Chair = Depends(chair_auth_middleware),
+):
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT * FROM rides WHERE id = :id FOR UPDATE"), {"id": ride_id}
+        ).fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="ride not found"
+            )
+        ride = Ride(**row)
+
+        if ride.chair_id != chair.id:
+            raise HTTPException(
+                status_code=status.BAD_REQUEST, detail="not assigned to this ride"
+            )
+
+        match req.status:
+            # Deny matching
+            case "MATCHING":
+                conn.execute(
+                    text(
+                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+                    ),
+                    {"id": str(ULID()), "ride_id": ride.id, "status": "MATCHING"},
+                )
+            # Accept matching
+            case "ENROUTE":
+                conn.execute(
+                    text(
+                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+                    ),
+                    {"id": str(ULID()), "ride_id": ride.id, "status": "ENROUTE"},
+                )
+            # After Picking up user
+            case "CARRYING":
+                ride_status = get_latest_ride_status(conn, ride.id)
+                if ride_status != "PICKUP":
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="chair has not arrived yet",
+                    )
+                conn.execute(
+                    text(
+                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
+                    ),
+                    {"id": str(ULID()), "ride_id": ride.id, "status": "CARRYING"},
+                )
+            case _:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="invalid status"
+                )
