@@ -675,20 +675,29 @@ def app_get_notification(
 
         ride: Ride = Ride(**row._mapping)
         status = get_latest_ride_status(conn, ride.id)
-        # fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
-        # 	if err != nil {
-        # 		writeError(w, http.StatusInternalServerError, err)
-        # 		return
+        fare = calculate_discounted_fare(
+            conn,
+            user.id,
+            ride,
+            ride.pickup_latitude,
+            ride.pickup_longitude,
+            ride.destination_latitude,
+            ride.destination_longitude,
+        )
 
         notification_response = AppGetNotificationResponse(
             ride_id=ride.id,
-            pickup_coordinate=Coordinate(latitude=0, longitude=0),
-            destination_coordinate=Coordinate(latitude=10, longitude=10),
-            fare=100,
+            pickup_coordinate=Coordinate(
+                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+            ),
+            destination_coordinate=Coordinate(
+                latitude=ride.destination_latitude, longitude=ride.destination_longitude
+            ),
+            fare=fare,
             status=status,
             chair=None,
-            created_at=1000,
-            updated_at=10000,
+            created_at=int(ride.created_at.timestamp() * 1000),
+            updated_at=int(ride.updated_at.timestamp() * 1000),
         )
 
         if ride.chair_id:
