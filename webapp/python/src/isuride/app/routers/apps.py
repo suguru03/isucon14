@@ -26,6 +26,7 @@ from ..utils import (
     calculate_fare,
     calculate_sale,
     secure_random_str,
+    timestamp_millis,
 )
 
 router = APIRouter(prefix="/api/app")
@@ -171,8 +172,8 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             fare=calculate_sale(ride),
             # TODO: 型エラーを修正
             evaluation=ride.evaluation,  # type: ignore[arg-type]
-            requested_at=int(ride.created_at.timestamp() * 1000),
-            completed_at=int(ride.updated_at.timestamp() * 1000),
+            requested_at=timestamp_millis(ride.created_at),
+            completed_at=timestamp_millis(ride.updated_at),
         )
         items.append(item)
 
@@ -444,7 +445,7 @@ def app_post_ride_evaluation(
         # TODO: BadGatewayのケースを実装する
 
         response = AppPostRideEvaluationResponse(
-            completed_at=int(ride.updated_at.timestamp() * 1000)
+            completed_at=timestamp_millis(ride.updated_at)
         )
     return response
 
@@ -606,8 +607,8 @@ def app_get_ride(
                 latitude=ride.destination_latitude, longitude=ride.destination_longitude
             ),
             status=status,
-            created_at=int(ride.created_at.timestamp() * 1000),
-            updated_at=int(ride.updated_at.timestamp() * 1000),
+            created_at=timestamp_millis(ride.created_at),
+            updated_at=timestamp_millis(ride.updated_at),
         )
 
         if ride.chair_id:
@@ -696,8 +697,8 @@ def app_get_notification(
             fare=fare,
             status=status,
             chair=None,
-            created_at=int(ride.created_at.timestamp() * 1000),
-            updated_at=int(ride.updated_at.timestamp() * 1000),
+            created_at=timestamp_millis(ride.created_at),
+            updated_at=timestamp_millis(ride.updated_at),
         )
 
         if ride.chair_id:
@@ -853,7 +854,8 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
         assert retrieved_at is not None
 
     return AppGetNearByChairsResponse(
-        chairs=near_by_chairs, retrieved_at=int(retrieved_at.timestamp() * 1000)
+        chairs=near_by_chairs,
+        retrieved_at=timestamp_millis(retrieved_at),
     )
 
 

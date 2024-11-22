@@ -13,7 +13,7 @@ from ulid import ULID
 from ..middlewares import chair_auth_middleware
 from ..models import Chair, ChairLocation, Owner, Ride, User
 from ..sql import engine
-from ..utils import secure_random_str
+from ..utils import secure_random_str, timestamp_millis
 from .apps import get_latest_ride_status
 
 router = APIRouter(prefix="/api/chair")
@@ -161,7 +161,7 @@ def chair_post_coordinate(
                     )
 
     return ChairPostCoordinateResponse(
-        recorded_at=int(location.created_at.timestamp() * 1000)
+        recorded_at=timestamp_millis(location.created_at)
     )
 
 

@@ -1,5 +1,6 @@
 import binascii
 import os
+from datetime import datetime
 
 from .models import Ride
 
@@ -10,6 +11,12 @@ FARE_PER_DISTANCE: int = 100
 def secure_random_str(b: int) -> str:
     random_bytes: bytes = os.urandom(b)
     return binascii.hexlify(random_bytes).decode("utf-8")
+
+
+def timestamp_millis(dt: datetime) -> int:
+    # epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    # return (dt - epoch) // timedelta(milliseconds=1)
+    return int(dt.timestamp() * 1000)
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):

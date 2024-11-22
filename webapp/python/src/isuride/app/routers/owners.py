@@ -18,7 +18,7 @@ from ulid import ULID
 from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
-from ..utils import secure_random_str, sum_sales
+from ..utils import secure_random_str, sum_sales, timestamp_millis
 
 router = APIRouter(prefix="/api/owner")
 
@@ -200,14 +200,12 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
             name=chair.name,
             model=chair.model,
             active=chair.is_active,
-            # TODO: ミリ秒への変換はこれで良いのだろうか
-            registered_at=int(chair.created_at.timestamp() * 1000),
+            registered_at=timestamp_millis(chair.created_at),
             total_distance=chair.total_distance,
             total_distance_updated_at=None,
         )
         if chair.total_distance_updated_at is not None:
-            # TODO: ミリ秒への変換はこれで良いのだろうか
-            t = int(chair.total_distance_updated_at.timestamp() * 1000)
+            t = timestamp_millis(chair.total_distance_updated_at)
             c.total_distance_updated_at = t
         res.chairs.append(c)
 
