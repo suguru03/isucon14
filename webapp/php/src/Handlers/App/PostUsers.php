@@ -136,7 +136,8 @@ class PostUsers extends AbstractHttpHandler
                 new AppPostUsers201Response([
                     'id' => (string)$userId,
                     'invitation_code' => $invitationCode
-                ])
+                ]),
+                StatusCodeInterface::STATUS_CREATED
             );
         } catch (PDOException $e) {
             if ($this->db->inTransaction()) {
