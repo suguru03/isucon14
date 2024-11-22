@@ -29,7 +29,7 @@ def calculate_sale(ride: Ride) -> int:
     return calculate_fare(
         ride.pickup_latitude,
         ride.pickup_longitude,
-        ride.destination_longitude,
+        ride.destination_latitude,
         ride.destination_longitude,
     )
 
