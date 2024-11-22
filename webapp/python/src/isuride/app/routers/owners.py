@@ -18,15 +18,9 @@ from ulid import ULID
 from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
-from ..utils import secure_random_str
-
-fare_per_distance: int = 100
-initial_fare: int = 500
+from ..utils import secure_random_str, sum_sales
 
 router = APIRouter(prefix="/api/owner")
-
-INITIAL_FARE = 500
-FARE_PER_DISTANCE = 100
 
 
 class OwnerPostOwnersRequest(BaseModel):
@@ -137,19 +131,6 @@ def owner_get_sales(
         res.models = model_sales
 
         return res
-
-
-def sum_sales(rides: list[Ride]) -> int:
-    sale = 0
-    for ride in rides:
-        sale += calculate_sale(ride)
-    return sale
-
-
-def calculate_sale(ride: Ride) -> int:
-    # TODO: implement
-    # return calculateFare(ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
-    return 10
 
 
 class ChairWithDetail(BaseModel):

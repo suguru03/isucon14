@@ -19,8 +19,14 @@ from ..payment_gateway import (
     request_payment_gateway_post_payment,
 )
 from ..sql import engine
-from ..utils import secure_random_str
-from .owners import calculate_sale, fare_per_distance, initial_fare
+from ..utils import (
+    calculate_distance,
+    calculate_fare,
+    calculate_sale,
+    fare_per_distance,
+    initial_fare,
+    secure_random_str,
+)
 
 router = APIRouter(prefix="/api/app")
 
@@ -334,12 +340,6 @@ def app_post_rides_estimated_fare(
             )
             - discounted,
         )
-
-
-def calculate_distance(
-    a_latitude: int, a_longitude: int, b_latitude: int, b_longitude: int
-) -> int:
-    return abs(a_latitude - b_latitude) + abs(a_longitude - b_longitude)
 
 
 class AppPostRideEvaluationRequest(BaseModel):
@@ -846,13 +846,6 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
     return AppGetNearByChairsResponse(
         chairs=near_by_chairs, retrieved_at=int(retrieved_at.timestamp() * 1000)
     )
-
-
-def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
-    metered_fare = fare_per_distance * calculate_distance(
-        pickup_latitude, pickup_longitude, dest_latitude, dest_longitude
-    )
-    return initial_fare + metered_fare
 
 
 def calculate_discounted_fare(
