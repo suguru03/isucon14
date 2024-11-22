@@ -1,6 +1,6 @@
 import binascii
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from .models import Ride
 
@@ -14,9 +14,9 @@ def secure_random_str(b: int) -> str:
 
 
 def timestamp_millis(dt: datetime) -> int:
-    # epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-    # return (dt - epoch) // timedelta(milliseconds=1)
-    return int(dt.timestamp() * 1000)
+    dt = dt.astimezone(timezone.utc)
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    return (dt - epoch) // timedelta(milliseconds=1)
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
