@@ -3,8 +3,8 @@ import os
 
 from .models import Ride
 
-fare_per_distance: int = 100
-initial_fare: int = 500
+INITIAL_FARE: int = 500
+FARE_PER_DISTANCE: int = 100
 
 
 def secure_random_str(b: int) -> str:
@@ -13,10 +13,10 @@ def secure_random_str(b: int) -> str:
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
-    metered_fare = fare_per_distance * calculate_distance(
+    metered_fare = FARE_PER_DISTANCE * calculate_distance(
         pickup_latitude, pickup_longitude, dest_latitude, dest_longitude
     )
-    return initial_fare + metered_fare
+    return INITIAL_FARE + metered_fare
 
 
 def calculate_distance(

@@ -20,11 +20,11 @@ from ..payment_gateway import (
 )
 from ..sql import engine
 from ..utils import (
+    FARE_PER_DISTANCE,
+    INITIAL_FARE,
     calculate_distance,
     calculate_fare,
     calculate_sale,
-    fare_per_distance,
-    initial_fare,
     secure_random_str,
 )
 
@@ -892,9 +892,9 @@ def calculate_discounted_fare(
         if coupon:
             discount = coupon.discount
 
-    metered_fare: int = fare_per_distance * calculate_distance(
+    metered_fare: int = FARE_PER_DISTANCE * calculate_distance(
         dest_latitude, dest_longitude, pickup_latitude, pickup_longitude
     )
 
     discounted_metered_fare: int = max(metered_fare - discount, 0)
-    return initial_fare + discounted_metered_fare
+    return INITIAL_FARE + discounted_metered_fare
