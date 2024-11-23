@@ -12,7 +12,7 @@ use Slim\App;
 
 return function (App $app, array $config) {
     /** @var LoggerInterface $logger */
-    $logger = $config['logger'];
+    $logger = $config['logger']();
     /** @var PostPayment $paymentGateway */
     $paymentGateway = $config['payment_gateway']();
     /** @var PDO $database */
@@ -47,10 +47,10 @@ return function (App $app, array $config) {
     // chair handlers
     $app->post('/api/chair/chairs', new Handlers\Chair\PostChairs($database));
     $app->group('/api/chair', function ($app) use ($database) {
-        $app->post('activity', new Handlers\Chair\PostActivity($database));
-        $app->post('coordinate', new Handlers\Chair\PostCoordinate($database));
-        $app->get('notification', new Handlers\Chair\GetNotification($database));
-        $app->post('rides/{ride_id}/status', new Handlers\Chair\PostRideStatus($database));
+        $app->post('/activity', new Handlers\Chair\PostActivity($database));
+        $app->post('/coordinate', new Handlers\Chair\PostCoordinate($database));
+        $app->get('/notification', new Handlers\Chair\GetNotification($database));
+        $app->post('/rides/{ride_id}/status', new Handlers\Chair\PostRideStatus($database));
     })->addMiddleware(
         new Middlewares\ChairAuthMiddleware($database, $app->getResponseFactory())
     );

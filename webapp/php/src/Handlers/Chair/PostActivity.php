@@ -44,6 +44,7 @@ class PostActivity extends AbstractHttpHandler
         try {
             $stmt = $this->db->prepare('UPDATE chairs SET is_active = ? WHERE id = ?');
             $stmt->execute([$req->getIsActive(), $chair->id]);
+            $this->db->commit();
             return $this->writeNoContent($response);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(

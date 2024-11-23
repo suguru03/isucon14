@@ -55,8 +55,7 @@ class PostCoordinate extends AbstractHttpHandler
                 'SELECT * FROM chair_locations WHERE id = ?'
             );
             $stmt->execute([$chairLocationId]);
-            $chairLocation = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+            $chairLocation = $stmt->fetch(PDO::FETCH_ASSOC);
 
             $stmt = $this->db->prepare(
                 'SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1'
@@ -64,13 +63,8 @@ class PostCoordinate extends AbstractHttpHandler
             $stmt->execute([$chair->id]);
             $ride = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$ride) {
-                throw new RuntimeException();
-            } else {
+            if ($ride) {
                 $status = $this->getLatestRideStatus($this->db, $ride['id']);
-                if ($status === '') {
-                    throw new RuntimeException();
-                }
 
                 if ($status !== 'COMPLETED' && $status !== 'CANCELLED') {
                     if (
@@ -94,6 +88,7 @@ class PostCoordinate extends AbstractHttpHandler
                     }
                 }
             }
+            $this->db->commit();
             return $this->writeJson(
                 $response,
                 new ChairPostCoordinate200Response(['recorded_at' => strtotime($chairLocation['created_at'])])

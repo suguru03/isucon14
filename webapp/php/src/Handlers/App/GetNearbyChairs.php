@@ -141,10 +141,10 @@ class GetNearbyChairs extends AbstractHttpHandler
                     ]);
                 }
             }
-            $stmt = $this->db->prepare('SELECT CURRENT_TIMESTAMP(6) AS current_time');
+            $stmt = $this->db->prepare('SELECT CURRENT_TIMESTAMP(6) AS ct');
             $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $retrievedAt = new RetrievedAt($row['current_time']);
+            $retrievedAt = new RetrievedAt($row['ct']);
             $this->db->commit();
             return $this->writeJson($response, new AppGetNearbyChairs200Response([
                 'chairs' => $nearbyChairs,
