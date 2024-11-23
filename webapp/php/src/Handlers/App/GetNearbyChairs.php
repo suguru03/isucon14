@@ -16,6 +16,7 @@ use IsuRide\Model\Coordinate;
 use IsuRide\Response\ErrorResponse;
 use PDO;
 use PDOException;
+use RuntimeException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -99,25 +100,15 @@ class GetNearbyChairs extends AbstractHttpHandler
                 );
                 $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1');
                 $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($result) {
-                    $ride = new Ride(
-                        id: $result['id'],
-                        userId: $result['user_id'],
-                        chairId: $result['chair_id'],
-                        pickupLatitude: $result['pickup_latitude'],
-                        pickupLongitude: $result['pickup_longitude'],
-                        destinationLatitude: $result['destination_latitude'],
-                        destinationLongitude: $result['destination_longitude'],
-                        evaluation: $result['evaluation'],
-                        createdAt: $result['created_at'],
-                        updatedAt: $result['updated_at']
-                    );
-                    $status = $this->getLatestRideStatus($this->db, $ride->id);
+                $ride = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($ride) {
+                    // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
+                    $status = $this->getLatestRideStatus($this->db, $ride['id']);
                     if ($status !== 'COMPLETED') {
                         continue;
                     }
                 }
+                // 5分以内に更新されている最新の位置情報を取得
                 $stmt = $this->db->prepare(
                     'SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1'
                 );
