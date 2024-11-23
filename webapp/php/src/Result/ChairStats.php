@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace IsuRide\Result;
 
-use IsuRide\Model\AppChairStats;
 use IsuRide\Model\AppGetNotification200ResponseChairStats;
 use Throwable;
 
