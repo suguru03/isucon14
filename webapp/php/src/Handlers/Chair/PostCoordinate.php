@@ -64,13 +64,8 @@ class PostCoordinate extends AbstractHttpHandler
             $stmt->execute([$chair->id]);
             $ride = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$ride) {
-                throw new RuntimeException();
-            } else {
+            if ($ride) {
                 $status = $this->getLatestRideStatus($this->db, $ride['id']);
-                if ($status === '') {
-                    throw new RuntimeException();
-                }
 
                 if ($status !== 'COMPLETED' && $status !== 'CANCELLED') {
                     if (
