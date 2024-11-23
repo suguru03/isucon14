@@ -1,11 +1,25 @@
 name: Build Base Image with Packer
 
 on:
+  schedule:
+    - cron: '0 17 * * *'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Image deployment environment'
+        required: true
+        default: 'stg'
+        options:
+          - stg
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-ami:
-    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     name: build isucon14 base image
 
     steps:
@@ -32,12 +46,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible
 
+      - name: Set AWS Role ARN
+        id: set-role
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            echo "AWS_PACKER_BUILD_ROLE_ARN=${{ vars.AWS_PROD_PACKER_BUILD_ROLE_ARN }}" >> $GITHUB_ENV
+          else
+            echo "AWS_PACKER_BUILD_ROLE_ARN=${{ vars.AWS_STG_PACKER_BUILD_ROLE_ARN }}" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_PACKER_BUILD_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
       - name: Build
         run: |
           cd provisioning/packer
-          packer init -upgrade isucon14_base_image.pkr.hcl
-          packer build isucon14_base_image.pkr.hcl
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ap-northeast-1
+          make base-build
+
+      - name: Cleanup old AMIs
+        run: |
+          PREFIX="isucon14_baseimage-"
+          aws ec2 describe-images --owners self --filters "Name=name,Values=${PREFIX}*" --query 'Images[*].[ImageId,CreationDate]' --output json | \
+          jq -r 'sort_by(.[1]) | reverse | .[3:] | .[][0]' | \
+          xargs -I {} aws ec2 deregister-image --image-id {}

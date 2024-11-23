@@ -1,22 +1,26 @@
 name: Build AMI with Packer
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  # pull_request:
-  #   branches:
-  #     - '*'
+  schedule:
+    - cron: '0 18 * * *'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Image deployment environment'
+        required: true
+        default: 'stg'
+        options:
+          - stg
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-ami:
-    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
-    name: Build
-    strategy:
-      matrix:
-        go:
-          - 1.23.2
+    runs-on: ubuntu-latest
+    name: build isucon14 contestant image
 
     steps:
       - name: Checkout repository
@@ -35,8 +39,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
-        id: go
+          go-version: 1.23
 
       - name: Setup Task
         uses: arduino/setup-task@v2
@@ -63,11 +66,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible
 
+      - name: Set AWS Role ARN
+        id: set-role
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            echo "AWS_PACKER_BUILD_ROLE_ARN=${{ vars.AWS_PROD_PACKER_BUILD_ROLE_ARN }}" >> $GITHUB_ENV
+          else
+            echo "AWS_PACKER_BUILD_ROLE_ARN=${{ vars.AWS_STG_PACKER_BUILD_ROLE_ARN }}" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_PACKER_BUILD_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
       - name: Build
         run: |
           cd provisioning/packer
           make
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ap-northeast-1
+
+      - name: Cleanup old AMIs
+        run: |
+          PREFIX="isucon14_contestant-"
+          aws ec2 describe-images --owners self --filters "Name=name,Values=${PREFIX}*" --query 'Images[*].[ImageId,CreationDate]' --output json | \
+          jq -r 'sort_by(.[1]) | reverse | .[3:] | .[][0]' | \
+          xargs -I {} aws ec2 deregister-image --image-id {}

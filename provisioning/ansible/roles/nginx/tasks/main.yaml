@@ -41,13 +41,10 @@
     group: "root"
     mode: "0644"
   with_items:
-    - etc/nginx/tls/_.u.isucon.dev.crt
-    - etc/nginx/tls/_.u.isucon.dev.issuer.crt
-    - etc/nginx/tls/_.u.isucon.dev.key
     - etc/nginx/tls/_.t.isucon.dev.crt
     - etc/nginx/tls/_.t.isucon.dev.key
-    - etc/nginx/tls/_.self.u.isucon.dev.crt
-    - etc/nginx/tls/_.self.u.isucon.dev.key
+    - etc/nginx/tls/_.xiv.isucon.net.crt
+    - etc/nginx/tls/_.xiv.isucon.net.key
 
 - name: "roles/nginx/tasks: Delete old config"
   become: true
