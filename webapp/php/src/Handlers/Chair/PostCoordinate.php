@@ -88,6 +88,7 @@ class PostCoordinate extends AbstractHttpHandler
                     }
                 }
             }
+            $this->db->commit();
             return $this->writeJson(
                 $response,
                 new ChairPostCoordinate200Response(['recorded_at' => strtotime($chairLocation['created_at'])])

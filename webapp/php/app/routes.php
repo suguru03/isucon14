@@ -12,7 +12,7 @@ use Slim\App;
 
 return function (App $app, array $config) {
     /** @var LoggerInterface $logger */
-    $logger = $config['logger'];
+    $logger = $config['logger']();
     /** @var PostPayment $paymentGateway */
     $paymentGateway = $config['payment_gateway']();
     /** @var PDO $database */

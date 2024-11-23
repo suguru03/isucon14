@@ -54,10 +54,11 @@ class GetNotification extends AbstractHttpHandler
             }
 
             if (!$found || $status === 'COMPLETED' || $status === 'CANCELLED') {
+                // MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
                 $stmt = $this->db->prepare(
                     'SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE'
                 );
-                $stmt->execute([$chair->id]);
+                $stmt->execute();
                 $matched = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$matched) {
                     return $this->writeNoContent($response);
@@ -79,6 +80,7 @@ class GetNotification extends AbstractHttpHandler
             );
             $stmt->execute([$ride['user_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->db->commit();
 
             return $this->writeJson(
                 $response,

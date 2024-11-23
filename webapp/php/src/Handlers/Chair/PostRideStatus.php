@@ -109,6 +109,7 @@ class PostRideStatus extends AbstractHttpHandler
                         )
                     );
             }
+            $this->db->commit();
             return $this->writeNoContent($response);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
