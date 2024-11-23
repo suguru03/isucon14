@@ -54,6 +54,15 @@ type Chair struct {
 	notificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
+
+	// detour 今回のリクエストで迂回するかどうか
+	detour bool
+	// detoured 今回のリクエストで迂回したかどうか
+	detoured bool
+	// detourPoint 迂回ポイント
+	detourPoint Coordinate
+	// detourIn Dispaching or Carryingのどっちで迂回するか
+	detourIn RequestStatus
 }
 
 type RegisteredChairData struct {
@@ -128,14 +137,34 @@ func (c *Chair) Tick(ctx *Context) error {
 			}
 
 		case RequestStatusDispatching:
-			// 配椅子位置に向かう
+			// 配車位置に向かう
 			time := ctx.CurrentTime()
-			c.Location.MoveTo(&LocationEntry{
-				Coord: c.moveToward(c.Request.PickupPoint),
-				Time:  time,
-			})
+			if c.detour && c.detourIn == RequestStatusDispatching && !c.detoured {
+				// 迂回する予定でまだ迂回してない場合
+				if c.Location.Current().Equals(c.detourPoint) {
+					// 迂回ポイントに着いた次の移動は配車位置から離れる方向に行う
+					c.Location.MoveTo(&LocationEntry{
+						Coord: c.moveOppositeTo(c.Request.PickupPoint),
+						Time:  time,
+					})
+					c.detoured = true
+				} else {
+					// 迂回ポイントに向かう
+					c.Location.MoveTo(&LocationEntry{
+						Coord: c.moveToward(c.detourPoint),
+						Time:  time,
+					})
+				}
+			} else {
+				// 配車位置に向かう
+				c.Location.MoveTo(&LocationEntry{
+					Coord: c.moveToward(c.Request.PickupPoint),
+					Time:  time,
+				})
+			}
+
 			if c.Location.Current().Equals(c.Request.PickupPoint) {
-				// 配椅子位置に到着
+				// 配車位置に到着
 				c.Request.Statuses.Desired = RequestStatusDispatched
 				c.Request.Statuses.Chair = RequestStatusDispatched
 				c.Request.DispatchedAt = time
@@ -163,10 +192,30 @@ func (c *Chair) Tick(ctx *Context) error {
 		case RequestStatusCarrying:
 			// 目的地に向かう
 			time := ctx.CurrentTime()
-			c.Location.MoveTo(&LocationEntry{
-				Coord: c.moveToward(c.Request.DestinationPoint),
-				Time:  time,
-			})
+			if c.detour && c.detourIn == RequestStatusCarrying && !c.detoured {
+				// 迂回する予定でまだ迂回してない場合
+				if c.Location.Current().Equals(c.detourPoint) {
+					// 迂回ポイントに着いた次の移動は目的地から離れる方向に行う
+					c.Location.MoveTo(&LocationEntry{
+						Coord: c.moveOppositeTo(c.Request.DestinationPoint),
+						Time:  time,
+					})
+					c.detoured = true
+				} else {
+					// 迂回ポイントに向かう
+					c.Location.MoveTo(&LocationEntry{
+						Coord: c.moveToward(c.detourPoint),
+						Time:  time,
+					})
+				}
+			} else {
+				// 目的地に向かう
+				c.Location.MoveTo(&LocationEntry{
+					Coord: c.moveToward(c.Request.DestinationPoint),
+					Time:  time,
+				})
+			}
+
 			if c.Location.Current().Equals(c.Request.DestinationPoint) {
 				// 目的地に到着
 				c.Request.Statuses.Desired = RequestStatusArrived
@@ -203,20 +252,22 @@ func (c *Chair) Tick(ctx *Context) error {
 
 		// 椅子がリクエストを正常に認識する
 		c.Request = req
+		// 10%の確率で迂回させる(最短距離より1単位速度分だけ遠回しさせる)
+		c.detour = c.Rand.Float64() < 0.1
+		c.detoured = false
+		if c.detour {
+			if c.Rand.IntN(2) == 0 {
+				c.detourIn = RequestStatusDispatching
+				c.detourPoint = CalculateRandomDetourPoint(c.Location.Current(), c.Request.PickupPoint, c.Model.Speed, c.Rand)
+			} else {
+				c.detourIn = RequestStatusCarrying
+				c.detourPoint = CalculateRandomDetourPoint(c.Request.PickupPoint, c.Request.DestinationPoint, c.Model.Speed, c.Rand)
+			}
+		}
 
 	// 進行中のリクエストが存在せず、稼働中
 	case c.State == ChairStateActive:
-		// TODO: deactivateタイミング
-		//err := c.Client.SendDeactivate(ctx, c)
-		//if err != nil {
-		//	return WrapCodeError(ErrorCodeFailedToDeactivate, err)
-		//}
-		//
-		//// 退勤
-		//c.State = ChairStateInactive
-		//// 通知コネクションを切断
-		//c.notificationConn.Close()
-		//c.notificationConn = nil
+		break
 
 	// 未稼働
 	case c.State == ChairStateInactive:
@@ -330,6 +381,42 @@ func (c *Chair) moveToward(target Coordinate) (to Coordinate) {
 				to.X -= x
 			}
 		}
+	}
+
+	return to
+}
+
+func (c *Chair) moveOppositeTo(target Coordinate) (to Coordinate) {
+	current := c.Location.Current()
+	to = current
+
+	moveX := 0
+	moveY := 0
+	switch {
+	case target.X == current.X:
+		moveY = c.Model.Speed
+	case target.Y == current.Y:
+		moveX = c.Model.Speed
+	default:
+		if c.Rand.IntN(2) == 0 {
+			moveX = c.Model.Speed
+		} else {
+			moveY = c.Model.Speed
+		}
+	}
+
+	switch {
+	case current.X < target.X:
+		to.X -= moveX
+	case current.X > target.X:
+		to.X += moveX
+	}
+
+	switch {
+	case current.Y < target.Y:
+		to.Y -= moveY
+	case current.Y > target.Y:
+		to.Y += moveY
 	}
 
 	return to
