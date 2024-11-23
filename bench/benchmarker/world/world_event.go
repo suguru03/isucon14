@@ -25,3 +25,9 @@ type EventUserLeave struct {
 
 	unimplementedEvent
 }
+
+type EventSoftError struct {
+	Error error
+
+	unimplementedEvent
+}

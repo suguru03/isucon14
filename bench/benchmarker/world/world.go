@@ -305,7 +305,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		}
 		entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
 		if len(entries) == 0 {
-			return fmt.Errorf("ID:%sの椅子は指定の範囲内にありません", chair.ID)
+			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
 		}
 		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
 			if !entry.Until.Valid {
@@ -315,7 +315,8 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			// untilがある場合は今より3秒以内にその位置にいればOK
 			return baseTime.Sub(entry.Until.Time) <= 3*time.Second
 		}) {
-			return fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID)
+			// ソフトエラーとして処理する
+			go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))})
 		}
 	}
 	// TODO レスポンスに含まれないが、範囲内にある椅子の扱い
@@ -357,5 +358,7 @@ func (w *World) PublishEvent(e Event) {
 		}()
 	case *EventUserLeave:
 		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
+	case *EventSoftError:
+		w.handleTickError(data.Error)
 	}
 }
