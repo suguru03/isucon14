@@ -114,6 +114,20 @@ func (u *User) Tick(ctx *Context) error {
 
 	// 進行中のリクエストが存在
 	case u.Request != nil:
+		if u.notificationConn == nil {
+			// 通知コネクションが無い場合は繋いでおく
+			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
+				if !concurrent.TrySend(u.notificationQueue, event) {
+					slog.Error("通知受け取りチャンネルが詰まってる", slog.String("user_server_id", u.ServerID))
+					u.notificationQueue <- event
+				}
+			})
+			if err != nil {
+				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
+			}
+			u.notificationConn = conn
+		}
+
 		switch u.Request.Statuses.User {
 		case RequestStatusMatching:
 			// マッチングされるまで待機する
@@ -163,24 +177,16 @@ func (u *User) Tick(ctx *Context) error {
 		case RequestStatusCompleted:
 			// 進行中のリクエストが無い状態にする
 			u.Request = nil
+
+			// 通知コネクションを切る
+			if u.notificationConn != nil {
+				u.notificationConn.Close()
+				u.notificationConn = nil
+			}
 		}
 
 	// 進行中のリクエストは存在しないが、ユーザーがアクティブ状態
 	case u.Request == nil && u.State == UserStateActive:
-		if u.notificationConn == nil {
-			// 通知コネクションが無い場合は繋いでおく
-			conn, err := u.Client.ConnectUserNotificationStream(ctx, u, func(event NotificationEvent) {
-				if !concurrent.TrySend(u.notificationQueue, event) {
-					slog.Error("通知受け取りチャンネルが詰まってる", slog.String("user_server_id", u.ServerID))
-					u.notificationQueue <- event
-				}
-			})
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToConnectNotificationStream, err)
-			}
-			u.notificationConn = conn
-		}
-
 		if count := len(u.RequestHistory); (count == 1 && u.TotalEvaluation <= 1) || float64(u.TotalEvaluation)/float64(count) <= 2 {
 			// 初回利用で評価1なら離脱
 			// 2回以上利用して平均評価が2以下の場合は離脱
@@ -191,7 +197,6 @@ func (u *User) Tick(ctx *Context) error {
 		}
 
 		// 過去のリクエストを確認する
-		// TODO 作成する条件・頻度
 		err := u.CheckRequestHistory(ctx)
 		if err != nil {
 			return err
@@ -213,8 +218,10 @@ func (u *User) Tick(ctx *Context) error {
 
 func (u *User) Deactivate() {
 	u.State = UserStateInactive
-	u.notificationConn.Close()
-	u.notificationConn = nil
+	if u.notificationConn != nil {
+		u.notificationConn.Close()
+		u.notificationConn = nil
+	}
 	u.World.PublishEvent(&EventUserLeave{User: u})
 }
 
