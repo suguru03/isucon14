@@ -12,7 +12,7 @@ import (
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
 	actual := s.world.PaymentDB.TotalPayment() + s.TotalDiscount()
-	expected := s.Score()
+	expected := s.Score() * 100
 	if actual != expected {
 		s.contestantLogger.Error("決済サーバーで決済された額とユーザーが支払うべき額が一致していません", slog.Int64("diff(actual-expected)", actual-expected))
 	}

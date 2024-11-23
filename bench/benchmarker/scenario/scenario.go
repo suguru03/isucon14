@@ -260,7 +260,7 @@ LOOP:
 }
 
 func (s *Scenario) Score() int64 {
-	return lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.TotalSales.Load() })
+	return lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.TotalSales.Load() }) / 100
 }
 
 func (s *Scenario) TotalDiscount() int64 {
