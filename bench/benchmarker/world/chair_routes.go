@@ -1,6 +1,7 @@
 package world
 
 import (
+	"slices"
 	"sync"
 	"time"
 
@@ -32,6 +33,20 @@ func (r *ChairLocation) Current() Coordinate {
 		return r.Initial
 	}
 	return r.current.Coord
+}
+
+func (r *ChairLocation) LastMovedAt() (time.Time, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.current == nil {
+		return time.Time{}, false
+	}
+	for _, entry := range slices.Backward(r.history) {
+		if entry.ServerTime.Valid {
+			return entry.ServerTime.Time, true
+		}
+	}
+	return time.Time{}, false
 }
 
 func (r *ChairLocation) TotalTravelDistance() int {
