@@ -266,11 +266,12 @@ func (u *User) CreateRequest(ctx *Context) error {
 		useInvCoupon = true
 	}
 
-	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, 50)
+	checkDistance := 50
+	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, checkDistance)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
-	if err := u.World.checkNearbyChairsResponse(pickup, 50, nearby); err != nil {
+	if err := u.World.checkNearbyChairsResponse(pickup, checkDistance, nearby); err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
 	if len(nearby.Chairs) == 0 {

@@ -110,3 +110,33 @@ func (r *ChairLocation) SetServerTime(serverTime time.Time) {
 	defer r.mu.Unlock()
 	r.current.ServerTime = null.TimeFrom(serverTime)
 }
+
+type GetPeriodsByCoordResultEntry struct {
+	Since time.Time
+	Until null.Time
+}
+
+func (r *ChairLocation) GetPeriodsByCoord(c Coordinate) []GetPeriodsByCoordResultEntry {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var (
+		result  []GetPeriodsByCoordResultEntry
+		current *GetPeriodsByCoordResultEntry
+	)
+	for _, entry := range r.history {
+		if current != nil && entry.ServerTime.Valid {
+			current.Until = entry.ServerTime
+			result = append(result, *current)
+			current = nil
+		}
+		if entry.Coord.Equals(c) && entry.ServerTime.Valid {
+			current = &GetPeriodsByCoordResultEntry{
+				Since: entry.ServerTime.Time,
+			}
+		}
+	}
+	if current != nil {
+		result = append(result, *current)
+	}
+	return result
+}

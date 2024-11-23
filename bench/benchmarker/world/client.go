@@ -75,9 +75,10 @@ type GetNearbyChairsResponse struct {
 }
 
 type AppChair struct {
-	ID    string
-	Name  string
-	Model string
+	ID         string
+	Name       string
+	Model      string
+	Coordinate Coordinate
 }
 
 type RequestHistory struct {
