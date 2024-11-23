@@ -12,11 +12,11 @@ use IsuRide\Database\Model\Ride;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppChair;
 use IsuRide\Model\AppGetNearbyChairs200Response;
+use IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner;
 use IsuRide\Model\Coordinate;
 use IsuRide\Response\ErrorResponse;
 use PDO;
 use PDOException;
-use RuntimeException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -132,20 +132,14 @@ class GetNearbyChairs extends AbstractHttpHandler
                     $chairLocation->longitude
                 );
                 if ($distanceToChair <= $distance) {
-                    $chairStats = $this->getChairStats($this->db, $chair->id);
-                    if ($chairStats->isError()) {
-                        $this->db->rollBack();
-                        return (new ErrorResponse())->write(
-                            $response,
-                            StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
-                            $chairStats->error
-                        );
-                    }
-                    $nearbyChairs[] = new AppChair([
+                    $nearbyChairs[] = new AppGetNearbyChairs200ResponseChairsInner([
                         'id' => $chair->id,
                         'name' => $chair->name,
                         'model' => $chair->model,
-                        'stats' => $chairStats->stats,
+                        'current_coordinate' => new Coordinate([
+                            'latitude' => $chairLocation->latitude,
+                            'longitude' => $chairLocation->longitude,
+                        ]),
                     ]);
                 }
             }

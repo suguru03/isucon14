@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNearbyChairs200Response
+ * AppGetNearbyChairs200ResponseChairsInner
  *
  * PHP version 7.4
  *
@@ -32,7 +32,7 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNearbyChairs200Response Class Doc Comment
+ * AppGetNearbyChairs200ResponseChairsInner Class Doc Comment
  *
  * @category Class
  * @package  IsuRide
@@ -40,7 +40,7 @@ use \IsuRide\ObjectSerializer;
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \JsonSerializable
+class AppGetNearbyChairs200ResponseChairsInner implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -49,7 +49,7 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_nearby_chairs_200_response';
+    protected static $openAPIModelName = 'app_get_nearby_chairs_200_response_chairs_inner';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -57,8 +57,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
       * @var string[]
       */
     protected static $openAPITypes = [
-        'chairs' => '\IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[]',
-        'retrieved_at' => 'int'
+        'id' => 'string',
+        'name' => 'string',
+        'model' => 'string',
+        'current_coordinate' => '\IsuRide\Model\Coordinate'
     ];
 
     /**
@@ -69,8 +71,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'chairs' => null,
-        'retrieved_at' => 'int64'
+        'id' => null,
+        'name' => null,
+        'model' => null,
+        'current_coordinate' => null
     ];
 
     /**
@@ -79,8 +83,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'chairs' => false,
-        'retrieved_at' => false
+        'id' => false,
+        'name' => false,
+        'model' => false,
+        'current_coordinate' => false
     ];
 
     /**
@@ -169,8 +175,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $attributeMap = [
-        'chairs' => 'chairs',
-        'retrieved_at' => 'retrieved_at'
+        'id' => 'id',
+        'name' => 'name',
+        'model' => 'model',
+        'current_coordinate' => 'current_coordinate'
     ];
 
     /**
@@ -179,8 +187,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $setters = [
-        'chairs' => 'setChairs',
-        'retrieved_at' => 'setRetrievedAt'
+        'id' => 'setId',
+        'name' => 'setName',
+        'model' => 'setModel',
+        'current_coordinate' => 'setCurrentCoordinate'
     ];
 
     /**
@@ -189,8 +199,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $getters = [
-        'chairs' => 'getChairs',
-        'retrieved_at' => 'getRetrievedAt'
+        'id' => 'getId',
+        'name' => 'getName',
+        'model' => 'getModel',
+        'current_coordinate' => 'getCurrentCoordinate'
     ];
 
     /**
@@ -250,8 +262,10 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('chairs', $data ?? [], null);
-        $this->setIfExists('retrieved_at', $data ?? [], null);
+        $this->setIfExists('id', $data ?? [], null);
+        $this->setIfExists('name', $data ?? [], null);
+        $this->setIfExists('model', $data ?? [], null);
+        $this->setIfExists('current_coordinate', $data ?? [], null);
     }
 
     /**
@@ -281,11 +295,17 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
     {
         $invalidProperties = [];
 
-        if ($this->container['chairs'] === null) {
-            $invalidProperties[] = "'chairs' can't be null";
+        if ($this->container['id'] === null) {
+            $invalidProperties[] = "'id' can't be null";
         }
-        if ($this->container['retrieved_at'] === null) {
-            $invalidProperties[] = "'retrieved_at' can't be null";
+        if ($this->container['name'] === null) {
+            $invalidProperties[] = "'name' can't be null";
+        }
+        if ($this->container['model'] === null) {
+            $invalidProperties[] = "'model' can't be null";
+        }
+        if ($this->container['current_coordinate'] === null) {
+            $invalidProperties[] = "'current_coordinate' can't be null";
         }
         return $invalidProperties;
     }
@@ -303,55 +323,109 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
 
 
     /**
-     * Gets chairs
+     * Gets id
      *
-     * @return \IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[]
+     * @return string
      */
-    public function getChairs()
+    public function getId()
     {
-        return $this->container['chairs'];
+        return $this->container['id'];
     }
 
     /**
-     * Sets chairs
+     * Sets id
      *
-     * @param \IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[] $chairs chairs
+     * @param string $id 椅子ID
      *
      * @return self
      */
-    public function setChairs($chairs)
+    public function setId($id)
     {
-        if (is_null($chairs)) {
-            throw new \InvalidArgumentException('non-nullable chairs cannot be null');
+        if (is_null($id)) {
+            throw new \InvalidArgumentException('non-nullable id cannot be null');
         }
-        $this->container['chairs'] = $chairs;
+        $this->container['id'] = $id;
 
         return $this;
     }
 
     /**
-     * Gets retrieved_at
+     * Gets name
      *
-     * @return int
+     * @return string
      */
-    public function getRetrievedAt()
+    public function getName()
     {
-        return $this->container['retrieved_at'];
+        return $this->container['name'];
     }
 
     /**
-     * Sets retrieved_at
+     * Sets name
      *
-     * @param int $retrieved_at 取得日時
+     * @param string $name 椅子の名前
      *
      * @return self
      */
-    public function setRetrievedAt($retrieved_at)
+    public function setName($name)
     {
-        if (is_null($retrieved_at)) {
-            throw new \InvalidArgumentException('non-nullable retrieved_at cannot be null');
+        if (is_null($name)) {
+            throw new \InvalidArgumentException('non-nullable name cannot be null');
         }
-        $this->container['retrieved_at'] = $retrieved_at;
+        $this->container['name'] = $name;
+
+        return $this;
+    }
+
+    /**
+     * Gets model
+     *
+     * @return string
+     */
+    public function getModel()
+    {
+        return $this->container['model'];
+    }
+
+    /**
+     * Sets model
+     *
+     * @param string $model 椅子のモデル
+     *
+     * @return self
+     */
+    public function setModel($model)
+    {
+        if (is_null($model)) {
+            throw new \InvalidArgumentException('non-nullable model cannot be null');
+        }
+        $this->container['model'] = $model;
+
+        return $this;
+    }
+
+    /**
+     * Gets current_coordinate
+     *
+     * @return \IsuRide\Model\Coordinate
+     */
+    public function getCurrentCoordinate()
+    {
+        return $this->container['current_coordinate'];
+    }
+
+    /**
+     * Sets current_coordinate
+     *
+     * @param \IsuRide\Model\Coordinate $current_coordinate current_coordinate
+     *
+     * @return self
+     */
+    public function setCurrentCoordinate($current_coordinate)
+    {
+        if (is_null($current_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable current_coordinate cannot be null');
+        }
+        $this->container['current_coordinate'] = $current_coordinate;
 
         return $this;
     }
