@@ -10,9 +10,7 @@ use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\ChairLocation;
 use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\RideStatus;
-use IsuRide\Model\AppChairStats;
-use IsuRide\Model\AppChairStatsRecentRidesInner;
-use IsuRide\Model\Coordinate;
+use IsuRide\Model\AppGetNotification200ResponseChairStats;
 use IsuRide\Result\ChairStats;
 use PDO;
 use PDOException;
@@ -149,7 +147,7 @@ abstract class AbstractHttpHandler
      */
     protected function getChairStats(PDO $tx, string $chairId): ChairStats
     {
-        $stats = new AppChairStats();
+        $stats = new AppGetNotification200ResponseChairStats();
         $rides = [];
         $stmt = $tx->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC');
         $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
@@ -217,65 +215,25 @@ abstract class AbstractHttpHandler
                 return new ChairStats($stats, $e);
             }
             $arrivedAt = null;
-            $rodeAt = null;
+            $pickupedAt = null;
             $isCompleted = false;
             foreach ($rideStatuses as $status) {
                 if ($status->status === 'ARRIVED') {
                     $arrivedAt = $status->createdAt;
                 } elseif ($status->status === 'CARRYING') {
-                    $rodeAt = $status->createdAt;
+                    $pickupedAt = $status->createdAt;
                 }
                 if ($status->status === 'COMPLETED') {
                     $isCompleted = true;
                 }
             }
-            if ($arrivedAt === null || $rodeAt === null) {
+            if ($arrivedAt === null || $pickupedAt === null) {
                 continue;
             }
             if (!$isCompleted) {
                 continue;
             }
-            $distance = 0;
-            $lastLocation = [
-                'latitude' => $ride->pickupLatitude,
-                'longitude' => $ride->pickupLongitude,
-            ];
-            foreach ($chairLocations as $location) {
-                $distance += $this->calculateDistance(
-                    $lastLocation['latitude'],
-                    $lastLocation['longitude'],
-                    $location->latitude,
-                    $location->longitude
-                );
-                $lastLocation = $location;
-            }
-            $distance += $this->calculateDistance(
-                $lastLocation['latitude'],
-                $lastLocation['longitude'],
-                $ride->destinationLatitude,
-                $ride->destinationLongitude,
-            );
-            $recentRides[] = new AppChairStatsRecentRidesInner(
-                [
-                    'id' => $ride->id,
-                    'pickup_coordinate' => new Coordinate([
-                        'latitude' => $ride->pickupLatitude,
-                        'longitude' => $ride->pickupLongitude,
-                    ]),
-                    'destination_coordinate' => new Coordinate([
-                        'latitude' => $ride->destinationLatitude,
-                        'longitude' => $ride->destinationLongitude,
-                    ]),
-                    'distance' => $distance,
-                    'duration' => $this->subMilliseconds($arrivedAt, $rodeAt),
-                    'evaluation' => $ride->evaluation,
-                ]
-            );
             $totalEvaluation += (float)$ride->evaluation;
-        }
-        $stats->setRecentRides($recentRides);
-        if ($totalRideCount > 5) {
-            $stats->setRecentRides(array_slice($recentRides, 0, 5));
         }
         $stats->setTotalRidesCount($totalRideCount);
         if ($totalRideCount > 0) { // @phpstan-ignore-line

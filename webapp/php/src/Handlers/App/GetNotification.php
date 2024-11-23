@@ -9,8 +9,8 @@ use IsuRide\Database\Model\Chair;
 use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
-use IsuRide\Model\AppChair;
 use IsuRide\Model\AppGetNotification200Response;
+use IsuRide\Model\AppGetNotification200ResponseChair;
 use IsuRide\Model\Coordinate;
 use IsuRide\Response\ErrorResponse;
 use PDO;
@@ -119,7 +119,7 @@ class GetNotification extends AbstractHttpHandler
                     );
                 }
                 $res->setChair(
-                    new AppChair([
+                    new AppGetNotification200ResponseChair([
                         'id' => $chair->id,
                         'name' => $chair->name,
                         'model' => $chair->model,
