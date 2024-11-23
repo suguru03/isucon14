@@ -66,6 +66,8 @@ const (
 	ErrorCodeFailedToGetOwnerChairs
 	// ErrorCodeIncorrectOwnerChairsData 取得したオーナーの椅子一覧の情報が合ってない
 	ErrorCodeIncorrectOwnerChairsData
+	// ErrorCodeTooOldNearbyChairsResponse 取得した付近の椅子情報が古すぎます
+	ErrorCodeTooOldNearbyChairsResponse
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{

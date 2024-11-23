@@ -10,6 +10,7 @@ import (
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
+	"github.com/samber/lo"
 )
 
 const (
@@ -284,11 +285,14 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	return result, nil
 }
 
-func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, response *GetNearbyChairsResponse) error {
+func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate, distance int, response *GetNearbyChairsResponse) error {
 	for _, chair := range response.Chairs {
 		c := w.ChairDB.GetByServerID(chair.ID)
 		if c == nil {
 			return fmt.Errorf("ID:%sの椅子は存在しません", chair.ID)
+		}
+		if c.State != ChairStateActive {
+			return fmt.Errorf("ID:%sの椅子はアクティブ状態ではありません", chair.ID)
 		}
 		if c.RegisteredData.Name != chair.Name {
 			return fmt.Errorf("ID:%sの椅子の名前が一致しません", chair.ID)
@@ -296,8 +300,26 @@ func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, resp
 		if c.Model.Name != chair.Model {
 			return fmt.Errorf("ID:%sの椅子のモデルが一致しません", chair.ID)
 		}
-		// TODO 位置バリデーション
+		if current.DistanceTo(chair.Coordinate) > distance {
+			return fmt.Errorf("ID:%sの椅子は指定の範囲内にありません", chair.ID)
+		}
+		entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
+		if len(entries) == 0 {
+			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
+		}
+		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
+			if !entry.Until.Valid {
+				// untilが無い場合は今もその位置にいることになるので、最新
+				return true
+			}
+			// untilがある場合は今より3秒以内にその位置にいればOK
+			return baseTime.Sub(entry.Until.Time) <= 3*time.Second
+		}) {
+			// ソフトエラーとして処理する
+			go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))})
+		}
 	}
+	// TODO レスポンスに含まれないが、範囲内にある椅子の扱い
 	return nil
 }
 
@@ -336,5 +358,7 @@ func (w *World) PublishEvent(e Event) {
 		}()
 	case *EventUserLeave:
 		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
+	case *EventSoftError:
+		w.handleTickError(data.Error)
 	}
 }

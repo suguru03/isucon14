@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
@@ -235,7 +236,6 @@ func (u *User) CreateRequest(ctx *Context) error {
 	u.InvitingLock.Lock()
 	defer u.InvitingLock.Unlock()
 
-	// TODO 目的地の決定方法をランダムじゃなくする
 	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)
 	dest := RandomCoordinateAwayFromHereWithRand(pickup, u.Rand.IntN(100)+5, u.Rand)
 
@@ -267,11 +267,13 @@ func (u *User) CreateRequest(ctx *Context) error {
 		useInvCoupon = true
 	}
 
-	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, 50)
+	checkDistance := 50
+	now := time.Now()
+	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, checkDistance)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
-	if err := u.World.checkNearbyChairsResponse(pickup, 50, nearby); err != nil {
+	if err := u.World.checkNearbyChairsResponse(now, pickup, checkDistance, nearby); err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
 	if len(nearby.Chairs) == 0 {
@@ -318,13 +320,13 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 	request.Statuses.RLock()
 	defer request.Statuses.RUnlock()
 	if request.Statuses.User != status && request.Statuses.Desired != status {
-		// キャンセル以外で、現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
+		// 現在認識しているユーザーの状態で無いかつ、想定状態ではない状態に遷移しようとしている場合
 		if request.Statuses.User == RequestStatusMatching && request.Statuses.Desired == RequestStatusDispatched && status == RequestStatusDispatching {
 			// ユーザーにDispatchingが送られる前に、椅子が到着している場合があるが、その時にDispatchingを受け取ることを許容する
 		} else if request.Statuses.User == RequestStatusDispatched && request.Statuses.Desired == RequestStatusArrived && status == RequestStatusCarrying {
 			// もう到着しているが、ユーザー側の通知が遅延していて、DISPATCHED状態からまだCARRYINGに遷移してないときは、CARRYINGを許容する
 		} else if request.Statuses.Desired == RequestStatusDispatched && request.Statuses.User == RequestStatusDispatched && status == RequestStatusCarrying {
-			// FIXME: 出発リクエストを送った後、ベンチマーカーのDesiredステータスの変更を行う前に通知が届いてしまうことがある
+			// ユーザーがDispatchedを受け取った状態で、椅子が出発リクエストを送った後、ベンチマーカーのDesiredステータスの変更を行う前にユーザー側にCarrying通知が届いてしまうことがあるがこれは許容する
 		} else if status == RequestStatusCompleted {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
 			for _, r := range slices.Backward(u.RequestHistory) {

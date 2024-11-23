@@ -396,9 +396,10 @@ func (c *userClient) GetNearbyChairs(ctx *world.Context, current world.Coordinat
 		RetrievedAt: time.UnixMilli(res.RetrievedAt),
 		Chairs: lo.Map(res.Chairs, func(chair api.AppGetNearbyChairsOKChairsItem, _ int) *world.AppChair {
 			return &world.AppChair{
-				ID:    chair.ID,
-				Name:  chair.Name,
-				Model: chair.Model,
+				ID:         chair.ID,
+				Name:       chair.Name,
+				Model:      chair.Model,
+				Coordinate: world.C(chair.CurrentCoordinate.Latitude, chair.CurrentCoordinate.Longitude),
 			}
 		}),
 	}, nil
