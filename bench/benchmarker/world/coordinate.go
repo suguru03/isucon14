@@ -76,11 +76,11 @@ func CalculateRandomDetourPoint(start, dest Coordinate, speed int, rand *rand.Ra
 	moveY := move - moveX
 
 	if start.X == dest.X {
-		moveX = 0
-		moveY = move
-	} else if start.Y == dest.Y {
-		moveY = 0
 		moveX = move
+		moveY = 0
+	} else if start.Y == dest.Y {
+		moveY = move
+		moveX = 0
 	}
 
 	x := start.X
