@@ -55,8 +55,7 @@ class PostCoordinate extends AbstractHttpHandler
                 'SELECT * FROM chair_locations WHERE id = ?'
             );
             $stmt->execute([$chairLocationId]);
-            $chairLocation = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+            $chairLocation = $stmt->fetch(PDO::FETCH_ASSOC);
 
             $stmt = $this->db->prepare(
                 'SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1'
