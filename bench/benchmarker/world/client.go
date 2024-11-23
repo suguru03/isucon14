@@ -44,14 +44,10 @@ type ChairClient interface {
 	SendChairCoordinate(ctx *Context, chair *Chair) (*SendChairCoordinateResponse, error)
 	// SendAcceptRequest サーバーに配椅子要求を受理することを報告する
 	SendAcceptRequest(ctx *Context, chair *Chair, req *Request) error
-	// SendDenyRequest サーバーに配椅子要求を受理することを報告する
-	SendDenyRequest(ctx *Context, chair *Chair, serverRequestID string) error
 	// SendDepart サーバーに客が搭乗完了して出発することを報告する
 	SendDepart(ctx *Context, req *Request) error
 	// SendActivate サーバーにリクエストの受付開始を通知する
 	SendActivate(ctx *Context, chair *Chair) error
-	// SendDeactivate サーバーにリクエストの受付停止を通知する
-	SendDeactivate(ctx *Context, chair *Chair) error
 	// ConnectChairNotificationStream 椅子用の通知ストリームに接続する
 	ConnectChairNotificationStream(ctx *Context, chair *Chair, receiver NotificationReceiverFunc) (NotificationStream, error)
 }

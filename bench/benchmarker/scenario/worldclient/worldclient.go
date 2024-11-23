@@ -192,17 +192,6 @@ func (c *chairClient) SendAcceptRequest(ctx *world.Context, chair *world.Chair, 
 	return nil
 }
 
-func (c *chairClient) SendDenyRequest(ctx *world.Context, chair *world.Chair, serverRequestID string) error {
-	_, err := c.client.ChairPostRideStatus(c.ctx, serverRequestID, &api.ChairPostRideStatusReq{
-		Status: api.ChairPostRideStatusReqStatusMATCHING,
-	})
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostDeny, err)
-	}
-
-	return nil
-}
-
 func (c *chairClient) SendDepart(ctx *world.Context, req *world.Request) error {
 	_, err := c.client.ChairPostRideStatus(c.ctx, req.ServerID, &api.ChairPostRideStatusReq{
 		Status: api.ChairPostRideStatusReqStatusCARRYING,
@@ -220,17 +209,6 @@ func (c *chairClient) SendActivate(ctx *world.Context, chair *world.Chair) error
 	})
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToPostActivate, err)
-	}
-
-	return nil
-}
-
-func (c *chairClient) SendDeactivate(ctx *world.Context, chair *world.Chair) error {
-	_, err := c.client.ChairPostActivity(c.ctx, &api.ChairPostActivityReq{
-		IsActive: false,
-	})
-	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToPostDeactivate, err)
 	}
 
 	return nil

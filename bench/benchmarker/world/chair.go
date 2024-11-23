@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"slices"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/guregu/null/v5"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
@@ -284,13 +285,21 @@ func (c *Chair) Tick(ctx *Context) error {
 	}
 
 	if c.Location.Dirty() {
-		// 動いた場合に自身の座標をサーバーに送信
-		res, err := c.Client.SendChairCoordinate(ctx, c)
+		// 動いた場合に自身の座標をサーバーに送信。成功するまでリトライし続ける
+		err := backoff.Retry(func() error {
+			res, err := c.Client.SendChairCoordinate(ctx, c)
+			if err != nil {
+				err = WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
+				go c.World.PublishEvent(&EventSoftError{Error: err})
+				return err
+			}
+			c.Location.SetServerTime(res.RecordedAt) // FIXME: ここの反映(ロック)が遅れて、総移動距離の計算が１つずれる場合がある
+			c.Location.ResetDirtyFlag()
+			return nil
+		}, backoff.NewExponentialBackOff())
 		if err != nil {
-			return WrapCodeError(ErrorCodeFailedToSendChairCoordinate, err)
+			return err
 		}
-		c.Location.SetServerTime(res.RecordedAt) // FIXME: ここの反映(ロック)が遅れて、総移動距離の計算が１つずれる場合がある
-		c.Location.ResetDirtyFlag()
 	}
 	return nil
 }
