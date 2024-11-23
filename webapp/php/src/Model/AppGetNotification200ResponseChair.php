@@ -1,6 +1,6 @@
 <?php
 /**
- * AppChairStatsRecentRidesInner
+ * AppGetNotification200ResponseChair
  *
  * PHP version 7.4
  *
@@ -32,15 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppChairStatsRecentRidesInner Class Doc Comment
+ * AppGetNotification200ResponseChair Class Doc Comment
  *
  * @category Class
+ * @description 椅子情報
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \JsonSerializable
+class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -49,7 +50,7 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
       *
       * @var string
       */
-    protected static $openAPIModelName = 'AppChair_stats_recent_rides_inner';
+    protected static $openAPIModelName = 'app_get_notification_200_response_chair';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,11 +59,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
       */
     protected static $openAPITypes = [
         'id' => 'string',
-        'pickup_coordinate' => '\IsuRide\Model\Coordinate',
-        'destination_coordinate' => '\IsuRide\Model\Coordinate',
-        'distance' => 'int',
-        'duration' => 'int',
-        'evaluation' => 'int'
+        'name' => 'string',
+        'model' => 'string',
+        'stats' => '\IsuRide\Model\AppGetNotification200ResponseChairStats'
     ];
 
     /**
@@ -74,11 +73,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
       */
     protected static $openAPIFormats = [
         'id' => null,
-        'pickup_coordinate' => null,
-        'destination_coordinate' => null,
-        'distance' => null,
-        'duration' => 'int64',
-        'evaluation' => null
+        'name' => null,
+        'model' => null,
+        'stats' => null
     ];
 
     /**
@@ -88,11 +85,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
       */
     protected static array $openAPINullables = [
         'id' => false,
-        'pickup_coordinate' => false,
-        'destination_coordinate' => false,
-        'distance' => false,
-        'duration' => false,
-        'evaluation' => false
+        'name' => false,
+        'model' => false,
+        'stats' => false
     ];
 
     /**
@@ -182,11 +177,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
      */
     protected static $attributeMap = [
         'id' => 'id',
-        'pickup_coordinate' => 'pickup_coordinate',
-        'destination_coordinate' => 'destination_coordinate',
-        'distance' => 'distance',
-        'duration' => 'duration',
-        'evaluation' => 'evaluation'
+        'name' => 'name',
+        'model' => 'model',
+        'stats' => 'stats'
     ];
 
     /**
@@ -196,11 +189,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
      */
     protected static $setters = [
         'id' => 'setId',
-        'pickup_coordinate' => 'setPickupCoordinate',
-        'destination_coordinate' => 'setDestinationCoordinate',
-        'distance' => 'setDistance',
-        'duration' => 'setDuration',
-        'evaluation' => 'setEvaluation'
+        'name' => 'setName',
+        'model' => 'setModel',
+        'stats' => 'setStats'
     ];
 
     /**
@@ -210,11 +201,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
      */
     protected static $getters = [
         'id' => 'getId',
-        'pickup_coordinate' => 'getPickupCoordinate',
-        'destination_coordinate' => 'getDestinationCoordinate',
-        'distance' => 'getDistance',
-        'duration' => 'getDuration',
-        'evaluation' => 'getEvaluation'
+        'name' => 'getName',
+        'model' => 'getModel',
+        'stats' => 'getStats'
     ];
 
     /**
@@ -275,11 +264,9 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
     public function __construct(array $data = null)
     {
         $this->setIfExists('id', $data ?? [], null);
-        $this->setIfExists('pickup_coordinate', $data ?? [], null);
-        $this->setIfExists('destination_coordinate', $data ?? [], null);
-        $this->setIfExists('distance', $data ?? [], null);
-        $this->setIfExists('duration', $data ?? [], null);
-        $this->setIfExists('evaluation', $data ?? [], null);
+        $this->setIfExists('name', $data ?? [], null);
+        $this->setIfExists('model', $data ?? [], null);
+        $this->setIfExists('stats', $data ?? [], null);
     }
 
     /**
@@ -312,20 +299,14 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
         if ($this->container['id'] === null) {
             $invalidProperties[] = "'id' can't be null";
         }
-        if ($this->container['pickup_coordinate'] === null) {
-            $invalidProperties[] = "'pickup_coordinate' can't be null";
+        if ($this->container['name'] === null) {
+            $invalidProperties[] = "'name' can't be null";
         }
-        if ($this->container['destination_coordinate'] === null) {
-            $invalidProperties[] = "'destination_coordinate' can't be null";
+        if ($this->container['model'] === null) {
+            $invalidProperties[] = "'model' can't be null";
         }
-        if ($this->container['distance'] === null) {
-            $invalidProperties[] = "'distance' can't be null";
-        }
-        if ($this->container['duration'] === null) {
-            $invalidProperties[] = "'duration' can't be null";
-        }
-        if ($this->container['evaluation'] === null) {
-            $invalidProperties[] = "'evaluation' can't be null";
+        if ($this->container['stats'] === null) {
+            $invalidProperties[] = "'stats' can't be null";
         }
         return $invalidProperties;
     }
@@ -355,7 +336,7 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
     /**
      * Sets id
      *
-     * @param string $id ライドID
+     * @param string $id 椅子ID
      *
      * @return self
      */
@@ -370,136 +351,82 @@ class AppChairStatsRecentRidesInner implements ModelInterface, ArrayAccess, \Jso
     }
 
     /**
-     * Gets pickup_coordinate
+     * Gets name
      *
-     * @return \IsuRide\Model\Coordinate
+     * @return string
      */
-    public function getPickupCoordinate()
+    public function getName()
     {
-        return $this->container['pickup_coordinate'];
+        return $this->container['name'];
     }
 
     /**
-     * Sets pickup_coordinate
+     * Sets name
      *
-     * @param \IsuRide\Model\Coordinate $pickup_coordinate pickup_coordinate
+     * @param string $name 椅子の名前
      *
      * @return self
      */
-    public function setPickupCoordinate($pickup_coordinate)
+    public function setName($name)
     {
-        if (is_null($pickup_coordinate)) {
-            throw new \InvalidArgumentException('non-nullable pickup_coordinate cannot be null');
+        if (is_null($name)) {
+            throw new \InvalidArgumentException('non-nullable name cannot be null');
         }
-        $this->container['pickup_coordinate'] = $pickup_coordinate;
+        $this->container['name'] = $name;
 
         return $this;
     }
 
     /**
-     * Gets destination_coordinate
+     * Gets model
      *
-     * @return \IsuRide\Model\Coordinate
+     * @return string
      */
-    public function getDestinationCoordinate()
+    public function getModel()
     {
-        return $this->container['destination_coordinate'];
+        return $this->container['model'];
     }
 
     /**
-     * Sets destination_coordinate
+     * Sets model
      *
-     * @param \IsuRide\Model\Coordinate $destination_coordinate destination_coordinate
+     * @param string $model 椅子のモデル
      *
      * @return self
      */
-    public function setDestinationCoordinate($destination_coordinate)
+    public function setModel($model)
     {
-        if (is_null($destination_coordinate)) {
-            throw new \InvalidArgumentException('non-nullable destination_coordinate cannot be null');
+        if (is_null($model)) {
+            throw new \InvalidArgumentException('non-nullable model cannot be null');
         }
-        $this->container['destination_coordinate'] = $destination_coordinate;
+        $this->container['model'] = $model;
 
         return $this;
     }
 
     /**
-     * Gets distance
+     * Gets stats
      *
-     * @return int
+     * @return \IsuRide\Model\AppGetNotification200ResponseChairStats
      */
-    public function getDistance()
+    public function getStats()
     {
-        return $this->container['distance'];
+        return $this->container['stats'];
     }
 
     /**
-     * Sets distance
+     * Sets stats
      *
-     * @param int $distance 移動距離
+     * @param \IsuRide\Model\AppGetNotification200ResponseChairStats $stats stats
      *
      * @return self
      */
-    public function setDistance($distance)
+    public function setStats($stats)
     {
-        if (is_null($distance)) {
-            throw new \InvalidArgumentException('non-nullable distance cannot be null');
+        if (is_null($stats)) {
+            throw new \InvalidArgumentException('non-nullable stats cannot be null');
         }
-        $this->container['distance'] = $distance;
-
-        return $this;
-    }
-
-    /**
-     * Gets duration
-     *
-     * @return int
-     */
-    public function getDuration()
-    {
-        return $this->container['duration'];
-    }
-
-    /**
-     * Sets duration
-     *
-     * @param int $duration 移動時間 (ミリ秒)
-     *
-     * @return self
-     */
-    public function setDuration($duration)
-    {
-        if (is_null($duration)) {
-            throw new \InvalidArgumentException('non-nullable duration cannot be null');
-        }
-        $this->container['duration'] = $duration;
-
-        return $this;
-    }
-
-    /**
-     * Gets evaluation
-     *
-     * @return int
-     */
-    public function getEvaluation()
-    {
-        return $this->container['evaluation'];
-    }
-
-    /**
-     * Sets evaluation
-     *
-     * @param int $evaluation 評価
-     *
-     * @return self
-     */
-    public function setEvaluation($evaluation)
-    {
-        if (is_null($evaluation)) {
-            throw new \InvalidArgumentException('non-nullable evaluation cannot be null');
-        }
-        $this->container['evaluation'] = $evaluation;
+        $this->container['stats'] = $stats;
 
         return $this;
     }

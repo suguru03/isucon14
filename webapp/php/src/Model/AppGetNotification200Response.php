@@ -60,8 +60,9 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => 'string',
         'pickup_coordinate' => '\IsuRide\Model\Coordinate',
         'destination_coordinate' => '\IsuRide\Model\Coordinate',
+        'fare' => 'int',
         'status' => '\IsuRide\Model\RideStatus',
-        'chair' => '\IsuRide\Model\AppChair',
+        'chair' => '\IsuRide\Model\AppGetNotification200ResponseChair',
         'created_at' => 'int',
         'updated_at' => 'int',
         'retry_after_ms' => 'int'
@@ -78,6 +79,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => null,
         'pickup_coordinate' => null,
         'destination_coordinate' => null,
+        'fare' => null,
         'status' => null,
         'chair' => null,
         'created_at' => 'int64',
@@ -94,6 +96,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => false,
         'pickup_coordinate' => false,
         'destination_coordinate' => false,
+        'fare' => false,
         'status' => false,
         'chair' => false,
         'created_at' => false,
@@ -190,6 +193,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => 'ride_id',
         'pickup_coordinate' => 'pickup_coordinate',
         'destination_coordinate' => 'destination_coordinate',
+        'fare' => 'fare',
         'status' => 'status',
         'chair' => 'chair',
         'created_at' => 'created_at',
@@ -206,6 +210,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => 'setRideId',
         'pickup_coordinate' => 'setPickupCoordinate',
         'destination_coordinate' => 'setDestinationCoordinate',
+        'fare' => 'setFare',
         'status' => 'setStatus',
         'chair' => 'setChair',
         'created_at' => 'setCreatedAt',
@@ -222,6 +227,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         'ride_id' => 'getRideId',
         'pickup_coordinate' => 'getPickupCoordinate',
         'destination_coordinate' => 'getDestinationCoordinate',
+        'fare' => 'getFare',
         'status' => 'getStatus',
         'chair' => 'getChair',
         'created_at' => 'getCreatedAt',
@@ -289,6 +295,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         $this->setIfExists('ride_id', $data ?? [], null);
         $this->setIfExists('pickup_coordinate', $data ?? [], null);
         $this->setIfExists('destination_coordinate', $data ?? [], null);
+        $this->setIfExists('fare', $data ?? [], null);
         $this->setIfExists('status', $data ?? [], null);
         $this->setIfExists('chair', $data ?? [], null);
         $this->setIfExists('created_at', $data ?? [], null);
@@ -331,6 +338,9 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
         }
         if ($this->container['destination_coordinate'] === null) {
             $invalidProperties[] = "'destination_coordinate' can't be null";
+        }
+        if ($this->container['fare'] === null) {
+            $invalidProperties[] = "'fare' can't be null";
         }
         if ($this->container['status'] === null) {
             $invalidProperties[] = "'status' can't be null";
@@ -438,6 +448,33 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
     }
 
     /**
+     * Gets fare
+     *
+     * @return int
+     */
+    public function getFare()
+    {
+        return $this->container['fare'];
+    }
+
+    /**
+     * Sets fare
+     *
+     * @param int $fare 運賃
+     *
+     * @return self
+     */
+    public function setFare($fare)
+    {
+        if (is_null($fare)) {
+            throw new \InvalidArgumentException('non-nullable fare cannot be null');
+        }
+        $this->container['fare'] = $fare;
+
+        return $this;
+    }
+
+    /**
      * Gets status
      *
      * @return \IsuRide\Model\RideStatus
@@ -467,7 +504,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
     /**
      * Gets chair
      *
-     * @return \IsuRide\Model\AppChair|null
+     * @return \IsuRide\Model\AppGetNotification200ResponseChair|null
      */
     public function getChair()
     {
@@ -477,7 +514,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
     /**
      * Sets chair
      *
-     * @param \IsuRide\Model\AppChair|null $chair chair
+     * @param \IsuRide\Model\AppGetNotification200ResponseChair|null $chair chair
      *
      * @return self
      */

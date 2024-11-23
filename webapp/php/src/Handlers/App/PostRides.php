@@ -51,7 +51,7 @@ class PostRides extends AbstractHttpHandler
         }
 
         $user = $request->getAttribute('user');
-        assert($user instanceof User);
+        assert($user instanceof \IsuRide\Database\Model\User);
         $rideId = new Ulid();
         $this->db->beginTransaction();
         try {
@@ -91,7 +91,7 @@ class PostRides extends AbstractHttpHandler
             }
             $stmt = $this->db->prepare(
                 <<<SQL
-INSERT INTO rides (id, user_id, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude) 
+INSERT INTO rides (id, user_id, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
 VALUES (?, ?, ?, ?, ?, ?)
 SQL
             );

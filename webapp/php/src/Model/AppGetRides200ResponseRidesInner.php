@@ -60,8 +60,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => 'string',
         'pickup_coordinate' => '\IsuRide\Model\Coordinate',
         'destination_coordinate' => '\IsuRide\Model\Coordinate',
-        'chair' => '\IsuRide\Model\AppGetRides200ResponseRidesInnerChair',
         'fare' => 'int',
+        'chair' => '\IsuRide\Model\AppGetRides200ResponseRidesInnerChair',
         'evaluation' => 'int',
         'requested_at' => 'int',
         'completed_at' => 'int'
@@ -78,8 +78,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => null,
         'pickup_coordinate' => null,
         'destination_coordinate' => null,
-        'chair' => null,
         'fare' => null,
+        'chair' => null,
         'evaluation' => null,
         'requested_at' => 'int64',
         'completed_at' => 'int64'
@@ -94,8 +94,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => false,
         'pickup_coordinate' => false,
         'destination_coordinate' => false,
-        'chair' => false,
         'fare' => false,
+        'chair' => false,
         'evaluation' => false,
         'requested_at' => false,
         'completed_at' => false
@@ -190,8 +190,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => 'id',
         'pickup_coordinate' => 'pickup_coordinate',
         'destination_coordinate' => 'destination_coordinate',
-        'chair' => 'chair',
         'fare' => 'fare',
+        'chair' => 'chair',
         'evaluation' => 'evaluation',
         'requested_at' => 'requested_at',
         'completed_at' => 'completed_at'
@@ -206,8 +206,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => 'setId',
         'pickup_coordinate' => 'setPickupCoordinate',
         'destination_coordinate' => 'setDestinationCoordinate',
-        'chair' => 'setChair',
         'fare' => 'setFare',
+        'chair' => 'setChair',
         'evaluation' => 'setEvaluation',
         'requested_at' => 'setRequestedAt',
         'completed_at' => 'setCompletedAt'
@@ -222,8 +222,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         'id' => 'getId',
         'pickup_coordinate' => 'getPickupCoordinate',
         'destination_coordinate' => 'getDestinationCoordinate',
-        'chair' => 'getChair',
         'fare' => 'getFare',
+        'chair' => 'getChair',
         'evaluation' => 'getEvaluation',
         'requested_at' => 'getRequestedAt',
         'completed_at' => 'getCompletedAt'
@@ -289,8 +289,8 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         $this->setIfExists('id', $data ?? [], null);
         $this->setIfExists('pickup_coordinate', $data ?? [], null);
         $this->setIfExists('destination_coordinate', $data ?? [], null);
-        $this->setIfExists('chair', $data ?? [], null);
         $this->setIfExists('fare', $data ?? [], null);
+        $this->setIfExists('chair', $data ?? [], null);
         $this->setIfExists('evaluation', $data ?? [], null);
         $this->setIfExists('requested_at', $data ?? [], null);
         $this->setIfExists('completed_at', $data ?? [], null);
@@ -332,11 +332,11 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
         if ($this->container['destination_coordinate'] === null) {
             $invalidProperties[] = "'destination_coordinate' can't be null";
         }
-        if ($this->container['chair'] === null) {
-            $invalidProperties[] = "'chair' can't be null";
-        }
         if ($this->container['fare'] === null) {
             $invalidProperties[] = "'fare' can't be null";
+        }
+        if ($this->container['chair'] === null) {
+            $invalidProperties[] = "'chair' can't be null";
         }
         if ($this->container['evaluation'] === null) {
             $invalidProperties[] = "'evaluation' can't be null";
@@ -444,33 +444,6 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
     }
 
     /**
-     * Gets chair
-     *
-     * @return \IsuRide\Model\AppGetRides200ResponseRidesInnerChair
-     */
-    public function getChair()
-    {
-        return $this->container['chair'];
-    }
-
-    /**
-     * Sets chair
-     *
-     * @param \IsuRide\Model\AppGetRides200ResponseRidesInnerChair $chair chair
-     *
-     * @return self
-     */
-    public function setChair($chair)
-    {
-        if (is_null($chair)) {
-            throw new \InvalidArgumentException('non-nullable chair cannot be null');
-        }
-        $this->container['chair'] = $chair;
-
-        return $this;
-    }
-
-    /**
      * Gets fare
      *
      * @return int
@@ -493,6 +466,33 @@ class AppGetRides200ResponseRidesInner implements ModelInterface, ArrayAccess, \
             throw new \InvalidArgumentException('non-nullable fare cannot be null');
         }
         $this->container['fare'] = $fare;
+
+        return $this;
+    }
+
+    /**
+     * Gets chair
+     *
+     * @return \IsuRide\Model\AppGetRides200ResponseRidesInnerChair
+     */
+    public function getChair()
+    {
+        return $this->container['chair'];
+    }
+
+    /**
+     * Sets chair
+     *
+     * @param \IsuRide\Model\AppGetRides200ResponseRidesInnerChair $chair chair
+     *
+     * @return self
+     */
+    public function setChair($chair)
+    {
+        if (is_null($chair)) {
+            throw new \InvalidArgumentException('non-nullable chair cannot be null');
+        }
+        $this->container['chair'] = $chair;
 
         return $this;
     }

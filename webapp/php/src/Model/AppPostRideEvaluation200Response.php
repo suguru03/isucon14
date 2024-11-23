@@ -57,7 +57,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
       * @var string[]
       */
     protected static $openAPITypes = [
-        'fare' => 'int',
         'completed_at' => 'int'
     ];
 
@@ -69,7 +68,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'fare' => null,
         'completed_at' => 'int64'
     ];
 
@@ -79,7 +77,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'fare' => false,
         'completed_at' => false
     ];
 
@@ -169,7 +166,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
      * @var string[]
      */
     protected static $attributeMap = [
-        'fare' => 'fare',
         'completed_at' => 'completed_at'
     ];
 
@@ -179,7 +175,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
      * @var string[]
      */
     protected static $setters = [
-        'fare' => 'setFare',
         'completed_at' => 'setCompletedAt'
     ];
 
@@ -189,7 +184,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
      * @var string[]
      */
     protected static $getters = [
-        'fare' => 'getFare',
         'completed_at' => 'getCompletedAt'
     ];
 
@@ -250,7 +244,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('fare', $data ?? [], null);
         $this->setIfExists('completed_at', $data ?? [], null);
     }
 
@@ -281,9 +274,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
     {
         $invalidProperties = [];
 
-        if ($this->container['fare'] === null) {
-            $invalidProperties[] = "'fare' can't be null";
-        }
         if ($this->container['completed_at'] === null) {
             $invalidProperties[] = "'completed_at' can't be null";
         }
@@ -301,33 +291,6 @@ class AppPostRideEvaluation200Response implements ModelInterface, ArrayAccess, \
         return count($this->listInvalidProperties()) === 0;
     }
 
-
-    /**
-     * Gets fare
-     *
-     * @return int
-     */
-    public function getFare()
-    {
-        return $this->container['fare'];
-    }
-
-    /**
-     * Sets fare
-     *
-     * @param int $fare 割引後運賃
-     *
-     * @return self
-     */
-    public function setFare($fare)
-    {
-        if (is_null($fare)) {
-            throw new \InvalidArgumentException('non-nullable fare cannot be null');
-        }
-        $this->container['fare'] = $fare;
-
-        return $this;
-    }
 
     /**
      * Gets completed_at

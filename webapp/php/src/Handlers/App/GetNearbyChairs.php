@@ -8,10 +8,9 @@ use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\Chair;
 use IsuRide\Database\Model\ChairLocation;
 use IsuRide\Database\Model\RetrievedAt;
-use IsuRide\Database\Model\Ride;
 use IsuRide\Handlers\AbstractHttpHandler;
-use IsuRide\Model\AppChair;
 use IsuRide\Model\AppGetNearbyChairs200Response;
+use IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner;
 use IsuRide\Model\Coordinate;
 use IsuRide\Response\ErrorResponse;
 use PDO;
@@ -99,25 +98,15 @@ class GetNearbyChairs extends AbstractHttpHandler
                 );
                 $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1');
                 $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($result) {
-                    $ride = new Ride(
-                        id: $result['id'],
-                        userId: $result['user_id'],
-                        chairId: $result['chair_id'],
-                        pickupLatitude: $result['pickup_latitude'],
-                        pickupLongitude: $result['pickup_longitude'],
-                        destinationLatitude: $result['destination_latitude'],
-                        destinationLongitude: $result['destination_longitude'],
-                        evaluation: $result['evaluation'],
-                        createdAt: $result['created_at'],
-                        updatedAt: $result['updated_at']
-                    );
-                    $status = $this->getLatestRideStatus($this->db, $ride->id);
+                $ride = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($ride) {
+                    // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
+                    $status = $this->getLatestRideStatus($this->db, $ride['id']);
                     if ($status !== 'COMPLETED') {
                         continue;
                     }
                 }
+                // 5分以内に更新されている最新の位置情報を取得
                 $stmt = $this->db->prepare(
                     'SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1'
                 );
@@ -141,20 +130,14 @@ class GetNearbyChairs extends AbstractHttpHandler
                     $chairLocation->longitude
                 );
                 if ($distanceToChair <= $distance) {
-                    $chairStats = $this->getChairStats($this->db, $chair->id);
-                    if ($chairStats->isError()) {
-                        $this->db->rollBack();
-                        return (new ErrorResponse())->write(
-                            $response,
-                            StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
-                            $chairStats->error
-                        );
-                    }
-                    $nearbyChairs[] = new AppChair([
+                    $nearbyChairs[] = new AppGetNearbyChairs200ResponseChairsInner([
                         'id' => $chair->id,
                         'name' => $chair->name,
                         'model' => $chair->model,
-                        'stats' => $chairStats->stats,
+                        'current_coordinate' => new Coordinate([
+                            'latitude' => $chairLocation->latitude,
+                            'longitude' => $chairLocation->longitude,
+                        ]),
                     ]);
                 }
             }

@@ -57,7 +57,7 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
       * @var string[]
       */
     protected static $openAPITypes = [
-        'chairs' => '\IsuRide\Model\AppChair[]',
+        'chairs' => '\IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[]',
         'retrieved_at' => 'int'
     ];
 
@@ -305,7 +305,7 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
     /**
      * Gets chairs
      *
-     * @return \IsuRide\Model\AppChair[]
+     * @return \IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[]
      */
     public function getChairs()
     {
@@ -315,7 +315,7 @@ class AppGetNearbyChairs200Response implements ModelInterface, ArrayAccess, \Jso
     /**
      * Sets chairs
      *
-     * @param \IsuRide\Model\AppChair[] $chairs chairs
+     * @param \IsuRide\Model\AppGetNearbyChairs200ResponseChairsInner[] $chairs chairs
      *
      * @return self
      */

@@ -1,9 +1,9 @@
 .gitignore
-src/Model/AppChair.php
-src/Model/AppChairStats.php
-src/Model/AppChairStatsRecentRidesInner.php
 src/Model/AppGetNearbyChairs200Response.php
+src/Model/AppGetNearbyChairs200ResponseChairsInner.php
 src/Model/AppGetNotification200Response.php
+src/Model/AppGetNotification200ResponseChair.php
+src/Model/AppGetNotification200ResponseChairStats.php
 src/Model/AppGetRides200Response.php
 src/Model/AppGetRides200ResponseRidesInner.php
 src/Model/AppGetRides200ResponseRidesInnerChair.php
@@ -15,7 +15,6 @@ src/Model/AppPostRidesEstimatedFare200Response.php
 src/Model/AppPostRidesRequest.php
 src/Model/AppPostUsers201Response.php
 src/Model/AppPostUsersRequest.php
-src/Model/AppRide.php
 src/Model/ChairGetNotification200Response.php
 src/Model/ChairPostActivityRequest.php
 src/Model/ChairPostChairs201Response.php

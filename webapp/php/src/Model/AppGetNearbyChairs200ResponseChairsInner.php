@@ -1,6 +1,6 @@
 <?php
 /**
- * AppChair
+ * AppGetNearbyChairs200ResponseChairsInner
  *
  * PHP version 7.4
  *
@@ -32,16 +32,15 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppChair Class Doc Comment
+ * AppGetNearbyChairs200ResponseChairsInner Class Doc Comment
  *
  * @category Class
- * @description App向けの椅子情報
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
+class AppGetNearbyChairs200ResponseChairsInner implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +49,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
       *
       * @var string
       */
-    protected static $openAPIModelName = 'AppChair';
+    protected static $openAPIModelName = 'app_get_nearby_chairs_200_response_chairs_inner';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -61,7 +60,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => 'string',
         'name' => 'string',
         'model' => 'string',
-        'stats' => '\IsuRide\Model\AppChairStats'
+        'current_coordinate' => '\IsuRide\Model\Coordinate'
     ];
 
     /**
@@ -75,7 +74,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => null,
         'name' => null,
         'model' => null,
-        'stats' => null
+        'current_coordinate' => null
     ];
 
     /**
@@ -87,7 +86,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => false,
         'name' => false,
         'model' => false,
-        'stats' => false
+        'current_coordinate' => false
     ];
 
     /**
@@ -179,7 +178,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => 'id',
         'name' => 'name',
         'model' => 'model',
-        'stats' => 'stats'
+        'current_coordinate' => 'current_coordinate'
     ];
 
     /**
@@ -191,7 +190,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => 'setId',
         'name' => 'setName',
         'model' => 'setModel',
-        'stats' => 'setStats'
+        'current_coordinate' => 'setCurrentCoordinate'
     ];
 
     /**
@@ -203,7 +202,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         'id' => 'getId',
         'name' => 'getName',
         'model' => 'getModel',
-        'stats' => 'getStats'
+        'current_coordinate' => 'getCurrentCoordinate'
     ];
 
     /**
@@ -266,7 +265,7 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('id', $data ?? [], null);
         $this->setIfExists('name', $data ?? [], null);
         $this->setIfExists('model', $data ?? [], null);
-        $this->setIfExists('stats', $data ?? [], null);
+        $this->setIfExists('current_coordinate', $data ?? [], null);
     }
 
     /**
@@ -305,8 +304,8 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
         if ($this->container['model'] === null) {
             $invalidProperties[] = "'model' can't be null";
         }
-        if ($this->container['stats'] === null) {
-            $invalidProperties[] = "'stats' can't be null";
+        if ($this->container['current_coordinate'] === null) {
+            $invalidProperties[] = "'current_coordinate' can't be null";
         }
         return $invalidProperties;
     }
@@ -405,28 +404,28 @@ class AppChair implements ModelInterface, ArrayAccess, \JsonSerializable
     }
 
     /**
-     * Gets stats
+     * Gets current_coordinate
      *
-     * @return \IsuRide\Model\AppChairStats
+     * @return \IsuRide\Model\Coordinate
      */
-    public function getStats()
+    public function getCurrentCoordinate()
     {
-        return $this->container['stats'];
+        return $this->container['current_coordinate'];
     }
 
     /**
-     * Sets stats
+     * Sets current_coordinate
      *
-     * @param \IsuRide\Model\AppChairStats $stats stats
+     * @param \IsuRide\Model\Coordinate $current_coordinate current_coordinate
      *
      * @return self
      */
-    public function setStats($stats)
+    public function setCurrentCoordinate($current_coordinate)
     {
-        if (is_null($stats)) {
-            throw new \InvalidArgumentException('non-nullable stats cannot be null');
+        if (is_null($current_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable current_coordinate cannot be null');
         }
-        $this->container['stats'] = $stats;
+        $this->container['current_coordinate'] = $current_coordinate;
 
         return $this;
     }
