@@ -285,8 +285,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 	return result, nil
 }
 
-func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, response *GetNearbyChairsResponse) error {
-	now := time.Now()
+func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate, distance int, response *GetNearbyChairsResponse) error {
 	for _, chair := range response.Chairs {
 		c := w.ChairDB.GetByServerID(chair.ID)
 		if c == nil {
@@ -314,7 +313,7 @@ func (w *World) checkNearbyChairsResponse(current Coordinate, distance int, resp
 				return true
 			}
 			// untilがある場合は今より3秒以内にその位置にいればOK
-			return now.Sub(entry.Until.Time) <= 3*time.Second
+			return baseTime.Sub(entry.Until.Time) <= 3*time.Second
 		}) {
 			return fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID)
 		}

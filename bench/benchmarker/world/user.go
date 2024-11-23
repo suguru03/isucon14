@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 )
@@ -267,11 +268,12 @@ func (u *User) CreateRequest(ctx *Context) error {
 	}
 
 	checkDistance := 50
+	now := time.Now()
 	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, checkDistance)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
-	if err := u.World.checkNearbyChairsResponse(pickup, checkDistance, nearby); err != nil {
+	if err := u.World.checkNearbyChairsResponse(now, pickup, checkDistance, nearby); err != nil {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
 	if len(nearby.Chairs) == 0 {
