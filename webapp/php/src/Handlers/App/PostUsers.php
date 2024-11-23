@@ -116,7 +116,7 @@ class PostUsers extends AbstractHttpHandler
                 ]);
                 // 招待した人にもRewardを付与
                 $stmt = $this->db->prepare(
-                    'INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)'
+                    "INSERT INTO coupons (user_id, code, discount) VALUES (?, CONCAT(?, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), ?)"
                 );
                 $stmt->execute([
                     $inviter['id'],
