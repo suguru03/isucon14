@@ -226,18 +226,12 @@ func (c *Chair) Tick(ctx *Context) error {
 			c.matchingData = nil
 		}
 
-	// オファーされたリクエストが存在するが、詳細を未取得
+	// アサインされたリクエストが存在するが、詳細を未取得
 	case c.Request == nil && c.matchingData != nil:
 		req := c.World.RequestDB.GetByServerID(c.matchingData.ServerRequestID)
 		if req == nil {
-			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので一律で拒否る
-			err := c.Client.SendDenyRequest(ctx, c, c.matchingData.ServerRequestID)
-			if err != nil {
-				return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
-			}
-
-			c.matchingData = nil
-			break
+			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので、クリティカルエラーにする
+			return WrapCodeError(ErrorCodeUncontrollableRequestReceived, fmt.Errorf("ベンチマーカー外で作成されたライドはベンチマーカーで処理できないため、ベンチマーカーの負荷走行中はライドを手で作成しないようにお願いします"))
 		}
 		// TODO: matchingDataのUserとDestinationのバリデーション
 

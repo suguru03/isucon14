@@ -68,6 +68,8 @@ const (
 	ErrorCodeIncorrectOwnerChairsData
 	// ErrorCodeTooOldNearbyChairsResponse 取得した付近の椅子情報が古すぎます
 	ErrorCodeTooOldNearbyChairsResponse
+	// ErrorCodeUncontrollableRequestReceived アサインされたライドがベンチマーカー外で作られたものであるため、処理できない
+	ErrorCodeUncontrollableRequestReceived
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -77,6 +79,7 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: true,
 	ErrorCodeChairAlreadyHasRequest:                         true,
 	ErrorCodeIncorrectAmountOfFareCharged:                   true,
+	ErrorCodeUncontrollableRequestReceived:                  true,
 }
 
 type codeError struct {
