@@ -136,7 +136,7 @@ class PostRideEvaluatation extends AbstractHttpHandler
             );
             $stmt = $this->db->prepare('SELECT * FROM payment_tokens WHERE user_id = ?');
             $stmt->bindValue(1, $ride->userId, PDO::PARAM_STR);
-            $stmt->execute([$ride['user_id']]);
+            $stmt->execute([$ride->userId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
@@ -173,7 +173,7 @@ class PostRideEvaluatation extends AbstractHttpHandler
                     );
                 }
                 $this->postPayment->execute(
-                    $paymentGatewayURL,
+                    $paymentGatewayURL['value'],
                     $paymentToken->token,
                     new PostPaymentRequest(
                         amount: $fare
