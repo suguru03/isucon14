@@ -36,7 +36,7 @@ var runCmd = &cobra.Command{
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// supervisorで起動された場合は、targetを上書きする
 		if benchrun.GetTargetAddress() != "" {
-			targetURL = "https://trial.isucon14.net"
+			targetURL = "https://xiv.isucon.net"
 			targetAddr = fmt.Sprintf("%s:%d", benchrun.GetTargetAddress(), 443)
 		}
 
