@@ -100,8 +100,8 @@ func (c *Chair) Tick(ctx *Context) error {
 	case c.Request != nil:
 		switch c.Request.Statuses.Chair {
 		case RequestStatusMatching:
-			// 配椅子要求を受理するか、拒否する
-			// TODO: 拒否ロジック
+			// Active状態なら配車要求をACKする
+			// そうでないなら、応答せずにハングさせる
 			if c.State == ChairStateActive {
 				c.Request.Statuses.Lock()
 
@@ -125,15 +125,6 @@ func (c *Chair) Tick(ctx *Context) error {
 				if !c.Request.User.Region.Contains(c.Location.Current()) {
 					ctx.ContestantLogger().Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
-			} else {
-				err := c.Client.SendDenyRequest(ctx, c, c.Request.ServerID)
-				if err != nil {
-					return WrapCodeError(ErrorCodeFailedToDenyRequest, err)
-				}
-
-				// サーバーに要求を拒否の通知が通ったので状態をリセット
-				c.Request = nil
-				c.matchingData = nil
 			}
 
 		case RequestStatusDispatching:
