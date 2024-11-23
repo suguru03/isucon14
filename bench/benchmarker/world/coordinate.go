@@ -68,3 +68,36 @@ func RandomCoordinateAwayFromHereWithRand(here Coordinate, distance int, rand *r
 	}
 	return C(here.X+x, here.Y+y)
 }
+
+func CalculateRandomDetourPoint(start, dest Coordinate, speed int, rand *rand.Rand) Coordinate {
+	halfT := start.DistanceTo(dest) / speed / 2
+	move := halfT * speed
+	moveX := rand.IntN(move + 1)
+	moveY := move - moveX
+
+	if start.X == dest.X {
+		moveX = 0
+		moveY = move
+	} else if start.Y == dest.Y {
+		moveY = 0
+		moveX = move
+	}
+
+	x := start.X
+	y := start.Y
+	switch {
+	case start.X < dest.X:
+		x += moveX
+	case start.X > dest.X:
+		x -= moveX
+	}
+
+	switch {
+	case start.Y < dest.Y:
+		y += moveY
+	case start.Y > dest.Y:
+		y -= moveY
+	}
+
+	return C(x, y)
+}
