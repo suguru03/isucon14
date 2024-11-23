@@ -70,6 +70,17 @@ class GetNotification extends AbstractHttpHandler
                     new \Exception('ride status not found')
                 );
             }
+
+            $fare = $this->calculateDiscountedFare(
+                $this->db,
+                $user->id,
+                $ride,
+                $ride->pickupLatitude,
+                $ride->pickupLongitude,
+                $ride->destinationLatitude,
+                $ride->destinationLongitude
+            );
+
             $res = new AppGetNotification200Response(
                 [
                     'ride_id' => $ride->id,
@@ -81,6 +92,7 @@ class GetNotification extends AbstractHttpHandler
                         'latitude' => $ride->destinationLatitude,
                         'longitude' => $ride->destinationLongitude,
                     ]),
+                    'fare' => $fare,
                     'status' => $status,
                     'created_at' => $ride->createdAtUnixMilliseconds(),
                     'updated_at' => $ride->updatedAtUnixMilliseconds(),
