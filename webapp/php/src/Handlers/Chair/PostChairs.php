@@ -64,7 +64,7 @@ class PostChairs extends AbstractHttpHandler
                 $owner['id'],
                 $req->getName(),
                 $req->getModel(),
-                false,
+                0,
                 $accessToken,
             ]);
 
@@ -79,7 +79,8 @@ class PostChairs extends AbstractHttpHandler
                 new ChairPostChairs201Response([
                     'id' => (string)$chairId,
                     'owner_id' => $owner['id'],
-                ])
+                ]),
+                StatusCodeInterface::STATUS_CREATED
             );
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
