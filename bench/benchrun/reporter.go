@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"os"
 	"syscall"
 
@@ -42,8 +43,12 @@ func (rep *FDReporter) Report(result *resources.BenchmarkResult) error {
 	if err != nil {
 		return err
 	}
-	if len(wire) > 65536 {
-		return errors.New("marshalled BenchmarkResult is too long (max: 65536)")
+	if len(wire) == 65536 {
+		fmt.Fprintln(os.Stderr, "marshalled BenchmarkResult length is 65536")
+	}
+
+	if len(wire) > 65535 {
+		return errors.New("marshalled BenchmarkResult is too long (max: 65535)")
 	}
 
 	lenBuf := make([]byte, 2)
