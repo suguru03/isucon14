@@ -213,7 +213,6 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 				return fmt.Errorf("total_distanceが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.TotalDistance, want)
 			}
 		}
-		// TODO: RegisteredAtの検証
 	}
 	return nil
 }
