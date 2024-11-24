@@ -1,6 +1,5 @@
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
-use axum::response::IntoResponse as _;
 use axum_extra::extract::CookieJar;
 use ulid::Ulid;
 
@@ -530,6 +529,11 @@ async fn app_post_ride_evaluation(
 
 #[derive(Debug, serde::Serialize)]
 struct AppGetNotificationResponse {
+    data: Option<AppGetNotificationResponseData>,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct AppGetNotificationResponseData {
     ride_id: String,
     pickup_coordinate: Coordinate,
     destination_coordinate: Coordinate,
@@ -558,7 +562,7 @@ struct AppGetNotificationResponseChairStats {
 async fn app_get_notification(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(user): axum::Extension<User>,
-) -> Result<axum::response::Response, Error> {
+) -> Result<axum::Json<AppGetNotificationResponse>, Error> {
     let mut tx = pool.begin().await?;
 
     let Some(ride): Option<Ride> =
@@ -567,7 +571,7 @@ async fn app_get_notification(
             .fetch_optional(&mut *tx)
             .await?
     else {
-        return Ok(StatusCode::NO_CONTENT.into_response());
+        return Ok(axum::Json(AppGetNotificationResponse { data: None }));
     };
 
     let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
@@ -583,7 +587,7 @@ async fn app_get_notification(
     )
     .await?;
 
-    let mut response = AppGetNotificationResponse {
+    let mut data = AppGetNotificationResponseData {
         ride_id: ride.id,
         pickup_coordinate: Coordinate {
             latitude: ride.pickup_latitude,
@@ -608,7 +612,7 @@ async fn app_get_notification(
 
         let stats = get_chair_stats(&mut tx, &chair.id).await?;
 
-        response.chair = Some(AppGetNotificationResponseChair {
+        data.chair = Some(AppGetNotificationResponseChair {
             id: chair.id,
             name: chair.name,
             model: chair.model,
@@ -616,7 +620,7 @@ async fn app_get_notification(
         });
     }
 
-    Ok(axum::Json(response).into_response())
+    Ok(axum::Json(AppGetNotificationResponse { data: Some(data) }))
 }
 
 async fn get_chair_stats(
