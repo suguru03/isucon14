@@ -23,7 +23,6 @@ pub fn app_routes(app_state: AppState) -> axum::Router<AppState> {
             "/api/app/rides/estimated-fare",
             axum::routing::post(app_post_rides_estimated_fare),
         )
-        .route("/api/app/rides/:ride_id", axum::routing::get(app_get_ride))
         .route(
             "/api/app/rides/:ride_id/evaluation",
             axum::routing::post(app_post_ride_evaluation),
@@ -415,199 +414,6 @@ async fn app_post_rides_estimated_fare(
     }))
 }
 
-#[derive(Debug, serde::Serialize)]
-struct RecentRide {
-    id: String,
-    pickup_coordinate: Coordinate,
-    destination_coordinate: Coordinate,
-    distance: i32,
-    duration: i64,
-    evaluation: i32,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct AppChairStats {
-    // 最近の乗車履歴
-    recent_rides: Vec<RecentRide>,
-
-    // 累計の情報
-    total_rides_count: i32,
-    total_evaluation_avg: f64,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct AppChair {
-    id: String,
-    name: String,
-    model: String,
-    stats: AppChairStats,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct AppGetRideResponse {
-    id: String,
-    pickup_coordinate: Coordinate,
-    destination_coordinate: Coordinate,
-    status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    chair: Option<AppChair>,
-    created_at: i64,
-    updated_at: i64,
-}
-
-async fn app_get_ride(
-    State(AppState { pool, .. }): State<AppState>,
-    Path((ride_id,)): Path<(String,)>,
-) -> Result<axum::Json<AppGetRideResponse>, Error> {
-    let mut tx = pool.begin().await?;
-
-    let Some(ride): Option<Ride> = sqlx::query_as("SELECT * FROM rides WHERE id = ?")
-        .bind(ride_id)
-        .fetch_optional(&mut *tx)
-        .await?
-    else {
-        return Err(Error::NotFound("ride not found"));
-    };
-
-    let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
-
-    let mut response = AppGetRideResponse {
-        id: ride.id,
-        pickup_coordinate: Coordinate {
-            latitude: ride.pickup_latitude,
-            longitude: ride.pickup_longitude,
-        },
-        destination_coordinate: Coordinate {
-            latitude: ride.destination_latitude,
-            longitude: ride.destination_longitude,
-        },
-        status,
-        chair: None,
-        created_at: ride.created_at.timestamp_millis(),
-        updated_at: ride.updated_at.timestamp_millis(),
-    };
-
-    if let Some(chair_id) = ride.chair_id {
-        let chair: Chair = sqlx::query_as("SELECT * FROM chairs WHERE id = ?")
-            .bind(chair_id)
-            .fetch_one(&mut *tx)
-            .await?;
-        let stats = get_chair_stats(&mut tx, &chair.id).await?;
-
-        response.chair = Some(AppChair {
-            id: chair.id,
-            name: chair.name,
-            model: chair.model,
-            stats,
-        });
-    }
-
-    Ok(axum::Json(response))
-}
-
-async fn get_chair_stats(
-    tx: &mut sqlx::MySqlConnection,
-    chair_id: &str,
-) -> Result<AppChairStats, Error> {
-    // 最近の乗車履歴
-    let rides: Vec<Ride> =
-        sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC")
-            .bind(chair_id)
-            .fetch_all(&mut *tx)
-            .await?;
-
-    let total_ride_count = rides.len() as i32;
-    let mut total_evaluation = 0.0;
-    let mut recent_rides = Vec::new();
-    for ride in rides {
-        let chair_locations: Vec<ChairLocation> = sqlx::query_as("SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at")
-            .bind(chair_id)
-            .bind(ride.created_at)
-            .bind(ride.updated_at)
-            .fetch_all(&mut *tx)
-            .await?;
-
-        let ride_statuses: Vec<RideStatus> =
-            sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at")
-                .bind(&ride.id)
-                .fetch_all(&mut *tx)
-                .await?;
-
-        let Some(arrived_at) = ride_statuses
-            .iter()
-            .find_map(|status| (status.status == "ARRIVED").then_some(status.created_at))
-        else {
-            continue;
-        };
-        let Some(rode_at) = ride_statuses
-            .iter()
-            .find_map(|status| (status.status == "CARRYING").then_some(status.created_at))
-        else {
-            continue;
-        };
-        let is_completed = ride_statuses
-            .iter()
-            .any(|status| status.status == "COMPLETED");
-        if !is_completed {
-            continue;
-        }
-
-        let mut distance = 0;
-        let mut last_latitude = ride.pickup_latitude;
-        let mut last_longitude = ride.pickup_longitude;
-        for location in chair_locations {
-            distance += crate::calculate_distance(
-                last_latitude,
-                last_longitude,
-                location.latitude,
-                location.longitude,
-            );
-            last_latitude = location.latitude;
-            last_longitude = location.longitude;
-        }
-        distance += crate::calculate_distance(
-            last_latitude,
-            last_longitude,
-            ride.destination_latitude,
-            ride.destination_longitude,
-        );
-
-        recent_rides.push(RecentRide {
-            id: ride.id,
-            pickup_coordinate: Coordinate {
-                latitude: ride.pickup_latitude,
-                longitude: ride.pickup_longitude,
-            },
-            destination_coordinate: Coordinate {
-                latitude: ride.destination_latitude,
-                longitude: ride.destination_longitude,
-            },
-            distance,
-            duration: (arrived_at - rode_at).num_milliseconds(),
-            evaluation: ride.evaluation.unwrap(),
-        });
-
-        total_evaluation += ride.evaluation.unwrap() as f64;
-    }
-
-    // 5件以上の履歴がある場合は5件までにする
-    if total_ride_count > 5 {
-        recent_rides.truncate(5);
-    }
-
-    let total_evaluation_avg = if total_ride_count > 0 {
-        total_evaluation / total_ride_count as f64
-    } else {
-        0.0
-    };
-
-    Ok(AppChairStats {
-        recent_rides,
-        total_rides_count: total_ride_count,
-        total_evaluation_avg,
-    })
-}
-
 #[derive(Debug, serde::Deserialize)]
 struct AppPostRideEvaluationRequest {
     evaluation: i32,
@@ -727,11 +533,26 @@ struct AppGetNotificationResponse {
     ride_id: String,
     pickup_coordinate: Coordinate,
     destination_coordinate: Coordinate,
+    fare: i32,
     status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    chair: Option<AppChair>,
+    chair: Option<AppGetNotificationResponseChair>,
     created_at: i64,
     updated_at: i64,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct AppGetNotificationResponseChair {
+    id: String,
+    name: String,
+    model: String,
+    stats: AppGetNotificationResponseChairStats,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct AppGetNotificationResponseChairStats {
+    total_rides_count: i32,
+    total_evaluation_avg: f64,
 }
 
 async fn app_get_notification(
@@ -742,7 +563,7 @@ async fn app_get_notification(
 
     let Some(ride): Option<Ride> =
         sqlx::query_as("SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1")
-            .bind(user.id)
+            .bind(&user.id)
             .fetch_optional(&mut *tx)
             .await?
     else {
@@ -750,6 +571,17 @@ async fn app_get_notification(
     };
 
     let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
+
+    let fare = calculate_discounted_fare(
+        &mut tx,
+        &user.id,
+        Some(&ride),
+        ride.pickup_latitude,
+        ride.pickup_longitude,
+        ride.destination_latitude,
+        ride.destination_longitude,
+    )
+    .await?;
 
     let mut response = AppGetNotificationResponse {
         ride_id: ride.id,
@@ -761,6 +593,7 @@ async fn app_get_notification(
             latitude: ride.destination_latitude,
             longitude: ride.destination_longitude,
         },
+        fare,
         status,
         chair: None,
         created_at: ride.created_at.timestamp_millis(),
@@ -775,7 +608,7 @@ async fn app_get_notification(
 
         let stats = get_chair_stats(&mut tx, &chair.id).await?;
 
-        response.chair = Some(AppChair {
+        response.chair = Some(AppGetNotificationResponseChair {
             id: chair.id,
             name: chair.name,
             model: chair.model,
@@ -784,6 +617,66 @@ async fn app_get_notification(
     }
 
     Ok(axum::Json(response).into_response())
+}
+
+async fn get_chair_stats(
+    tx: &mut sqlx::MySqlConnection,
+    chair_id: &str,
+) -> Result<AppGetNotificationResponseChairStats, Error> {
+    let rides: Vec<Ride> =
+        sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC")
+            .bind(chair_id)
+            .fetch_all(&mut *tx)
+            .await?;
+
+    let total_ride_count = rides.len() as i32;
+    let mut total_evaluation = 0.0;
+    for ride in rides {
+        let chair_locations: Vec<ChairLocation> = sqlx::query_as("SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at")
+            .bind(chair_id)
+            .bind(ride.created_at)
+            .bind(ride.updated_at)
+            .fetch_all(&mut *tx)
+            .await?;
+
+        let ride_statuses: Vec<RideStatus> =
+            sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at")
+                .bind(&ride.id)
+                .fetch_all(&mut *tx)
+                .await?;
+
+        if !ride_statuses
+            .iter()
+            .any(|status| status.status == "ARRIVED")
+        {
+            continue;
+        }
+        if !ride_statuses
+            .iter()
+            .any(|status| (status.status == "CARRYING"))
+        {
+            continue;
+        }
+        let is_completed = ride_statuses
+            .iter()
+            .any(|status| status.status == "COMPLETED");
+        if !is_completed {
+            continue;
+        }
+
+        total_evaluation += ride.evaluation.unwrap() as f64;
+    }
+
+    let total_evaluation_avg = if total_ride_count > 0 {
+        total_evaluation / total_ride_count as f64
+    } else {
+        0.0
+    };
+
+    Ok(AppGetNotificationResponseChairStats {
+        total_rides_count: total_ride_count,
+        total_evaluation_avg,
+    })
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -795,8 +688,16 @@ struct AppGetNearbyChairsQuery {
 
 #[derive(Debug, serde::Serialize)]
 struct AppGetNearbyChairsResponse {
-    chairs: Vec<AppChair>,
+    chairs: Vec<AppGetNearbyChairsResponseChair>,
     retrieved_at: i64,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct AppGetNearbyChairsResponseChair {
+    id: String,
+    name: String,
+    model: String,
+    current_coordinate: Coordinate,
 }
 
 async fn app_get_nearby_chairs(
@@ -845,13 +746,14 @@ async fn app_get_nearby_chairs(
             chair_location.longitude,
         ) <= distance
         {
-            let stats = get_chair_stats(&mut tx, &chair.id).await?;
-
-            nearby_chairs.push(AppChair {
+            nearby_chairs.push(AppGetNearbyChairsResponseChair {
                 id: chair.id,
                 name: chair.name,
                 model: chair.model,
-                stats,
+                current_coordinate: Coordinate {
+                    latitude: chair_location.latitude,
+                    longitude: chair_location.longitude,
+                },
             });
         }
     }
