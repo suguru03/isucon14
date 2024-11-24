@@ -81,7 +81,7 @@ func (p *Owner) Tick(ctx *Context) error {
 		last := lo.MaxBy(p.CompletedRequest.ToSlice(), func(a *Request, b *Request) bool { return a.ServerCompletedAt.After(b.ServerCompletedAt) })
 		if last != nil {
 			res, err := p.Client.GetOwnerSales(ctx, &GetOwnerSalesRequest{
-				Until: last.ServerCompletedAt.Add(1 * time.Millisecond), // webapp側のDBの精度との違いを吸収するために1ms追加して取る
+				Until: last.ServerCompletedAt,
 			})
 			if err != nil {
 				return WrapCodeError(ErrorCodeFailedToGetOwnerSales, err)
