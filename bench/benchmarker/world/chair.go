@@ -231,8 +231,9 @@ func (c *Chair) Tick(ctx *Context) error {
 	case c.Request == nil && c.matchingData != nil:
 		req := c.World.RequestDB.GetByServerID(c.matchingData.ServerRequestID)
 		if req == nil {
-			// ベンチマーク外で作成されたリクエストがアサインされた場合は処理できないので、クリティカルエラーにする
-			return WrapCodeError(ErrorCodeUncontrollableRequestReceived, fmt.Errorf("ベンチマーカー外で作成されたライドはベンチマーカーで処理できないため、ベンチマーカーの負荷走行中はライドを手で作成しないようにお願いします"))
+			// ロックの関係でまだRequestDBに入ってないreqのため、次のtickで処理する
+			// ベンチマーク外で作成されたリクエストがアサインされた場合はどうしようもできないのでハングする
+			return nil
 		}
 		// TODO: matchingDataのUserとDestinationのバリデーション
 
