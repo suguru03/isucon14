@@ -397,8 +397,8 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				}
 				continue
 			}
-			if r.Data.Set {
-				data := r.Data.Value
+			if r.Data.Valid {
+				data := r.Data.V
 				var event world.NotificationEvent
 				switch data.Status {
 				case api.RideStatusMATCHING:
