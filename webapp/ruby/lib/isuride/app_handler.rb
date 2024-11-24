@@ -310,7 +310,13 @@ module Isuride
           halt json(data: nil)
         end
 
-        status = get_latest_ride_status(tx, ride.fetch(:id))
+        yet_sent_ride_status = tx.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1', ride.fetch(:id)).first
+        status =
+          if yet_sent_ride_status.nil?
+            get_latest_ride_status(tx, ride.fetch(:id))
+          else
+            yet_sent_ride_status.fetch(:status)
+          end
 
         fare = calculate_discounted_fare(tx, @current_user.id, ride, ride.fetch(:pickup_latitude), ride.fetch(:pickup_longitude), ride.fetch(:destination_latitude), ride.fetch(:destination_longitude))
 
@@ -341,6 +347,10 @@ module Isuride
             model: chair.fetch(:model),
             stats:,
           }
+        end
+
+        unless yet_sent_ride_status.nil?
+          tx.xquery('UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', yet_sent_ride_status.fetch(:id))
         end
 
         response
