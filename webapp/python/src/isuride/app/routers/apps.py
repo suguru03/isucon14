@@ -32,10 +32,100 @@ from ..utils import (
 router = APIRouter(prefix="/api/app")
 
 
-@router.post("/register", status_code=201)
-def app_post_register():
+class AppPostUsersRequest(BaseModel):
+    username: str
+    firstname: str
+    lastname: str
+    date_of_birth: str
+    invitation_code: str | None = None
+
+
+class AppPostUsersResponse(BaseModel):
+    id: str
+    invitation_code: str
+
+
+@router.post("/users", response_model=AppPostUsersResponse, status_code=201)
+def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
-    return {"id": user_id}
+    access_token = secure_random_str(32)
+    invitation_code = secure_random_str(15)
+
+    # start transaction
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (:id, :username, :firstname, :lastname, :date_of_birth, :access_token, :invitation_code)"
+            ),
+            {
+                "id": user_id,
+                "username": r.username,
+                "firstname": r.firstname,
+                "lastname": r.lastname,
+                "date_of_birth": r.date_of_birth,
+                "access_token": access_token,
+                "invitation_code": invitation_code,
+            },
+        )
+
+        # 初回登録キャンペーンのクーポンを付与
+        conn.execute(
+            text(
+                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
+            ),
+            {"user_id": user_id, "code": "CP_NEW2024", "discount": 3000},
+        )
+
+        # 招待コードを使った登録
+        if r.invitation_code:
+            # 招待する側の招待数をチェック
+            coupons = conn.execute(
+                text("SELECT * FROM coupons WHERE code = :code FOR UPDATE"),
+                {"code": "INV_" + r.invitation_code},
+            ).fetchall()
+
+            if len(coupons) >= 3:
+                raise HTTPException(
+                    status_code=400, detail="この招待コードは使用できません"
+                )
+
+            # ユーザーチェック
+            inviter = conn.execute(
+                text("SELECT * FROM users WHERE invitation_code = :invitation_code"),
+                {"invitation_code": r.invitation_code},
+            ).fetchone()
+
+            if not inviter:
+                raise HTTPException(
+                    status_code=400, detail="この招待コードは使用できません。"
+                )
+
+            # 招待クーポン付与
+            conn.execute(
+                text(
+                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
+                ),
+                {
+                    "user_id": user_id,
+                    "code": "INV_" + r.invitation_code,
+                    "discount": 1500,
+                },
+            )
+
+            # 招待した人にもRewardを付与
+            conn.execute(
+                text(
+                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, CONCAT(:code_prefix, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), :discount)"
+                ),
+                {
+                    "user_id": inviter.id,
+                    "code": "RWD_" + r.invitation_code,
+                    "discount": 1000,
+                },
+            )
+
+    response.set_cookie(key="app_session", value=access_token, path="/")
+    return AppPostUsersResponse(id=user_id, invitation_code=invitation_code)
 
 
 class AppPostPaymentMethodsRequest(BaseModel):
@@ -60,44 +150,9 @@ def app_post_payment_methods(
         )
 
 
-@router.post("/requests", status_code=202)
-def app_post_requests():
-    request_id = str(ULID())
-    return {"request_id": request_id}
-
-
-@router.get("/users", status_code=200)
-def app_get_users():
-    pass
-
-
 class Coordinate(BaseModel):
     latitude: int
     longitude: int
-
-
-class AppPostRidesRequest(BaseModel):
-    pickup_coordinate: Coordinate | None = None
-    destination_coordinate: Coordinate | None = None
-
-
-class AppPostRidesResponse(BaseModel):
-    ride_id: str
-    fare: int
-
-
-def get_latest_ride_status(conn, ride_id: str) -> str:
-    row = conn.execute(
-        text(
-            "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
-        ),
-        {"ride_id": ride_id},
-    ).fetchone()
-
-    if not row:
-        return ""
-
-    return row.status
 
 
 class GetAppRidesResponseItemChair(BaseModel):
@@ -178,6 +233,30 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
         items.append(item)
 
     return GetAppRidesResponse(rides=items)
+
+
+class AppPostRidesRequest(BaseModel):
+    pickup_coordinate: Coordinate | None = None
+    destination_coordinate: Coordinate | None = None
+
+
+class AppPostRidesResponse(BaseModel):
+    ride_id: str
+    fare: int
+
+
+def get_latest_ride_status(conn, ride_id: str) -> str:
+    row = conn.execute(
+        text(
+            "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
+        ),
+        {"ride_id": ride_id},
+    ).fetchone()
+
+    if not row:
+        return ""
+
+    return row.status
 
 
 @router.post("/rides", status_code=202)
@@ -450,187 +529,6 @@ def app_post_ride_evaluation(
     return response
 
 
-class AppPostUsersRequest(BaseModel):
-    username: str
-    firstname: str
-    lastname: str
-    date_of_birth: str
-    invitation_code: str | None = None
-
-
-class AppPostUsersResponse(BaseModel):
-    id: str
-    invitation_code: str
-
-
-@router.post("/users", response_model=AppPostUsersResponse, status_code=201)
-def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
-    user_id = str(ULID())
-    access_token = secure_random_str(32)
-    invitation_code = secure_random_str(15)
-
-    # start transaction
-    with engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (:id, :username, :firstname, :lastname, :date_of_birth, :access_token, :invitation_code)"
-            ),
-            {
-                "id": user_id,
-                "username": r.username,
-                "firstname": r.firstname,
-                "lastname": r.lastname,
-                "date_of_birth": r.date_of_birth,
-                "access_token": access_token,
-                "invitation_code": invitation_code,
-            },
-        )
-
-        # 初回登録キャンペーンのクーポンを付与
-        conn.execute(
-            text(
-                "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
-            ),
-            {"user_id": user_id, "code": "CP_NEW2024", "discount": 3000},
-        )
-
-        # 招待コードを使った登録
-        if r.invitation_code:
-            # 招待する側の招待数をチェック
-            coupons = conn.execute(
-                text("SELECT * FROM coupons WHERE code = :code FOR UPDATE"),
-                {"code": "INV_" + r.invitation_code},
-            ).fetchall()
-
-            if len(coupons) >= 3:
-                raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません"
-                )
-
-            # ユーザーチェック
-            inviter = conn.execute(
-                text("SELECT * FROM users WHERE invitation_code = :invitation_code"),
-                {"invitation_code": r.invitation_code},
-            ).fetchone()
-
-            if not inviter:
-                raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません。"
-                )
-
-            # 招待クーポン付与
-            conn.execute(
-                text(
-                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, :code, :discount)"
-                ),
-                {
-                    "user_id": user_id,
-                    "code": "INV_" + r.invitation_code,
-                    "discount": 1500,
-                },
-            )
-
-            # 招待した人にもRewardを付与
-            conn.execute(
-                text(
-                    "INSERT INTO coupons (user_id, code, discount) VALUES (:user_id, CONCAT(:code_prefix, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), :discount)"
-                ),
-                {
-                    "user_id": inviter.id,
-                    "code": "RWD_" + r.invitation_code,
-                    "discount": 1000,
-                },
-            )
-
-    response.set_cookie(key="app_session", value=access_token, path="/")
-    return AppPostUsersResponse(id=user_id, invitation_code=invitation_code)
-
-
-class RecentRide(BaseModel):
-    id: str
-    pickup_coordinate: Coordinate
-    destination_coordinate: Coordinate
-    distance: int
-    duration: int
-    evaluation: int
-
-
-class AppChairStats(BaseModel):
-    # 最近の乗車履歴
-    recent_rides: list[RecentRide]
-
-    # 累計の情報
-    total_rides_count: int
-    total_evaluation_avg: float
-
-
-class AppChair(BaseModel):
-    id: str
-    name: str
-    model: str
-    stats: AppChairStats
-
-
-class AppGetRideResponse(BaseModel):
-    id: str
-    pickup_coordinate: Coordinate
-    destination_coordinate: Coordinate
-    status: str
-    chair: AppChair | None = None
-    created_at: int
-    updated_at: int
-
-
-@router.get(
-    "/rides/{ride_id}",
-    response_model=AppGetRideResponse,
-    status_code=200,
-    response_model_exclude_none=True,
-)
-def app_get_ride(
-    ride_id: str, user: User = Depends(app_auth_middleware)
-) -> AppGetRideResponse:
-    with engine.begin() as conn:
-        ride = conn.execute(
-            text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
-        ).fetchone()
-        if not ride:
-            raise HTTPException(status_code=404, detail="ride not found")
-        status = get_latest_ride_status(conn, ride.id)
-
-        response = AppGetRideResponse(
-            id=ride.id,
-            pickup_coordinate=Coordinate(
-                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-            ),
-            destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude, longitude=ride.destination_longitude
-            ),
-            status=status,
-            created_at=timestamp_millis(ride.created_at),
-            updated_at=timestamp_millis(ride.updated_at),
-        )
-
-        if ride.chair_id:
-            chair = conn.execute(
-                text("SELECT * FROM chairs WHERE id = :chair_id"),
-                {"chair_id": ride.chair_id},
-            ).fetchone()
-
-            # TODO: stats = get_chair_stats(chair.id)
-            stats = AppChairStats(
-                recent_rides=[], total_rides_count=1, total_evaluation_avg=0.1
-            )
-            response.chair = AppChair(
-                id=chair.id,  # type: ignore
-                name=chair.name,  # type: ignore
-                model=chair.model,  # type: ignore
-                stats=stats,  # type: ignore
-            )
-
-    return response
-
-
 class AppGetNotificationResponseChairStats(BaseModel):
     total_rides_count: int
     total_evaluation_avg: float
@@ -719,6 +617,41 @@ def app_get_notification(
 
         # TODO: check the chair is here
     return notification_response
+
+
+class RecentRide(BaseModel):
+    id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    distance: int
+    duration: int
+    evaluation: int
+
+
+class AppChairStats(BaseModel):
+    # 最近の乗車履歴
+    recent_rides: list[RecentRide]
+
+    # 累計の情報
+    total_rides_count: int
+    total_evaluation_avg: float
+
+
+class AppChair(BaseModel):
+    id: str
+    name: str
+    model: str
+    stats: AppChairStats
+
+
+class AppGetRideResponse(BaseModel):
+    id: str
+    pickup_coordinate: Coordinate
+    destination_coordinate: Coordinate
+    status: str
+    chair: AppChair | None = None
+    created_at: int
+    updated_at: int
 
 
 def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats:
