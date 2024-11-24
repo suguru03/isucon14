@@ -199,9 +199,10 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 		if data.Model != chair.Model.Name {
 			return fmt.Errorf("modelが一致しないデータがあります (id: %s, got: %s, want: %s)", chair.ServerID, data.Model, chair.Model.Name)
 		}
-		if (data.Active && chair.State != ChairStateActive) || (!data.Active && chair.State != ChairStateInactive) {
-			return fmt.Errorf("activeが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.Active, !data.Active)
-		}
+		// アクティブ状態の検査はリクエストのタイミングでズレることがあるので、検査しない
+		//if (data.Active && chair.State != ChairStateActive) || (!data.Active && chair.State != ChairStateInactive) {
+		//	return fmt.Errorf("activeが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.Active, !data.Active)
+		//}
 		if data.TotalDistanceUpdatedAt.Valid {
 			lastMovedAt, ok := chair.Location.LastMovedAt()
 			if ok && data.TotalDistanceUpdatedAt.Time.Sub(lastMovedAt) > 3*time.Second {
