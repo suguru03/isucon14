@@ -226,36 +226,38 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				}
 				continue
 			}
-
-			var event world.NotificationEvent
-			switch r.Status {
-			case api.RideStatusMATCHING:
-				event = &world.ChairNotificationEventMatched{
-					ServerRequestID: r.RideID,
-					User: world.ChairNotificationEventUserPayload{
-						ID:   r.User.ID,
-						Name: r.User.Name,
-					},
-					Destination: world.C(r.DestinationCoordinate.Latitude, r.DestinationCoordinate.Longitude),
+			if r.Data.Valid {
+				data := r.Data.V
+				var event world.NotificationEvent
+				switch data.Status {
+				case api.RideStatusMATCHING:
+					event = &world.ChairNotificationEventMatched{
+						ServerRequestID: data.RideID,
+						User: world.ChairNotificationEventUserPayload{
+							ID:   data.User.ID,
+							Name: data.User.Name,
+						},
+						Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
+					}
+				case api.RideStatusENROUTE:
+					// event = &world.ChairNotificationEventDispatching{}
+				case api.RideStatusPICKUP:
+					// event = &world.ChairNotificationEventDispatched{}
+				case api.RideStatusCARRYING:
+					// event = &world.ChairNotificationEventCarrying{}
+				case api.RideStatusARRIVED:
+					// event = &world.ChairNotificationEventArrived{}
+				case api.RideStatusCOMPLETED:
+					event = &world.ChairNotificationEventCompleted{
+						ServerRequestID: data.RideID,
+					}
 				}
-			case api.RideStatusENROUTE:
-				// event = &world.ChairNotificationEventDispatching{}
-			case api.RideStatusPICKUP:
-				// event = &world.ChairNotificationEventDispatched{}
-			case api.RideStatusCARRYING:
-				// event = &world.ChairNotificationEventCarrying{}
-			case api.RideStatusARRIVED:
-				// event = &world.ChairNotificationEventArrived{}
-			case api.RideStatusCOMPLETED:
-				event = &world.ChairNotificationEventCompleted{
-					ServerRequestID: r.RideID,
+				if event == nil {
+					// 意図しない通知の種類は無視する
+					continue
 				}
+				receiver(event)
 			}
-			if event == nil {
-				// 意図しない通知の種類は無視する
-				continue
-			}
-			receiver(event)
 		}
 	}()
 

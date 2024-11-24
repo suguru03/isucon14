@@ -82,7 +82,7 @@ func (s *AppGetNearbyChairsOKChairsItem) SetCurrentCoordinate(val Coordinate) {
 	s.CurrentCoordinate = val
 }
 
-// 最新の自分のライドが存在する場合はdataは必須。過去にライドが１つも存在しない場合はnullまたはundefined.
+// 自分のライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも存在しない場合、dataはnullまたはundefined.
 type AppGetNotificationOK struct {
 	Data OptUserNotificationData `json:"data"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
@@ -568,45 +568,16 @@ func (s *AppPostUsersReq) SetInvitationCode(val OptString) {
 	s.InvitationCode = val
 }
 
-// ChairGetNotificationNoContent is response for ChairGetNotification operation.
-type ChairGetNotificationNoContent struct{}
-
-func (*ChairGetNotificationNoContent) chairGetNotificationRes() {}
-
+// 自分に割り当てられたライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも割り当てられていない場合、dataはnullまたはundefined.
 type ChairGetNotificationOK struct {
-	// ライドID.
-	RideID                string     `json:"ride_id"`
-	User                  User       `json:"user"`
-	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
-	DestinationCoordinate Coordinate `json:"destination_coordinate"`
-	Status                RideStatus `json:"status"`
+	Data OptChairNotificationData `json:"data"`
 	// 次回の通知ポーリングまでの待機時間(ミリ秒単位).
 	RetryAfterMs OptInt `json:"retry_after_ms"`
 }
 
-// GetRideID returns the value of RideID.
-func (s *ChairGetNotificationOK) GetRideID() string {
-	return s.RideID
-}
-
-// GetUser returns the value of User.
-func (s *ChairGetNotificationOK) GetUser() User {
-	return s.User
-}
-
-// GetPickupCoordinate returns the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) GetPickupCoordinate() Coordinate {
-	return s.PickupCoordinate
-}
-
-// GetDestinationCoordinate returns the value of DestinationCoordinate.
-func (s *ChairGetNotificationOK) GetDestinationCoordinate() Coordinate {
-	return s.DestinationCoordinate
-}
-
-// GetStatus returns the value of Status.
-func (s *ChairGetNotificationOK) GetStatus() RideStatus {
-	return s.Status
+// GetData returns the value of Data.
+func (s *ChairGetNotificationOK) GetData() OptChairNotificationData {
+	return s.Data
 }
 
 // GetRetryAfterMs returns the value of RetryAfterMs.
@@ -614,29 +585,9 @@ func (s *ChairGetNotificationOK) GetRetryAfterMs() OptInt {
 	return s.RetryAfterMs
 }
 
-// SetRideID sets the value of RideID.
-func (s *ChairGetNotificationOK) SetRideID(val string) {
-	s.RideID = val
-}
-
-// SetUser sets the value of User.
-func (s *ChairGetNotificationOK) SetUser(val User) {
-	s.User = val
-}
-
-// SetPickupCoordinate sets the value of PickupCoordinate.
-func (s *ChairGetNotificationOK) SetPickupCoordinate(val Coordinate) {
-	s.PickupCoordinate = val
-}
-
-// SetDestinationCoordinate sets the value of DestinationCoordinate.
-func (s *ChairGetNotificationOK) SetDestinationCoordinate(val Coordinate) {
-	s.DestinationCoordinate = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ChairGetNotificationOK) SetStatus(val RideStatus) {
-	s.Status = val
+// SetData sets the value of Data.
+func (s *ChairGetNotificationOK) SetData(val OptChairNotificationData) {
+	s.Data = val
 }
 
 // SetRetryAfterMs sets the value of RetryAfterMs.
@@ -644,7 +595,66 @@ func (s *ChairGetNotificationOK) SetRetryAfterMs(val OptInt) {
 	s.RetryAfterMs = val
 }
 
-func (*ChairGetNotificationOK) chairGetNotificationRes() {}
+// 椅子向け通知データ.
+// Ref: #/components/schemas/ChairNotificationData
+type ChairNotificationData struct {
+	// ライドID.
+	RideID                string     `json:"ride_id"`
+	User                  User       `json:"user"`
+	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
+	DestinationCoordinate Coordinate `json:"destination_coordinate"`
+	Status                RideStatus `json:"status"`
+}
+
+// GetRideID returns the value of RideID.
+func (s *ChairNotificationData) GetRideID() string {
+	return s.RideID
+}
+
+// GetUser returns the value of User.
+func (s *ChairNotificationData) GetUser() User {
+	return s.User
+}
+
+// GetPickupCoordinate returns the value of PickupCoordinate.
+func (s *ChairNotificationData) GetPickupCoordinate() Coordinate {
+	return s.PickupCoordinate
+}
+
+// GetDestinationCoordinate returns the value of DestinationCoordinate.
+func (s *ChairNotificationData) GetDestinationCoordinate() Coordinate {
+	return s.DestinationCoordinate
+}
+
+// GetStatus returns the value of Status.
+func (s *ChairNotificationData) GetStatus() RideStatus {
+	return s.Status
+}
+
+// SetRideID sets the value of RideID.
+func (s *ChairNotificationData) SetRideID(val string) {
+	s.RideID = val
+}
+
+// SetUser sets the value of User.
+func (s *ChairNotificationData) SetUser(val User) {
+	s.User = val
+}
+
+// SetPickupCoordinate sets the value of PickupCoordinate.
+func (s *ChairNotificationData) SetPickupCoordinate(val Coordinate) {
+	s.PickupCoordinate = val
+}
+
+// SetDestinationCoordinate sets the value of DestinationCoordinate.
+func (s *ChairNotificationData) SetDestinationCoordinate(val Coordinate) {
+	s.DestinationCoordinate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ChairNotificationData) SetStatus(val RideStatus) {
+	s.Status = val
+}
 
 // ChairPostActivityNoContent is response for ChairPostActivity operation.
 type ChairPostActivityNoContent struct{}
@@ -1120,6 +1130,52 @@ func (o OptAppPostUsersReq) Get() (v AppPostUsersReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAppPostUsersReq) Or(d AppPostUsersReq) AppPostUsersReq {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptChairNotificationData returns new OptChairNotificationData with value set to v.
+func NewOptChairNotificationData(v ChairNotificationData) OptChairNotificationData {
+	return OptChairNotificationData{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptChairNotificationData is optional ChairNotificationData.
+type OptChairNotificationData struct {
+	Value ChairNotificationData
+	Set   bool
+}
+
+// IsSet returns true if OptChairNotificationData was set.
+func (o OptChairNotificationData) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptChairNotificationData) Reset() {
+	var v ChairNotificationData
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptChairNotificationData) SetTo(v ChairNotificationData) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptChairNotificationData) Get() (v ChairNotificationData, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptChairNotificationData) Or(d ChairNotificationData) ChairNotificationData {
 	if v, ok := o.Get(); ok {
 		return v
 	}

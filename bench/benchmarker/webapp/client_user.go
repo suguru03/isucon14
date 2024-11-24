@@ -257,8 +257,8 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
 			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
 		}
-	} else if resp.StatusCode != http.StatusNoContent {
-		err = fmt.Errorf("GET /api/app/notificationsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d or %d, actual:%d)", http.StatusOK, http.StatusNoContent, resp.StatusCode)
+	} else {
+		err = fmt.Errorf("GET /api/app/notificationsへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", http.StatusOK, resp.StatusCode)
 	}
 
 	if nested {
