@@ -206,27 +206,7 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 }
 
 func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppGetNotificationOK, error] {
-	return func(yield func(*api.AppGetNotificationOK, error) bool) {
-		for notification, err := range c.appGetNotification(ctx, false) {
-			if notification == nil {
-				if !yield(nil, err) {
-					return
-				}
-			} else {
-				if !yield(&api.AppGetNotificationOK{
-					RideID:                notification.RideID,
-					PickupCoordinate:      notification.PickupCoordinate,
-					DestinationCoordinate: notification.DestinationCoordinate,
-					Status:                notification.Status,
-					Chair:                 notification.Chair,
-					CreatedAt:             notification.CreatedAt,
-					UpdatedAt:             notification.UpdatedAt,
-				}, err) {
-					return
-				}
-			}
-		}
-	}
+	return c.appGetNotification(ctx, false)
 }
 
 func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.AppGetNotificationOK, error] {
@@ -262,7 +242,7 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 				request := &api.AppGetNotificationOK{}
 				line := scanner.Text()
 				if strings.HasPrefix(line, "data:") {
-					err := json.Unmarshal([]byte(line[5:]), request)
+					err := json.Unmarshal([]byte(line[5:]), &request.Data)
 					if !yield(request, err) || err != nil {
 						return
 					}

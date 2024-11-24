@@ -348,7 +348,7 @@ paths:
       tags:
         - app
       summary: ユーザー向け通知エンドポイント
-      description: 最新の自分のライドを取得する
+      description: 最新の自分のライドの状態を取得・通知する
       operationId: app-get-notification
       responses:
         "200":
@@ -356,72 +356,14 @@ paths:
           content:
             application/json:
               schema:
+                description: 自分のライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも存在しない場合、dataはnullまたはundefined
                 type: object
                 properties:
-                  ride_id:
-                    type: string
-                    description: ライドID
-                  pickup_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  destination_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  fare:
-                    type: integer
-                    description: 運賃
-                  status:
-                    $ref: "#/components/schemas/RideStatus"
-                  chair:
-                    type: object
-                    description: 椅子情報
-                    properties:
-                      id:
-                        type: string
-                        description: 椅子ID
-                      name:
-                        type: string
-                        description: 椅子の名前
-                      model:
-                        type: string
-                        description: 椅子のモデル
-                      stats:
-                        type: object
-                        description: 椅子の統計情報
-                        properties:
-                          total_rides_count:
-                            type: integer
-                            description: 総乗車回数
-                          total_evaluation_avg:
-                            type: number
-                            description: 総評価平均
-                        required:
-                          - total_rides_count
-                          - total_evaluation_avg
-                    required:
-                      - id
-                      - name
-                      - model
-                      - stats
-                  created_at:
-                    type: integer
-                    format: int64
-                    description: 配車要求日時
-                  updated_at:
-                    type: integer
-                    format: int64
-                    description: 配車要求更新日時
+                  data:
+                    $ref: "#/components/schemas/UserNotificationData"
                   retry_after_ms:
                     type: integer
                     description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
-                required:
-                  - ride_id
-                  - pickup_coordinate
-                  - destination_coordinate
-                  - fare
-                  - status
-                  - created_at
-                  - updated_at
-        "204":
-          description: 対象となるライドが存在しない場合
   /app/nearby-chairs:
     get:
       tags:
@@ -899,3 +841,66 @@ components:
           type: string
       required:
         - message
+    UserNotificationData:
+      description: ユーザー向け通知データ
+      type: object
+      properties:
+        ride_id:
+          type: string
+          description: ライドID
+        pickup_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        destination_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        fare:
+          type: integer
+          description: 運賃(割引後)
+        status:
+          $ref: "#/components/schemas/RideStatus"
+        chair:
+          type: object
+          description: 椅子情報
+          properties:
+            id:
+              type: string
+              description: 椅子ID
+            name:
+              type: string
+              description: 椅子の名前
+            model:
+              type: string
+              description: 椅子のモデル
+            stats:
+              type: object
+              description: 椅子の統計情報
+              properties:
+                total_rides_count:
+                  type: integer
+                  description: 総乗車回数
+                total_evaluation_avg:
+                  type: number
+                  description: 総評価平均
+              required:
+                - total_rides_count
+                - total_evaluation_avg
+          required:
+            - id
+            - name
+            - model
+            - stats
+        created_at:
+          type: integer
+          format: int64
+          description: 配車要求日時
+        updated_at:
+          type: integer
+          format: int64
+          description: 配車要求更新日時
+      required:
+        - ride_id
+        - pickup_coordinate
+        - destination_coordinate
+        - fare
+        - status
+        - created_at
+        - updated_at

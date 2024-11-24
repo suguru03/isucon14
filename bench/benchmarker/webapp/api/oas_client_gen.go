@@ -24,10 +24,10 @@ type Invoker interface {
 	AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error)
 	// AppGetNotification invokes app-get-notification operation.
 	//
-	// 最新の自分のライドを取得する.
+	// 最新の自分のライドの状態を取得・通知する.
 	//
 	// GET /app/notification
-	AppGetNotification(ctx context.Context) (AppGetNotificationRes, error)
+	AppGetNotification(ctx context.Context) (*AppGetNotificationOK, error)
 	// AppGetRides invokes app-get-rides operation.
 	//
 	// ユーザーが完了済みのライド一覧を取得する.
@@ -94,12 +94,6 @@ type Invoker interface {
 	//
 	// POST /chair/rides/{ride_id}/status
 	ChairPostRideStatus(ctx context.Context, request OptChairPostRideStatusReq, params ChairPostRideStatusParams) (ChairPostRideStatusRes, error)
-	// OwnerGetChair invokes owner-get-chair operation.
-	//
-	// 管理している椅子の詳細を取得する.
-	//
-	// GET /owner/chairs/{chair_id}
-	OwnerGetChair(ctx context.Context, params OwnerGetChairParams) (*OwnerGetChairOK, error)
 	// OwnerGetChairs invokes owner-get-chairs operation.
 	//
 	// 椅子のオーナーが管理している椅子の一覧を取得する.
@@ -256,15 +250,15 @@ func (c *Client) sendAppGetNearbyChairs(ctx context.Context, params AppGetNearby
 
 // AppGetNotification invokes app-get-notification operation.
 //
-// 最新の自分のライドを取得する.
+// 最新の自分のライドの状態を取得・通知する.
 //
 // GET /app/notification
-func (c *Client) AppGetNotification(ctx context.Context) (AppGetNotificationRes, error) {
+func (c *Client) AppGetNotification(ctx context.Context) (*AppGetNotificationOK, error) {
 	res, err := c.sendAppGetNotification(ctx)
 	return res, err
 }
 
-func (c *Client) sendAppGetNotification(ctx context.Context) (res AppGetNotificationRes, err error) {
+func (c *Client) sendAppGetNotification(ctx context.Context) (res *AppGetNotificationOK, err error) {
 
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
@@ -744,60 +738,6 @@ func (c *Client) sendChairPostRideStatus(ctx context.Context, request OptChairPo
 	defer resp.Body.Close()
 
 	result, err := decodeChairPostRideStatusResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// OwnerGetChair invokes owner-get-chair operation.
-//
-// 管理している椅子の詳細を取得する.
-//
-// GET /owner/chairs/{chair_id}
-func (c *Client) OwnerGetChair(ctx context.Context, params OwnerGetChairParams) (*OwnerGetChairOK, error) {
-	res, err := c.sendOwnerGetChair(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendOwnerGetChair(ctx context.Context, params OwnerGetChairParams) (res *OwnerGetChairOK, err error) {
-
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/owner/chairs/"
-	{
-		// Encode "chair_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "chair_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.ChairID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	result, err := decodeOwnerGetChairResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

@@ -395,37 +395,39 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 				}
 				continue
 			}
-
-			var event world.NotificationEvent
-			switch r.Status {
-			case api.RideStatusMATCHING:
-				// event = &world.UserNotificationEventMatching{}
-			case api.RideStatusENROUTE:
-				event = &world.UserNotificationEventDispatching{
-					ServerRequestID: r.RideID,
+			if r.Data.Set {
+				data := r.Data.Value
+				var event world.NotificationEvent
+				switch data.Status {
+				case api.RideStatusMATCHING:
+					// event = &world.UserNotificationEventMatching{}
+				case api.RideStatusENROUTE:
+					event = &world.UserNotificationEventDispatching{
+						ServerRequestID: data.RideID,
+					}
+				case api.RideStatusPICKUP:
+					event = &world.UserNotificationEventDispatched{
+						ServerRequestID: data.RideID,
+					}
+				case api.RideStatusCARRYING:
+					event = &world.UserNotificationEventCarrying{
+						ServerRequestID: data.RideID,
+					}
+				case api.RideStatusARRIVED:
+					event = &world.UserNotificationEventArrived{
+						ServerRequestID: data.RideID,
+					}
+				case api.RideStatusCOMPLETED:
+					event = &world.UserNotificationEventCompleted{
+						ServerRequestID: data.RideID,
+					}
 				}
-			case api.RideStatusPICKUP:
-				event = &world.UserNotificationEventDispatched{
-					ServerRequestID: r.RideID,
+				if event == nil {
+					// 意図しない通知の種類は無視する
+					continue
 				}
-			case api.RideStatusCARRYING:
-				event = &world.UserNotificationEventCarrying{
-					ServerRequestID: r.RideID,
-				}
-			case api.RideStatusARRIVED:
-				event = &world.UserNotificationEventArrived{
-					ServerRequestID: r.RideID,
-				}
-			case api.RideStatusCOMPLETED:
-				event = &world.UserNotificationEventCompleted{
-					ServerRequestID: r.RideID,
-				}
+				receiver(event)
 			}
-			if event == nil {
-				// 意図しない通知の種類は無視する
-				continue
-			}
-			receiver(event)
 		}
 	}()
 
