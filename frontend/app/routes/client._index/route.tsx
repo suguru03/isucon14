@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
@@ -30,7 +30,7 @@ type Action = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
-  const data = useClientAppRequestContext();
+  const { status, payload } = useClientAppRequestContext();
 
   const [action, setAction] = useState<Action>();
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
@@ -67,6 +67,11 @@ export default function Index() {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
   const [fare, setFare] = useState<number>();
+  const isStatusOpenModal = useMemo(
+    () => status !== undefined && status !== "COMPLETED",
+    [status],
+  );
+
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
@@ -76,14 +81,11 @@ export default function Index() {
         pickup_coordinate: currentLocation,
         destination_coordinate: destLocation,
       },
-      headers: {
-        Authorization: `Bearer ${data.auth?.accessToken}`,
-      },
     }).then((res) => {
       setRequestId(res.ride_id);
       setFare(res.fare);
     });
-  }, [data, currentLocation, destLocation]);
+  }, [currentLocation, destLocation]);
 
   useEffect(() => {
     if (!currentLocation || !destLocation) {
@@ -178,37 +180,37 @@ export default function Index() {
           </div>
         </Modal>
       )}
-      {data?.status && (
+      {isStatusOpenModal && (
         <Modal ref={drivingStateModalRef}>
-          {data.status === "MATCHING" && (
-            <Enroute
-              destLocation={data?.payload?.coordinate?.destination}
-              pickup={data?.payload?.coordinate?.pickup}
-              fare={fare}
-            />
-          )}
-          {data.status === "ENROUTE" && (
+          {status === "MATCHING" && (
             <Matching
-              destLocation={data?.payload?.coordinate?.destination}
-              pickup={data?.payload?.coordinate?.pickup}
+              destLocation={payload?.coordinate?.destination}
+              pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {data.status === "PICKUP" && (
+          {status === "ENROUTE" && (
+            <Enroute
+              destLocation={payload?.coordinate?.destination}
+              pickup={payload?.coordinate?.pickup}
+              fare={fare}
+            />
+          )}
+          {status === "PICKUP" && (
             <Dispatched
-              destLocation={data?.payload?.coordinate?.destination}
-              pickup={data?.payload?.coordinate?.pickup}
+              destLocation={payload?.coordinate?.destination}
+              pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {data.status === "CARRYING" && (
+          {status === "CARRYING" && (
             <Carrying
-              destLocation={data?.payload?.coordinate?.destination}
-              pickup={data?.payload?.coordinate?.pickup}
+              destLocation={payload?.coordinate?.destination}
+              pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {data.status === "ARRIVED" && <Arrived />}
+          {status === "ARRIVED" && <Arrived />}
         </Modal>
       )}
     </>
