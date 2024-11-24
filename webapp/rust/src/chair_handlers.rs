@@ -26,10 +26,6 @@ pub fn chair_routes(app_state: AppState) -> axum::Router<AppState> {
             axum::routing::get(chair_get_notification),
         )
         .route(
-            "/api/chair/rides/:ride_id",
-            axum::routing::get(chair_get_ride_request),
-        )
-        .route(
             "/api/chair/rides/:ride_id/status",
             axum::routing::post(chair_post_ride_status),
         )
@@ -269,56 +265,6 @@ async fn chair_get_notification(
         status,
     })
     .into_response())
-}
-
-#[derive(Debug, serde::Serialize)]
-struct ChairGetRideResponse {
-    id: String,
-    user: SimpleUser,
-    pickup_coordinate: Coordinate,
-    destination_coordinate: Coordinate,
-    status: String,
-}
-
-async fn chair_get_ride_request(
-    State(AppState { pool, .. }): State<AppState>,
-    Path((ride_id,)): Path<(String,)>,
-) -> Result<axum::Json<ChairGetRideResponse>, Error> {
-    let mut tx = pool.begin().await?;
-
-    let Some(ride): Option<Ride> = sqlx::query_as("SELECT * FROM rides WHERE id = ?")
-        .bind(ride_id)
-        .fetch_optional(&mut *tx)
-        .await?
-    else {
-        return Err(Error::NotFound("ride not found"));
-    };
-
-    let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
-
-    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?")
-        .bind(ride.user_id)
-        .fetch_one(&mut *tx)
-        .await?;
-
-    tx.commit().await?;
-
-    Ok(axum::Json(ChairGetRideResponse {
-        id: ride.id,
-        user: SimpleUser {
-            id: user.id,
-            name: format!("{} {}", user.firstname, user.lastname),
-        },
-        pickup_coordinate: Coordinate {
-            latitude: ride.pickup_latitude,
-            longitude: ride.pickup_longitude,
-        },
-        destination_coordinate: Coordinate {
-            latitude: ride.destination_latitude,
-            longitude: ride.destination_longitude,
-        },
-        status,
-    }))
 }
 
 #[derive(Debug, serde::Deserialize)]
