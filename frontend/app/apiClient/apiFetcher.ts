@@ -92,12 +92,13 @@ export async function apiFetch<
     }
 
     if (response.headers.get("content-type")?.includes("json")) {
-      return {...await response.json(), _responseStatus: response.status};
+      return {...await response.json(), _responseStatus: response.status, _responseHeaders: response.headers};
     } else {
       // if it is not a json response, assume it is a blob and cast it to TData
       return (await response.blob()) as unknown as TData;
     }
   } catch (e) {
+    console.log('e', e);
     let errorObject: Error = {
       name: "unknown" as const,
       message:
