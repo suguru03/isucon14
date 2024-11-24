@@ -24,12 +24,6 @@ type ChairPostRideStatusParams struct {
 	RideID string
 }
 
-// OwnerGetChairParams is parameters of owner-get-chair operation.
-type OwnerGetChairParams struct {
-	// 椅子ID.
-	ChairID string
-}
-
 // OwnerGetSalesParams is parameters of owner-get-sales operation.
 type OwnerGetSalesParams struct {
 	// 開始日時（含む）.
