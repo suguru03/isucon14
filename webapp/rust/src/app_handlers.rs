@@ -722,7 +722,10 @@ async fn app_get_nearby_chairs(
 
     let mut nearby_chairs = Vec::new();
     for chair in chairs {
-        // 現在進行中のリクエストがある場合はスキップ
+        if !chair.is_active {
+            continue;
+        }
+
         let ride: Option<Ride> = sqlx::query_as(
             "SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
         )
@@ -730,19 +733,23 @@ async fn app_get_nearby_chairs(
         .fetch_optional(&mut *tx)
         .await?;
         if let Some(ride) = ride {
+            // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
             let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
             if status != "COMPLETED" {
                 continue;
             }
         };
 
-        // 5分以内に更新されている最新の位置情報を取得
-        let Some(chair_location): Option<ChairLocation> = sqlx::query_as("SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1")
-            .bind(&chair.id)
-            .fetch_optional(&mut *tx)
-            .await? else {
-                continue;
-            };
+        // 最新の位置情報を取得
+        let Some(chair_location): Option<ChairLocation> = sqlx::query_as(
+            "SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
+        )
+        .bind(&chair.id)
+        .fetch_optional(&mut *tx)
+        .await?
+        else {
+            continue;
+        };
         if crate::calculate_distance(
             coordinate.latitude,
             coordinate.longitude,
