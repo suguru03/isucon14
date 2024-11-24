@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/guregu/null/v5"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
@@ -205,14 +206,30 @@ func (c *Client) AppPostPaymentMethods(ctx context.Context, reqBody *api.AppPost
 	return resBody, nil
 }
 
-func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*api.AppGetNotificationOK, error] {
+type AppGetNotificationOK struct {
+	Data         null.Value[UserNotificationData] `json:"data"`
+	RetryAfterMs null.Int                         `json:"retry_after_ms"`
+}
+
+type UserNotificationData struct {
+	RideID                string                           `json:"ride_id"`
+	PickupCoordinate      api.Coordinate                   `json:"pickup_coordinate"`
+	DestinationCoordinate api.Coordinate                   `json:"destination_coordinate"`
+	Fare                  int                              `json:"fare"`
+	Status                api.RideStatus                   `json:"status"`
+	Chair                 api.OptUserNotificationDataChair `json:"chair"`
+	CreatedAt             int64                            `json:"created_at"`
+	UpdatedAt             int64                            `json:"updated_at"`
+}
+
+func (c *Client) AppGetNotification(ctx context.Context) iter.Seq2[*AppGetNotificationOK, error] {
 	return c.appGetNotification(ctx, false)
 }
 
-func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[*api.AppGetNotificationOK, error] {
+func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[*AppGetNotificationOK, error] {
 	req, err := c.agent.NewRequest(http.MethodGet, "/api/app/notification", nil)
 	if err != nil {
-		return func(yield func(*api.AppGetNotificationOK, error) bool) { yield(nil, err) }
+		return func(yield func(*AppGetNotificationOK, error) bool) { yield(nil, err) }
 	}
 
 	for _, modifier := range c.requestModifiers {
@@ -228,18 +245,18 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 
 	resp, err := httpClient.Do(req.WithContext(ctx))
 	if err != nil {
-		return func(yield func(*api.AppGetNotificationOK, error) bool) {
+		return func(yield func(*AppGetNotificationOK, error) bool) {
 			yield(nil, fmt.Errorf("GET /api/app/notificationsのリクエストが失敗しました: %w", err))
 		}
 	}
 
 	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
-		return func(yield func(*api.AppGetNotificationOK, error) bool) {
+		return func(yield func(*AppGetNotificationOK, error) bool) {
 			defer closeBody(resp)
 
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
-				request := &api.AppGetNotificationOK{}
+				request := &AppGetNotificationOK{}
 				line := scanner.Text()
 				if strings.HasPrefix(line, "data:") {
 					err := json.Unmarshal([]byte(line[5:]), &request.Data)
@@ -252,7 +269,7 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 	}
 
 	defer closeBody(resp)
-	request := &api.AppGetNotificationOK{}
+	request := &AppGetNotificationOK{}
 	if resp.StatusCode == http.StatusOK {
 		if err = json.NewDecoder(resp.Body).Decode(request); err != nil {
 			err = fmt.Errorf("requestのJSONのdecodeに失敗しました: %w", err)
@@ -262,9 +279,9 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 	}
 
 	if nested {
-		return func(yield func(*api.AppGetNotificationOK, error) bool) { yield(request, err) }
+		return func(yield func(*AppGetNotificationOK, error) bool) { yield(request, err) }
 	} else {
-		return func(yield func(*api.AppGetNotificationOK, error) bool) {
+		return func(yield func(*AppGetNotificationOK, error) bool) {
 			if !yield(request, err) {
 				return
 			}
@@ -283,8 +300,8 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 						if !yield(notification, err) {
 							return
 						}
-						if notification != nil && notification.RetryAfterMs.IsSet() {
-							waitTime = time.Duration(notification.RetryAfterMs.Value) * time.Millisecond
+						if notification != nil && notification.RetryAfterMs.Valid {
+							waitTime = time.Duration(notification.RetryAfterMs.Int64) * time.Millisecond
 						} else {
 							waitTime = defaultWaitTime
 						}
