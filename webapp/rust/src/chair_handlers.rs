@@ -240,10 +240,11 @@ async fn chair_get_notification(
         }
         _ => {
             // MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-            let Some(matched): Option<Ride> =
-                sqlx::query_as("SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
-                    .fetch_optional(&mut *tx)
-                    .await?
+            let Some(matched): Option<Ride> = sqlx::query_as(
+                "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE",
+            )
+            .fetch_optional(&mut *tx)
+            .await?
             else {
                 return Ok(axum::Json(ChairGetNotificationResponse { data: None }));
             };

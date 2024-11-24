@@ -168,7 +168,6 @@ struct GetAppRidesResponse {
     rides: Vec<GetAppRidesResponseItem>,
 }
 
-// Ride
 #[derive(Debug, serde::Serialize)]
 struct GetAppRidesResponseItem {
     id: String,
@@ -272,7 +271,7 @@ async fn app_post_rides(
     let mut continuing_ride_count = 0;
     for ride in rides {
         let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
-        if status != "COMPLETED" && status != "CANCELED" {
+        if status != "COMPLETED" {
             continuing_ride_count += 1;
         }
     }
