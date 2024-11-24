@@ -16,10 +16,6 @@ pub fn owner_routes(app_state: AppState) -> axum::Router<AppState> {
     let authed_routes = axum::Router::new()
         .route("/api/owner/sales", axum::routing::get(owner_get_sales))
         .route("/api/owner/chairs", axum::routing::get(owner_get_chairs))
-        .route(
-            "/api/owner/chairs/:chair_id",
-            axum::routing::get(owner_get_chair_detail),
-        )
         .route_layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
             crate::middlewares::owner_auth_middleware,
@@ -143,16 +139,16 @@ async fn owner_get_sales(
             .fetch_all(&mut *tx)
             .await?;
 
-        let chair_sales = sum_sales(&reqs);
-        res.total_sales += chair_sales;
+        let sales = sum_sales(&reqs);
+        res.total_sales += sales;
 
         res.chairs.push(ChairSales {
             id: chair.id,
             name: chair.name,
-            sales: chair_sales,
+            sales,
         });
 
-        *model_sales_by_model.entry(chair.model).or_insert(0) += chair_sales;
+        *model_sales_by_model.entry(chair.model).or_insert(0) += sales;
     }
 
     for (model, sales) in model_sales_by_model {
@@ -222,7 +218,12 @@ struct ChairWithDetail {
 }
 
 #[derive(Debug, serde::Serialize)]
-struct OwnerChair {
+struct OwnerGetChairResponse {
+    chairs: Vec<OwnerGetChairResponseChair>,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct OwnerGetChairResponseChair {
     id: String,
     name: String,
     model: String,
@@ -231,11 +232,6 @@ struct OwnerChair {
     total_distance: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     total_distance_updated_at: Option<i64>,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct OwnerGetChairResponse {
-    chairs: Vec<OwnerChair>,
 }
 
 async fn owner_get_chairs(
@@ -268,7 +264,7 @@ WHERE owner_id = ?
     Ok(axum::Json(OwnerGetChairResponse {
         chairs: chairs
             .into_iter()
-            .map(|chair| OwnerChair {
+            .map(|chair| OwnerGetChairResponseChair {
                 id: chair.id,
                 name: chair.name,
                 model: chair.model,
@@ -280,62 +276,5 @@ WHERE owner_id = ?
                     .map(|t| t.timestamp_millis()),
             })
             .collect(),
-    }))
-}
-
-#[derive(Debug, serde::Serialize)]
-struct OwnerGetChairDetailResponse {
-    id: String,
-    name: String,
-    model: String,
-    active: bool,
-    registered_at: i64,
-    total_distance: i64,
-    total_distance_updated_at: Option<i64>,
-}
-
-async fn owner_get_chair_detail(
-    State(AppState { pool, .. }): State<AppState>,
-    Path((chair_id,)): Path<(String,)>,
-    axum::Extension(owner): axum::Extension<Owner>,
-) -> Result<axum::Json<OwnerGetChairDetailResponse>, Error> {
-    let Some(chair): Option<ChairWithDetail> = sqlx::query_as(r#"SELECT id,
-       owner_id,
-       name,
-       access_token,
-       model,
-       is_active,
-       created_at,
-       updated_at,
-       IFNULL(total_distance, 0) AS total_distance,
-       total_distance_updated_at
-FROM chairs
-       LEFT JOIN (SELECT chair_id,
-                          SUM(IFNULL(distance, 0)) AS total_distance,
-                          MAX(created_at)          AS total_distance_updated_at
-                   FROM (SELECT chair_id,
-                                created_at,
-                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
-                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
-                         FROM chair_locations) tmp
-                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
-WHERE owner_id = ? AND id = ?"#)
-    .bind(owner.id)
-    .bind(chair_id)
-    .fetch_optional(&pool)
-    .await? else {
-        return Err(Error::NotFound("chair not found"));
-    };
-
-    Ok(axum::Json(OwnerGetChairDetailResponse {
-        id: chair.id,
-        name: chair.name,
-        model: chair.model,
-        active: chair.is_active,
-        registered_at: chair.created_at.timestamp_millis(),
-        total_distance: chair.total_distance.0,
-        total_distance_updated_at: chair
-            .total_distance_updated_at
-            .map(|t| t.timestamp_millis()),
     }))
 }
