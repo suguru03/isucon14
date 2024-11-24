@@ -6,14 +6,14 @@ import (
 
 var (
 	checkNameByInstanceName = map[string]string{
-		"isucon14-qualify-1": "qualify1",
-		"isucon14-qualify-2": "qualify2",
-		"isucon14-qualify-3": "qualify3",
+		"isucon14-contest-1": "contest1",
+		"isucon14-contest-2": "contest2",
+		"isucon14-contest-3": "contest3",
 	}
 	privateAddressByInstanceName = map[string]string{
-		"isucon14-qualify-1": "192.168.0.11",
-		"isucon14-qualify-2": "192.168.0.12",
-		"isucon14-qualify-3": "192.168.0.13",
+		"isucon14-contest-1": "192.168.0.11",
+		"isucon14-contest-2": "192.168.0.12",
+		"isucon14-contest-3": "192.168.0.13",
 	}
 )
 

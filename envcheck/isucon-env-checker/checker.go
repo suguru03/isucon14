@@ -161,11 +161,11 @@ func (c *checker) name() string {
 					if checkName, ok := checkNameByInstanceName[name]; ok {
 						return checkName
 					} else {
-						return "qualify-unknown"
+						return "contest-unknown"
 					}
 				}
 			}
 		}
 	}
-	return "qualify-unknown"
+	return "contest-unknown"
 }

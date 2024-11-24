@@ -26,7 +26,7 @@ type GetCloudFormationQuery struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id   int64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // query parameter. "test" | "qualify"
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // query parameter. "test" | "contest"
 }
 
 func (x *GetCloudFormationQuery) Reset() {

@@ -27,7 +27,7 @@ type GetLeaderboardDumpQuery struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	When string `protobuf:"bytes,1,opt,name=when,proto3" json:"when,omitempty"` // ISO8601 or "qualify-end"
+	When string `protobuf:"bytes,1,opt,name=when,proto3" json:"when,omitempty"` // ISO8601 or "contest-end"
 }
 
 func (x *GetLeaderboardDumpQuery) Reset() {

@@ -8,7 +8,7 @@ import "isuxportal/resources/team.proto";
 import "google/protobuf/timestamp.proto";
 
 message GetLeaderboardDumpQuery {
-  string when = 1; // ISO8601 or "qualify-end"
+  string when = 1; // ISO8601 or "contest-end"
 }
 
 message GetLeaderboardDumpResponse {

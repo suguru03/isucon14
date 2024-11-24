@@ -13,7 +13,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	info, err := p.GetInfo("qualify")
+	info, err := p.GetInfo("contest")
 	if err != nil {
 		fmt.Printf("ポータルから情報の取得に失敗しました: %v\n", err)
 		os.Exit(1)
