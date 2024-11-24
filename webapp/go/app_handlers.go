@@ -960,11 +960,11 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// 5分以内に更新されている最新の位置情報を取得
+		// 最新の位置情報を取得
 		chairLocation := &ChairLocation{}
 		err = tx.Get(
 			chairLocation,
-			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1`,
+			`SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1`,
 			chair.ID,
 		)
 		if err != nil {
