@@ -639,10 +639,21 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := getLatestRideStatus(tx, ride.ID)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
+	yetSentRideStatus := RideStatus{}
+	status := ""
+	if err := tx.Get(&yetSentRideStatus, `SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1 FOR UPDATE`, ride.ID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			status, err = getLatestRideStatus(tx, ride.ID)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err)
+				return
+			}
+		} else {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		status = yetSentRideStatus.Status
 	}
 
 	fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
@@ -688,6 +699,19 @@ func appGetNotification(w http.ResponseWriter, r *http.Request) {
 			Model: chair.Model,
 			Stats: stats,
 		}
+	}
+
+	if yetSentRideStatus.ID != "" {
+		_, err := tx.Exec(`UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?`, yetSentRideStatus.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, response)
