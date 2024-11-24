@@ -7,6 +7,8 @@ from .models import Ride
 INITIAL_FARE: int = 500
 FARE_PER_DISTANCE: int = 100
 
+EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
 
 def secure_random_str(b: int) -> str:
     random_bytes: bytes = os.urandom(b)
@@ -15,8 +17,11 @@ def secure_random_str(b: int) -> str:
 
 def timestamp_millis(dt: datetime) -> int:
     dt = dt.astimezone(timezone.utc)
-    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-    return (dt - epoch) // timedelta(milliseconds=1)
+    return (dt - EPOCH) // timedelta(milliseconds=1)
+
+
+def datetime_fromtimestamp_millis(t: int) -> datetime:
+    return EPOCH + timedelta(milliseconds=t)
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):

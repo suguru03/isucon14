@@ -18,7 +18,12 @@ from ulid import ULID
 from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
-from ..utils import secure_random_str, sum_sales, timestamp_millis
+from ..utils import (
+    datetime_fromtimestamp_millis,
+    secure_random_str,
+    sum_sales,
+    timestamp_millis,
+)
 
 router = APIRouter(prefix="/api/owner")
 
@@ -88,14 +93,14 @@ def owner_get_sales(
 ) -> OwnerGetSalesResponse:
     # TODO: タイムゾーンの扱いに自信なし
     if since is None:
-        since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
+        since_dt = datetime_fromtimestamp_millis(0)
     else:
-        since_dt = datetime.fromtimestamp(since / 1000, tz=timezone.utc)
+        since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
         until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
     else:
-        until_dt = datetime.fromtimestamp(until / 1000, tz=timezone.utc)
+        until_dt = datetime_fromtimestamp_millis(until)
 
     with engine.begin() as conn:
         rows = conn.execute(
