@@ -636,13 +636,6 @@ async fn get_chair_stats(
     let total_ride_count = rides.len() as i32;
     let mut total_evaluation = 0.0;
     for ride in rides {
-        let chair_locations: Vec<ChairLocation> = sqlx::query_as("SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at")
-            .bind(chair_id)
-            .bind(ride.created_at)
-            .bind(ride.updated_at)
-            .fetch_all(&mut *tx)
-            .await?;
-
         let ride_statuses: Vec<RideStatus> =
             sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at")
                 .bind(&ride.id)
