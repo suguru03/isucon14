@@ -229,7 +229,7 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	if yetSentRideStatus.ID == "" && (!found || status == "COMPLETED") {
 		matched := &Ride{}
 		// MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-		if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); err != nil {
+		if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				writeJSON(w, http.StatusOK, &chairGetNotificationResponse{})
 				return
