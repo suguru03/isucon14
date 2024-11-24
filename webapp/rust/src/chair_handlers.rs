@@ -1,6 +1,5 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::response::{IntoResponse as _, Response};
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::CookieJar;
 use ulid::Ulid;
@@ -187,6 +186,11 @@ struct SimpleUser {
 
 #[derive(Debug, serde::Serialize)]
 struct ChairGetNotificationResponse {
+    data: Option<ChairGetNotificationResponseData>,
+}
+
+#[derive(Debug, serde::Serialize)]
+struct ChairGetNotificationResponseData {
     ride_id: String,
     user: SimpleUser,
     pickup_coordinate: Coordinate,
@@ -197,7 +201,7 @@ struct ChairGetNotificationResponse {
 async fn chair_get_notification(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(chair): axum::Extension<Chair>,
-) -> Result<Response, Error> {
+) -> Result<axum::Json<ChairGetNotificationResponse>, Error> {
     let mut tx = pool.begin().await?;
 
     sqlx::query("SELECT * FROM chairs WHERE id = ? FOR UPDATE")
@@ -226,7 +230,7 @@ async fn chair_get_notification(
                     .fetch_optional(&mut *tx)
                     .await?
             else {
-                return Ok(StatusCode::NO_CONTENT.into_response());
+                return Ok(axum::Json(ChairGetNotificationResponse { data: None }));
             };
 
             sqlx::query("UPDATE rides SET chair_id = ? WHERE id = ?")
@@ -249,22 +253,23 @@ async fn chair_get_notification(
     tx.commit().await?;
 
     Ok(axum::Json(ChairGetNotificationResponse {
-        ride_id: ride.id,
-        user: SimpleUser {
-            id: user.id,
-            name: format!("{} {}", user.firstname, user.lastname),
-        },
-        pickup_coordinate: Coordinate {
-            latitude: ride.pickup_latitude,
-            longitude: ride.pickup_longitude,
-        },
-        destination_coordinate: Coordinate {
-            latitude: ride.destination_latitude,
-            longitude: ride.destination_longitude,
-        },
-        status,
-    })
-    .into_response())
+        data: Some(ChairGetNotificationResponseData {
+            ride_id: ride.id,
+            user: SimpleUser {
+                id: user.id,
+                name: format!("{} {}", user.firstname, user.lastname),
+            },
+            pickup_coordinate: Coordinate {
+                latitude: ride.pickup_latitude,
+                longitude: ride.pickup_longitude,
+            },
+            destination_coordinate: Coordinate {
+                latitude: ride.destination_latitude,
+                longitude: ride.destination_longitude,
+            },
+            status,
+        }),
+    }))
 }
 
 #[derive(Debug, serde::Deserialize)]
