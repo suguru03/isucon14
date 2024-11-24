@@ -26,6 +26,8 @@ type Owner struct {
 	ChairDB *concurrent.SimpleMap[ChairID, *Chair]
 	// TotalSales 管理している椅子による売上の合計
 	TotalSales atomic.Int64
+	// SubScore このオーナーが管理している椅子によって獲得したベンチマークスコアの合計
+	SubScore atomic.Int64
 	// CompletedRequest 管理している椅子が完了したリクエスト
 	CompletedRequest *concurrent.SimpleSlice[*Request]
 

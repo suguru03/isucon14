@@ -171,6 +171,7 @@ func (u *User) Tick(ctx *Context) error {
 				u.TotalEvaluation += score
 				u.Request.Chair.Owner.CompletedRequest.Append(u.Request)
 				u.Request.Chair.Owner.TotalSales.Add(int64(u.Request.Sales()))
+				u.Request.Chair.Owner.SubScore.Add(int64(u.Request.Score()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
 			}
 
