@@ -120,7 +120,7 @@ async fn app_post_users(
                 .execute(&mut *tx)
                 .await?;
             // 招待した人にもRewardを付与
-            sqlx::query("INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)")
+            sqlx::query("INSERT INTO coupons (user_id, code, discount) VALUES (?, CONCAT(?, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), ?)")
                 .bind(inviter.id)
                 .bind(format!("RWD_{req_invitation_code}"))
                 .bind(1000)
@@ -411,7 +411,7 @@ async fn app_post_rides_estimated_fare(
             req.pickup_coordinate.longitude,
             req.destination_coordinate.latitude,
             req.destination_coordinate.longitude,
-        ) - discounted
+        ) - discounted,
     }))
 }
 
