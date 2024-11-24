@@ -934,6 +934,10 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 
 	nearbyChairs := []appGetNearbyChairsResponseChair{}
 	for _, chair := range chairs {
+		if !chair.IsActive {
+			continue
+		}
+
 		ride := &Ride{}
 		if err := tx.Get(
 			ride,
