@@ -709,16 +709,6 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appGetNotificationResponseChair
 	totalRideCount := len(rides)
 	totalEvaluation := 0.0
 	for _, ride := range rides {
-		chairLocations := []ChairLocation{}
-		err := tx.Select(
-			&chairLocations,
-			`SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at`,
-			chairID, ride.CreatedAt, ride.UpdatedAt,
-		)
-		if err != nil {
-			return stats, err
-		}
-
 		rideStatuses := []RideStatus{}
 		err = tx.Select(
 			&rideStatuses,
