@@ -80,11 +80,13 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         const decoder = new TextDecoder();
         const readed = (await reader?.read())?.value;
         const decoded = decoder.decode(readed);
-        const json = getSSEJsonFromFetch<AppGetNotificationResponse>(decoded);
+        const json =
+          getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
+        console.log("json", json);
         setFirstNotification(
           json
             ? {
-                ...json,
+                data: json,
                 contentType: "event-stream",
               }
             : undefined,
@@ -128,14 +130,14 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   >(
     firstNotification
       ? {
-          status: firstNotification.status,
+          status: firstNotification.data?.status,
           payload: {
-            ride_id: firstNotification.ride_id,
+            ride_id: firstNotification.data?.ride_id,
             coordinate: {
-              pickup: firstNotification.pickup_coordinate,
-              destination: firstNotification.destination_coordinate,
+              pickup: firstNotification.data?.pickup_coordinate,
+              destination: firstNotification.data?.destination_coordinate,
             },
-            chair: firstNotification.chair,
+            chair: firstNotification.data?.chair,
           },
         }
       : {},
@@ -153,18 +155,18 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
-              eventData.status !== preRequest.status ||
-              eventData.ride_id !== preRequest.payload?.ride_id
+              eventData.data?.status !== preRequest.status ||
+              eventData.data?.ride_id !== preRequest.payload?.ride_id
             ) {
               return {
-                status: eventData.status,
+                status: eventData.data?.status,
                 payload: {
-                  ride_id: eventData.ride_id,
+                  ride_id: eventData.data?.ride_id,
                   coordinate: {
-                    pickup: eventData.pickup_coordinate,
-                    destination: eventData.destination_coordinate,
+                    pickup: eventData.data?.pickup_coordinate,
+                    destination: eventData.data?.destination_coordinate,
                   },
-                  chair: eventData.chair,
+                  chair: eventData.data?.chair,
                 },
               };
             } else {
@@ -190,21 +192,21 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           setClientAppPayloadWithStatus((prev) => {
             if (
               prev?.payload !== undefined &&
-              prev?.status === currentNotification.status &&
-              prev.payload?.ride_id === currentNotification.ride_id
+              prev?.status === currentNotification.data?.status &&
+              prev.payload?.ride_id === currentNotification.data?.ride_id
             ) {
               return prev;
             }
 
             return {
-              status: currentNotification.status,
+              status: currentNotification.data?.status,
               payload: {
-                ride_id: currentNotification.ride_id,
+                ride_id: currentNotification.data?.ride_id,
                 coordinate: {
-                  pickup: currentNotification.pickup_coordinate,
-                  destination: currentNotification.destination_coordinate,
+                  pickup: currentNotification.data?.pickup_coordinate,
+                  destination: currentNotification.data?.destination_coordinate,
                 },
-                chair: currentNotification.chair,
+                chair: currentNotification.data?.chair,
               },
             };
           });
