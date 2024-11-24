@@ -180,6 +180,31 @@ func (r *Request) timelineString() string {
 	return fmt.Sprintf("[0(base=%d),%d,%d,%d,%d,%d]", baseTime, matchTime, dispatchTime, pickedUpTime, arrivedTime, completedTime)
 }
 
+const ForwardingScoreDenominator = 10
+
+func (r *Request) Score() int {
+	return r.Sales() + r.StartPoint.V.DistanceTo(r.PickupPoint)*FarePerDistance/ForwardingScoreDenominator
+}
+
+func (r *Request) PartialScore() int {
+	switch r.Statuses.Desired {
+	case RequestStatusMatching:
+		return 0
+	case RequestStatusDispatching:
+		return r.StartPoint.V.DistanceTo(r.Chair.Location.Current()) * FarePerDistance / ForwardingScoreDenominator
+	case RequestStatusDispatched:
+		return r.StartPoint.V.DistanceTo(r.PickupPoint) * FarePerDistance / ForwardingScoreDenominator
+	case RequestStatusCarrying:
+		return r.StartPoint.V.DistanceTo(r.PickupPoint)*FarePerDistance/ForwardingScoreDenominator + r.PickupPoint.DistanceTo(r.Chair.Location.Current())*FarePerDistance
+	case RequestStatusArrived:
+		return r.Score() - InitialFare
+	case RequestStatusCompleted:
+		return r.Score()
+	default:
+		panic("unknown status")
+	}
+}
+
 type Evaluation struct {
 	Matching bool
 	Dispatch bool

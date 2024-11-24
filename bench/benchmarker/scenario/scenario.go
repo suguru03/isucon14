@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/guregu/null/v5"
 	"github.com/isucon/isucandar"
 	"github.com/isucon/isucon14/bench/benchmarker/scenario/worldclient"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
@@ -44,6 +45,7 @@ type Scenario struct {
 	reporter         benchrun.Reporter
 	meter            metric.Meter
 	prepareOnly      bool
+	finalScore       null.Int64
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool) *Scenario {
@@ -259,8 +261,25 @@ LOOP:
 	return nil
 }
 
-func (s *Scenario) Score() int64 {
-	return lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.TotalSales.Load() }) / 100
+func (s *Scenario) TotalSales() int64 {
+	return lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.TotalSales.Load() })
+}
+
+func (s *Scenario) Score(final bool) int64 {
+	if s.finalScore.Valid {
+		return s.finalScore.Int64
+	}
+	score := lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.SubScore.Load() }) / 100
+	if final {
+		score += lo.SumBy(s.world.RequestDB.ToSlice(), func(r *world.Request) int64 {
+			if r.Evaluated {
+				return 0
+			}
+			return int64(r.PartialScore())
+		}) / 100
+		s.finalScore = null.IntFrom(score)
+	}
+	return score
 }
 
 func (s *Scenario) TotalDiscount() int64 {
@@ -274,7 +293,7 @@ func (s *Scenario) TotalDiscount() int64 {
 }
 
 func sendResult(s *Scenario, finished bool, passed bool) error {
-	rawScore := s.Score()
+	rawScore := s.Score(finished)
 	if err := s.reporter.Report(&resources.BenchmarkResult{
 		Finished: finished,
 		Passed:   passed,
