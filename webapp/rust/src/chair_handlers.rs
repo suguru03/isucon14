@@ -293,16 +293,7 @@ async fn chair_post_ride_status(
     }
 
     match req.status.as_str() {
-        // Deny matching
-        "MATCHING" => {
-            sqlx::query("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)")
-                .bind(Ulid::new().to_string())
-                .bind(ride.id)
-                .bind("MATCHING")
-                .execute(&mut *tx)
-                .await?;
-        }
-        // Accept matching
+        // Acknowledge the ride
         "ENROUTE" => {
             sqlx::query("INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)")
                 .bind(Ulid::new().to_string())
