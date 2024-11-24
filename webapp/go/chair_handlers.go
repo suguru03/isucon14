@@ -88,8 +88,6 @@ func chairPostActivity(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// TODO: Requestの構造体がないの、紛らわしいので要検討
-
 type chairPostCoordinateResponse struct {
 	RecordedAt int64 `json:"recorded_at"`
 }
@@ -333,8 +331,6 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 
 		if !found || status == "COMPLETED" {
 			matched := &Ride{}
-			// TODO: いい感じに椅子とユーザーをマッチングさせる
-			// MEMO: 多分距離と椅子の移動速度が関係しそう
 			if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					return false, nil

@@ -162,7 +162,6 @@ type getAppRidesResponse struct {
 	Rides []getAppRidesResponseItem `json:"rides"`
 }
 
-// Ride
 type getAppRidesResponseItem struct {
 	ID                    string                       `json:"id"`
 	PickupCoordinate      Coordinate                   `json:"pickup_coordinate"`
