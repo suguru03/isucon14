@@ -4,7 +4,7 @@ use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::CookieJar;
 use ulid::Ulid;
 
-use crate::models::{Chair, ChairLocation, Owner, Ride, User};
+use crate::models::{Chair, ChairLocation, Owner, Ride, RideStatus, User};
 use crate::{AppState, Coordinate, Error};
 
 pub fn chair_routes(app_state: AppState) -> axum::Router<AppState> {
@@ -202,27 +202,42 @@ async fn chair_get_notification(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(chair): axum::Extension<Chair>,
 ) -> Result<axum::Json<ChairGetNotificationResponse>, Error> {
-    let mut tx = pool.begin().await?;
-
     sqlx::query("SELECT * FROM chairs WHERE id = ? FOR UPDATE")
         .bind(&chair.id)
-        .execute(&mut *tx)
+        .execute(&pool)
         .await?;
 
     let ride: Option<Ride> =
         sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1")
             .bind(&chair.id)
-            .fetch_optional(&mut *tx)
+            .fetch_optional(&pool)
             .await?;
 
-    let status = if let Some(ref ride) = ride {
-        Some(crate::get_latest_ride_status(&mut *tx, &ride.id).await?)
+    let (mut yet_sent_ride_status_id, ride_and_status) = if let Some(ride) = ride {
+        let yet_sent_ride_status: Option<RideStatus> =
+            sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1")
+                .bind(&ride.id)
+                .fetch_optional(&pool)
+                .await?;
+        if let Some(yet_sent_ride_status) = yet_sent_ride_status {
+            (
+                Some(yet_sent_ride_status.id),
+                Some((ride, yet_sent_ride_status.status)),
+            )
+        } else {
+            let status = crate::get_latest_ride_status(&pool, &ride.id).await?;
+            (None, Some((ride, status)))
+        }
     } else {
-        None
+        (None, None)
     };
 
-    let (ride, status) = match status {
-        Some(status) if status != "COMPLETED" && status != "CANCELED" => (ride.unwrap(), status),
+    let mut tx = pool.begin().await?;
+
+    let (ride, status) = match ride_and_status {
+        Some((ride, status)) if yet_sent_ride_status_id.is_some() || status != "COMPLETED" => {
+            (ride, status)
+        }
         _ => {
             // MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
             let Some(matched): Option<Ride> =
@@ -233,15 +248,18 @@ async fn chair_get_notification(
                 return Ok(axum::Json(ChairGetNotificationResponse { data: None }));
             };
 
-            sqlx::query("UPDATE rides SET chair_id = ? WHERE id = ?")
-                .bind(chair.id)
-                .bind(&matched.id)
-                .execute(&mut *tx)
-                .await?;
-            (
-                ride.unwrap_or(matched),
-                status.unwrap_or_else(|| "MATCHING".to_owned()),
-            )
+            if let Some((ride, status)) = ride_and_status {
+                (ride, status)
+            } else {
+                sqlx::query("UPDATE rides SET chair_id = ? WHERE id = ?")
+                    .bind(chair.id)
+                    .bind(&matched.id)
+                    .execute(&mut *tx)
+                    .await?;
+                let yet_sent_ride_status: RideStatus = sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1").bind(&matched.id).fetch_one(&mut *tx).await?;
+                yet_sent_ride_status_id = Some(yet_sent_ride_status.id);
+                (matched, yet_sent_ride_status.status)
+            }
         }
     };
 
@@ -249,6 +267,13 @@ async fn chair_get_notification(
         .bind(ride.user_id)
         .fetch_one(&mut *tx)
         .await?;
+
+    if let Some(yet_sent_ride_status_id) = yet_sent_ride_status_id {
+        sqlx::query("UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?")
+            .bind(yet_sent_ride_status_id)
+            .execute(&mut *tx)
+            .await?;
+    }
 
     tx.commit().await?;
 
