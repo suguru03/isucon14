@@ -166,7 +166,7 @@ module Isuride
 
         continuing_ride_count = rides.count do |ride|
           status = get_latest_ride_status(tx, ride.fetch(:id))
-          status != 'COMPLETED' && status != 'CANCELED'
+          status != 'COMPLETED'
         end
 
         if continuing_ride_count > 0

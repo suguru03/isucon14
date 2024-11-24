@@ -121,7 +121,7 @@ module Isuride
       response = db_transaction do |tx|
         if yet_sent_ride_status.nil? && (ride.nil? || status == 'COMPLETED')
           # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-          matched = tx.query('SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE').first
+          matched = tx.query('SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE').first
           if matched.nil?
             halt json(data: nil)
           end
