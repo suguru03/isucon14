@@ -162,7 +162,6 @@ type getAppRidesResponse struct {
 	Rides []getAppRidesResponseItem `json:"rides"`
 }
 
-// Ride
 type getAppRidesResponseItem struct {
 	ID                    string                       `json:"id"`
 	PickupCoordinate      Coordinate                   `json:"pickup_coordinate"`
@@ -297,7 +296,7 @@ func appPostRides(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status != "COMPLETED" && status != "CANCELED" {
+		if status != "COMPLETED" {
 			continuingRideCount++
 		}
 	}
