@@ -21,10 +21,6 @@ type AppPostUsersRes interface {
 	appPostUsersRes()
 }
 
-type ChairGetNotificationRes interface {
-	chairGetNotificationRes()
-}
-
 type ChairPostRideStatusRes interface {
 	chairPostRideStatusRes()
 }

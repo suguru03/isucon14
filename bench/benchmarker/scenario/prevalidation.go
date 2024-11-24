@@ -189,7 +189,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RideStatusMATCHING); err != nil {
+			if err := validateChairNotification(result.Data.V, requestID, userID, api.RideStatusMATCHING); err != nil {
 				return err
 			}
 			break
@@ -225,7 +225,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RideStatusENROUTE); err != nil {
+			if err := validateChairNotification(result.Data.V, requestID, userID, api.RideStatusENROUTE); err != nil {
 				return err
 			}
 			break
@@ -262,7 +262,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RideStatusPICKUP); err != nil {
+			if err := validateChairNotification(result.Data.V, requestID, userID, api.RideStatusPICKUP); err != nil {
 				return err
 			}
 			break
@@ -298,7 +298,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RideStatusCARRYING); err != nil {
+			if err := validateChairNotification(result.Data.V, requestID, userID, api.RideStatusCARRYING); err != nil {
 				return err
 			}
 			break
@@ -335,7 +335,7 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 			if err != nil {
 				return err
 			}
-			if err := validateChairNotification(result, requestID, userID, api.RideStatusARRIVED); err != nil {
+			if err := validateChairNotification(result.Data.V, requestID, userID, api.RideStatusARRIVED); err != nil {
 				return err
 			}
 			break
@@ -459,7 +459,7 @@ func validateAppNotificationWithChair(req api.UserNotificationData, requestID st
 	return nil
 }
 
-func validateChairNotification(req *api.ChairGetNotificationOK, requestID string, userID string, status api.RideStatus) error {
+func validateChairNotification(req webapp.ChairNotificationData, requestID string, userID string, status api.RideStatus) error {
 	if req.RideID != requestID {
 		return fmt.Errorf("GET /api/chair/notification の返却するIDが、リクエストIDと一致しません (expected:%s, actual:%s)", requestID, req.RideID)
 	}

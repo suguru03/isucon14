@@ -624,7 +624,7 @@ func decodeAppPostUsersResponse(resp *http.Response) (res AppPostUsersRes, _ err
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
-func decodeChairGetNotificationResponse(resp *http.Response) (res ChairGetNotificationRes, _ error) {
+func decodeChairGetNotificationResponse(resp *http.Response) (res *ChairGetNotificationOK, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -670,9 +670,6 @@ func decodeChairGetNotificationResponse(resp *http.Response) (res ChairGetNotifi
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
-	case 204:
-		// Code 204.
-		return &ChairGetNotificationNoContent{}, nil
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }

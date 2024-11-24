@@ -1993,6 +1993,86 @@ func (s *ChairGetNotificationOK) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ChairGetNotificationOK) encodeFields(e *jx.Encoder) {
 	{
+		if s.Data.Set {
+			e.FieldStart("data")
+			s.Data.Encode(e)
+		}
+	}
+	{
+		if s.RetryAfterMs.Set {
+			e.FieldStart("retry_after_ms")
+			s.RetryAfterMs.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfChairGetNotificationOK = [2]string{
+	0: "data",
+	1: "retry_after_ms",
+}
+
+// Decode decodes ChairGetNotificationOK from json.
+func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ChairGetNotificationOK to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "data":
+			if err := func() error {
+				s.Data.Reset()
+				if err := s.Data.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"data\"")
+			}
+		case "retry_after_ms":
+			if err := func() error {
+				s.RetryAfterMs.Reset()
+				if err := s.RetryAfterMs.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retry_after_ms\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ChairGetNotificationOK")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ChairGetNotificationOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ChairGetNotificationOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ChairNotificationData) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ChairNotificationData) encodeFields(e *jx.Encoder) {
+	{
 		e.FieldStart("ride_id")
 		e.Str(s.RideID)
 	}
@@ -2012,27 +2092,20 @@ func (s *ChairGetNotificationOK) encodeFields(e *jx.Encoder) {
 		e.FieldStart("status")
 		s.Status.Encode(e)
 	}
-	{
-		if s.RetryAfterMs.Set {
-			e.FieldStart("retry_after_ms")
-			s.RetryAfterMs.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfChairGetNotificationOK = [6]string{
+var jsonFieldsNameOfChairNotificationData = [5]string{
 	0: "ride_id",
 	1: "user",
 	2: "pickup_coordinate",
 	3: "destination_coordinate",
 	4: "status",
-	5: "retry_after_ms",
 }
 
-// Decode decodes ChairGetNotificationOK from json.
-func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
+// Decode decodes ChairNotificationData from json.
+func (s *ChairNotificationData) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ChairGetNotificationOK to nil")
+		return errors.New("invalid: unable to decode ChairNotificationData to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -2090,22 +2163,12 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
-		case "retry_after_ms":
-			if err := func() error {
-				s.RetryAfterMs.Reset()
-				if err := s.RetryAfterMs.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"retry_after_ms\"")
-			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ChairGetNotificationOK")
+		return errors.Wrap(err, "decode ChairNotificationData")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2122,8 +2185,8 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfChairGetNotificationOK) {
-					name = jsonFieldsNameOfChairGetNotificationOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfChairNotificationData) {
+					name = jsonFieldsNameOfChairNotificationData[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2144,14 +2207,14 @@ func (s *ChairGetNotificationOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ChairGetNotificationOK) MarshalJSON() ([]byte, error) {
+func (s *ChairNotificationData) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ChairGetNotificationOK) UnmarshalJSON(data []byte) error {
+func (s *ChairNotificationData) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3097,6 +3160,39 @@ func (s OptAppPostUsersReq) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptAppPostUsersReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ChairNotificationData as json.
+func (o OptChairNotificationData) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes ChairNotificationData from json.
+func (o *OptChairNotificationData) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptChairNotificationData to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptChairNotificationData) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptChairNotificationData) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
