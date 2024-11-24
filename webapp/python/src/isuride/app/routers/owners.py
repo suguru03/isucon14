@@ -18,15 +18,14 @@ from ulid import ULID
 from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
-from ..utils import secure_random_str
-
-fare_per_distance: int = 100
-initial_fare: int = 500
+from ..utils import (
+    datetime_fromtimestamp_millis,
+    secure_random_str,
+    sum_sales,
+    timestamp_millis,
+)
 
 router = APIRouter(prefix="/api/owner")
-
-INITIAL_FARE = 500
-FARE_PER_DISTANCE = 100
 
 
 class OwnerPostOwnersRequest(BaseModel):
@@ -94,21 +93,21 @@ def owner_get_sales(
 ) -> OwnerGetSalesResponse:
     # TODO: タイムゾーンの扱いに自信なし
     if since is None:
-        since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
+        since_dt = datetime_fromtimestamp_millis(0)
     else:
-        since_dt = datetime.fromtimestamp(since / 1000, tz=timezone.utc)
+        since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
         until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
     else:
-        until_dt = datetime.fromtimestamp(until / 1000, tz=timezone.utc)
+        until_dt = datetime_fromtimestamp_millis(until)
 
     with engine.begin() as conn:
         rows = conn.execute(
             text("SELECT * FROM chairs WHERE owner_id = :owner_id"),
             {"owner_id": owner.id},
-        )
-        chairs = [Chair(**r) for r in rows.mappings()]
+        ).fetchall()
+        chairs = [Chair(**r._mapping) for r in rows]
 
         res = OwnerGetSalesResponse(total_sales=0, chairs=[], models=[])
         model_sales_by_model: MutableMapping[str, int] = defaultdict(int)
@@ -119,8 +118,8 @@ def owner_get_sales(
                 ),
                 # TODO: datetime型で大丈夫なんだっけ？
                 {"chair_id": chair.id, "since": since_dt, "until": until_dt},
-            )
-            rides = [Ride(**r) for r in rows.mappings()]
+            ).fetchall()
+            rides = [Ride(**r._mapping) for r in rows]
 
             chair_sales = sum_sales(rides)
 
@@ -137,19 +136,6 @@ def owner_get_sales(
         res.models = model_sales
 
         return res
-
-
-def sum_sales(rides: list[Ride]) -> int:
-    sale = 0
-    for ride in rides:
-        sale += calculate_sale(ride)
-    return sale
-
-
-def calculate_sale(ride: Ride) -> int:
-    # TODO: implement
-    # return calculateFare(ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
-    return 10
 
 
 class ChairWithDetail(BaseModel):
@@ -219,14 +205,12 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
             name=chair.name,
             model=chair.model,
             active=chair.is_active,
-            # TODO: ミリ秒への変換はこれで良いのだろうか
-            registered_at=int(chair.created_at.timestamp() * 1000),
+            registered_at=timestamp_millis(chair.created_at),
             total_distance=chair.total_distance,
             total_distance_updated_at=None,
         )
         if chair.total_distance_updated_at is not None:
-            # TODO: ミリ秒への変換はこれで良いのだろうか
-            t = int(chair.total_distance_updated_at.timestamp() * 1000)
+            t = timestamp_millis(chair.total_distance_updated_at)
             c.total_distance_updated_at = t
         res.chairs.append(c)
 
