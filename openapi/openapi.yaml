@@ -721,13 +721,11 @@ paths:
                 status:
                   type: string
                   enum:
-                    - MATCHING
                     - ENROUTE
                     - CARRYING
                   description: |
                     ライドの状態
-                    MATCHING: マッチングを拒否し、再度マッチング状態に戻す
-                    ENROUTE: マッチングを承認し、乗車位置に向かう
+                    ENROUTE: マッチしたライドを確認し、乗車位置に向かう
                     CARRYING: ユーザーが乗車し、椅子が目的地に向かう
               required:
                 - status
