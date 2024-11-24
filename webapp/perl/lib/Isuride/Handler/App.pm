@@ -3,23 +3,25 @@ use v5.40;
 use utf8;
 
 use HTTP::Status qw(:constants);
-use Types::Standard -types;
 use Data::ULID::XS qw(ulid);
+use Cpanel::JSON::XS::Type qw(JSON_TYPE_STRING JSON_TYPE_INT JSON_TYPE_STRING_OR_NULL json_type_arrayof);
 
+use Isuride::Models qw(Coordinate);
+use Isuride::Time qw(unix_milli_from_str);
 use Isuride::Util qw(secure_random_str calculate_sale check_params);
 
-use constant AppPostUsersRequest => Dict [
-    username        => Str,
-    firstname       => Str,
-    lastname        => Str,
-    date_of_birth   => Str,
-    invitation_code => Optional [Str],
-];
+use constant AppPostUsersRequest => {
+    username        => JSON_TYPE_STRING,
+    firstname       => JSON_TYPE_STRING,
+    lastname        => JSON_TYPE_STRING,
+    date_of_birth   => JSON_TYPE_STRING,
+    invitation_code => JSON_TYPE_STRING_OR_NULL,
+};
 
-use constant AppPostUsersResponse => Dict [
-    id              => Str,
-    invitation_code => Str,
-];
+use constant AppPostUsersResponse => {
+    id              => JSON_TYPE_STRING,
+    invitation_code => JSON_TYPE_STRING,
+};
 
 sub app_post_users ($app, $c) {
     my $params = $c->req->json_parameters;
@@ -89,13 +91,13 @@ sub app_post_users ($app, $c) {
     my $res = $c->render_json({
             id              => $user_id,
             invitation_code => $invitation_code,
-    });
+    }, AppPostUsersResponse);
 
     $res->status(HTTP_CREATED);
     return $res;
 }
 
-use constant AppPaymentMethodsRequest => Dict [ token => Str, ];
+use constant AppPaymentMethodsRequest => { token => JSON_TYPE_STRING, };
 
 sub app_post_payment_methods ($app, $c) {
     my $params = $c->req->json_parameters;
@@ -117,6 +119,28 @@ sub app_post_payment_methods ($app, $c) {
 
     $c->halt_no_content(HTTP_NO_CONTENT);
 }
+
+use constant AppGetRidesResponseItemChair => {
+    id    => JSON_TYPE_STRING,
+    owner => JSON_TYPE_STRING,
+    model => JSON_TYPE_STRING,
+    model => JSON_TYPE_STRING,
+};
+
+use constant AppGetRidesResponseItem => {
+    id                     => JSON_TYPE_STRING,
+    pickup_coordinate      => Coordinate,
+    destination_coordinate => Coordinate,
+    chair                  => AppGetRidesResponseItemChair,
+    fare                   => JSON_TYPE_INT,
+    evaluation             => JSON_TYPE_INT,
+    requested_at           => JSON_TYPE_INT,
+    completed_at           => JSON_TYPE_INT,
+};
+
+use constant AppGetRidesResponse => {
+    rides => json_type_arrayof(AppGetRidesResponseItem),
+};
 
 sub app_get_rides ($app, $c) {
     my $user = $c->stash->{user};
@@ -149,11 +173,10 @@ sub app_get_rides ($app, $c) {
                 latitude  => $ride->{destination_latitude},
                 longitude => $ride->{destination_longitude},
             },
-            fare       => calculate_sale($ride),
-            evaluation => $ride->{evaluation},
-            # XXX: unixMilli相当の処理
-            requested_at => $ride->{created_at},
-            completed_at => $ride->{updated_at},
+            fare         => calculate_sale($ride),
+            evaluation   => $ride->{evaluation},
+            requested_at => unix_milli_from_str($ride->{created_at}),
+            completed_at => unix_milli_from_str($ride->{updated_at}),
         };
 
         my $chair = $app->dbh->select_row(
@@ -182,10 +205,11 @@ sub app_get_rides ($app, $c) {
 
         push $items->@*, $item;
     }
-    return $c->render_json({ rides => $items });
+
+    return $c->render_json({ rides => $items }, AppGetRidesResponse);
 }
 
-sub get_latest_ride_status($c, $ride_id) {
+sub get_latest_ride_status ($c, $ride_id) {
     $c->dbh->select_row(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id

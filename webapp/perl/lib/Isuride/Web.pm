@@ -75,5 +75,4 @@ sub app_get_resuest ($self, $c) {
         my $res = $c->render_json({ message => $message }, { message => JSON_TYPE_STRING });
         die Kossy::Exception->new($status, response => $res);
     };
-
 }
