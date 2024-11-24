@@ -59,7 +59,7 @@ export default defineConfig({
         return content
           .replace(
             "return await response.json();",
-            "return {...await response.json(), _responseStatus: response.status,  _responseHeaders: response.headers};",
+            "return {...await response.json(), _responseStatus: response.status};",
           )
           .replace(
             '| { status: "unknown"; payload: string }',
