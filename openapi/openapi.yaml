@@ -688,38 +688,22 @@ paths:
       tags:
         - chair
       summary: 椅子向け通知エンドポイント
-      description: 椅子に配車要求を通知するなどで使う想定
+      description: 自分に割り当てられた最新のライドの状態を取得・通知する
       operationId: chair-get-notification
       responses:
         "200":
-          description: 自分に割り当てられた最新のライド
+          description: OK
           content:
             application/json:
               schema:
+                description: 自分に割り当てられたライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも割り当てられていない場合、dataはnullまたはundefined
                 type: object
                 properties:
-                  ride_id:
-                    type: string
-                    description: ライドID
-                  user:
-                    $ref: "#/components/schemas/User"
-                  pickup_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  destination_coordinate:
-                    $ref: "#/components/schemas/Coordinate"
-                  status:
-                    $ref: "#/components/schemas/RideStatus"
+                  data:
+                    $ref: "#/components/schemas/ChairNotificationData"
                   retry_after_ms:
                     type: integer
                     description: 次回の通知ポーリングまでの待機時間(ミリ秒単位)
-                required:
-                  - ride_id
-                  - user
-                  - pickup_coordinate
-                  - destination_coordinate
-                  - status
-        "204":
-          description: 割り当てられたライドが存在しない場合
   "/chair/rides/{ride_id}/status":
     post:
       tags:
@@ -904,3 +888,24 @@ components:
         - status
         - created_at
         - updated_at
+    ChairNotificationData:
+      description: 椅子向け通知データ
+      type: object
+      properties:
+        ride_id:
+          type: string
+          description: ライドID
+        user:
+          $ref: "#/components/schemas/User"
+        pickup_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        destination_coordinate:
+          $ref: "#/components/schemas/Coordinate"
+        status:
+          $ref: "#/components/schemas/RideStatus"
+      required:
+        - ride_id
+        - user
+        - pickup_coordinate
+        - destination_coordinate
+        - status

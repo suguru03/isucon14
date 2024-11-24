@@ -170,6 +170,10 @@ type simpleUser struct {
 }
 
 type chairGetNotificationResponse struct {
+	Data *chairGetNotificationResponseData `json:"data"`
+}
+
+type chairGetNotificationResponseData struct {
 	RideID                string     `json:"ride_id"`
 	User                  simpleUser `json:"user"`
 	PickupCoordinate      Coordinate `json:"pickup_coordinate"`
@@ -212,12 +216,12 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !found || status == "COMPLETED" || status == "CANCELED" {
+	if !found || status == "COMPLETED" {
 		matched := &Ride{}
 		// MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
 		if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				w.WriteHeader(http.StatusNoContent)
+				writeJSON(w, http.StatusOK, &chairGetNotificationResponse{})
 				return
 			}
 			writeError(w, http.StatusInternalServerError, err)
@@ -248,20 +252,22 @@ func chairGetNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, &chairGetNotificationResponse{
-		RideID: ride.ID,
-		User: simpleUser{
-			ID:   user.ID,
-			Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+		Data: &chairGetNotificationResponseData{
+			RideID: ride.ID,
+			User: simpleUser{
+				ID:   user.ID,
+				Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+			},
+			PickupCoordinate: Coordinate{
+				Latitude:  ride.PickupLatitude,
+				Longitude: ride.PickupLongitude,
+			},
+			DestinationCoordinate: Coordinate{
+				Latitude:  ride.DestinationLatitude,
+				Longitude: ride.DestinationLongitude,
+			},
+			Status: status,
 		},
-		PickupCoordinate: Coordinate{
-			Latitude:  ride.PickupLatitude,
-			Longitude: ride.PickupLongitude,
-		},
-		DestinationCoordinate: Coordinate{
-			Latitude:  ride.DestinationLatitude,
-			Longitude: ride.DestinationLongitude,
-		},
-		Status: status,
 	})
 }
 
@@ -274,6 +280,106 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 
 	var lastRide *Ride
 	var lastRideStatus string
+	f := func() (respond bool, err error) {
+		found := true
+		ride := &Ride{}
+		tx, err := db.Beginx()
+		if err != nil {
+			return false, err
+		}
+		defer tx.Rollback()
+
+		if _, err := tx.Exec("SELECT * FROM chairs WHERE id = ? FOR UPDATE", chair.ID); err != nil {
+			return false, err
+		}
+
+		if err := tx.Get(ride, `SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				found = false
+			} else {
+				return false, err
+			}
+		}
+
+		var status string
+		if found {
+			status, err = getLatestRideStatus(tx, ride.ID)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		if !found || status == "COMPLETED" {
+			matched := &Ride{}
+			// TODO: いい感じに椅子とユーザーをマッチングさせる
+			// MEMO: 多分距離と椅子の移動速度が関係しそう
+			if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return false, nil
+				}
+				return false, err
+			}
+
+			if _, err := tx.Exec("UPDATE rides SET chair_id = ? WHERE id = ?", chair.ID, matched.ID); err != nil {
+				return false, err
+			}
+
+			if !found {
+				ride = matched
+			}
+		}
+
+		if lastRide != nil && ride.ID == lastRide.ID && status == lastRideStatus {
+			return false, nil
+		}
+
+		user := &User{}
+		err = tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID)
+		if err != nil {
+			return false, err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return false, err
+		}
+
+		if err := writeSSE(w, &chairGetNotificationResponseData{
+			RideID: ride.ID,
+			User: simpleUser{
+				ID:   user.ID,
+				Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+			},
+			PickupCoordinate: Coordinate{
+				Latitude:  ride.PickupLatitude,
+				Longitude: ride.PickupLongitude,
+			},
+			DestinationCoordinate: Coordinate{
+				Latitude:  ride.DestinationLatitude,
+				Longitude: ride.DestinationLongitude,
+			},
+			Status: status,
+		}); err != nil {
+			return false, err
+		}
+		lastRide = ride
+		lastRideStatus = status
+
+		return true, nil
+	}
+
+	// 初回送信を必ず行う
+	respond, err := f()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !respond {
+		if err := writeSSE(w, nil); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
 	for {
 		select {
 		case <-r.Context().Done():
@@ -281,99 +387,14 @@ func chairGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			err := func() error {
-				found := true
-				ride := &Ride{}
-				tx, err := db.Beginx()
-				if err != nil {
-					return err
-				}
-				defer tx.Rollback()
-
-				if _, err := tx.Exec("SELECT * FROM chairs WHERE id = ? FOR UPDATE", chair.ID); err != nil {
-					return err
-				}
-
-				if err := tx.Get(ride, `SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1`, chair.ID); err != nil {
-					if errors.Is(err, sql.ErrNoRows) {
-						found = false
-					} else {
-						return err
-					}
-				}
-
-				var status string
-				if found {
-					status, err = getLatestRideStatus(tx, ride.ID)
-					if err != nil {
-						return err
-					}
-				}
-
-				if !found || status == "COMPLETED" || status == "CANCELED" {
-					matched := &Ride{}
-					// TODO: いい感じに椅子とユーザーをマッチングさせる
-					// MEMO: 多分距離と椅子の移動速度が関係しそう
-					if err := tx.Get(matched, `SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE`); err != nil {
-						if errors.Is(err, sql.ErrNoRows) {
-							return nil
-						}
-						return err
-					}
-
-					if _, err := tx.Exec("UPDATE rides SET chair_id = ? WHERE id = ?", chair.ID, matched.ID); err != nil {
-						return err
-					}
-
-					if !found {
-						ride = matched
-					}
-				}
-
-				if lastRide != nil && ride.ID == lastRide.ID && status == lastRideStatus {
-					return nil
-				}
-
-				user := &User{}
-				err = tx.Get(user, "SELECT * FROM users WHERE id = ?", ride.UserID)
-				if err != nil {
-					return err
-				}
-
-				if err := tx.Commit(); err != nil {
-					return err
-				}
-
-				if err := writeSSE(w, &chairGetNotificationResponse{
-					RideID: ride.ID,
-					User: simpleUser{
-						ID:   user.ID,
-						Name: fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
-					},
-					PickupCoordinate: Coordinate{
-						Latitude:  ride.PickupLatitude,
-						Longitude: ride.PickupLongitude,
-					},
-					DestinationCoordinate: Coordinate{
-						Latitude:  ride.DestinationLatitude,
-						Longitude: ride.DestinationLongitude,
-					},
-					Status: status,
-				}); err != nil {
-					return err
-				}
-				lastRide = ride
-				lastRideStatus = status
-
-				return nil
-			}()
-
+			respond, err := f()
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
-
-			time.Sleep(100 * time.Millisecond)
+			if !respond {
+				time.Sleep(100 * time.Millisecond)
+			}
 		}
 	}
 }
