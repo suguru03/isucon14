@@ -297,7 +297,7 @@ func appPostRides(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		if status != "COMPLETED" && status != "CANCELED" {
+		if status != "COMPLETED" {
 			continuingRideCount++
 		}
 	}
