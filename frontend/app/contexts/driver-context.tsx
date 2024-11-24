@@ -75,14 +75,14 @@ export const useClientChairRequest = (accessToken: string, id?: string) => {
             abortController.signal,
           );
           setClientChairPayloadWithStatus({
-            status: appRequest.status,
+            status: appRequest.data?.status,
             payload: {
-              ride_id: appRequest.ride_id,
+              ride_id: appRequest.data?.ride_id,
               coordinate: {
-                pickup: appRequest.destination_coordinate, // TODO: set pickup
-                destination: appRequest.destination_coordinate,
+                pickup: appRequest.data?.destination_coordinate, // TODO: set pickup
+                destination: appRequest.data?.destination_coordinate,
               },
-              user: appRequest.user,
+              user: appRequest.data?.user,
             },
           });
         })().catch((e) => {

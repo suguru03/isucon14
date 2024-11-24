@@ -34,17 +34,6 @@ export const Matching = ({
       },
     });
   }, [auth, postChairRideStatus, ride_id]);
-  const handleDeny = useCallback(() => {
-    postChairRideStatus({
-      pathParams: { rideId: ride_id || "" },
-      body: {
-        status: "MATCHING",
-      },
-      headers: {
-        Authorization: `Bearer ${auth?.accessToken}`,
-      },
-    });
-  }, [auth, postChairRideStatus, ride_id]);
 
   return (
     <div className="h-full text-center content-center">
@@ -76,17 +65,6 @@ export const Matching = ({
               }}
             >
               配車を受け付ける
-            </Button>
-          </div>
-          <div className="my-4">
-            <Button
-              className="w-80"
-              onClick={() => {
-                handleDeny();
-                handleCloseModal();
-              }}
-            >
-              キャンセル
             </Button>
           </div>
         </div>

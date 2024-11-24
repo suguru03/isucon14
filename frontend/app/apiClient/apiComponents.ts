@@ -508,59 +508,7 @@ export const useAppPostRideEvaluation = (
 export type AppGetNotificationError = Fetcher.ErrorWrapper<undefined>;
 
 export type AppGetNotificationResponse = {
-  /**
-   * ライドID
-   */
-  ride_id: string;
-  pickup_coordinate: Schemas.Coordinate;
-  destination_coordinate: Schemas.Coordinate;
-  /**
-   * 運賃
-   */
-  fare: number;
-  status: Schemas.RideStatus;
-  /**
-   * 椅子情報
-   */
-  chair?: {
-    /**
-     * 椅子ID
-     */
-    id: string;
-    /**
-     * 椅子の名前
-     */
-    name: string;
-    /**
-     * 椅子のモデル
-     */
-    model: string;
-    /**
-     * 椅子の統計情報
-     */
-    stats: {
-      /**
-       * 総乗車回数
-       */
-      total_rides_count: number;
-      /**
-       * 総評価平均
-       */
-      total_evaluation_avg: number;
-    };
-  };
-  /**
-   * 配車要求日時
-   *
-   * @format int64
-   */
-  created_at: number;
-  /**
-   * 配車要求更新日時
-   *
-   * @format int64
-   */
-  updated_at: number;
+  data?: Schemas.UserNotificationData;
   /**
    * 次回の通知ポーリングまでの待機時間(ミリ秒単位)
    */
@@ -570,7 +518,7 @@ export type AppGetNotificationResponse = {
 export type AppGetNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
- * 最新の自分のライドを取得する
+ * 最新の自分のライドの状態を取得・通知する
  */
 export const fetchAppGetNotification = (
   variables: AppGetNotificationVariables,
@@ -586,7 +534,7 @@ export const fetchAppGetNotification = (
   >({ url: "/app/notification", method: "get", ...variables, signal });
 
 /**
- * 最新の自分のライドを取得する
+ * 最新の自分のライドの状態を取得・通知する
  */
 export const useAppGetNotification = <TData = AppGetNotificationResponse,>(
   variables: AppGetNotificationVariables,
@@ -1111,14 +1059,7 @@ export const useChairPostCoordinate = (
 export type ChairGetNotificationError = Fetcher.ErrorWrapper<undefined>;
 
 export type ChairGetNotificationResponse = {
-  /**
-   * ライドID
-   */
-  ride_id: string;
-  user: Schemas.User;
-  pickup_coordinate: Schemas.Coordinate;
-  destination_coordinate: Schemas.Coordinate;
-  status: Schemas.RideStatus;
+  data?: Schemas.ChairNotificationData;
   /**
    * 次回の通知ポーリングまでの待機時間(ミリ秒単位)
    */
@@ -1128,7 +1069,7 @@ export type ChairGetNotificationResponse = {
 export type ChairGetNotificationVariables = ApiContext["fetcherOptions"];
 
 /**
- * 椅子に配車要求を通知するなどで使う想定
+ * 自分に割り当てられた最新のライドの状態を取得・通知する
  */
 export const fetchChairGetNotification = (
   variables: ChairGetNotificationVariables,
@@ -1144,7 +1085,7 @@ export const fetchChairGetNotification = (
   >({ url: "/chair/notification", method: "get", ...variables, signal });
 
 /**
- * 椅子に配車要求を通知するなどで使う想定
+ * 自分に割り当てられた最新のライドの状態を取得・通知する
  */
 export const useChairGetNotification = <TData = ChairGetNotificationResponse,>(
   variables: ChairGetNotificationVariables,
@@ -1190,11 +1131,10 @@ export type ChairPostRideStatusError = Fetcher.ErrorWrapper<{
 export type ChairPostRideStatusRequestBody = {
   /**
    * ライドの状態
-   * MATCHING: マッチングを拒否し、再度マッチング状態に戻す
-   * ENROUTE: マッチングを承認し、乗車位置に向かう
+   * ENROUTE: マッチしたライドを確認し、乗車位置に向かう
    * CARRYING: ユーザーが乗車し、椅子が目的地に向かう
    */
-  status: "MATCHING" | "ENROUTE" | "CARRYING";
+  status: "ENROUTE" | "CARRYING";
 };
 
 export type ChairPostRideStatusVariables = {

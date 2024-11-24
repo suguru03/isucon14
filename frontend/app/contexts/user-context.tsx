@@ -1,5 +1,4 @@
 import { useNavigate, useSearchParams } from "@remix-run/react";
-import { EventSourcePolyfill } from "event-source-polyfill";
 import {
   createContext,
   useContext,
@@ -48,27 +47,107 @@ const isApiFetchError = (
   return false;
 };
 
+/**
+ * SSE用の通信をfetchで取得した時のparse関数
+ */
+function getSSEJsonFromFetch<T>(value: string) {
+  const data = value.slice("data:".length).trim();
+  try {
+    return JSON.parse(data) as T;
+  } catch (e) {
+    console.error(`don't parse ${value}`);
+  }
+}
+
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] =
-    useState<Omit<ClientAppRide, "auth" | "user">>();
-  const isSSE = localStorage.getItem("isSSE") === "true";
 
+  const [firstNotification, setFirstNotification] = useState<
+    AppGetNotificationResponse & { contentType: "event-stream" | "json" }
+  >();
+  useEffect(() => {
+    const abortController = new AbortController();
+    (async () => {
+      const notification = await fetch(`${apiBaseURL}/app/notification`);
+      if (
+        notification?.headers
+          .get("Content-type")
+          ?.split(";")[0]
+          .includes("text/event-stream")
+      ) {
+        const reader = notification.body?.getReader();
+        const decoder = new TextDecoder();
+        const readed = (await reader?.read())?.value;
+        const decoded = decoder.decode(readed);
+        const json =
+          getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
+        console.log("json", json);
+        setFirstNotification(
+          json
+            ? {
+                data: json,
+                contentType: "event-stream",
+              }
+            : undefined,
+        );
+      } else {
+        const json = (await notification.json()) as
+          | AppGetNotificationResponse
+          | undefined;
+        setFirstNotification(
+          json
+            ? {
+                ...json,
+                contentType: "json",
+              }
+            : undefined,
+        );
+      }
+    })().catch((e) => {
+      console.error(`ERROR: ${JSON.stringify(e)}`);
+      if (isApiFetchError(e)) {
+        const apiError = e as {
+          name: string;
+          message: string;
+          stack: {
+            status: number;
+            payload: string;
+          };
+        };
+        if (apiError.stack.status === 401) {
+          navigate("/client/register");
+        }
+      }
+    });
+    return () => {
+      abortController.abort();
+    };
+  }, [setFirstNotification, navigate]);
+
+  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] = useState<
+    Omit<ClientAppRide, "auth" | "user">
+  >(
+    firstNotification
+      ? {
+          status: firstNotification.data?.status,
+          payload: {
+            ride_id: firstNotification.data?.ride_id,
+            coordinate: {
+              pickup: firstNotification.data?.pickup_coordinate,
+              destination: firstNotification.data?.destination_coordinate,
+            },
+            chair: firstNotification.data?.chair,
+          },
+        }
+      : {},
+  );
+  const retryAfterMs = firstNotification?.retry_after_ms ?? 10000;
+  const isSSE = firstNotification?.contentType === "event-stream";
   useEffect(() => {
     if (isSSE) {
-      /**
-       * WebAPI標準のものはAuthヘッダーを利用できないため
-       */
-      const eventSource = new EventSourcePolyfill(
-        `${apiBaseURL}/app/notification`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-      eventSource.onmessage = (event) => {
+      const eventSource = new EventSource(`${apiBaseURL}/app/notification`);
+      eventSource.addEventListener("message", (event) => {
         if (typeof event.data === "string") {
           const eventData = JSON.parse(
             event.data,
@@ -76,18 +155,18 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           setClientAppPayloadWithStatus((preRequest) => {
             if (
               preRequest === undefined ||
-              eventData.status !== preRequest.status ||
-              eventData.ride_id !== preRequest.payload?.ride_id
+              eventData.data?.status !== preRequest.status ||
+              eventData.data?.ride_id !== preRequest.payload?.ride_id
             ) {
               return {
-                status: eventData.status,
+                status: eventData.data?.status,
                 payload: {
-                  ride_id: eventData.ride_id,
+                  ride_id: eventData.data?.ride_id,
                   coordinate: {
-                    pickup: eventData.pickup_coordinate,
-                    destination: eventData.destination_coordinate,
+                    pickup: eventData.data?.pickup_coordinate,
+                    destination: eventData.data?.destination_coordinate,
                   },
-                  chair: eventData.chair,
+                  chair: eventData.data?.chair,
                 },
               };
             } else {
@@ -98,86 +177,71 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         return () => {
           eventSource.close();
         };
-      };
+      });
     } else {
       const abortController = new AbortController();
-
+      let timeoutId: number = 0;
       const polling = () => {
         (async () => {
-          const current = await fetchAppGetNotification(
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            },
+          console.log("polling:start");
+          const currentNotification = await fetchAppGetNotification(
+            {},
             abortController.signal,
           );
+          console.log("polling:end");
           setClientAppPayloadWithStatus((prev) => {
             if (
               prev?.payload !== undefined &&
-              prev?.status === current.status &&
-              prev.payload?.ride_id === current.ride_id
+              prev?.status === currentNotification.data?.status &&
+              prev.payload?.ride_id === currentNotification.data?.ride_id
             ) {
               return prev;
             }
 
             return {
-              status: current.status,
+              status: currentNotification.data?.status,
               payload: {
-                ride_id: current.ride_id,
+                ride_id: currentNotification.data?.ride_id,
                 coordinate: {
-                  pickup: current.pickup_coordinate,
-                  destination: current.destination_coordinate,
+                  pickup: currentNotification.data?.pickup_coordinate,
+                  destination: currentNotification.data?.destination_coordinate,
                 },
-                chair: current.chair,
+                chair: currentNotification.data?.chair,
               },
             };
           });
+          timeoutId = window.setTimeout(polling, retryAfterMs);
         })().catch((e) => {
-          console.error(`ERROR: ${e}`);
-        });
-        window.setTimeout(polling, 10000);
-      };
-      polling();
-
-      (async () => {
-        const appRequest = await fetchAppGetNotification(
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
-          abortController.signal,
-        );
-        setClientAppPayloadWithStatus({
-          status: appRequest.status,
-          payload: {
-            ride_id: appRequest.ride_id,
-            coordinate: {
-              pickup: appRequest.pickup_coordinate,
-              destination: appRequest.destination_coordinate,
-            },
-            chair: appRequest.chair,
-          },
-        });
-      })().catch((e) => {
-        if (isApiFetchError(e)) {
-          const apiError = e as {
-            name: string;
-            message: string;
-            stack: {
-              status: number;
-              payload: string;
+          console.error(`ERROR: ${JSON.stringify(e)}`);
+          if (isApiFetchError(e)) {
+            const apiError = e as {
+              name: string;
+              message: string;
+              stack: {
+                status: number;
+                payload: string;
+              };
             };
-          };
-          if (apiError.stack.status === 401) {
-            navigate("/client/register");
+            if (apiError.stack.status === 401) {
+              navigate("/client/register");
+            }
           }
-        }
-        console.error(`ERROR: ${JSON.stringify(e)}`);
-      });
+        });
+      };
+      timeoutId = window.setTimeout(polling, retryAfterMs);
+
+      return () => {
+        abortController.abort();
+        clearTimeout(timeoutId);
+      };
     }
-  }, [accessToken, setClientAppPayloadWithStatus, isSSE, navigate]);
+  }, [
+    accessToken,
+    setClientAppPayloadWithStatus,
+    isSSE,
+    navigate,
+    retryAfterMs,
+  ]);
 
   const responseClientAppRequest = useMemo<ClientAppRide | undefined>(() => {
     const debugStatus =
