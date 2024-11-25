@@ -198,7 +198,7 @@ func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) er
 
 	const (
 		initialOwnersNum         = 5
-		initialChairsNumPerOwner = 10
+		initialChairsNumPerOwner = 4
 		initialUsersNum          = 10
 	)
 
