@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from .routers import apps, chairs, owners
 
+# TODO: sqlalchemyのログを消す
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 app = FastAPI()
