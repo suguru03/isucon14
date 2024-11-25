@@ -3,8 +3,10 @@ import subprocess
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from sqlalchemy import text
 
 from .routers import apps, chairs, owners
+from .sql import engine
 
 # TODO: sqlalchemyのログを消す
 logging.basicConfig(level=logging.INFO)
@@ -19,9 +21,21 @@ class PostInitializeRequest(BaseModel):
     payment_server: str
 
 
+class PostInitializeResponse(BaseModel):
+    language: str
+
+
 @app.post("/api/initialize")
-def post_initialize() -> dict[str, str]:
-    # TODO: fix path
-    # TODO: golang output
+def post_initialize(req: PostInitializeRequest) -> PostInitializeResponse:
+    # TODO: エラーレスポンスに init.sh の出力を返すようにする
     subprocess.run("../sql/init.sh", check=True)
-    return {"language": "python"}
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "UPDATE settings SET value = :value WHERE name = 'payment_gateway_url'",
+            ),
+            {"value": req.payment_server},
+        )
+
+    return PostInitializeResponse(language="python")
