@@ -111,10 +111,10 @@ class GetSales extends AbstractHttpHandler
                 );
                 $stmt = $this->db->prepare(
                     '
-                SELECT rides.* 
-                    FROM rides 
-                    JOIN ride_statuses ON rides.id = ride_statuses.ride_id 
-                WHERE chair_id = ? AND status = \'COMPLETED\' AND updated_at BETWEEN ? AND ?'
+                SELECT rides.*
+                    FROM rides
+                    JOIN ride_statuses ON rides.id = ride_statuses.ride_id
+                WHERE chair_id = ? AND status = \'COMPLETED\' AND updated_at BETWEEN ? AND ?  + INTERVAL 999 MICROSECOND'
                 );
                 $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
                 $stmt->bindValue(2, $since->format('Y-m-d H:i:s'), PDO::PARAM_STR);
