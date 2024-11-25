@@ -172,30 +172,7 @@ abstract class AbstractHttpHandler
         }
         $totalRideCount = count($rides);
         $totalEvaluation = 0.0;
-        $recentRides = [];
         foreach ($rides as $ride) {
-            $chairLocations = [];
-            try {
-                $stmt = $tx->prepare(
-                    'SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at'
-                );
-                $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
-                $stmt->bindValue(2, $ride->createdAt, PDO::PARAM_STR);
-                $stmt->bindValue(3, $ride->updatedAt, PDO::PARAM_STR);
-                $stmt->execute();
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($result as $row) {
-                    $chairLocations[] = new ChairLocation(
-                        id: $row['id'],
-                        chairId: $row['chair_id'],
-                        latitude: $row['latitude'],
-                        longitude: $row['longitude'],
-                        createdAt: $row['created_at']
-                    );
-                }
-            } catch (PDOException $e) {
-                return new ChairStats($stats, $e);
-            }
             /** @var RideStatus[] $rideStatuses */
             $rideStatuses = [];
             try {
