@@ -1,3 +1,6 @@
+SET CHARACTER_SET_CLIENT = utf8mb4;
+SET CHARACTER_SET_CONNECTION = utf8mb4;
+
 USE isuride;
 
 INSERT INTO settings (name, value)
