@@ -27,6 +27,9 @@ class PostActivity extends AbstractHttpHandler
         ResponseInterface $response,
         array $args
     ): ResponseInterface {
+        $chair = $request->getAttribute('chair');
+        assert($chair instanceof Chair);
+
         $req = new ChairPostActivityRequest((array)$request->getParsedBody());
         if (!$req->valid()) {
             return (new ErrorResponse())->write(
@@ -37,14 +40,10 @@ class PostActivity extends AbstractHttpHandler
                 )
             );
         }
-        $chair = $request->getAttribute('chair');
-        assert($chair instanceof Chair);
 
-        $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare('UPDATE chairs SET is_active = ? WHERE id = ?');
             $stmt->execute([$req->getIsActive(), $chair->id]);
-            $this->db->commit();
             return $this->writeNoContent($response);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(

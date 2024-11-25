@@ -7,7 +7,6 @@ namespace IsuRide\Handlers;
 use DateTimeImmutable;
 use DateTimeZone;
 use Fig\Http\Message\StatusCodeInterface;
-use IsuRide\Database\Model\ChairLocation;
 use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\RideStatus;
 use IsuRide\Model\UserNotificationDataChairStats;
