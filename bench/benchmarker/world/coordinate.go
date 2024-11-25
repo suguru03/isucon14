@@ -33,6 +33,82 @@ func (c Coordinate) Within(region *Region) bool {
 	return region.Contains(c)
 }
 
+func (c Coordinate) MoveToward(target Coordinate, step int, rand *rand.Rand) Coordinate {
+	prev := c
+	to := c
+
+	// ランダムにx, y方向で近づける
+	x := rand.IntN(step + 1)
+	y := step - x
+	remain := 0
+
+	switch {
+	case prev.X < target.X:
+		xDiff := target.X - (prev.X + x)
+		if xDiff < 0 {
+			// X座標で追い越すので、追い越す分をyの移動に加える
+			to.X = target.X
+			y += -xDiff
+		} else {
+			to.X += x
+		}
+	case prev.X > target.X:
+		xDiff := (prev.X - x) - target.X
+		if xDiff < 0 {
+			// X座標で追い越すので、追い越す分をyの移動に加える
+			to.X = target.X
+			y += -xDiff
+		} else {
+			to.X -= x
+		}
+	default:
+		y = step
+	}
+
+	switch {
+	case prev.Y < target.Y:
+		yDiff := target.Y - (prev.Y + y)
+		if yDiff < 0 {
+			to.Y = target.Y
+			remain += -yDiff
+		} else {
+			to.Y += y
+		}
+	case prev.Y > target.Y:
+		yDiff := (prev.Y - y) - target.Y
+		if yDiff < 0 {
+			to.Y = target.Y
+			remain += -yDiff
+		} else {
+			to.Y -= y
+		}
+	default:
+		remain = y
+	}
+
+	if remain > 0 {
+		x = remain
+		switch {
+		case to.X < target.X:
+			xDiff := target.X - (to.X + x)
+			if xDiff < 0 {
+				to.X = target.X
+			} else {
+				to.X += x
+			}
+		case to.X > target.X:
+			xDiff := (to.X - x) - target.X
+			if xDiff < 0 {
+				to.X = target.X
+			} else {
+				to.X -= x
+			}
+		}
+	}
+
+	return to
+}
+
 func RandomCoordinate(worldX, worldY int) Coordinate {
 	return C(rand.IntN(worldX), rand.IntN(worldY))
 }
