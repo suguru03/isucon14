@@ -7,7 +7,7 @@ TODO: このdocstringを消す
 
 from collections import defaultdict
 from collections.abc import MutableMapping
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
@@ -19,6 +19,7 @@ from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
 from ..utils import (
+    JST,
     datetime_fromtimestamp_millis,
     secure_random_str,
     sum_sales,
@@ -98,7 +99,7 @@ def owner_get_sales(
         since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
-        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=JST)
     else:
         until_dt = datetime_fromtimestamp_millis(until)
 
