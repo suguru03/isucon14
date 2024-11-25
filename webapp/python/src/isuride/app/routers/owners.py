@@ -149,25 +149,32 @@ class ChairWithDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
     total_distance: int
-    total_distance_updated_at: datetime  # TODO: sql.NullTimeに対応する型は？
+    total_distance_updated_at: datetime | None = None
 
 
-class OwnerChair(BaseModel):
+class OwnerGetChairResponseChair(BaseModel):
     id: str
     name: str
     model: str
     active: bool
     registered_at: int
     total_distance: int
-    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも
+    total_distance_updated_at: int | None = None
 
 
 class OwnerGetChairResponse(BaseModel):
-    chairs: list[OwnerChair]
+    chairs: list[OwnerGetChairResponseChair]
 
 
-@router.get("/chairs", status_code=200)
-def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
+@router.get(
+    "/chairs",
+    status_code=200,
+    response_model=OwnerGetChairResponse,
+    response_model_exclude_none=True,
+)
+def owner_get_chairs(
+    owner: Owner = Depends(owner_auth_middleware),
+) -> OwnerGetChairResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -201,7 +208,7 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
 
     res = OwnerGetChairResponse(chairs=[])
     for chair in chairs:
-        c = OwnerChair(
+        c = OwnerGetChairResponseChair(
             id=chair.id,
             name=chair.name,
             model=chair.model,
