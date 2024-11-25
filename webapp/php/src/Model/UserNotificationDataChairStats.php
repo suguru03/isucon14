@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNotification200Response
+ * UserNotificationDataChairStats
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNotification200Response Class Doc Comment
+ * UserNotificationDataChairStats Class Doc Comment
  *
  * @category Class
- * @description 自分のライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも存在しない場合、dataはnullまたはundefined
+ * @description 椅子の統計情報
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNotification200Response implements ModelInterface, ArrayAccess, \JsonSerializable
+class UserNotificationDataChairStats implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_notification_200_response';
+    protected static $openAPIModelName = 'UserNotificationData_chair_stats';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,8 +58,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @var string[]
       */
     protected static $openAPITypes = [
-        'data' => '\IsuRide\Model\UserNotificationData',
-        'retry_after_ms' => 'int'
+        'total_rides_count' => 'int',
+        'total_evaluation_avg' => 'float'
     ];
 
     /**
@@ -70,8 +70,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'data' => null,
-        'retry_after_ms' => null
+        'total_rides_count' => null,
+        'total_evaluation_avg' => null
     ];
 
     /**
@@ -80,8 +80,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'data' => false,
-        'retry_after_ms' => false
+        'total_rides_count' => false,
+        'total_evaluation_avg' => false
     ];
 
     /**
@@ -170,8 +170,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $attributeMap = [
-        'data' => 'data',
-        'retry_after_ms' => 'retry_after_ms'
+        'total_rides_count' => 'total_rides_count',
+        'total_evaluation_avg' => 'total_evaluation_avg'
     ];
 
     /**
@@ -180,8 +180,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $setters = [
-        'data' => 'setData',
-        'retry_after_ms' => 'setRetryAfterMs'
+        'total_rides_count' => 'setTotalRidesCount',
+        'total_evaluation_avg' => 'setTotalEvaluationAvg'
     ];
 
     /**
@@ -190,8 +190,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $getters = [
-        'data' => 'getData',
-        'retry_after_ms' => 'getRetryAfterMs'
+        'total_rides_count' => 'getTotalRidesCount',
+        'total_evaluation_avg' => 'getTotalEvaluationAvg'
     ];
 
     /**
@@ -251,8 +251,8 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('data', $data ?? [], null);
-        $this->setIfExists('retry_after_ms', $data ?? [], null);
+        $this->setIfExists('total_rides_count', $data ?? [], null);
+        $this->setIfExists('total_evaluation_avg', $data ?? [], null);
     }
 
     /**
@@ -282,6 +282,12 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
     {
         $invalidProperties = [];
 
+        if ($this->container['total_rides_count'] === null) {
+            $invalidProperties[] = "'total_rides_count' can't be null";
+        }
+        if ($this->container['total_evaluation_avg'] === null) {
+            $invalidProperties[] = "'total_evaluation_avg' can't be null";
+        }
         return $invalidProperties;
     }
 
@@ -298,55 +304,55 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
 
 
     /**
-     * Gets data
+     * Gets total_rides_count
      *
-     * @return \IsuRide\Model\UserNotificationData|null
+     * @return int
      */
-    public function getData()
+    public function getTotalRidesCount()
     {
-        return $this->container['data'];
+        return $this->container['total_rides_count'];
     }
 
     /**
-     * Sets data
+     * Sets total_rides_count
      *
-     * @param \IsuRide\Model\UserNotificationData|null $data data
+     * @param int $total_rides_count 総乗車回数
      *
      * @return self
      */
-    public function setData($data)
+    public function setTotalRidesCount($total_rides_count)
     {
-        if (is_null($data)) {
-            throw new \InvalidArgumentException('non-nullable data cannot be null');
+        if (is_null($total_rides_count)) {
+            throw new \InvalidArgumentException('non-nullable total_rides_count cannot be null');
         }
-        $this->container['data'] = $data;
+        $this->container['total_rides_count'] = $total_rides_count;
 
         return $this;
     }
 
     /**
-     * Gets retry_after_ms
+     * Gets total_evaluation_avg
      *
-     * @return int|null
+     * @return float
      */
-    public function getRetryAfterMs()
+    public function getTotalEvaluationAvg()
     {
-        return $this->container['retry_after_ms'];
+        return $this->container['total_evaluation_avg'];
     }
 
     /**
-     * Sets retry_after_ms
+     * Sets total_evaluation_avg
      *
-     * @param int|null $retry_after_ms 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+     * @param float $total_evaluation_avg 総評価平均
      *
      * @return self
      */
-    public function setRetryAfterMs($retry_after_ms)
+    public function setTotalEvaluationAvg($total_evaluation_avg)
     {
-        if (is_null($retry_after_ms)) {
-            throw new \InvalidArgumentException('non-nullable retry_after_ms cannot be null');
+        if (is_null($total_evaluation_avg)) {
+            throw new \InvalidArgumentException('non-nullable total_evaluation_avg cannot be null');
         }
-        $this->container['retry_after_ms'] = $retry_after_ms;
+        $this->container['total_evaluation_avg'] = $total_evaluation_avg;
 
         return $this;
     }

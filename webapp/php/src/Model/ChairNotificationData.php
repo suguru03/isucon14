@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNotification200ResponseChair
+ * ChairNotificationData
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNotification200ResponseChair Class Doc Comment
+ * ChairNotificationData Class Doc Comment
  *
  * @category Class
- * @description 椅子情報
+ * @description 椅子向け通知データ
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess, \JsonSerializable
+class ChairNotificationData implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_notification_200_response_chair';
+    protected static $openAPIModelName = 'ChairNotificationData';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,10 +58,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @var string[]
       */
     protected static $openAPITypes = [
-        'id' => 'string',
-        'name' => 'string',
-        'model' => 'string',
-        'stats' => '\IsuRide\Model\AppGetNotification200ResponseChairStats'
+        'ride_id' => 'string',
+        'user' => '\IsuRide\Model\User',
+        'pickup_coordinate' => '\IsuRide\Model\Coordinate',
+        'destination_coordinate' => '\IsuRide\Model\Coordinate',
+        'status' => '\IsuRide\Model\RideStatus'
     ];
 
     /**
@@ -72,10 +73,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'id' => null,
-        'name' => null,
-        'model' => null,
-        'stats' => null
+        'ride_id' => null,
+        'user' => null,
+        'pickup_coordinate' => null,
+        'destination_coordinate' => null,
+        'status' => null
     ];
 
     /**
@@ -84,10 +86,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'id' => false,
-        'name' => false,
-        'model' => false,
-        'stats' => false
+        'ride_id' => false,
+        'user' => false,
+        'pickup_coordinate' => false,
+        'destination_coordinate' => false,
+        'status' => false
     ];
 
     /**
@@ -176,10 +179,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $attributeMap = [
-        'id' => 'id',
-        'name' => 'name',
-        'model' => 'model',
-        'stats' => 'stats'
+        'ride_id' => 'ride_id',
+        'user' => 'user',
+        'pickup_coordinate' => 'pickup_coordinate',
+        'destination_coordinate' => 'destination_coordinate',
+        'status' => 'status'
     ];
 
     /**
@@ -188,10 +192,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $setters = [
-        'id' => 'setId',
-        'name' => 'setName',
-        'model' => 'setModel',
-        'stats' => 'setStats'
+        'ride_id' => 'setRideId',
+        'user' => 'setUser',
+        'pickup_coordinate' => 'setPickupCoordinate',
+        'destination_coordinate' => 'setDestinationCoordinate',
+        'status' => 'setStatus'
     ];
 
     /**
@@ -200,10 +205,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $getters = [
-        'id' => 'getId',
-        'name' => 'getName',
-        'model' => 'getModel',
-        'stats' => 'getStats'
+        'ride_id' => 'getRideId',
+        'user' => 'getUser',
+        'pickup_coordinate' => 'getPickupCoordinate',
+        'destination_coordinate' => 'getDestinationCoordinate',
+        'status' => 'getStatus'
     ];
 
     /**
@@ -263,10 +269,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('id', $data ?? [], null);
-        $this->setIfExists('name', $data ?? [], null);
-        $this->setIfExists('model', $data ?? [], null);
-        $this->setIfExists('stats', $data ?? [], null);
+        $this->setIfExists('ride_id', $data ?? [], null);
+        $this->setIfExists('user', $data ?? [], null);
+        $this->setIfExists('pickup_coordinate', $data ?? [], null);
+        $this->setIfExists('destination_coordinate', $data ?? [], null);
+        $this->setIfExists('status', $data ?? [], null);
     }
 
     /**
@@ -296,17 +303,20 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
     {
         $invalidProperties = [];
 
-        if ($this->container['id'] === null) {
-            $invalidProperties[] = "'id' can't be null";
+        if ($this->container['ride_id'] === null) {
+            $invalidProperties[] = "'ride_id' can't be null";
         }
-        if ($this->container['name'] === null) {
-            $invalidProperties[] = "'name' can't be null";
+        if ($this->container['user'] === null) {
+            $invalidProperties[] = "'user' can't be null";
         }
-        if ($this->container['model'] === null) {
-            $invalidProperties[] = "'model' can't be null";
+        if ($this->container['pickup_coordinate'] === null) {
+            $invalidProperties[] = "'pickup_coordinate' can't be null";
         }
-        if ($this->container['stats'] === null) {
-            $invalidProperties[] = "'stats' can't be null";
+        if ($this->container['destination_coordinate'] === null) {
+            $invalidProperties[] = "'destination_coordinate' can't be null";
+        }
+        if ($this->container['status'] === null) {
+            $invalidProperties[] = "'status' can't be null";
         }
         return $invalidProperties;
     }
@@ -324,109 +334,136 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
 
 
     /**
-     * Gets id
+     * Gets ride_id
      *
      * @return string
      */
-    public function getId()
+    public function getRideId()
     {
-        return $this->container['id'];
+        return $this->container['ride_id'];
     }
 
     /**
-     * Sets id
+     * Sets ride_id
      *
-     * @param string $id 椅子ID
+     * @param string $ride_id ライドID
      *
      * @return self
      */
-    public function setId($id)
+    public function setRideId($ride_id)
     {
-        if (is_null($id)) {
-            throw new \InvalidArgumentException('non-nullable id cannot be null');
+        if (is_null($ride_id)) {
+            throw new \InvalidArgumentException('non-nullable ride_id cannot be null');
         }
-        $this->container['id'] = $id;
+        $this->container['ride_id'] = $ride_id;
 
         return $this;
     }
 
     /**
-     * Gets name
+     * Gets user
      *
-     * @return string
+     * @return \IsuRide\Model\User
      */
-    public function getName()
+    public function getUser()
     {
-        return $this->container['name'];
+        return $this->container['user'];
     }
 
     /**
-     * Sets name
+     * Sets user
      *
-     * @param string $name 椅子の名前
+     * @param \IsuRide\Model\User $user user
      *
      * @return self
      */
-    public function setName($name)
+    public function setUser($user)
     {
-        if (is_null($name)) {
-            throw new \InvalidArgumentException('non-nullable name cannot be null');
+        if (is_null($user)) {
+            throw new \InvalidArgumentException('non-nullable user cannot be null');
         }
-        $this->container['name'] = $name;
+        $this->container['user'] = $user;
 
         return $this;
     }
 
     /**
-     * Gets model
+     * Gets pickup_coordinate
      *
-     * @return string
+     * @return \IsuRide\Model\Coordinate
      */
-    public function getModel()
+    public function getPickupCoordinate()
     {
-        return $this->container['model'];
+        return $this->container['pickup_coordinate'];
     }
 
     /**
-     * Sets model
+     * Sets pickup_coordinate
      *
-     * @param string $model 椅子のモデル
+     * @param \IsuRide\Model\Coordinate $pickup_coordinate pickup_coordinate
      *
      * @return self
      */
-    public function setModel($model)
+    public function setPickupCoordinate($pickup_coordinate)
     {
-        if (is_null($model)) {
-            throw new \InvalidArgumentException('non-nullable model cannot be null');
+        if (is_null($pickup_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable pickup_coordinate cannot be null');
         }
-        $this->container['model'] = $model;
+        $this->container['pickup_coordinate'] = $pickup_coordinate;
 
         return $this;
     }
 
     /**
-     * Gets stats
+     * Gets destination_coordinate
      *
-     * @return \IsuRide\Model\AppGetNotification200ResponseChairStats
+     * @return \IsuRide\Model\Coordinate
      */
-    public function getStats()
+    public function getDestinationCoordinate()
     {
-        return $this->container['stats'];
+        return $this->container['destination_coordinate'];
     }
 
     /**
-     * Sets stats
+     * Sets destination_coordinate
      *
-     * @param \IsuRide\Model\AppGetNotification200ResponseChairStats $stats stats
+     * @param \IsuRide\Model\Coordinate $destination_coordinate destination_coordinate
      *
      * @return self
      */
-    public function setStats($stats)
+    public function setDestinationCoordinate($destination_coordinate)
     {
-        if (is_null($stats)) {
-            throw new \InvalidArgumentException('non-nullable stats cannot be null');
+        if (is_null($destination_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable destination_coordinate cannot be null');
         }
-        $this->container['stats'] = $stats;
+        $this->container['destination_coordinate'] = $destination_coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Gets status
+     *
+     * @return \IsuRide\Model\RideStatus
+     */
+    public function getStatus()
+    {
+        return $this->container['status'];
+    }
+
+    /**
+     * Sets status
+     *
+     * @param \IsuRide\Model\RideStatus $status status
+     *
+     * @return self
+     */
+    public function setStatus($status)
+    {
+        if (is_null($status)) {
+            throw new \InvalidArgumentException('non-nullable status cannot be null');
+        }
+        $this->container['status'] = $status;
 
         return $this;
     }

@@ -96,6 +96,9 @@ class GetNearbyChairs extends AbstractHttpHandler
                     createdAt: $chair['created_at'],
                     updatedAt: $chair['updated_at']
                 );
+                if (!$chair->isActive) {
+                    continue;
+                }
                 $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1');
                 $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
                 $ride = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -106,12 +109,12 @@ class GetNearbyChairs extends AbstractHttpHandler
                         continue;
                     }
                 }
-                // 5分以内に更新されている最新の位置情報を取得
+
+                // 最新の位置情報を取得
                 $stmt = $this->db->prepare(
-                    'SELECT * FROM chair_locations WHERE chair_id = ? AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1'
+                    'SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1'
                 );
-                $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$chair->id]);
                 $chairLocationResult = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$chairLocationResult) {
                     continue;

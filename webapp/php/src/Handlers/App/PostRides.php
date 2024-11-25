@@ -74,7 +74,7 @@ class PostRides extends AbstractHttpHandler
                     updatedAt: $row['updated_at']
                 );
                 $status = $this->getLatestRideStatus($this->db, $ride->id);
-                if ($status !== 'COMPLETED' && $status !== 'CANCELED') {
+                if ($status !== 'COMPLETED') {
                     $continuingRideCount++;
                 }
             }
