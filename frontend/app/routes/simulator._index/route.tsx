@@ -1,21 +1,16 @@
-import { List } from "~/components/modules/list/list";
-import { ListItem } from "~/components/modules/list/list-item";
-import { useSimulatorContext } from "~/contexts/simulator-context";
-import { ChairInfo } from "./ChairInfo";
-import { useEmulator } from "~/components/hooks/emulate";
+import { Simulator } from "./Simulator";
+import { SmartPhone } from "./SmartPhone";
 
 export default function Index() {
-  const { targetChair } = useSimulatorContext();
-  useEmulator(targetChair);
   return (
-    <div className="p-6">
-      {targetChair !== undefined ? (
-        <List>
-          <ListItem key={targetChair.id}>
-            <ChairInfo chair={targetChair} />
-          </ListItem>
-        </List>
-      ) : null}
+    <div className="h-screen min-h-[1000px] min-w-[1200px] flex justify-center items-center gap-32">
+      <SmartPhone>
+        <iframe src="/client" className="w-full h-full" />
+      </SmartPhone>
+      <div className="w-[400px]">
+        <h1 className="text-lg font-semibold mb-2">Chair Simulator</h1>
+        <Simulator className="bg-white rounded shadow" />
+      </div>
     </div>
   );
 }
