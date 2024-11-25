@@ -223,13 +223,3 @@ def owner_get_chairs(
         res.chairs.append(c)
 
     return res
-
-
-class OwnerGetChairDetailResponse(BaseModel):
-    id: str
-    name: str
-    model: str
-    active: bool
-    registered_at: int
-    total_distance: int
-    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも
