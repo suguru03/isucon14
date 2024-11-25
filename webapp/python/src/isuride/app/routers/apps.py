@@ -119,7 +119,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 ),
                 {
                     "user_id": inviter.id,
-                    "code": "RWD_" + r.invitation_code,
+                    "code_prefix": "RWD_" + r.invitation_code,
                     "discount": 1000,
                 },
             )
