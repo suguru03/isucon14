@@ -63,7 +63,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [firstNotification, setFirstNotification] = useState<
+  const [notification, setNotification] = useState<
     AppGetNotificationResponse & { contentType: "event-stream" | "json" }
   >();
   useEffect(() => {
@@ -82,8 +82,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         const decoded = decoder.decode(readed);
         const json =
           getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
-        console.log("json", json);
-        setFirstNotification(
+        setNotification(
           json
             ? {
                 data: json,
@@ -95,7 +94,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         const json = (await notification.json()) as
           | AppGetNotificationResponse
           | undefined;
-        setFirstNotification(
+        setNotification(
           json
             ? {
                 ...json,
@@ -123,27 +122,27 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
     return () => {
       abortController.abort();
     };
-  }, [setFirstNotification, navigate]);
+  }, [setNotification, navigate]);
 
-  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] = useState<
-    Omit<ClientAppRide, "auth" | "user">
-  >(
-    firstNotification
-      ? {
-          status: firstNotification.data?.status,
-          payload: {
-            ride_id: firstNotification.data?.ride_id,
-            coordinate: {
-              pickup: firstNotification.data?.pickup_coordinate,
-              destination: firstNotification.data?.destination_coordinate,
+  const clientAppPayloadWithStatus = useMemo(
+    () =>
+      notification?.data
+        ? {
+            status: notification.data?.status,
+            payload: {
+              ride_id: notification.data?.ride_id,
+              coordinate: {
+                pickup: notification.data?.pickup_coordinate,
+                destination: notification.data?.destination_coordinate,
+              },
+              chair: notification.data?.chair,
             },
-            chair: firstNotification.data?.chair,
-          },
-        }
-      : {},
+          }
+        : undefined,
+    [notification],
   );
-  const retryAfterMs = firstNotification?.retry_after_ms ?? 10000;
-  const isSSE = firstNotification?.contentType === "event-stream";
+  const retryAfterMs = notification?.retry_after_ms ?? 10000;
+  const isSSE = notification?.contentType === "event-stream";
   useEffect(() => {
     if (isSSE) {
       const eventSource = new EventSource(`${apiBaseURL}/app/notification`);
@@ -151,23 +150,16 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         if (typeof event.data === "string") {
           const eventData = JSON.parse(
             event.data,
-          ) as AppGetNotificationResponse;
-          setClientAppPayloadWithStatus((preRequest) => {
+          ) as AppGetNotificationResponse["data"];
+          setNotification((preRequest) => {
             if (
               preRequest === undefined ||
-              eventData.data?.status !== preRequest.status ||
-              eventData.data?.ride_id !== preRequest.payload?.ride_id
+              eventData?.status !== preRequest?.data?.status ||
+              eventData?.ride_id !== preRequest?.data?.ride_id
             ) {
               return {
-                status: eventData.data?.status,
-                payload: {
-                  ride_id: eventData.data?.ride_id,
-                  coordinate: {
-                    pickup: eventData.data?.pickup_coordinate,
-                    destination: eventData.data?.destination_coordinate,
-                  },
-                  chair: eventData.data?.chair,
-                },
+                data: eventData,
+                contentType: "event-stream",
               };
             } else {
               return preRequest;
@@ -183,32 +175,20 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       let timeoutId: number = 0;
       const polling = () => {
         (async () => {
-          console.log("polling:start");
           const currentNotification = await fetchAppGetNotification(
             {},
             abortController.signal,
           );
-          console.log("polling:end");
-          setClientAppPayloadWithStatus((prev) => {
+          setNotification((prev) => {
             if (
-              prev?.payload !== undefined &&
-              prev?.status === currentNotification.data?.status &&
-              prev.payload?.ride_id === currentNotification.data?.ride_id
+              prev?.data === undefined ||
+              prev?.data?.status !== currentNotification.data?.status ||
+              prev?.data?.ride_id !== currentNotification.data?.ride_id
             ) {
+              return { ...currentNotification, contentType: "json" };
+            } else {
               return prev;
             }
-
-            return {
-              status: currentNotification.data?.status,
-              payload: {
-                ride_id: currentNotification.data?.ride_id,
-                coordinate: {
-                  pickup: currentNotification.data?.pickup_coordinate,
-                  destination: currentNotification.data?.destination_coordinate,
-                },
-                chair: currentNotification.data?.chair,
-              },
-            };
           });
           timeoutId = window.setTimeout(polling, retryAfterMs);
         })().catch((e) => {
@@ -235,13 +215,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         clearTimeout(timeoutId);
       };
     }
-  }, [
-    accessToken,
-    setClientAppPayloadWithStatus,
-    isSSE,
-    navigate,
-    retryAfterMs,
-  ]);
+  }, [accessToken, isSSE, navigate, retryAfterMs]);
 
   const responseClientAppRequest = useMemo<ClientAppRide | undefined>(() => {
     const debugStatus =
@@ -273,7 +247,6 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       },
     };
   }, [clientAppPayloadWithStatus, searchParams, accessToken, id]);
-
   return responseClientAppRequest;
 };
 
@@ -307,7 +280,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [accessTokenParameter, userIdParameter]);
 
   const request = useClientAppRequest(accessToken ?? "", id ?? "");
-
   return (
     <ClientAppRequestContext.Provider value={{ ...request }}>
       {children}

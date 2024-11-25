@@ -31,7 +31,6 @@ type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { status, payload } = useClientAppRequestContext();
-
   const [action, setAction] = useState<Action>();
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();

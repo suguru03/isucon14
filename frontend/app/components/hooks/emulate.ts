@@ -1,7 +1,10 @@
 import { useEffect } from "react";
-import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
+import {
+  fetchChairPostCoordinate,
+  fetchChairPostRideStatus,
+} from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { SimulatorChair } from "~/contexts/simulator-context";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -29,38 +32,51 @@ const move = (
   }
 };
 
-export const useEmulator = () => {
-  const clientChair = useClientChairRequestContext();
-
+export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (
       !(
-        clientChair.chair?.currentCoordinate &&
-        clientChair.auth?.accessToken &&
-        clientChair.payload?.coordinate &&
-        clientChair.chair.currentCoordinate.location
+        targetChair?.coordinateState?.coordinate &&
+        targetChair?.chairNotification?.payload?.coordinate
       )
     ) {
       return;
     }
 
-    const { location, setter } = clientChair.chair.currentCoordinate;
-    const { pickup, destination } = clientChair.payload.coordinate;
-    const accessToken = clientChair.auth.accessToken;
-    const status = clientChair.status;
-
+    const { coordinate, setter } = targetChair.coordinateState;
+    const { pickup, destination } =
+      targetChair.chairNotification.payload.coordinate;
+    const status = targetChair.chairNotification.status;
     const currentCoodinatePost = () => {
-      if (location) {
-        sessionStorage.setItem("latitude", String(location.latitude));
-        sessionStorage.setItem("longitude", String(location.longitude));
+      if (coordinate) {
+        sessionStorage.setItem("latitude", String(coordinate.latitude));
+        sessionStorage.setItem("longitude", String(coordinate.longitude));
         fetchChairPostCoordinate({
-          body: location,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          body: coordinate,
         }).catch((e) => {
           console.error(`CONSOLE ERROR: ${e}`);
         });
+      }
+    };
+    const postEnroute = () => {
+      if (targetChair.chairNotification?.payload?.ride_id) {
+        fetchChairPostRideStatus({
+          body: { status: "ENROUTE" },
+          pathParams: {
+            rideId: targetChair.chairNotification?.payload?.ride_id,
+          },
+        }).catch((e) => console.error(e));
+      }
+    };
+
+    const postCarring = () => {
+      if (targetChair.chairNotification?.payload?.ride_id) {
+        fetchChairPostRideStatus({
+          body: { status: "CARRYING" },
+          pathParams: {
+            rideId: targetChair.chairNotification?.payload?.ride_id,
+          },
+        }).catch((e) => console.error(e));
       }
     };
 
@@ -68,21 +84,27 @@ export const useEmulator = () => {
       currentCoodinatePost();
 
       switch (status) {
+        case "MATCHING":
+          postEnroute();
+          break;
+        case "PICKUP":
+          postCarring();
+          break;
         case "ENROUTE":
           if (pickup) {
-            setter(move(location, pickup));
+            setter(move(coordinate, pickup));
           }
           break;
         case "CARRYING":
           if (destination) {
-            setter(move(location, destination));
+            setter(move(coordinate, destination));
           }
           break;
       }
-    }, 3000);
+    }, 1000);
 
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [clientChair]);
+  }, [targetChair]);
 };

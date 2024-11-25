@@ -10,6 +10,7 @@ type Props = Omit<
 };
 
 export function Toggle(props: Props) {
+  const { value, onUpdate, className, ...rest } = props;
   return (
     <label
       className={twMerge(
@@ -22,18 +23,18 @@ export function Toggle(props: Props) {
         "after:rounded-full",
         "after:absolute after:top-[3px]",
         "after:transition-transform",
-        props.value
+        value
           ? "after:bg-green-500 after:translate-x-full"
           : "after:bg-slate-50 after:left-[3px]",
-        props.className,
+        className,
       )}
     >
       <input
         className="hidden"
-        {...props}
+        {...rest}
         type="checkbox"
-        value={`${props.value}`}
-        onChange={() => props.onUpdate(!props.value)}
+        value={`${value}`}
+        onChange={() => onUpdate(!value)}
       />
     </label>
   );

@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import { RideId } from "./apiClient/apiParameters";
 import {
   Coordinate as ApiCoodinate,
@@ -28,7 +27,7 @@ export type ClientAppRide = {
     }>;
     chair?: ClientAppChair;
   }>;
-  auth: {
+  auth?: {
     accessToken: AccessToken;
   };
   user?: {
@@ -47,18 +46,6 @@ export type ClientChairRide = {
     }>;
     user?: User;
   }>;
-  auth: {
-    accessToken: AccessToken;
-    userId?: string;
-  };
-  chair?: {
-    id?: string;
-    name: string;
-    currentCoordinate: {
-      setter: Dispatch<SetStateAction<Coordinate | undefined>>;
-      location?: Coordinate;
-    };
-  };
 };
 
 export type Pos = {

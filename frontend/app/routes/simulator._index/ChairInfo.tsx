@@ -39,10 +39,14 @@ function Statuses(
   );
 }
 
-function CoordinatePickup(props: {
-  location: ReturnType<typeof useState<Coordinate>>;
+function CoordinatePickup({
+  coordinate,
+  setter,
+}: {
+  coordinate: ReturnType<typeof useState<Coordinate>>;
+  setter: (coordinate: Coordinate) => void;
 }) {
-  const [location, setLocation] = props.location;
+  const [location, setLocation] = coordinate;
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
 
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
@@ -50,16 +54,20 @@ function CoordinatePickup(props: {
 
   const handleCloseModal = useCallback(() => {
     setLocation(currentLocation);
+    if (currentLocation) {
+      setter(currentLocation);
+    }
+
     modalRef.current?.close();
     setVisibleModal(false);
-  }, [setLocation, currentLocation]);
+  }, [setLocation, currentLocation, setter]);
 
   return (
     <>
       <LocationButton
         className="w-full"
         location={location}
-        label="現在位置"
+        label="初期位置"
         onClick={() => setVisibleModal(true)}
       />
       {visibleModal && (
@@ -87,10 +95,12 @@ function CoordinatePickup(props: {
 }
 
 export function ChairInfo(props: Props) {
+  const { chair } = props;
   const location = useState<Coordinate>();
   const [activate, setActivate] = useState<boolean>(false);
-  const [rideStatus] = useState<RideStatus>("MATCHING"); // TODO fetch処理
-
+  const [rideStatus] = useState<RideStatus>(
+    chair.chairNotification?.status ?? "MATCHING",
+  );
   return (
     <div
       className="
@@ -118,7 +128,10 @@ export function ChairInfo(props: Props) {
           </div>
         </div>
         <div className="right-bottom">
-          <CoordinatePickup location={location} />
+          <CoordinatePickup
+            coordinate={location}
+            setter={chair.coordinateState.setter}
+          />
         </div>
       </div>
     </div>
