@@ -16,7 +16,7 @@ export default function Index() {
     return owners.find((o) => o.id === id);
   };
 
-  const [targetOwner, setTargetOwner] = useState<{ chairs: SimulatorChair[] }>(
+  const [targetOwner, setTargetOwner] = useState<{ chair?: SimulatorChair }>(
     owners[0],
   );
 
@@ -27,15 +27,15 @@ export default function Index() {
         id="ownerNames"
         label="オーナー"
         items={ownerNames}
-        onChange={(id) => setTargetOwner(getOwnerById(id) ?? { chairs: [] })}
+        onChange={(id) =>
+          setTargetOwner(getOwnerById(id) ?? { chair: undefined })
+        }
       />
-      {targetOwner !== undefined ? (
+      {targetOwner.chair !== undefined ? (
         <List>
-          {targetOwner.chairs?.map((c) => (
-            <ListItem key={c.id}>
-              <ChairInfo chair={c} />
-            </ListItem>
-          ))}
+          <ListItem key={targetOwner.chair.id}>
+            <ChairInfo chair={targetOwner.chair} />
+          </ListItem>
         </List>
       ) : null}
     </div>

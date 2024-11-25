@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { useClientChairRequestContext } from "~/contexts/driver-context";
+import { useSimulatorContext } from "~/contexts/simulator-context";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -28,36 +28,30 @@ const move = (
       throw Error("Error: Expected status to be 'Arraived'.");
   }
 };
-
 export const useEmulator = () => {
-  const clientChair = useClientChairRequestContext();
+  const { targetChair } = useSimulatorContext();
 
   useEffect(() => {
     if (
       !(
-        clientChair.chair?.currentCoordinate &&
-        clientChair.auth?.accessToken &&
-        clientChair.payload?.coordinate &&
-        clientChair.chair.currentCoordinate.location
+        targetChair?.coordinateState?.coordinate &&
+        targetChair?.chairNotification?.payload?.coordinate
       )
     ) {
       return;
     }
 
-    const { location, setter } = clientChair.chair.currentCoordinate;
-    const { pickup, destination } = clientChair.payload.coordinate;
-    const accessToken = clientChair.auth.accessToken;
-    const status = clientChair.status;
+    const { coordinate, setter } = targetChair.coordinateState;
+    const { pickup, destination } =
+      targetChair.chairNotification.payload.coordinate;
+    const status = targetChair.chairNotification.status;
 
     const currentCoodinatePost = () => {
-      if (location) {
-        sessionStorage.setItem("latitude", String(location.latitude));
-        sessionStorage.setItem("longitude", String(location.longitude));
+      if (coordinate) {
+        sessionStorage.setItem("latitude", String(coordinate.latitude));
+        sessionStorage.setItem("longitude", String(coordinate.longitude));
         fetchChairPostCoordinate({
-          body: location,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          body: coordinate,
         }).catch((e) => {
           console.error(`CONSOLE ERROR: ${e}`);
         });
@@ -70,12 +64,12 @@ export const useEmulator = () => {
       switch (status) {
         case "ENROUTE":
           if (pickup) {
-            setter(move(location, pickup));
+            setter(move(coordinate, pickup));
           }
           break;
         case "CARRYING":
           if (destination) {
-            setter(move(location, destination));
+            setter(move(coordinate, destination));
           }
           break;
       }
@@ -84,5 +78,5 @@ export const useEmulator = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [clientChair]);
+  }, [targetChair]);
 };

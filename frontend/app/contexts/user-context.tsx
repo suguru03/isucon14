@@ -82,7 +82,6 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         const decoded = decoder.decode(readed);
         const json =
           getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
-        console.log("json", json);
         setFirstNotification(
           json
             ? {
