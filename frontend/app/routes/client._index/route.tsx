@@ -5,7 +5,7 @@ import {
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
-import { ChairRide, Coordinate } from "~/apiClient/apiSchemas";
+import { Coordinate } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
@@ -72,24 +72,39 @@ export default function Index() {
     [status],
   );
 
-
-  const [nearByChairs, setNearByChairs] = useState<{id: string;
-    name: string;
-    model: string;
-    current_coordinate: Coordinate}[]>();
-  // 一旦useEffectで取得するようにする
+  const [nearByChairs, setNearByChairs] = useState<
+    {
+      id: string;
+      name: string;
+      model: string;
+      current_coordinate: Coordinate;
+    }[]
+  >();
+  // 一旦useEffectで取得するようにする (currentLocationがセットされたタイミングで発火する)
   useEffect(() => {
-    if ( currentLocation?.latitude && currentLocation?.longitude && ) {
+    if (currentLocation?.latitude && currentLocation?.longitude) {
       const abortController = new AbortController();
-      (async() => {
-        const nearByChairs = await fetchAppGetNearbyChairs({queryParams: {latitude: currentLocation?.latitude, longitude: currentLocation?.longitude}}, abortController.signal)
-        const chairs = nearByChairs.chairs
-        setNearByChairs(chairs)
-      })()
-      return () => abortController.abort()
+      (async () => {
+        const nearByChairs = await fetchAppGetNearbyChairs(
+          {
+            queryParams: {
+              latitude: currentLocation?.latitude,
+              longitude: currentLocation?.longitude,
+            },
+          },
+          abortController.signal,
+        );
+        const chairs = nearByChairs.chairs;
+        setNearByChairs(chairs);
+      })().catch((e) => {
+        console.error(`CONSOLE ERROR: ${e}`);
+      });
+      return () => abortController.abort();
     }
     return;
-  },[setNearByChairs, currentLocation]);
+  }, [setNearByChairs, currentLocation]);
+  // TODO: nearByChairsで表示処理
+  console.log("nearByChairs", nearByChairs);
 
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
@@ -111,12 +126,15 @@ export default function Index() {
       return;
     }
     const abortController = new AbortController();
-    fetchAppPostRidesEstimatedFare({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
+    fetchAppPostRidesEstimatedFare(
+      {
+        body: {
+          pickup_coordinate: currentLocation,
+          destination_coordinate: destLocation,
+        },
       },
-    }, abortController.signal)
+      abortController.signal,
+    )
       .then((res) =>
         setEstimatePrice({ fare: res.fare, discount: res.discount }),
       )
@@ -124,9 +142,9 @@ export default function Index() {
         console.error(err);
         setEstimatePrice(undefined);
       });
-      return () => {
-        abortController.abort();
-      }
+    return () => {
+      abortController.abort();
+    };
   }, [currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
