@@ -12,7 +12,7 @@ export const meta: MetaFunction = () => {
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-  const data = await fetchAppPostUsers({
+  await fetchAppPostUsers({
     body: {
       date_of_birth: String(formData.get("date_of_birth")),
       username: String(formData.get("username")),
