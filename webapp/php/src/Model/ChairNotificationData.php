@@ -1,6 +1,6 @@
 <?php
 /**
- * ChairGetNotification200Response
+ * ChairNotificationData
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * ChairGetNotification200Response Class Doc Comment
+ * ChairNotificationData Class Doc Comment
  *
  * @category Class
- * @description 自分に割り当てられたライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも割り当てられていない場合、dataはnullまたはundefined
+ * @description 椅子向け通知データ
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \JsonSerializable
+class ChairNotificationData implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
       *
       * @var string
       */
-    protected static $openAPIModelName = 'chair_get_notification_200_response';
+    protected static $openAPIModelName = 'ChairNotificationData';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,8 +58,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
       * @var string[]
       */
     protected static $openAPITypes = [
-        'data' => '\IsuRide\Model\ChairNotificationData',
-        'retry_after_ms' => 'int'
+        'ride_id' => 'string',
+        'user' => '\IsuRide\Model\User',
+        'pickup_coordinate' => '\IsuRide\Model\Coordinate',
+        'destination_coordinate' => '\IsuRide\Model\Coordinate',
+        'status' => '\IsuRide\Model\RideStatus'
     ];
 
     /**
@@ -70,8 +73,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'data' => null,
-        'retry_after_ms' => null
+        'ride_id' => null,
+        'user' => null,
+        'pickup_coordinate' => null,
+        'destination_coordinate' => null,
+        'status' => null
     ];
 
     /**
@@ -80,8 +86,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'data' => false,
-        'retry_after_ms' => false
+        'ride_id' => false,
+        'user' => false,
+        'pickup_coordinate' => false,
+        'destination_coordinate' => false,
+        'status' => false
     ];
 
     /**
@@ -170,8 +179,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
      * @var string[]
      */
     protected static $attributeMap = [
-        'data' => 'data',
-        'retry_after_ms' => 'retry_after_ms'
+        'ride_id' => 'ride_id',
+        'user' => 'user',
+        'pickup_coordinate' => 'pickup_coordinate',
+        'destination_coordinate' => 'destination_coordinate',
+        'status' => 'status'
     ];
 
     /**
@@ -180,8 +192,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
      * @var string[]
      */
     protected static $setters = [
-        'data' => 'setData',
-        'retry_after_ms' => 'setRetryAfterMs'
+        'ride_id' => 'setRideId',
+        'user' => 'setUser',
+        'pickup_coordinate' => 'setPickupCoordinate',
+        'destination_coordinate' => 'setDestinationCoordinate',
+        'status' => 'setStatus'
     ];
 
     /**
@@ -190,8 +205,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
      * @var string[]
      */
     protected static $getters = [
-        'data' => 'getData',
-        'retry_after_ms' => 'getRetryAfterMs'
+        'ride_id' => 'getRideId',
+        'user' => 'getUser',
+        'pickup_coordinate' => 'getPickupCoordinate',
+        'destination_coordinate' => 'getDestinationCoordinate',
+        'status' => 'getStatus'
     ];
 
     /**
@@ -251,8 +269,11 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('data', $data ?? [], null);
-        $this->setIfExists('retry_after_ms', $data ?? [], null);
+        $this->setIfExists('ride_id', $data ?? [], null);
+        $this->setIfExists('user', $data ?? [], null);
+        $this->setIfExists('pickup_coordinate', $data ?? [], null);
+        $this->setIfExists('destination_coordinate', $data ?? [], null);
+        $this->setIfExists('status', $data ?? [], null);
     }
 
     /**
@@ -282,6 +303,21 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
     {
         $invalidProperties = [];
 
+        if ($this->container['ride_id'] === null) {
+            $invalidProperties[] = "'ride_id' can't be null";
+        }
+        if ($this->container['user'] === null) {
+            $invalidProperties[] = "'user' can't be null";
+        }
+        if ($this->container['pickup_coordinate'] === null) {
+            $invalidProperties[] = "'pickup_coordinate' can't be null";
+        }
+        if ($this->container['destination_coordinate'] === null) {
+            $invalidProperties[] = "'destination_coordinate' can't be null";
+        }
+        if ($this->container['status'] === null) {
+            $invalidProperties[] = "'status' can't be null";
+        }
         return $invalidProperties;
     }
 
@@ -298,55 +334,136 @@ class ChairGetNotification200Response implements ModelInterface, ArrayAccess, \J
 
 
     /**
-     * Gets data
+     * Gets ride_id
      *
-     * @return \IsuRide\Model\ChairNotificationData|null
+     * @return string
      */
-    public function getData()
+    public function getRideId()
     {
-        return $this->container['data'];
+        return $this->container['ride_id'];
     }
 
     /**
-     * Sets data
+     * Sets ride_id
      *
-     * @param \IsuRide\Model\ChairNotificationData|null $data data
+     * @param string $ride_id ライドID
      *
      * @return self
      */
-    public function setData($data)
+    public function setRideId($ride_id)
     {
-        if (is_null($data)) {
-            throw new \InvalidArgumentException('non-nullable data cannot be null');
+        if (is_null($ride_id)) {
+            throw new \InvalidArgumentException('non-nullable ride_id cannot be null');
         }
-        $this->container['data'] = $data;
+        $this->container['ride_id'] = $ride_id;
 
         return $this;
     }
 
     /**
-     * Gets retry_after_ms
+     * Gets user
      *
-     * @return int|null
+     * @return \IsuRide\Model\User
      */
-    public function getRetryAfterMs()
+    public function getUser()
     {
-        return $this->container['retry_after_ms'];
+        return $this->container['user'];
     }
 
     /**
-     * Sets retry_after_ms
+     * Sets user
      *
-     * @param int|null $retry_after_ms 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+     * @param \IsuRide\Model\User $user user
      *
      * @return self
      */
-    public function setRetryAfterMs($retry_after_ms)
+    public function setUser($user)
     {
-        if (is_null($retry_after_ms)) {
-            throw new \InvalidArgumentException('non-nullable retry_after_ms cannot be null');
+        if (is_null($user)) {
+            throw new \InvalidArgumentException('non-nullable user cannot be null');
         }
-        $this->container['retry_after_ms'] = $retry_after_ms;
+        $this->container['user'] = $user;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_coordinate
+     *
+     * @return \IsuRide\Model\Coordinate
+     */
+    public function getPickupCoordinate()
+    {
+        return $this->container['pickup_coordinate'];
+    }
+
+    /**
+     * Sets pickup_coordinate
+     *
+     * @param \IsuRide\Model\Coordinate $pickup_coordinate pickup_coordinate
+     *
+     * @return self
+     */
+    public function setPickupCoordinate($pickup_coordinate)
+    {
+        if (is_null($pickup_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable pickup_coordinate cannot be null');
+        }
+        $this->container['pickup_coordinate'] = $pickup_coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_coordinate
+     *
+     * @return \IsuRide\Model\Coordinate
+     */
+    public function getDestinationCoordinate()
+    {
+        return $this->container['destination_coordinate'];
+    }
+
+    /**
+     * Sets destination_coordinate
+     *
+     * @param \IsuRide\Model\Coordinate $destination_coordinate destination_coordinate
+     *
+     * @return self
+     */
+    public function setDestinationCoordinate($destination_coordinate)
+    {
+        if (is_null($destination_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable destination_coordinate cannot be null');
+        }
+        $this->container['destination_coordinate'] = $destination_coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Gets status
+     *
+     * @return \IsuRide\Model\RideStatus
+     */
+    public function getStatus()
+    {
+        return $this->container['status'];
+    }
+
+    /**
+     * Sets status
+     *
+     * @param \IsuRide\Model\RideStatus $status status
+     *
+     * @return self
+     */
+    public function setStatus($status)
+    {
+        if (is_null($status)) {
+            throw new \InvalidArgumentException('non-nullable status cannot be null');
+        }
+        $this->container['status'] = $status;
 
         return $this;
     }

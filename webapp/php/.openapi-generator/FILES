@@ -2,8 +2,6 @@
 src/Model/AppGetNearbyChairs200Response.php
 src/Model/AppGetNearbyChairs200ResponseChairsInner.php
 src/Model/AppGetNotification200Response.php
-src/Model/AppGetNotification200ResponseChair.php
-src/Model/AppGetNotification200ResponseChairStats.php
 src/Model/AppGetRides200Response.php
 src/Model/AppGetRides200ResponseRidesInner.php
 src/Model/AppGetRides200ResponseRidesInnerChair.php
@@ -16,6 +14,7 @@ src/Model/AppPostRidesRequest.php
 src/Model/AppPostUsers201Response.php
 src/Model/AppPostUsersRequest.php
 src/Model/ChairGetNotification200Response.php
+src/Model/ChairNotificationData.php
 src/Model/ChairPostActivityRequest.php
 src/Model/ChairPostChairs201Response.php
 src/Model/ChairPostChairsRequest.php
@@ -36,4 +35,7 @@ src/Model/PostInitialize200Response.php
 src/Model/PostInitializeRequest.php
 src/Model/RideStatus.php
 src/Model/User.php
+src/Model/UserNotificationData.php
+src/Model/UserNotificationDataChair.php
+src/Model/UserNotificationDataChairStats.php
 src/ObjectSerializer.php
