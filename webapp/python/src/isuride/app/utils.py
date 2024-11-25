@@ -7,6 +7,7 @@ from .models import Ride
 
 INITIAL_FARE: int = 500
 FARE_PER_DISTANCE: int = 100
+# TODO: タイムゾーンをUTCに戻してベンチマーカーを通す
 JST: ZoneInfo = ZoneInfo("Asia/Tokyo")
 
 EPOCH = datetime(1970, 1, 1, tzinfo=ZoneInfo("Asia/Tokyo"))
