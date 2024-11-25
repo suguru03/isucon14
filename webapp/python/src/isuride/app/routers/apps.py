@@ -577,7 +577,20 @@ def app_get_notification(
             return response
 
         ride: Ride = Ride(**row._mapping)
-        status = get_latest_ride_status(conn, ride.id)
+
+        row = conn.execute(
+            text(
+                "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
+            ),
+            {"ride_id": ride.id},
+        ).fetchone()
+        yet_sent_ride_status: RideStatus | None = None
+        if not row:
+            status = get_latest_ride_status(conn, ride.id)
+        else:
+            yet_sent_ride_status = RideStatus(**row._mapping)
+            status = yet_sent_ride_status.status
+
         fare = calculate_discounted_fare(
             conn,
             user.id,
@@ -622,7 +635,14 @@ def app_get_notification(
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
-        # TODO: check the chair is here
+            if yet_sent_ride_status:
+                conn.execute(
+                    text(
+                        "UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = :yet_send_ride_status_id"
+                    ),
+                    {"yet_send_ride_status_id": yet_sent_ride_status.id},
+                )
+
     return notification_response
 
 
