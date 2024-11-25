@@ -690,19 +690,6 @@ def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats
     total_evaluation: float = 0.0  # noqa
 
     for ride in rides:
-        rows = conn.execute(  # noqa
-            text(
-                "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at BETWEEN :created_at AND :updated_at ORDER BY created_at"
-            ),
-            {
-                "chair_id": chair_id,
-                "created_at": ride.created_at,
-                "updated_at": ride.updated_at,
-            },
-        ).fetchall()
-        # TODO: 質問中
-        chair_locations = [ChairLocation(**row._mapping) for row in rows]  # noqa
-
         rows = conn.execute(
             text(
                 "SELECT * FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at"
