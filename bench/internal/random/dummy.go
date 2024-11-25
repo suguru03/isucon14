@@ -89,3 +89,6 @@ func GenerateFirstName() string    { return gimei.NewName().First.Kanji() }
 func GenerateUserName() string     { return gofakeit.Username() }
 func GenerateDateOfBirth() string  { return gofakeit.DateRange(dateStart, dateEnd).Format("2006-01-02") }
 func GeneratePaymentToken() string { return gofakeit.LetterN(100) }
+func GenerateHexString(n int) string {
+	return lo.RandomString(n, []rune("0123456789abcdef"))
+}

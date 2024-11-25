@@ -163,6 +163,10 @@ func PickModels() map[int]ChairModels {
 	return result
 }
 
+func PickRandomModel() *ChairModel {
+	return modelsBySpeed[modelSpeeds[rand.IntN(len(modelSpeeds))]].Random()
+}
+
 func init() {
 	for _, names := range modelNamesBySpeed {
 		for _, name := range names {
