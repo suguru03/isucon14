@@ -6,7 +6,7 @@ import { Button } from "~/components/primitives/button/button";
 export const meta: MetaFunction = () => {
   return [
     { title: "Regiter | ISURIDE" },
-    { name: "description", content: "ユーザー登録" },
+    { name: "description", content: "決済トークン登録" },
   ];
 };
 

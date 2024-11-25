@@ -20,7 +20,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       lastname: String(formData.get("lastname")),
     },
   });
-  return redirect(`/client?id=${data.id}`);
+  return redirect(`/client/register-payment`);
 };
 
 export default function ClientRegister() {
