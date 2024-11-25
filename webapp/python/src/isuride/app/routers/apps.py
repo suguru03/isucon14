@@ -541,7 +541,7 @@ class AppGetNotificationResponseChair(BaseModel):
     stats: AppGetNotificationResponseChairStats
 
 
-class AppGetNotificationResponse(BaseModel):
+class AppGetNotificationResponseData(BaseModel):
     ride_id: str
     pickup_coordinate: Coordinate
     destination_coordinate: Coordinate
@@ -550,6 +550,10 @@ class AppGetNotificationResponse(BaseModel):
     chair: AppGetNotificationResponseChair | None = None
     created_at: int
     updated_at: int
+
+
+class AppGetNotificationResponse(BaseModel):
+    data: AppGetNotificationResponseData | None = None
 
 
 @router.get(
@@ -569,7 +573,7 @@ def app_get_notification(
             {"user_id": user.id},
         ).fetchone()
         if not row:
-            response.status_code = HTTPStatus.NO_CONTENT
+            response.status_code = HTTPStatus.OK
             return response
 
         ride: Ride = Ride(**row._mapping)
@@ -585,18 +589,21 @@ def app_get_notification(
         )
 
         notification_response = AppGetNotificationResponse(
-            ride_id=ride.id,
-            pickup_coordinate=Coordinate(
-                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-            ),
-            destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude, longitude=ride.destination_longitude
-            ),
-            fare=fare,
-            status=status,
-            chair=None,
-            created_at=timestamp_millis(ride.created_at),
-            updated_at=timestamp_millis(ride.updated_at),
+            data=AppGetNotificationResponseData(
+                ride_id=ride.id,
+                pickup_coordinate=Coordinate(
+                    latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+                ),
+                destination_coordinate=Coordinate(
+                    latitude=ride.destination_latitude,
+                    longitude=ride.destination_longitude,
+                ),
+                fare=fare,
+                status=status,
+                chair=None,
+                created_at=timestamp_millis(ride.created_at),
+                updated_at=timestamp_millis(ride.updated_at),
+            )
         )
 
         if ride.chair_id:
@@ -611,7 +618,7 @@ def app_get_notification(
 
             stats = get_chair_stats(conn, ride.chair_id)
 
-            notification_response.chair = AppGetNotificationResponseChair(
+            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
