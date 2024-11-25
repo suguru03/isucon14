@@ -1,10 +1,11 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
+import { ChairRide, Coordinate } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
@@ -71,6 +72,25 @@ export default function Index() {
     [status],
   );
 
+
+  const [nearByChairs, setNearByChairs] = useState<{id: string;
+    name: string;
+    model: string;
+    current_coordinate: Coordinate}[]>();
+  // 一旦useEffectで取得するようにする
+  useEffect(() => {
+    if ( currentLocation?.latitude && currentLocation?.longitude && ) {
+      const abortController = new AbortController();
+      (async() => {
+        const nearByChairs = await fetchAppGetNearbyChairs({queryParams: {latitude: currentLocation?.latitude, longitude: currentLocation?.longitude}}, abortController.signal)
+        const chairs = nearByChairs.chairs
+        setNearByChairs(chairs)
+      })()
+      return () => abortController.abort()
+    }
+    return;
+  },[setNearByChairs, currentLocation]);
+
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
@@ -90,13 +110,13 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-
+    const abortController = new AbortController();
     fetchAppPostRidesEstimatedFare({
       body: {
         pickup_coordinate: currentLocation,
         destination_coordinate: destLocation,
       },
-    })
+    }, abortController.signal)
       .then((res) =>
         setEstimatePrice({ fare: res.fare, discount: res.discount }),
       )
@@ -104,6 +124,9 @@ export default function Index() {
         console.error(err);
         setEstimatePrice(undefined);
       });
+      return () => {
+        abortController.abort();
+      }
   }, [currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
