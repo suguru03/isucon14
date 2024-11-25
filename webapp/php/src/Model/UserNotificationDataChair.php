@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNotification200Response
+ * UserNotificationDataChair
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNotification200Response Class Doc Comment
+ * UserNotificationDataChair Class Doc Comment
  *
  * @category Class
- * @description 自分のライドが１つでも存在する場合は最新のものをdataで返す。過去にライドが１つも存在しない場合、dataはnullまたはundefined
+ * @description 椅子情報
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNotification200Response implements ModelInterface, ArrayAccess, \JsonSerializable
+class UserNotificationDataChair implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_notification_200_response';
+    protected static $openAPIModelName = 'UserNotificationData_chair';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,8 +58,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @var string[]
       */
     protected static $openAPITypes = [
-        'data' => '\IsuRide\Model\UserNotificationData',
-        'retry_after_ms' => 'int'
+        'id' => 'string',
+        'name' => 'string',
+        'model' => 'string',
+        'stats' => '\IsuRide\Model\UserNotificationDataChairStats'
     ];
 
     /**
@@ -70,8 +72,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'data' => null,
-        'retry_after_ms' => null
+        'id' => null,
+        'name' => null,
+        'model' => null,
+        'stats' => null
     ];
 
     /**
@@ -80,8 +84,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'data' => false,
-        'retry_after_ms' => false
+        'id' => false,
+        'name' => false,
+        'model' => false,
+        'stats' => false
     ];
 
     /**
@@ -170,8 +176,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $attributeMap = [
-        'data' => 'data',
-        'retry_after_ms' => 'retry_after_ms'
+        'id' => 'id',
+        'name' => 'name',
+        'model' => 'model',
+        'stats' => 'stats'
     ];
 
     /**
@@ -180,8 +188,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $setters = [
-        'data' => 'setData',
-        'retry_after_ms' => 'setRetryAfterMs'
+        'id' => 'setId',
+        'name' => 'setName',
+        'model' => 'setModel',
+        'stats' => 'setStats'
     ];
 
     /**
@@ -190,8 +200,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      * @var string[]
      */
     protected static $getters = [
-        'data' => 'getData',
-        'retry_after_ms' => 'getRetryAfterMs'
+        'id' => 'getId',
+        'name' => 'getName',
+        'model' => 'getModel',
+        'stats' => 'getStats'
     ];
 
     /**
@@ -251,8 +263,10 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('data', $data ?? [], null);
-        $this->setIfExists('retry_after_ms', $data ?? [], null);
+        $this->setIfExists('id', $data ?? [], null);
+        $this->setIfExists('name', $data ?? [], null);
+        $this->setIfExists('model', $data ?? [], null);
+        $this->setIfExists('stats', $data ?? [], null);
     }
 
     /**
@@ -282,6 +296,18 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
     {
         $invalidProperties = [];
 
+        if ($this->container['id'] === null) {
+            $invalidProperties[] = "'id' can't be null";
+        }
+        if ($this->container['name'] === null) {
+            $invalidProperties[] = "'name' can't be null";
+        }
+        if ($this->container['model'] === null) {
+            $invalidProperties[] = "'model' can't be null";
+        }
+        if ($this->container['stats'] === null) {
+            $invalidProperties[] = "'stats' can't be null";
+        }
         return $invalidProperties;
     }
 
@@ -298,55 +324,109 @@ class AppGetNotification200Response implements ModelInterface, ArrayAccess, \Jso
 
 
     /**
-     * Gets data
+     * Gets id
      *
-     * @return \IsuRide\Model\UserNotificationData|null
+     * @return string
      */
-    public function getData()
+    public function getId()
     {
-        return $this->container['data'];
+        return $this->container['id'];
     }
 
     /**
-     * Sets data
+     * Sets id
      *
-     * @param \IsuRide\Model\UserNotificationData|null $data data
+     * @param string $id 椅子ID
      *
      * @return self
      */
-    public function setData($data)
+    public function setId($id)
     {
-        if (is_null($data)) {
-            throw new \InvalidArgumentException('non-nullable data cannot be null');
+        if (is_null($id)) {
+            throw new \InvalidArgumentException('non-nullable id cannot be null');
         }
-        $this->container['data'] = $data;
+        $this->container['id'] = $id;
 
         return $this;
     }
 
     /**
-     * Gets retry_after_ms
+     * Gets name
      *
-     * @return int|null
+     * @return string
      */
-    public function getRetryAfterMs()
+    public function getName()
     {
-        return $this->container['retry_after_ms'];
+        return $this->container['name'];
     }
 
     /**
-     * Sets retry_after_ms
+     * Sets name
      *
-     * @param int|null $retry_after_ms 次回の通知ポーリングまでの待機時間(ミリ秒単位)
+     * @param string $name 椅子の名前
      *
      * @return self
      */
-    public function setRetryAfterMs($retry_after_ms)
+    public function setName($name)
     {
-        if (is_null($retry_after_ms)) {
-            throw new \InvalidArgumentException('non-nullable retry_after_ms cannot be null');
+        if (is_null($name)) {
+            throw new \InvalidArgumentException('non-nullable name cannot be null');
         }
-        $this->container['retry_after_ms'] = $retry_after_ms;
+        $this->container['name'] = $name;
+
+        return $this;
+    }
+
+    /**
+     * Gets model
+     *
+     * @return string
+     */
+    public function getModel()
+    {
+        return $this->container['model'];
+    }
+
+    /**
+     * Sets model
+     *
+     * @param string $model 椅子のモデル
+     *
+     * @return self
+     */
+    public function setModel($model)
+    {
+        if (is_null($model)) {
+            throw new \InvalidArgumentException('non-nullable model cannot be null');
+        }
+        $this->container['model'] = $model;
+
+        return $this;
+    }
+
+    /**
+     * Gets stats
+     *
+     * @return \IsuRide\Model\UserNotificationDataChairStats
+     */
+    public function getStats()
+    {
+        return $this->container['stats'];
+    }
+
+    /**
+     * Sets stats
+     *
+     * @param \IsuRide\Model\UserNotificationDataChairStats $stats stats
+     *
+     * @return self
+     */
+    public function setStats($stats)
+    {
+        if (is_null($stats)) {
+            throw new \InvalidArgumentException('non-nullable stats cannot be null');
+        }
+        $this->container['stats'] = $stats;
 
         return $this;
     }

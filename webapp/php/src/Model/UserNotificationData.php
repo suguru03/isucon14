@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNotification200ResponseChairStats
+ * UserNotificationData
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNotification200ResponseChairStats Class Doc Comment
+ * UserNotificationData Class Doc Comment
  *
  * @category Class
- * @description 椅子の統計情報
+ * @description ユーザー向け通知データ
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAccess, \JsonSerializable
+class UserNotificationData implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_notification_200_response_chair_stats';
+    protected static $openAPIModelName = 'UserNotificationData';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,8 +58,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
       * @var string[]
       */
     protected static $openAPITypes = [
-        'total_rides_count' => 'int',
-        'total_evaluation_avg' => 'float'
+        'ride_id' => 'string',
+        'pickup_coordinate' => '\IsuRide\Model\Coordinate',
+        'destination_coordinate' => '\IsuRide\Model\Coordinate',
+        'fare' => 'int',
+        'status' => '\IsuRide\Model\RideStatus',
+        'chair' => '\IsuRide\Model\UserNotificationDataChair',
+        'created_at' => 'int',
+        'updated_at' => 'int'
     ];
 
     /**
@@ -70,8 +76,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'total_rides_count' => null,
-        'total_evaluation_avg' => null
+        'ride_id' => null,
+        'pickup_coordinate' => null,
+        'destination_coordinate' => null,
+        'fare' => null,
+        'status' => null,
+        'chair' => null,
+        'created_at' => 'int64',
+        'updated_at' => 'int64'
     ];
 
     /**
@@ -80,8 +92,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'total_rides_count' => false,
-        'total_evaluation_avg' => false
+        'ride_id' => false,
+        'pickup_coordinate' => false,
+        'destination_coordinate' => false,
+        'fare' => false,
+        'status' => false,
+        'chair' => false,
+        'created_at' => false,
+        'updated_at' => false
     ];
 
     /**
@@ -170,8 +188,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
      * @var string[]
      */
     protected static $attributeMap = [
-        'total_rides_count' => 'total_rides_count',
-        'total_evaluation_avg' => 'total_evaluation_avg'
+        'ride_id' => 'ride_id',
+        'pickup_coordinate' => 'pickup_coordinate',
+        'destination_coordinate' => 'destination_coordinate',
+        'fare' => 'fare',
+        'status' => 'status',
+        'chair' => 'chair',
+        'created_at' => 'created_at',
+        'updated_at' => 'updated_at'
     ];
 
     /**
@@ -180,8 +204,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
      * @var string[]
      */
     protected static $setters = [
-        'total_rides_count' => 'setTotalRidesCount',
-        'total_evaluation_avg' => 'setTotalEvaluationAvg'
+        'ride_id' => 'setRideId',
+        'pickup_coordinate' => 'setPickupCoordinate',
+        'destination_coordinate' => 'setDestinationCoordinate',
+        'fare' => 'setFare',
+        'status' => 'setStatus',
+        'chair' => 'setChair',
+        'created_at' => 'setCreatedAt',
+        'updated_at' => 'setUpdatedAt'
     ];
 
     /**
@@ -190,8 +220,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
      * @var string[]
      */
     protected static $getters = [
-        'total_rides_count' => 'getTotalRidesCount',
-        'total_evaluation_avg' => 'getTotalEvaluationAvg'
+        'ride_id' => 'getRideId',
+        'pickup_coordinate' => 'getPickupCoordinate',
+        'destination_coordinate' => 'getDestinationCoordinate',
+        'fare' => 'getFare',
+        'status' => 'getStatus',
+        'chair' => 'getChair',
+        'created_at' => 'getCreatedAt',
+        'updated_at' => 'getUpdatedAt'
     ];
 
     /**
@@ -251,8 +287,14 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('total_rides_count', $data ?? [], null);
-        $this->setIfExists('total_evaluation_avg', $data ?? [], null);
+        $this->setIfExists('ride_id', $data ?? [], null);
+        $this->setIfExists('pickup_coordinate', $data ?? [], null);
+        $this->setIfExists('destination_coordinate', $data ?? [], null);
+        $this->setIfExists('fare', $data ?? [], null);
+        $this->setIfExists('status', $data ?? [], null);
+        $this->setIfExists('chair', $data ?? [], null);
+        $this->setIfExists('created_at', $data ?? [], null);
+        $this->setIfExists('updated_at', $data ?? [], null);
     }
 
     /**
@@ -282,11 +324,26 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
     {
         $invalidProperties = [];
 
-        if ($this->container['total_rides_count'] === null) {
-            $invalidProperties[] = "'total_rides_count' can't be null";
+        if ($this->container['ride_id'] === null) {
+            $invalidProperties[] = "'ride_id' can't be null";
         }
-        if ($this->container['total_evaluation_avg'] === null) {
-            $invalidProperties[] = "'total_evaluation_avg' can't be null";
+        if ($this->container['pickup_coordinate'] === null) {
+            $invalidProperties[] = "'pickup_coordinate' can't be null";
+        }
+        if ($this->container['destination_coordinate'] === null) {
+            $invalidProperties[] = "'destination_coordinate' can't be null";
+        }
+        if ($this->container['fare'] === null) {
+            $invalidProperties[] = "'fare' can't be null";
+        }
+        if ($this->container['status'] === null) {
+            $invalidProperties[] = "'status' can't be null";
+        }
+        if ($this->container['created_at'] === null) {
+            $invalidProperties[] = "'created_at' can't be null";
+        }
+        if ($this->container['updated_at'] === null) {
+            $invalidProperties[] = "'updated_at' can't be null";
         }
         return $invalidProperties;
     }
@@ -304,55 +361,217 @@ class AppGetNotification200ResponseChairStats implements ModelInterface, ArrayAc
 
 
     /**
-     * Gets total_rides_count
+     * Gets ride_id
      *
-     * @return int
+     * @return string
      */
-    public function getTotalRidesCount()
+    public function getRideId()
     {
-        return $this->container['total_rides_count'];
+        return $this->container['ride_id'];
     }
 
     /**
-     * Sets total_rides_count
+     * Sets ride_id
      *
-     * @param int $total_rides_count 総乗車回数
+     * @param string $ride_id ライドID
      *
      * @return self
      */
-    public function setTotalRidesCount($total_rides_count)
+    public function setRideId($ride_id)
     {
-        if (is_null($total_rides_count)) {
-            throw new \InvalidArgumentException('non-nullable total_rides_count cannot be null');
+        if (is_null($ride_id)) {
+            throw new \InvalidArgumentException('non-nullable ride_id cannot be null');
         }
-        $this->container['total_rides_count'] = $total_rides_count;
+        $this->container['ride_id'] = $ride_id;
 
         return $this;
     }
 
     /**
-     * Gets total_evaluation_avg
+     * Gets pickup_coordinate
      *
-     * @return float
+     * @return \IsuRide\Model\Coordinate
      */
-    public function getTotalEvaluationAvg()
+    public function getPickupCoordinate()
     {
-        return $this->container['total_evaluation_avg'];
+        return $this->container['pickup_coordinate'];
     }
 
     /**
-     * Sets total_evaluation_avg
+     * Sets pickup_coordinate
      *
-     * @param float $total_evaluation_avg 総評価平均
+     * @param \IsuRide\Model\Coordinate $pickup_coordinate pickup_coordinate
      *
      * @return self
      */
-    public function setTotalEvaluationAvg($total_evaluation_avg)
+    public function setPickupCoordinate($pickup_coordinate)
     {
-        if (is_null($total_evaluation_avg)) {
-            throw new \InvalidArgumentException('non-nullable total_evaluation_avg cannot be null');
+        if (is_null($pickup_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable pickup_coordinate cannot be null');
         }
-        $this->container['total_evaluation_avg'] = $total_evaluation_avg;
+        $this->container['pickup_coordinate'] = $pickup_coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_coordinate
+     *
+     * @return \IsuRide\Model\Coordinate
+     */
+    public function getDestinationCoordinate()
+    {
+        return $this->container['destination_coordinate'];
+    }
+
+    /**
+     * Sets destination_coordinate
+     *
+     * @param \IsuRide\Model\Coordinate $destination_coordinate destination_coordinate
+     *
+     * @return self
+     */
+    public function setDestinationCoordinate($destination_coordinate)
+    {
+        if (is_null($destination_coordinate)) {
+            throw new \InvalidArgumentException('non-nullable destination_coordinate cannot be null');
+        }
+        $this->container['destination_coordinate'] = $destination_coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Gets fare
+     *
+     * @return int
+     */
+    public function getFare()
+    {
+        return $this->container['fare'];
+    }
+
+    /**
+     * Sets fare
+     *
+     * @param int $fare 運賃(割引後)
+     *
+     * @return self
+     */
+    public function setFare($fare)
+    {
+        if (is_null($fare)) {
+            throw new \InvalidArgumentException('non-nullable fare cannot be null');
+        }
+        $this->container['fare'] = $fare;
+
+        return $this;
+    }
+
+    /**
+     * Gets status
+     *
+     * @return \IsuRide\Model\RideStatus
+     */
+    public function getStatus()
+    {
+        return $this->container['status'];
+    }
+
+    /**
+     * Sets status
+     *
+     * @param \IsuRide\Model\RideStatus $status status
+     *
+     * @return self
+     */
+    public function setStatus($status)
+    {
+        if (is_null($status)) {
+            throw new \InvalidArgumentException('non-nullable status cannot be null');
+        }
+        $this->container['status'] = $status;
+
+        return $this;
+    }
+
+    /**
+     * Gets chair
+     *
+     * @return \IsuRide\Model\UserNotificationDataChair|null
+     */
+    public function getChair()
+    {
+        return $this->container['chair'];
+    }
+
+    /**
+     * Sets chair
+     *
+     * @param \IsuRide\Model\UserNotificationDataChair|null $chair chair
+     *
+     * @return self
+     */
+    public function setChair($chair)
+    {
+        if (is_null($chair)) {
+            throw new \InvalidArgumentException('non-nullable chair cannot be null');
+        }
+        $this->container['chair'] = $chair;
+
+        return $this;
+    }
+
+    /**
+     * Gets created_at
+     *
+     * @return int
+     */
+    public function getCreatedAt()
+    {
+        return $this->container['created_at'];
+    }
+
+    /**
+     * Sets created_at
+     *
+     * @param int $created_at 配車要求日時
+     *
+     * @return self
+     */
+    public function setCreatedAt($created_at)
+    {
+        if (is_null($created_at)) {
+            throw new \InvalidArgumentException('non-nullable created_at cannot be null');
+        }
+        $this->container['created_at'] = $created_at;
+
+        return $this;
+    }
+
+    /**
+     * Gets updated_at
+     *
+     * @return int
+     */
+    public function getUpdatedAt()
+    {
+        return $this->container['updated_at'];
+    }
+
+    /**
+     * Sets updated_at
+     *
+     * @param int $updated_at 配車要求更新日時
+     *
+     * @return self
+     */
+    public function setUpdatedAt($updated_at)
+    {
+        if (is_null($updated_at)) {
+            throw new \InvalidArgumentException('non-nullable updated_at cannot be null');
+        }
+        $this->container['updated_at'] = $updated_at;
 
         return $this;
     }

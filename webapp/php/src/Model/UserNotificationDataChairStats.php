@@ -1,6 +1,6 @@
 <?php
 /**
- * AppGetNotification200ResponseChair
+ * UserNotificationDataChairStats
  *
  * PHP version 7.4
  *
@@ -32,16 +32,16 @@ use \ArrayAccess;
 use \IsuRide\ObjectSerializer;
 
 /**
- * AppGetNotification200ResponseChair Class Doc Comment
+ * UserNotificationDataChairStats Class Doc Comment
  *
  * @category Class
- * @description 椅子情報
+ * @description 椅子の統計情報
  * @package  IsuRide
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess, \JsonSerializable
+class UserNotificationDataChairStats implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -50,7 +50,7 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       *
       * @var string
       */
-    protected static $openAPIModelName = 'app_get_notification_200_response_chair';
+    protected static $openAPIModelName = 'UserNotificationData_chair_stats';
 
     /**
       * Array of property to type mappings. Used for (de)serialization
@@ -58,10 +58,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @var string[]
       */
     protected static $openAPITypes = [
-        'id' => 'string',
-        'name' => 'string',
-        'model' => 'string',
-        'stats' => '\IsuRide\Model\AppGetNotification200ResponseChairStats'
+        'total_rides_count' => 'int',
+        'total_evaluation_avg' => 'float'
     ];
 
     /**
@@ -72,10 +70,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @psalm-var array<string, string|null>
       */
     protected static $openAPIFormats = [
-        'id' => null,
-        'name' => null,
-        'model' => null,
-        'stats' => null
+        'total_rides_count' => null,
+        'total_evaluation_avg' => null
     ];
 
     /**
@@ -84,10 +80,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
       * @var boolean[]
       */
     protected static array $openAPINullables = [
-        'id' => false,
-        'name' => false,
-        'model' => false,
-        'stats' => false
+        'total_rides_count' => false,
+        'total_evaluation_avg' => false
     ];
 
     /**
@@ -176,10 +170,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $attributeMap = [
-        'id' => 'id',
-        'name' => 'name',
-        'model' => 'model',
-        'stats' => 'stats'
+        'total_rides_count' => 'total_rides_count',
+        'total_evaluation_avg' => 'total_evaluation_avg'
     ];
 
     /**
@@ -188,10 +180,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $setters = [
-        'id' => 'setId',
-        'name' => 'setName',
-        'model' => 'setModel',
-        'stats' => 'setStats'
+        'total_rides_count' => 'setTotalRidesCount',
+        'total_evaluation_avg' => 'setTotalEvaluationAvg'
     ];
 
     /**
@@ -200,10 +190,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      * @var string[]
      */
     protected static $getters = [
-        'id' => 'getId',
-        'name' => 'getName',
-        'model' => 'getModel',
-        'stats' => 'getStats'
+        'total_rides_count' => 'getTotalRidesCount',
+        'total_evaluation_avg' => 'getTotalEvaluationAvg'
     ];
 
     /**
@@ -263,10 +251,8 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
      */
     public function __construct(array $data = null)
     {
-        $this->setIfExists('id', $data ?? [], null);
-        $this->setIfExists('name', $data ?? [], null);
-        $this->setIfExists('model', $data ?? [], null);
-        $this->setIfExists('stats', $data ?? [], null);
+        $this->setIfExists('total_rides_count', $data ?? [], null);
+        $this->setIfExists('total_evaluation_avg', $data ?? [], null);
     }
 
     /**
@@ -296,17 +282,11 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
     {
         $invalidProperties = [];
 
-        if ($this->container['id'] === null) {
-            $invalidProperties[] = "'id' can't be null";
+        if ($this->container['total_rides_count'] === null) {
+            $invalidProperties[] = "'total_rides_count' can't be null";
         }
-        if ($this->container['name'] === null) {
-            $invalidProperties[] = "'name' can't be null";
-        }
-        if ($this->container['model'] === null) {
-            $invalidProperties[] = "'model' can't be null";
-        }
-        if ($this->container['stats'] === null) {
-            $invalidProperties[] = "'stats' can't be null";
+        if ($this->container['total_evaluation_avg'] === null) {
+            $invalidProperties[] = "'total_evaluation_avg' can't be null";
         }
         return $invalidProperties;
     }
@@ -324,109 +304,55 @@ class AppGetNotification200ResponseChair implements ModelInterface, ArrayAccess,
 
 
     /**
-     * Gets id
+     * Gets total_rides_count
      *
-     * @return string
+     * @return int
      */
-    public function getId()
+    public function getTotalRidesCount()
     {
-        return $this->container['id'];
+        return $this->container['total_rides_count'];
     }
 
     /**
-     * Sets id
+     * Sets total_rides_count
      *
-     * @param string $id 椅子ID
+     * @param int $total_rides_count 総乗車回数
      *
      * @return self
      */
-    public function setId($id)
+    public function setTotalRidesCount($total_rides_count)
     {
-        if (is_null($id)) {
-            throw new \InvalidArgumentException('non-nullable id cannot be null');
+        if (is_null($total_rides_count)) {
+            throw new \InvalidArgumentException('non-nullable total_rides_count cannot be null');
         }
-        $this->container['id'] = $id;
+        $this->container['total_rides_count'] = $total_rides_count;
 
         return $this;
     }
 
     /**
-     * Gets name
+     * Gets total_evaluation_avg
      *
-     * @return string
+     * @return float
      */
-    public function getName()
+    public function getTotalEvaluationAvg()
     {
-        return $this->container['name'];
+        return $this->container['total_evaluation_avg'];
     }
 
     /**
-     * Sets name
+     * Sets total_evaluation_avg
      *
-     * @param string $name 椅子の名前
+     * @param float $total_evaluation_avg 総評価平均
      *
      * @return self
      */
-    public function setName($name)
+    public function setTotalEvaluationAvg($total_evaluation_avg)
     {
-        if (is_null($name)) {
-            throw new \InvalidArgumentException('non-nullable name cannot be null');
+        if (is_null($total_evaluation_avg)) {
+            throw new \InvalidArgumentException('non-nullable total_evaluation_avg cannot be null');
         }
-        $this->container['name'] = $name;
-
-        return $this;
-    }
-
-    /**
-     * Gets model
-     *
-     * @return string
-     */
-    public function getModel()
-    {
-        return $this->container['model'];
-    }
-
-    /**
-     * Sets model
-     *
-     * @param string $model 椅子のモデル
-     *
-     * @return self
-     */
-    public function setModel($model)
-    {
-        if (is_null($model)) {
-            throw new \InvalidArgumentException('non-nullable model cannot be null');
-        }
-        $this->container['model'] = $model;
-
-        return $this;
-    }
-
-    /**
-     * Gets stats
-     *
-     * @return \IsuRide\Model\AppGetNotification200ResponseChairStats
-     */
-    public function getStats()
-    {
-        return $this->container['stats'];
-    }
-
-    /**
-     * Sets stats
-     *
-     * @param \IsuRide\Model\AppGetNotification200ResponseChairStats $stats stats
-     *
-     * @return self
-     */
-    public function setStats($stats)
-    {
-        if (is_null($stats)) {
-            throw new \InvalidArgumentException('non-nullable stats cannot be null');
-        }
-        $this->container['stats'] = $stats;
+        $this->container['total_evaluation_avg'] = $total_evaluation_avg;
 
         return $this;
     }

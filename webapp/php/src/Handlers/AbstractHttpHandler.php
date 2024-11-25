@@ -10,7 +10,7 @@ use Fig\Http\Message\StatusCodeInterface;
 use IsuRide\Database\Model\ChairLocation;
 use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\RideStatus;
-use IsuRide\Model\AppGetNotification200ResponseChairStats;
+use IsuRide\Model\UserNotificationDataChairStats;
 use IsuRide\Result\ChairStats;
 use PDO;
 use PDOException;
@@ -147,7 +147,7 @@ abstract class AbstractHttpHandler
      */
     protected function getChairStats(PDO $tx, string $chairId): ChairStats
     {
-        $stats = new AppGetNotification200ResponseChairStats();
+        $stats = new UserNotificationDataChairStats();
         $rides = [];
         $stmt = $tx->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC');
         $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
