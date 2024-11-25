@@ -84,8 +84,6 @@ func init() {
 func GenerateOwnerName() string {
 	return ownerNames[int(ownerNamesIdx.Add(1))%len(ownerNames)]
 }
-func GenerateChairName() string    { return gofakeit.PetName() }
-func GenerateChairModel() string   { return gofakeit.CarModel() }
 func GenerateLastName() string     { return gimei.NewName().Last.Kanji() }
 func GenerateFirstName() string    { return gimei.NewName().First.Kanji() }
 func GenerateUserName() string     { return gofakeit.Username() }
