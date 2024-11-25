@@ -237,6 +237,7 @@ func (w *World) CreateOwner(ctx *Context, args *CreateOwnerArgs) (*Owner, error)
 		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
 		CompletedRequest:   concurrent.NewSimpleSlice[*Request](),
 		RegisteredData:     registeredData,
+		ChairModels:        PickModels(),
 		Client:             res.Client,
 		Rand:               random.CreateChildRand(w.RootRand),
 		chairCountPerModel: map[*ChairModel]int{},

@@ -30,6 +30,8 @@ type Owner struct {
 	SubScore atomic.Int64
 	// CompletedRequest 管理している椅子が完了したリクエスト
 	CompletedRequest *concurrent.SimpleSlice[*Request]
+	// ChairModels このオーナーが取り扱っているモデル
+	ChairModels map[int]ChairModels
 
 	// RegisteredData サーバーに登録されているオーナー情報
 	RegisteredData RegisteredOwnerData
@@ -93,10 +95,12 @@ func (p *Owner) Tick(ctx *Context) error {
 				ctx.ContestantLogger().Info("一定の売上が立ったためOwnerのChairが増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
 				for range increase {
 					p.createChairTryCount++
+					// TODO どのモデルを増やすか
+					models := p.ChairModels[modelSpeeds[(p.createChairTryCount-1)%len(modelSpeeds)]]
 					_, err := p.World.CreateChair(ctx, &CreateChairArgs{
 						Owner:             p,
 						InitialCoordinate: RandomCoordinateOnRegionWithRand(p.Region, p.Rand),
-						Model:             ChairModels[(p.createChairTryCount-1)%len(ChairModels)],
+						Model:             models.Random(),
 					})
 					if err != nil {
 						// 登録に失敗した椅子はリトライされない

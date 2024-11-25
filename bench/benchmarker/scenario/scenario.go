@@ -214,7 +214,7 @@ func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) er
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Owner:             owner,
 				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(owner.Region, owner.Rand),
-				Model:             world.ChairModelA,
+				Model:             owner.ChairModels[2].Random(),
 			})
 			if err != nil {
 				return err
