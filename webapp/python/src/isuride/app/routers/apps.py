@@ -278,7 +278,7 @@ def app_post_rides(
         continuing_ride_count: int = 0
         for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
-            if status != "COMPLETED" and status != "CANCELED":
+            if status != "COMPLETED":
                 continuing_ride_count += 1
 
         if continuing_ride_count > 0:
