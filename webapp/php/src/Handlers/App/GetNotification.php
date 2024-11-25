@@ -141,7 +141,7 @@ class GetNotification extends AbstractHttpHandler
                 );
             }
 
-            if ($yetSentRideStatus['id']) {
+            if (isset($yetSentRideStatus['id'])) {
                 $stmt = $this->db->prepare('UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?');
                 $stmt->execute([$yetSentRideStatus['id']]);
             }

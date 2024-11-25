@@ -73,7 +73,7 @@ class PostRidesEstimatedFare extends AbstractHttpHandler
                             $pickupCoordinate->getLongitude(),
                             $destinationCoordinate->getLatitude(),
                             $destinationCoordinate->getLongitude()
-                        )
+                        ) - $discounted
                     ]
                 ),
             );
