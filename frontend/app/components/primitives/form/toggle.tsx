@@ -10,7 +10,7 @@ type Props = Omit<
 };
 
 export function Toggle(props: Props) {
-  const {value, onUpdate, className, ...rest} = props
+  const { value, onUpdate, className, ...rest } = props;
   return (
     <label
       className={twMerge(

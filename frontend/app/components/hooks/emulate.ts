@@ -1,7 +1,10 @@
 import { useEffect } from "react";
-import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
+import {
+  fetchChairPostCoordinate,
+  fetchChairPostRideStatus,
+} from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { SimulatorChair, useSimulatorContext } from "~/contexts/simulator-context";
+import { SimulatorChair } from "~/contexts/simulator-context";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -28,8 +31,8 @@ const move = (
       throw Error("Error: Expected status to be 'Arraived'.");
   }
 };
-export const useEmulator = (targetChair: SimulatorChair) => {
 
+export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (
       !(
@@ -44,7 +47,6 @@ export const useEmulator = (targetChair: SimulatorChair) => {
     const { pickup, destination } =
       targetChair.chairNotification.payload.coordinate;
     const status = targetChair.chairNotification.status;
-
     const currentCoodinatePost = () => {
       if (coordinate) {
         sessionStorage.setItem("latitude", String(coordinate.latitude));
@@ -56,11 +58,38 @@ export const useEmulator = (targetChair: SimulatorChair) => {
         });
       }
     };
+    const postEnroute = () => {
+      if (targetChair.chairNotification?.payload?.ride_id) {
+        fetchChairPostRideStatus({
+          body: { status: "ENROUTE" },
+          pathParams: {
+            rideId: targetChair.chairNotification?.payload?.ride_id,
+          },
+        }).catch((e) => console.error(e));
+      }
+    };
+
+    const postCarring = () => {
+      if (targetChair.chairNotification?.payload?.ride_id) {
+        fetchChairPostRideStatus({
+          body: { status: "CARRYING" },
+          pathParams: {
+            rideId: targetChair.chairNotification?.payload?.ride_id,
+          },
+        }).catch((e) => console.error(e));
+      }
+    };
 
     const timeoutId = setTimeout(() => {
       currentCoodinatePost();
 
       switch (status) {
+        case "MATCHING":
+          postEnroute();
+          break;
+        case "PICKUP":
+          postCarring();
+          break;
         case "ENROUTE":
           if (pickup) {
             setter(move(coordinate, pickup));
@@ -72,7 +101,7 @@ export const useEmulator = (targetChair: SimulatorChair) => {
           }
           break;
       }
-    }, 3000);
+    }, 1000);
 
     return () => {
       clearTimeout(timeoutId);

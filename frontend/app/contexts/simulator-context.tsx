@@ -57,7 +57,7 @@ function getSSEJsonFromFetch<T>(value: string) {
 }
 
 export const useClientChairNotification = (id?: string) => {
-  const [firstNotification, setFirstNotification] = useState<
+  const [notification, setNotification] = useState<
     ChairGetNotificationResponse & { contentType: "event-stream" | "json" }
   >();
   useEffect(() => {
@@ -76,7 +76,7 @@ export const useClientChairNotification = (id?: string) => {
         const decoded = decoder.decode(readed);
         const json =
           getSSEJsonFromFetch<ChairGetNotificationResponse["data"]>(decoded);
-        setFirstNotification(
+        setNotification(
           json
             ? {
                 data: json,
@@ -88,7 +88,7 @@ export const useClientChairNotification = (id?: string) => {
         const json = (await notification.json()) as
           | ChairGetNotificationResponse
           | undefined;
-        setFirstNotification(
+        setNotification(
           json
             ? {
                 ...json,
@@ -103,26 +103,26 @@ export const useClientChairNotification = (id?: string) => {
     return () => {
       abortController.abort();
     };
-  }, [setFirstNotification]);
+  }, [setNotification]);
 
-  const [clientAppPayloadWithStatus, setClientAppPayloadWithStatus] = useState<
-    Omit<ClientChairRide, "auth" | "user">
-  >(
-    firstNotification
-      ? {
-          status: firstNotification.data?.status,
-          payload: {
-            ride_id: firstNotification.data?.ride_id,
-            coordinate: {
-              pickup: firstNotification.data?.pickup_coordinate,
-              destination: firstNotification.data?.destination_coordinate,
+  const clientChairPayloadWithStatus = useMemo(
+    () =>
+      notification
+        ? {
+            status: notification.data?.status,
+            payload: {
+              ride_id: notification.data?.ride_id,
+              coordinate: {
+                pickup: notification.data?.pickup_coordinate,
+                destination: notification.data?.destination_coordinate,
+              },
             },
-          },
-        }
-      : {},
+          }
+        : undefined,
+    [notification],
   );
-  const retryAfterMs = firstNotification?.retry_after_ms ?? 10000;
-  const isSSE = firstNotification?.contentType === "event-stream";
+  const retryAfterMs = notification?.retry_after_ms ?? 10000;
+  const isSSE = notification?.contentType === "event-stream";
   useEffect(() => {
     if (isSSE) {
       const eventSource = new EventSource(`${apiBaseURL}/chair/notification`);
@@ -130,22 +130,16 @@ export const useClientChairNotification = (id?: string) => {
         if (typeof event.data === "string") {
           const eventData = JSON.parse(
             event.data,
-          ) as ChairGetNotificationResponse;
-          setClientAppPayloadWithStatus((preRequest) => {
+          ) as ChairGetNotificationResponse["data"];
+          setNotification((preRequest) => {
             if (
               preRequest === undefined ||
-              eventData.data?.status !== preRequest.status ||
-              eventData.data?.ride_id !== preRequest.payload?.ride_id
+              eventData?.status !== preRequest.data?.status ||
+              eventData?.ride_id !== preRequest.data?.ride_id
             ) {
               return {
-                status: eventData.data?.status,
-                payload: {
-                  ride_id: eventData.data?.ride_id,
-                  coordinate: {
-                    pickup: eventData.data?.pickup_coordinate,
-                    destination: eventData.data?.destination_coordinate,
-                  },
-                },
+                data: eventData,
+                contentType: "event-stream",
               };
             } else {
               return preRequest;
@@ -165,25 +159,20 @@ export const useClientChairNotification = (id?: string) => {
             {},
             abortController.signal,
           );
-          setClientAppPayloadWithStatus((prev) => {
+          setNotification((preRequest) => {
             if (
-              prev?.payload !== undefined &&
-              prev?.status === currentNotification.data?.status &&
-              prev.payload?.ride_id === currentNotification.data?.ride_id
+              preRequest === undefined ||
+              currentNotification?.data?.status !== preRequest.data?.status ||
+              currentNotification?.data?.ride_id !== preRequest.data?.ride_id
             ) {
-              return prev;
+              return {
+                data: currentNotification.data,
+                retry_after_ms: currentNotification.retry_after_ms,
+                contentType: "json",
+              };
+            } else {
+              return preRequest;
             }
-
-            return {
-              status: currentNotification.data?.status,
-              payload: {
-                ride_id: currentNotification.data?.ride_id,
-                coordinate: {
-                  pickup: currentNotification.data?.pickup_coordinate,
-                  destination: currentNotification.data?.destination_coordinate,
-                },
-              },
-            };
           });
           timeoutId = window.setTimeout(polling, retryAfterMs);
         })().catch((e) => {
@@ -197,10 +186,10 @@ export const useClientChairNotification = (id?: string) => {
         clearTimeout(timeoutId);
       };
     }
-  }, [setClientAppPayloadWithStatus, isSSE, retryAfterMs]);
+  }, [isSSE, retryAfterMs]);
 
   const responseClientAppRequest = useMemo<ClientChairRide | undefined>(() => {
-    const candidateAppRequest = clientAppPayloadWithStatus;
+    const candidateAppRequest = clientChairPayloadWithStatus;
     return {
       ...candidateAppRequest,
       status: candidateAppRequest?.status,
@@ -209,16 +198,16 @@ export const useClientChairNotification = (id?: string) => {
         name: "ISUCON太郎",
       },
     };
-  }, [clientAppPayloadWithStatus, id]);
+  }, [clientChairPayloadWithStatus, id]);
 
   return responseClientAppRequest;
 };
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const {id, token} = getTargetChair();
+  const { id, token } = getTargetChair();
   useEffect(() => {
     document.cookie = `chair_session=${token}; path=/`;
-  },[token])
+  }, [token]);
 
   const owners = getOwners().map(
     (owner) =>
@@ -228,6 +217,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
           ...owner.chair,
           coordinateState: {
             setter(coordinate) {
+              console.log("setter", coordinate);
               this.coordinate = coordinate;
             },
           },
@@ -237,6 +227,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const request = useClientChairNotification(id);
+  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>();
 
   return (
     <ClientSimulatorContext.Provider
@@ -246,9 +237,8 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
           ...getTargetChair(),
           chairNotification: request,
           coordinateState: {
-            setter(coordinate) {
-              this.coordinate = coordinate;
-            },
+            setter: setCurrentCoordinate,
+            coordinate: currentCoodinate,
           },
         },
       }}
