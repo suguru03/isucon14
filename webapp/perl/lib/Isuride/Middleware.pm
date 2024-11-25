@@ -3,7 +3,7 @@ use v5.40;
 use utf8;
 use HTTP::Status qw(:constants);
 
-sub app_auth_middleware($app) {
+sub app_auth_middleware ($app) {
     sub ($self, $c) {
         my $access_token = $c->req->cookies->{apps_session};
 
@@ -25,7 +25,7 @@ sub app_auth_middleware($app) {
     };
 }
 
-sub owner_auth_middleware($app) {
+sub owner_auth_middleware ($app) {
     sub ($self, $c) {
         my $access_token = $c->req->cookies->{owner_session};
 
@@ -47,7 +47,7 @@ sub owner_auth_middleware($app) {
     };
 }
 
-sub chair_auth_middleware($app) {
+sub chair_auth_middleware ($app) {
     sub ($self, $c) {
         my $access_token = $c->req->cookies->{chair_session};
 
