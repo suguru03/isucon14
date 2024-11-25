@@ -182,12 +182,10 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       let timeoutId: number = 0;
       const polling = () => {
         (async () => {
-          console.log("polling:start");
           const currentNotification = await fetchAppGetNotification(
             {},
             abortController.signal,
           );
-          console.log("polling:end");
           setClientAppPayloadWithStatus((prev) => {
             if (
               prev?.payload !== undefined &&
@@ -306,7 +304,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [accessTokenParameter, userIdParameter]);
 
   const request = useClientAppRequest(accessToken ?? "", id ?? "");
-
+  console.log('request', request)
   return (
     <ClientAppRequestContext.Provider value={{ ...request }}>
       {children}

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { fetchChairPostCoordinate } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { useSimulatorContext } from "~/contexts/simulator-context";
+import { SimulatorChair, useSimulatorContext } from "~/contexts/simulator-context";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -28,8 +28,7 @@ const move = (
       throw Error("Error: Expected status to be 'Arraived'.");
   }
 };
-export const useEmulator = () => {
-  const { targetChair } = useSimulatorContext();
+export const useEmulator = (targetChair: SimulatorChair) => {
 
   useEffect(() => {
     if (

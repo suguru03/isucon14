@@ -76,7 +76,6 @@ export const useClientChairNotification = (id?: string) => {
         const decoded = decoder.decode(readed);
         const json =
           getSSEJsonFromFetch<ChairGetNotificationResponse["data"]>(decoded);
-        console.log("json", json);
         setFirstNotification(
           json
             ? {
@@ -162,12 +161,10 @@ export const useClientChairNotification = (id?: string) => {
       let timeoutId: number = 0;
       const polling = () => {
         (async () => {
-          console.log("polling:start");
           const currentNotification = await fetchChairGetNotification(
             {},
             abortController.signal,
           );
-          console.log("polling:end");
           setClientAppPayloadWithStatus((prev) => {
             if (
               prev?.payload !== undefined &&
@@ -218,8 +215,10 @@ export const useClientChairNotification = (id?: string) => {
 };
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const targetChair = getTargetChair();
-  document.cookie = `chair_session=${targetChair.token}; path=/`;
+  const {id, token} = getTargetChair();
+  useEffect(() => {
+    document.cookie = `chair_session=${token}; path=/`;
+  },[token])
 
   const owners = getOwners().map(
     (owner) =>
@@ -237,7 +236,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
       }) satisfies SimulatorOwner,
   );
 
-  const request = useClientChairNotification(targetChair.id);
+  const request = useClientChairNotification(id);
 
   return (
     <ClientSimulatorContext.Provider
