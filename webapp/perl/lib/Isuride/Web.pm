@@ -8,12 +8,13 @@ use Kossy::Exception;
 use DBIx::Sunny;
 use Cpanel::JSON::XS;
 use Cpanel::JSON::XS::Type;
-use Types::Standard -types;
+use HTTP::Status qw(:constants);
 
 $Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
 
 use Isuride::Middleware;
 use Isuride::Handler::App;
+use Isuride::Util qw(check_params);
 
 sub connect_db() {
     my $host     = $ENV{ISUCON_DB_HOST}     || '127.0.0.1';
@@ -49,7 +50,7 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
 
 # router
 {
-
+    post '/api/initialize' => \&post_initialize;
     {
         #  app handlers
         post '/api/app/users' => \&Isuride::Handler::App::app_post_users;
@@ -60,8 +61,35 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
     }
 }
 
-sub default ($self, $c) {
-    $c->render_json({ greeting => '' });
+use constant PostInitializeRequest => {
+    payment_server => JSON_TYPE_STRING,
+};
+
+use constant PostInitializeResponse => {
+    language => JSON_TYPE_STRING,
+};
+
+sub post_initialize ($self, $c) {
+    my $params = $c->req->json_parameters;
+
+    unless (check_params($params, PostInitializeRequest)) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    }
+
+    if (my $e = system($self->root_dir . '/../sql/init.sh')) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, "failed to initialize: $e");
+    }
+
+    try {
+        $self->dbh->query(
+            q{UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'},
+            $params->{payment_server}
+        );
+    } catch ($e) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    }
+
+    return $c->render_json({ language => 'perl' }, PostInitializeResponse);
 }
 
 sub app_get_resuest ($self, $c) {
