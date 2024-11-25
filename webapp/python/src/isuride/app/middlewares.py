@@ -5,6 +5,8 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/middlewares.go
 TODO: このdocstringを消す
 """
 
+from typing import Annotated
+
 from fastapi import Cookie, HTTPException, status
 from sqlalchemy import text
 
@@ -12,7 +14,7 @@ from .models import Chair, Owner, User
 from .sql import engine
 
 
-def app_auth_middleware(app_session=Cookie(default=None)) -> User:
+def app_auth_middleware(app_session: Annotated[str | None, Cookie()] = None) -> User:
     if not app_session:
         raise HTTPException(status_code=401, detail="app_session cookie is required")
 
@@ -29,7 +31,9 @@ def app_auth_middleware(app_session=Cookie(default=None)) -> User:
         return user
 
 
-def owner_auth_middleware(owner_session=Cookie(default=None)) -> Owner:
+def owner_auth_middleware(
+    owner_session: Annotated[str | None, Cookie()] = None,
+) -> Owner:
     if not owner_session:
         raise HTTPException(status_code=401, detail="owner_session cookie is required")
 
@@ -46,7 +50,9 @@ def owner_auth_middleware(owner_session=Cookie(default=None)) -> Owner:
         return Owner(**row._mapping)
 
 
-def chair_auth_middleware(chair_session=Cookie(default=None)) -> Chair:
+def chair_auth_middleware(
+    chair_session: Annotated[str | None, Cookie()] = None,
+) -> Chair:
     if not chair_session:
         raise HTTPException(status_code=401, detail="chair_session cookie is required")
 
