@@ -89,9 +89,10 @@ class PostCoordinate extends AbstractHttpHandler
                 }
             }
             $this->db->commit();
+            $unixMilliseconds = \DateTimeImmutable::createFromFormat("Y-m-d H:i:s.u", $chairLocation['created_at'])->format('Uv');
             return $this->writeJson(
                 $response,
-                new ChairPostCoordinate200Response(['recorded_at' => strtotime($chairLocation['created_at'])])
+                new ChairPostCoordinate200Response(['recorded_at' => (int)$unixMilliseconds])
             );
         } catch (RuntimeException | PDOException $e) {
             return (new ErrorResponse())->write(
