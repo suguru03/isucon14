@@ -1,8 +1,10 @@
 package world
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"slices"
+	"strconv"
 
 	"github.com/samber/lo"
 )
@@ -10,6 +12,10 @@ import (
 type ChairModel struct {
 	Name  string
 	Speed int
+}
+
+func (m *ChairModel) GenerateName() string {
+	return modelCodes[m.Name] + "-" + strconv.Itoa(rand.IntN(10000))
 }
 
 type ChairModels []*ChairModel
@@ -84,6 +90,63 @@ var (
 			"Aurora Glow",
 		},
 	}
+	modelCodes = map[string]string{
+		"リラックスシート NEO":      "RS-NEO01",
+		"エアシェル ライト":         "AS-LT02",
+		"チェアエース S":          "CA-S03",
+		"ベーシックスツール プラス":     "BS-PL04",
+		"SitEase":           "SE-05",
+		"スピンフレーム 01":        "SF-01",
+		"LiteLine":          "LL-06",
+		"リラックス座":            "RZ-07",
+		"EasySit":           "ES-08",
+		"ComfortBasic":      "CB-09",
+		"フォームライン RX":        "FL-RX10",
+		"StyleSit":          "SS-11",
+		"エルゴクレスト II":        "EC-II12",
+		"クエストチェア Lite":      "QC-L13",
+		"AeroSeat":          "AS-14",
+		"エアフロー EZ":          "AF-EZ15",
+		"ゲーミングシート NEXUS":    "GS-NX16",
+		"シェルシート ハイブリッド":     "SS-HY17",
+		"フレックスコンフォート PRO":   "FC-P18",
+		"プレイスタイル Z":         "PS-Z19",
+		"ストリームギア S1":        "SG-S120",
+		"リカーブチェア スマート":      "RC-SM21",
+		"ErgoFlex":          "EF-22",
+		"BalancePro":        "BP-23",
+		"風雅（ふうが）チェア":        "FG-C24",
+		"ゼンバランス EX":         "ZB-EX25",
+		"シャドウバースト M":        "SB-M26",
+		"フューチャーチェア CORE":    "FC-CR27",
+		"プレミアムエアチェア ZETA":   "PA-Z28",
+		"プロゲーマーエッジ X1":      "PE-X129",
+		"モーションチェア RISE":     "MC-R30",
+		"雅楽座":               "GA-31",
+		"スリムライン GX":         "SL-GX32",
+		"Infinity Seat":     "IS-33",
+		"LuxeThrone":        "LT-34",
+		"Titanium Line":     "TL-35",
+		"ZenComfort":        "ZC-36",
+		"アルティマシート X":        "US-X37",
+		"インペリアルクラフト LUXE":   "IC-LX38",
+		"ステルスシート ROGUE":     "SS-R39",
+		"エコシート リジェネレイト":     "ES-RG40",
+		"フューチャーステップ VISION": "FS-V41",
+		"インフィニティ GEAR V":    "IG-V42",
+		"オブシディアン PRIME":     "OP-43",
+		"ナイトシート ブラックエディション": "NS-BE44",
+		"ShadowEdition":     "SE-45",
+		"Phoenix Ultra":     "PU-46",
+		"タイタンフレーム ULTRA":    "TF-U47",
+		"Legacy Chair":      "LC-48",
+		"ルミナスエアクラウン":        "LA-C49",
+		"ヴァーチェア SUPREME":    "VC-S50",
+		"匠座 PRO LIMITED":    "TZ-PL51",
+		"匠座（たくみざ）プレミアム":     "TZ-P52",
+		"ゼノバース ALPHA":       "ZB-A53",
+		"Aurora Glow":       "AG-54",
+	}
 	modelsBySpeed = lo.MapValues(modelNamesBySpeed, func(names []string, speed int) ChairModels {
 		return lo.Map(names, func(name string, _ int) *ChairModel {
 			return &ChairModel{Name: name, Speed: speed}
@@ -98,4 +161,15 @@ func PickModels() map[int]ChairModels {
 		result[speed] = lo.Shuffle(slices.Clone(models))[:3]
 	}
 	return result
+}
+
+func init() {
+	for _, names := range modelNamesBySpeed {
+		for _, name := range names {
+			_, ok := modelCodes[name]
+			if !ok {
+				panic(fmt.Errorf("コード名がない: %s", name))
+			}
+		}
+	}
 }

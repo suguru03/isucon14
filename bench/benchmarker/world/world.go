@@ -257,7 +257,7 @@ type CreateChairArgs struct {
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
-		Name: random.GenerateChairName(),
+		Name: args.Model.GenerateName(),
 	}
 
 	res, err := w.Client.RegisterChair(ctx, args.Owner, &RegisterChairRequest{
