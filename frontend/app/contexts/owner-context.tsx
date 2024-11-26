@@ -1,4 +1,4 @@
-import { useSearchParams } from "@remix-run/react";
+import { useNavigate, useSearchParams } from "@remix-run/react";
 import {
   createContext,
   useContext,
@@ -13,6 +13,8 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/apiClient/apiComponents";
+import { getCookieValue } from "~/components/modules/session/cookie";
+import { isClientApiError } from "~/types";
 
 type ClientProviderRequest = Partial<{
   chairs: OwnerGetChairsResponse["chairs"];
@@ -42,11 +44,17 @@ const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
 export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
-
+  const navigate = useNavigate();
   const id = searchParams.get("id") ?? undefined;
   const name = searchParams.get("name") ?? undefined;
   const since = searchParams.get("since") ?? undefined;
   const until = searchParams.get("until") ?? undefined;
+
+  useEffect(() => {
+    if (getCookieValue(document.cookie, "app_session") === undefined) {
+      navigate("/client/register");
+    }
+  }, [navigate]);
 
   const isDummy = useMemo(() => {
     try {
@@ -87,16 +95,19 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
               abortController.signal,
             ).then((res) => setSales(res))
           : Promise.resolve(),
-      ]).catch((reason) => {
-        if (typeof reason === "string") {
-          console.error(`CONSOLE PROMISE ERROR: ${reason}`);
+      ]).catch((e) => {
+        console.error(`ERROR: ${JSON.stringify(e)}`);
+        if (isClientApiError(e)) {
+          if (e.stack.status === 401) {
+            navigate("/owner/register");
+          }
         }
       });
       return () => {
         abortController.abort();
       };
     }
-  }, [setChairs, setSales, since, until, isDummy]);
+  }, [setChairs, setSales, since, until, isDummy, navigate]);
 
   const responseClientProvider = useMemo<ClientProviderRequest>(() => {
     return {

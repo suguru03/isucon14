@@ -13,6 +13,7 @@ import {
   fetchAppGetNotification,
 } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import { getCookieValue } from "~/components/modules/session/cookie";
 import { isClientApiError, type ClientAppRide } from "~/types";
 
 /**
@@ -26,12 +27,6 @@ function getSSEJsonFromFetch<T>(value: string) {
     console.error(`don't parse ${value}`);
   }
 }
-
-const getCookieValue = (cookieString: string, cookieName: string) => {
-  const regex = new RegExp(`(?:^|; )${cookieName}=([^;]*)`);
-  const match = cookieString.match(regex);
-  return match ? match[1] : undefined;
-};
 
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();

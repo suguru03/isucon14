@@ -6,7 +6,7 @@ import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { Badge } from "~/components/primitives/badge/badge";
 import { Text } from "~/components/primitives/text/text";
-import { useClientProviderContext } from "~/contexts/provider-context";
+import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
