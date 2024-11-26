@@ -10,13 +10,13 @@ import { twMerge } from "tailwind-merge";
 
 type ModalProps = PropsWithChildren<
   ComponentProps<"div"> & {
-    onClose?: () => void;
     center?: boolean;
+    onClose?: () => void;
   }
 >;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
-  ({ children, onClose, center, className, ...props }, ref) => {
+  ({ children, center, onClose, className, ...props }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
     const handleClose = () => {

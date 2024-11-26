@@ -1,6 +1,4 @@
 import { useEmulator } from "~/components/hooks/emulate";
-import { List } from "~/components/modules/list/list";
-import { ListItem } from "~/components/modules/list/list-item";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { ChairInfo } from "./ChairInfo";
 
@@ -13,14 +11,8 @@ export function Simulator({ className }: Props) {
   useEmulator(targetChair);
 
   return (
-    <div className={className}>
-      {targetChair !== undefined ? (
-        <List>
-          <ListItem key={targetChair.id}>
-            <ChairInfo chair={targetChair} />
-          </ListItem>
-        </List>
-      ) : null}
+    <div className="bg-white rounded shadow w-[400px] px-4 py-2">
+      {targetChair !== undefined ? <ChairInfo chair={targetChair} /> : null}
     </div>
   );
 }

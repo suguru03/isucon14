@@ -114,12 +114,7 @@ export function ChairInfo(props: Props) {
   ); // TODO: 現在位置を表示
   console.log("curentCoordinate", currentCooridnate);
   return (
-    <div
-      className="
-        border-t
-        flex
-      "
-    >
+    <div className="flex">
       <ChairModel model={props.chair.model} className="size-12 mx-3 my-auto" />
       <div className="right-container m-3 flex-grow">
         <div className="right-top flex">

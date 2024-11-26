@@ -7,9 +7,9 @@ export default function Index() {
       <SmartPhone>
         <iframe title="ユーザー画面" src="/client" className="w-full h-full" />
       </SmartPhone>
-      <div className="w-[400px]">
+      <div>
         <h1 className="text-lg font-semibold mb-2">Chair Simulator</h1>
-        <Simulator className="bg-white rounded shadow" />
+        <Simulator />
       </div>
     </div>
   );
