@@ -1,5 +1,6 @@
 import { ComponentProps, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import { fetchChairPostActivity } from "~/apiClient/apiComponents";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
 import { ChairIcon } from "~/components/icon/chair";
@@ -104,7 +105,21 @@ function CoordinatePickup({
 
 export function ChairInfo(props: Props) {
   const { chair } = props;
-  const [activate, setActivate] = useState<boolean>(false);
+  const [activate, setActivate] = useState<boolean>(true);
+
+  const toggleActivate = useCallback(
+    (activity: boolean) => {
+      try {
+        void fetchChairPostActivity({ body: { is_active: activity } });
+        setActivate(activity);
+      } catch (e) {
+        if (typeof e === "string") {
+          console.error(`CONSOLE ERROR: ${e}`);
+        }
+      }
+    },
+    [setActivate],
+  );
   const rideStatus = useMemo(
     () => chair.chairNotification?.status ?? "MATCHING",
     [chair],
@@ -128,7 +143,7 @@ export function ChairInfo(props: Props) {
               <span className="text-xs font-bold text-neutral-500 mr-3">
                 配車受付
               </span>
-              <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+              <Toggle value={activate} onUpdate={(v) => toggleActivate(v)} />
             </div>
           </div>
           <div className="right-bottom">
