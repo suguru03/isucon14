@@ -13,39 +13,7 @@ import {
   fetchAppGetNotification,
 } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import type { ClientAppRide } from "~/types";
-
-const isApiFetchError = (
-  obj: unknown,
-): obj is {
-  name: string;
-  message: string;
-  stack: {
-    status: number;
-    payload: string;
-  };
-} => {
-  if (typeof obj === "object" && obj !== null) {
-    const typedError = obj as {
-      name?: unknown;
-      message?: unknown;
-      stack?: {
-        status?: unknown;
-        payload?: unknown;
-      };
-    };
-
-    return (
-      typeof typedError.name === "string" &&
-      typeof typedError.message === "string" &&
-      typeof typedError.stack === "object" &&
-      typedError.stack !== null &&
-      typeof typedError.stack.status === "number" &&
-      typeof typedError.stack.payload === "string"
-    );
-  }
-  return false;
-};
+import { isClientApiError, type ClientAppRide } from "~/types";
 
 /**
  * SSE用の通信をfetchで取得した時用のparse関数
@@ -193,16 +161,8 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           timeoutId = window.setTimeout(polling, retryAfterMs);
         })().catch((e) => {
           console.error(`ERROR: ${JSON.stringify(e)}`);
-          if (isApiFetchError(e)) {
-            const apiError = e as {
-              name: string;
-              message: string;
-              stack: {
-                status: number;
-                payload: string;
-              };
-            };
-            if (apiError.stack.status === 401) {
+          if (isClientApiError(e)) {
+            if (e.stack.status === 401) {
               navigate("/client/register");
             }
           }
