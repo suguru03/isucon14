@@ -74,6 +74,8 @@ class RideStatus(BaseModel):
     ride_id: str
     status: str
     created_at: datetime
+    app_sent_at: datetime | None = None
+    chair_sent_at: datetime | None = None
 
 
 class Owner(BaseModel):
