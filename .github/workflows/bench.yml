@@ -23,6 +23,8 @@ jobs:
             ./bench/go.sum
       - name: Install Task
         uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build bench
         working-directory: ./bench
         run: |
@@ -39,6 +41,8 @@ jobs:
             ./bench/go.sum
       - name: Install Task
         uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run bench Test
         working-directory: ./bench
         run: |
