@@ -11,11 +11,12 @@ import { twMerge } from "tailwind-merge";
 type ModalProps = PropsWithChildren<
   ComponentProps<"div"> & {
     onClose?: () => void;
+    center?: boolean;
   }
 >;
 
 export const Modal = forwardRef<{ close: () => void }, ModalProps>(
-  ({ children, onClose, className, ...props }, ref) => {
+  ({ children, onClose, center, className, ...props }, ref) => {
     const sheetRef = useRef<HTMLDivElement>(null);
 
     const handleClose = () => {
@@ -35,7 +36,8 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
     useEffect(() => {
       const timer = setTimeout(() => {
         if (sheetRef.current) {
-          sheetRef.current.style.transform = `translateY(0)`;
+          sheetRef.current.style.transform = "";
+          sheetRef.current.style.opacity = "";
         }
       }, 50);
       return () => clearTimeout(timer);
@@ -51,13 +53,22 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
         <div
           className={twMerge(
             "fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50 md:max-w-screen-md mx-auto",
+            center
+              ? "top-1/2 -translate-y-1/2 max-h-[50vh] rounded-3xl transition duration-300 ease-out"
+              : "",
             className,
           )}
           ref={sheetRef}
-          style={{ willChange: "transform", transform: "translateY(100%)" }}
+          style={{
+            willChange: "transform",
+            transform: center ? "translateY(-40%)" : "translateY(100%)",
+            opacity: center ? "0" : "",
+          }}
           {...props}
         >
-          <div className="px-8 py-6 h-full">{children}</div>
+          <div className={twMerge(["px-8 py-6 h-full", "p-10"])}>
+            {children}
+          </div>
         </div>
       </>
     );

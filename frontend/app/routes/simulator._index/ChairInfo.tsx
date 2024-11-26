@@ -70,24 +70,31 @@ function CoordinatePickup({
         onClick={() => setVisibleModal(true)}
       />
       {visibleModal && (
-        <Modal ref={modalRef} onClose={handleCloseModal}>
-          <div className="w-full h-full flex flex-col items-center">
-            <Map
-              className="max-h-[80%]"
-              initialCoordinate={location}
-              from={location}
-              onMove={(c) => setCurrentLocation(c)}
-              selectable
-            />
-            <Button
-              className="w-full my-6"
-              onClick={handleCloseModal}
-              variant="primary"
-            >
-              この座標で確定する
-            </Button>
-          </div>
-        </Modal>
+        <div className="fixed min-w-[1200px] min-h-[1000px] inset-0">
+          <Modal
+            ref={modalRef}
+            center
+            onClose={handleCloseModal}
+            className="absolute w-[800px] md:max-w-none max-h-none h-[700px]"
+          >
+            <div className="w-full h-full flex flex-col items-center">
+              <Map
+                className="flex-1"
+                initialCoordinate={location}
+                from={location}
+                onMove={(c) => setCurrentLocation(c)}
+                selectable
+              />
+              <Button
+                className="w-full mt-6"
+                onClick={handleCloseModal}
+                variant="primary"
+              >
+                この座標で確定する
+              </Button>
+            </div>
+          </Modal>
+        </div>
       )}
     </>
   );
