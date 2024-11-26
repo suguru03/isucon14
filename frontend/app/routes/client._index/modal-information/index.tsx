@@ -1,4 +1,5 @@
 import { PriceText } from "~/components/modules/price-text/price-text";
+import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
 export const RideInformation = () => {
@@ -19,4 +20,10 @@ export const RideInformation = () => {
       {stat?.total_rides_count && <p>配車回数: {stat?.total_rides_count}</p>}
     </>
   );
+};
+
+export const DrivingCarModel = () => {
+  const { payload } = useClientAppRequestContext();
+  const chair = payload?.chair;
+  return <ChairModel model={chair?.model ?? ""} className="size-[76px] mb-4" />;
 };
