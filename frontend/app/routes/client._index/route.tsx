@@ -308,7 +308,11 @@ export default function Index() {
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {internalStatus === "ARRIVED" && <Arrived />}
+          {internalStatus === "ARRIVED" && (
+            <Arrived
+              onEvaluated={() => setInternalStatus("COMPLETED")}
+            />
+          )}
         </Modal>
       )}
     </>
