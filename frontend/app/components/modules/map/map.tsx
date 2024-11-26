@@ -12,65 +12,101 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
+import { ChairIcon } from "~/components/icon/chair";
 import { ToIcon } from "~/components/icon/to";
 import { Button } from "~/components/primitives/button/button";
-import type { Coordinate, Pos } from "~/types";
+import type { Coordinate, DisplayPos, NearByChair } from "~/types";
 
-const GridDistance = 50;
-const MapSize = GridDistance * 100;
-const PinSize = 40;
-
-const draw = (ctx: CanvasRenderingContext2D) => {
-  ctx.fillStyle = colors.neutral[100];
-  ctx.fillRect(0, 0, MapSize, MapSize);
-
-  ctx.strokeStyle = colors.neutral[200];
-  ctx.lineWidth = 10;
-  ctx.beginPath();
-
-  for (let v = GridDistance; v < MapSize; v += GridDistance) {
-    ctx.moveTo(v, 0);
-    ctx.lineTo(v, MapSize);
-  }
-
-  for (let h = GridDistance; h < MapSize; h += GridDistance) {
-    ctx.moveTo(0, h);
-    ctx.lineTo(MapSize, h);
-  }
-
-  ctx.stroke();
-};
+const GridDistance = 20;
+const PinSize = 50;
+const ChairSize = 40;
+const DisplayMapSize = GridDistance * 80;
+const WorldSize = 1000;
 
 const minmax = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 };
 
-const coordinateToPos = (coordinate: Coordinate): Pos => {
+const coordinateToPos = ({ latitude, longitude }: Coordinate): DisplayPos => {
   return {
-    x: -coordinate.latitude,
-    y: -coordinate.longitude,
+    x: (-(latitude + WorldSize / 2) / WorldSize) * DisplayMapSize,
+    y: (-(longitude + WorldSize / 2) / WorldSize) * DisplayMapSize,
   };
 };
 
-const posToCoordinate = (pos: Pos): Coordinate => {
+const posToCoordinate = ({ x, y }: DisplayPos): Coordinate => {
   return {
-    latitude: Math.ceil(-pos.x),
-    longitude: Math.ceil(-pos.y),
+    latitude: Math.ceil((-x / DisplayMapSize) * WorldSize - WorldSize / 2),
+    longitude: Math.ceil((-y / DisplayMapSize) * WorldSize - WorldSize / 2),
   };
 };
 
-const centerPosFrom = (pos: Pos, outerRect: DOMRect): Pos => {
+const centerPosFrom = (pos: DisplayPos, outerRect: DOMRect): DisplayPos => {
   return {
     x: pos.x - outerRect.width / 2,
     y: pos.y - outerRect.height / 2,
   };
 };
 
+const draw = (
+  ctx: CanvasRenderingContext2D,
+  option: { from?: Coordinate; to?: Coordinate },
+) => {
+  // background
+  ctx.fillStyle = colors.neutral[100];
+  ctx.fillRect(0, 0, DisplayMapSize, DisplayMapSize);
+
+  ctx.strokeStyle = colors.neutral[200];
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  for (let v = GridDistance; v < DisplayMapSize; v += GridDistance) {
+    ctx.moveTo(v, 0);
+    ctx.lineTo(v, DisplayMapSize);
+  }
+  for (let h = GridDistance; h < DisplayMapSize; h += GridDistance) {
+    ctx.moveTo(0, h);
+    ctx.lineTo(DisplayMapSize, h);
+  }
+  ctx.stroke();
+
+  // from-to
+  const from = option.from ? coordinateToPos(option.from) : undefined;
+  const to = option.to ? coordinateToPos(option.to) : undefined;
+
+  if (from && to) {
+    ctx.strokeStyle = colors.neutral[400];
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.setLineDash([3, 12]);
+    ctx.beginPath();
+    ctx.moveTo(-from.x, -from.y);
+    ctx.lineTo(-to.x, -to.y);
+    ctx.stroke();
+  }
+
+  if (from) {
+    ctx.fillStyle = colors.neutral[800];
+    ctx.beginPath();
+    ctx.arc(-from.x, -from.y, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  if (to) {
+    ctx.fillStyle = colors.red[500];
+    ctx.beginPath();
+    ctx.arc(-to.x, -to.y, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+};
+
 const SelectorLayer: FC<{
   pinSize?: number;
-  pos?: Pos;
+  pinColor?: `#${string}`;
+  pos?: DisplayPos;
   updateViewLocation: (coordinate: Coordinate) => void;
-}> = ({ pinSize = 80, pos, updateViewLocation }) => {
+}> = ({ pinSize = 80, pinColor = colors.black, pos, updateViewLocation }) => {
   const loc = useMemo(() => pos && posToCoordinate(pos), [pos]);
   const [isOpenCustomSelector, setIsOpenCustomSelector] = useState(false);
   const inputLatitudeRef = useRef<HTMLInputElement>(null);
@@ -87,7 +123,7 @@ const SelectorLayer: FC<{
       </svg>
       <ToIcon
         className="absolute mt-[-8px] opacity-60"
-        color={colors.black}
+        color={pinColor}
         width={pinSize}
         height={pinSize}
         style={{
@@ -116,7 +152,7 @@ const SelectorLayer: FC<{
                 type="number"
                 id="latitude"
                 min={0}
-                max={MapSize}
+                max={DisplayMapSize}
                 defaultValue={loc.latitude}
                 placeholder="latitude"
                 className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
@@ -134,7 +170,7 @@ const SelectorLayer: FC<{
                 type="number"
                 id="longtiude"
                 min={0}
-                max={MapSize}
+                max={DisplayMapSize}
                 defaultValue={loc.longitude}
                 placeholder="longitude"
                 className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
@@ -160,7 +196,10 @@ const SelectorLayer: FC<{
   );
 };
 
-const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
+const PinLayer: FC<{
+  from?: Coordinate;
+  to?: Coordinate;
+}> = ({ from, to }) => {
   const fromPos = useMemo(() => from && coordinateToPos(from), [from]);
   const toPos = useMemo(() => to && coordinateToPos(to), [to]);
   return (
@@ -172,7 +211,7 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
           width={PinSize}
           height={PinSize}
           style={{
-            transform: `translate(${-fromPos.x - PinSize / 2}px, ${-fromPos.y - PinSize}px)`,
+            transform: `translate(${-fromPos.x - PinSize / 2}px, ${-fromPos.y - PinSize - 8}px)`,
           }}
         />
       )}
@@ -183,7 +222,7 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
           width={PinSize}
           height={PinSize}
           style={{
-            transform: `translate(${-toPos.x - PinSize / 2}px, ${-toPos.y - PinSize}px)`,
+            transform: `translate(${-toPos.x - PinSize / 2}px, ${-toPos.y - PinSize - 8}px)`,
           }}
         ></ToIcon>
       )}
@@ -191,19 +230,47 @@ const PinLayer: FC<{ from?: Coordinate; to?: Coordinate }> = ({ from, to }) => {
   );
 };
 
+const ChairLayer: FC<{
+  chairs?: NearByChair[];
+}> = ({ chairs }) => {
+  return (
+    <div className="flex w-full h-full absolute top-0 left-0">
+      {chairs?.map(({ id, model, current_coordinate }) => {
+        const pos = coordinateToPos(current_coordinate);
+        return (
+          <ChairIcon
+            model={model}
+            key={id}
+            width={ChairSize}
+            height={ChairSize}
+            className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
+            style={{
+              transform: `translate(${-pos.x - PinSize / 2}px, ${-pos.y - PinSize - 8}px)`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 type MapProps = ComponentProps<"div"> & {
   onMove?: (coordinate: Coordinate) => void;
   selectable?: boolean;
+  selectorPinColor?: `#${string}`;
   from?: Coordinate;
   to?: Coordinate;
+  chairs?: NearByChair[];
   initialCoordinate?: Coordinate;
 };
 
 export const Map: FC<MapProps> = ({
   selectable,
+  selectorPinColor,
   onMove,
   from,
   to,
+  chairs,
   initialCoordinate,
   className,
 }) => {
@@ -219,7 +286,7 @@ export const Map: FC<MapProps> = ({
   });
   const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
 
-  const updateViewLocation = useCallback((loc: Coordinate) => {
+  const updateViewLocation = useCallback((loc?: Coordinate) => {
     if (!outerRef.current) {
       return;
     }
@@ -231,27 +298,30 @@ export const Map: FC<MapProps> = ({
         y: pos.y + rect.height / 2,
       };
       setPos(initalPos);
-      onMoveRef?.current?.(posToCoordinate(centerPosFrom(initalPos, rect)));
+      onMoveRef?.current?.(loc);
       return;
     }
-    const mapCenterPos = {
-      x: -MapSize / 2,
-      y: -MapSize / 2,
-    };
-    setPos(mapCenterPos);
-    onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
+    if (!loc) {
+      const mapCenterPos = {
+        x: -DisplayMapSize / 2 + rect.width / 2,
+        y: -DisplayMapSize / 2 + rect.height / 2,
+      };
+      setPos(mapCenterPos);
+      onMoveRef?.current?.(posToCoordinate(centerPosFrom(mapCenterPos, rect)));
+      return;
+    }
   }, []);
 
   useLayoutEffect(() => {
-    if (initialCoordinate) updateViewLocation(initialCoordinate);
+    updateViewLocation(initialCoordinate);
   }, [initialCoordinate, updateViewLocation]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!context) return;
-    draw(context);
-  }, []);
+    draw(context, { from, to });
+  }, [from, to]);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -304,12 +374,12 @@ export const Map: FC<MapProps> = ({
       if (!outerRect) return;
       const posX = minmax(
         movingStartPos.x - (movingStartPagePos.x - pageX),
-        -MapSize + outerRect.width,
+        -DisplayMapSize + outerRect.width,
         0,
       );
       const posY = minmax(
         movingStartPos.y - (movingStartPagePos.y - pageY),
-        -MapSize + outerRect.height,
+        -DisplayMapSize + outerRect.height,
         0,
       );
       setPos({ x: posX, y: posY });
@@ -336,7 +406,7 @@ export const Map: FC<MapProps> = ({
   return (
     <div
       className={twMerge(
-        "w-full h-full relative overflow-hidden",
+        "w-full h-full relative overflow-hidden bg-neutral-200",
         isDrag && "cursor-grab",
         className,
       )}
@@ -353,17 +423,23 @@ export const Map: FC<MapProps> = ({
         )}
         style={{
           transform: `translate(${x}px, ${y}px)`,
-          width: MapSize,
-          height: MapSize,
+          width: DisplayMapSize,
+          height: DisplayMapSize,
         }}
       >
-        <canvas width={MapSize} height={MapSize} ref={canvasRef} />
+        <canvas
+          width={DisplayMapSize}
+          height={DisplayMapSize}
+          ref={canvasRef}
+        />
+        {chairs && chairs.length !== 0 && <ChairLayer chairs={chairs} />}
         <PinLayer from={from} to={to} />
       </div>
       {selectable && outerRect && (
         <SelectorLayer
           pos={centerPosFrom({ x, y }, outerRect)}
           updateViewLocation={updateViewLocation}
+          pinColor={selectorPinColor}
         />
       )}
     </div>

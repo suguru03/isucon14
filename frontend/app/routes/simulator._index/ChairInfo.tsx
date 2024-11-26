@@ -2,10 +2,10 @@ import { ComponentProps, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
+import { ChairIcon } from "~/components/icon/chair";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
-import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
 import { SimulatorChair } from "~/contexts/simulator-context";
@@ -112,10 +112,7 @@ export function ChairInfo(props: Props) {
   return (
     <div>
       <div className="flex">
-        <ChairModel
-          model={props.chair.model}
-          className="size-12 mx-3 my-auto"
-        />
+        <ChairIcon model={props.chair.model} className="size-12 mx-3 my-auto" />
         <div className="right-container m-3 flex-grow">
           <div className="right-top flex">
             <div className="right-top-left flex-grow">
