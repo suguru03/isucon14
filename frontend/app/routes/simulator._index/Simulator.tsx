@@ -2,11 +2,7 @@ import { useEmulator } from "~/components/hooks/emulate";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { ChairInfo } from "./ChairInfo";
 
-type Props = {
-  className?: string;
-};
-
-export function Simulator({ className }: Props) {
+export function Simulator() {
   const { targetChair } = useSimulatorContext();
   useEmulator(targetChair);
 
