@@ -69,7 +69,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   useEffect(() => {
     const abortController = new AbortController();
     (async () => {
-      const notification = await fetch(`${apiBaseURL}/app/notification`);
+      const notification = await fetch(`${apiBaseURL}/app/notification`, {signal: abortController.signal});
       if (
         notification?.headers
           .get("Content-type")
