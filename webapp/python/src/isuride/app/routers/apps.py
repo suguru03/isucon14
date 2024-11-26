@@ -45,7 +45,9 @@ class AppPostUsersResponse(BaseModel):
     invitation_code: str
 
 
-@router.post("/users", response_model=AppPostUsersResponse, status_code=201)
+@router.post(
+    "/users", response_model=AppPostUsersResponse, status_code=HTTPStatus.CREATED
+)
 def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
@@ -86,7 +88,8 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             if len(coupons) >= 3:
                 raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません"
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail="この招待コードは使用できません",
                 )
 
             # ユーザーチェック
@@ -97,7 +100,8 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             if not inviter:
                 raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません。"
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail="この招待コードは使用できません。",
                 )
 
             # 招待クーポン付与
@@ -259,13 +263,13 @@ def get_latest_ride_status(conn, ride_id: str) -> str:
     return row.status
 
 
-@router.post("/rides", status_code=202)
+@router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
     r: AppPostRidesRequest, user: User = Depends(app_auth_middleware)
 ) -> AppPostRidesResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
         )
 
@@ -282,7 +286,9 @@ def app_post_rides(
                 continuing_ride_count += 1
 
         if continuing_ride_count > 0:
-            raise HTTPException(status_code=409, detail="ride already exists")
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT, detail="ride already exists"
+            )
 
         conn.execute(
             text(
@@ -388,7 +394,7 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 @router.post(
     "/rides/estimated-fare",
     response_model=AppPostRidesEstimatedFareResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_post_rides_estimated_fare(
     r: AppPostRidesEstimatedFareRequest, user: User = Depends(app_auth_middleware)
@@ -433,14 +439,15 @@ class AppPostRideEvaluationResponse(BaseModel):
 @router.post(
     "/rides/{ride_id}/evaluation",
     response_model=AppPostRideEvaluationResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
     req: AppPostRideEvaluationRequest, ride_id: str
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
-            status_code=400, detail="evaluation must be between 1 and 5"
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="evaluation must be between 1 and 5",
         )
 
     with engine.begin() as conn:
@@ -449,19 +456,25 @@ def app_post_ride_evaluation(
         ).fetchone()
 
         if not row:
-            raise HTTPException(status_code=404, detail="ride not found")
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
+            )
         ride = Ride.model_validate(row)
         status = get_latest_ride_status(conn, ride.id)
 
         if status != "ARRIVED":
-            raise HTTPException(status_code=400, detail="not arrived yet")
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST, detail="not arrived yet"
+            )
 
         result = conn.execute(
             text("UPDATE rides SET evaluation = :evaluation WHERE id = :id"),
             {"evaluation": req.evaluation, "id": ride_id},
         )
         if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="ride not found")
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
+            )
 
         conn.execute(
             text(
@@ -559,7 +572,7 @@ class AppGetNotificationResponse(BaseModel):
 @router.get(
     "/notification",
     response_model=AppGetNotificationResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
     response_model_exclude_none=True,
 )
 def app_get_notification(
@@ -741,7 +754,7 @@ class AppGetNearByChairsResponse(BaseModel):
 @router.get(
     "/nearby-chairs",
     response_model=AppGetNearByChairsResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
     coordinate = Coordinate(latitude=latitude, longitude=longitude)

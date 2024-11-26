@@ -7,7 +7,7 @@ TODO: このdocstringを消す
 
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -32,13 +32,13 @@ class ChairPostChairsResponse(BaseModel):
     owner_id: str
 
 
-@router.post("/chairs", status_code=status.HTTP_201_CREATED)
+@router.post("/chairs", status_code=HTTPStatus.CREATED)
 def chair_post_chairs(
     req: ChairPostChairsRequest, resp: Response
 ) -> ChairPostChairsResponse:
     if req.name == "" or req.model == "" or req.chair_register_token == "":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="some of required fields(name, model, chair_register_token) are empty",
         )
 
@@ -51,7 +51,8 @@ def chair_post_chairs(
         ).fetchone()
         if row is None:
             raise HTTPException(
-                status_code=status.UNAUTHORIZED, detail="invalid chair_register_token"
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="invalid chair_register_token",
             )
         owner = Owner.model_validate(row)
 
@@ -81,7 +82,7 @@ class PostChairActivityRequest(BaseModel):
     is_active: bool
 
 
-@router.post("/activity", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/activity", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_activity(
     req: PostChairActivityRequest, chair: Chair = Depends(chair_auth_middleware)
 ):
@@ -124,7 +125,7 @@ def chair_post_coordinate(
             {"id": chair_location_id},
         ).fetchone()
         if row is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
         location = ChairLocation.model_validate(row)
 
         row = conn.execute(
@@ -231,7 +232,7 @@ def chair_get_notification(
             text("SELECT * FROM users WHERE id = :id FOR SHARE"), {"id": ride.user_id}
         ).fetchone()
         if row is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
         user = User.model_validate(row)
 
     return ChairGetNotificationResponse(
@@ -253,7 +254,7 @@ class PostChairRidesRideIDStatusRequest(BaseModel):
     status: str
 
 
-@router.post("/rides/{ride_id}/status", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/rides/{ride_id}/status", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_ride_status(
     ride_id: str,
     req: PostChairRidesRideIDStatusRequest,
@@ -265,13 +266,13 @@ def chair_post_ride_status(
         ).fetchone()
         if row is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="ride not found"
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
         ride = Ride.model_validate(row)
 
         if ride.chair_id != chair.id:
             raise HTTPException(
-                status_code=status.BAD_REQUEST, detail="not assigned to this ride"
+                status_code=HTTPStatus.BAD_REQUEST, detail="not assigned to this ride"
             )
 
         match req.status:
@@ -296,7 +297,7 @@ def chair_post_ride_status(
                 ride_status = get_latest_ride_status(conn, ride.id)
                 if ride_status != "PICKUP":
                     raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
+                        status_code=HTTPStatus.BAD_REQUEST,
                         detail="chair has not arrived yet",
                     )
                 conn.execute(
@@ -307,5 +308,5 @@ def chair_post_ride_status(
                 )
             case _:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="invalid status"
+                    status_code=HTTPStatus.BAD_REQUEST, detail="invalid status"
                 )
