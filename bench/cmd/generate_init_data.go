@@ -23,17 +23,24 @@ var (
 )
 
 var (
-	baseUserNum       = 500
+	baseUserNum       = 300
 	inviteProbability = 0.5
 	ownerNum          = 5
 	chairNumPerOwner  = 100
-	rideNum           = 1000
-	averageDistance   = 50
+	rideNum           = 750
+	averageDistance   = 25
 )
 
 var generateInitDataCmd = &cobra.Command{
 	Use:   "generate-init-data",
 	Short: "初期データをDBに生成する",
+	Long: `
+初期データ生成し、指定されたDBに挿入します。
+実行時にride_statuses, rides, chair_locations, chairs, owners, payment_tokens, coupons, usersテーブルの行は全て削除されます。
+実行後にride_statuses, rides, chair_locations, chairs, owners, payment_tokens, coupons, usersテーブルをmysqldumpしてください
+
+$ mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-create-info --no-tablespaces -h 127.0.0.1 -u isucon -p --databases isuride -n --ignore-table=isuride.settings --ignore-table=isuride.chair_models | gzip > ./3-initial-data.sql.gz
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rand := random.NewLockedRand(rand.NewPCG(0, 0))
 
