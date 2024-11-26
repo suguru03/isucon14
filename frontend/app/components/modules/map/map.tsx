@@ -12,12 +12,14 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
+import { ChairIcon } from "~/components/icon/chair";
 import { ToIcon } from "~/components/icon/to";
 import { Button } from "~/components/primitives/button/button";
-import type { Coordinate, DisplayPos } from "~/types";
+import type { Coordinate, DisplayPos, NearByChair } from "~/types";
 
 const GridDistance = 20;
 const PinSize = 50;
+const ChairSize = 40;
 const DisplayMapSize = GridDistance * 80;
 const WorldSize = 1000;
 
@@ -197,7 +199,6 @@ const SelectorLayer: FC<{
 const PinLayer: FC<{
   from?: Coordinate;
   to?: Coordinate;
-  chairs?: Coordinate[];
 }> = ({ from, to }) => {
   const fromPos = useMemo(() => from && coordinateToPos(from), [from]);
   const toPos = useMemo(() => to && coordinateToPos(to), [to]);
@@ -229,12 +230,38 @@ const PinLayer: FC<{
   );
 };
 
+const ChairLayer: FC<{
+  chairs?: NearByChair[];
+}> = ({ chairs }) => {
+  console.log(chairs);
+  return (
+    <div className="flex w-full h-full absolute top-0 left-0">
+      {chairs?.map(({ id, model, current_coordinate }) => {
+        const pos = coordinateToPos(current_coordinate);
+        return (
+          <ChairIcon
+            model={model}
+            key={id}
+            width={ChairSize}
+            height={ChairSize}
+            className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
+            style={{
+              transform: `translate(${-pos.x - PinSize / 2}px, ${-pos.y - PinSize - 8}px)`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 type MapProps = ComponentProps<"div"> & {
   onMove?: (coordinate: Coordinate) => void;
   selectable?: boolean;
   selectorPinColor?: `#${string}`;
   from?: Coordinate;
   to?: Coordinate;
+  chairs?: NearByChair[];
   initialCoordinate?: Coordinate;
 };
 
@@ -244,6 +271,7 @@ export const Map: FC<MapProps> = ({
   onMove,
   from,
   to,
+  chairs,
   initialCoordinate,
   className,
 }) => {
@@ -294,7 +322,6 @@ export const Map: FC<MapProps> = ({
     const context = canvas?.getContext("2d");
     if (!context) return;
     draw(context, { from, to });
-    return () => {};
   }, [from, to]);
 
   useEffect(() => {
@@ -406,6 +433,7 @@ export const Map: FC<MapProps> = ({
           height={DisplayMapSize}
           ref={canvasRef}
         />
+        {chairs && chairs.length !== 0 && <ChairLayer chairs={chairs} />}
         <PinLayer from={from} to={to} />
       </div>
       {selectable && outerRect && (

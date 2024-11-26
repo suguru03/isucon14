@@ -1,10 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
 import { FC } from "react";
 import { OwnerGetChairsResponse } from "~/apiClient/apiComponents";
+import { ChairIcon } from "~/components/icon/chair";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { Badge } from "~/components/primitives/badge/badge";
-import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/provider-context";
 
@@ -29,7 +29,7 @@ const Chair: FC<{ chair: OwnerGetChairsResponse["chairs"][number] }> = ({
             <div className="w-36">
               <dt className="text-sm text-gray-500">モデル</dt>
               <dd className="flex">
-                <ChairModel model={chair.model} className="shrink-0" />
+                <ChairIcon model={chair.model} className="shrink-0" />
                 <span className="truncate ms-2">{chair.model}</span>
               </dd>
             </div>

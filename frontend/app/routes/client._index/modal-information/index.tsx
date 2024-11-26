@@ -1,5 +1,5 @@
+import { ChairIcon } from "~/components/icon/chair";
 import { PriceText } from "~/components/modules/price-text/price-text";
-import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
 export const RideInformation = () => {
@@ -25,5 +25,5 @@ export const RideInformation = () => {
 export const DrivingCarModel = () => {
   const { payload } = useClientAppRequestContext();
   const chair = payload?.chair;
-  return <ChairModel model={chair?.model ?? ""} className="size-[76px] mb-4" />;
+  return <ChairIcon model={chair?.model ?? ""} className="size-[76px] mb-4" />;
 };
