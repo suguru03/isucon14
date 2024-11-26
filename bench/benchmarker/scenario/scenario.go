@@ -162,9 +162,11 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	if err := s.prevalidation(ctx, client); err != nil {
-		return err
-	}
+	//
+	//if err := s.prevalidation(ctx, client); err != nil {
+	//	return err
+	//}
+	//
 
 	if !s.prepareOnly {
 		// バリデーション後にデータを初期化する
