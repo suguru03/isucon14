@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build-ami:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
     name: build isucon14 contestant image
 
     steps:

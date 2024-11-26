@@ -10,7 +10,7 @@ defaults:
 jobs:
   build:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
