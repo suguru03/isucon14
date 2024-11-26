@@ -6,7 +6,7 @@ import {
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
+import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
@@ -34,6 +34,11 @@ type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
+  const [internalStatus, setInternalStatus] = useState<RideStatus | undefined>(undefined);
+  useEffect(() => {
+    setInternalStatus(status);
+  }, [status]);
+
   const [action, setAction] = useState<Action>();
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
@@ -72,9 +77,9 @@ export default function Index() {
   const [fare, setFare] = useState<number>();
   const isStatusOpenModal = useMemo(
     () =>
-      status &&
-      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(status),
-    [status],
+      internalStatus &&
+      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(internalStatus),
+    [internalStatus],
   );
 
   const handleRideRequest = useCallback(async () => {
@@ -90,6 +95,7 @@ export default function Index() {
       setRequestId(res.ride_id);
       setFare(res.fare);
     });
+    setInternalStatus("MATCHING");
   }, [currentLocation, destLocation]);
 
   useEffect(() => {
@@ -277,32 +283,32 @@ export default function Index() {
       )}
       {isStatusOpenModal && (
         <Modal ref={drivingStateModalRef}>
-          {status === "MATCHING" && (
+          {internalStatus === "MATCHING" && (
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {status === "ENROUTE" && (
+          {internalStatus === "ENROUTE" && (
             <Enroute
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "PICKUP" && (
+          {internalStatus === "PICKUP" && (
             <Dispatched
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "CARRYING" && (
+          {internalStatus === "CARRYING" && (
             <Carrying
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "ARRIVED" && <Arrived />}
+          {internalStatus === "ARRIVED" && <Arrived />}
         </Modal>
       )}
     </>
