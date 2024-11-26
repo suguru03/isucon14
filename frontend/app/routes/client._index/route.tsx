@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
@@ -71,6 +72,40 @@ export default function Index() {
     [status],
   );
 
+  const [nearByChairs, setNearByChairs] = useState<
+    {
+      id: string;
+      name: string;
+      model: string;
+      current_coordinate: Coordinate;
+    }[]
+  >();
+  // 一旦useEffectで取得するようにする (currentLocationがセットされたタイミングで発火する)
+  useEffect(() => {
+    if (currentLocation?.latitude && currentLocation?.longitude) {
+      const abortController = new AbortController();
+      (async () => {
+        const nearByChairs = await fetchAppGetNearbyChairs(
+          {
+            queryParams: {
+              latitude: currentLocation?.latitude,
+              longitude: currentLocation?.longitude,
+            },
+          },
+          abortController.signal,
+        );
+        const chairs = nearByChairs.chairs;
+        setNearByChairs(chairs);
+      })().catch((e) => {
+        console.error(`CONSOLE ERROR: ${e}`);
+      });
+      return () => abortController.abort();
+    }
+    return;
+  }, [setNearByChairs, currentLocation]);
+  // TODO: nearByChairsで表示処理
+  console.log("nearByChairs", nearByChairs);
+
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
@@ -90,13 +125,16 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-
-    fetchAppPostRidesEstimatedFare({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
+    const abortController = new AbortController();
+    fetchAppPostRidesEstimatedFare(
+      {
+        body: {
+          pickup_coordinate: currentLocation,
+          destination_coordinate: destLocation,
+        },
       },
-    })
+      abortController.signal,
+    )
       .then((res) =>
         setEstimatePrice({ fare: res.fare, discount: res.discount }),
       )
@@ -104,6 +142,9 @@ export default function Index() {
         console.error(err);
         setEstimatePrice(undefined);
       });
+    return () => {
+      abortController.abort();
+    };
   }, [currentLocation, destLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
