@@ -60,6 +60,8 @@ pub struct RideStatus {
     pub ride_id: String,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub app_sent_at: Option<DateTime<Utc>>,
+    pub chair_sent_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

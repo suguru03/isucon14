@@ -115,7 +115,7 @@ def owner_get_sales(
         for chair in chairs:
             rows = conn.execute(
                 text(
-                    "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until"
+                    "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until + INTERVAL 999 MICROSECOND"
                 ),
                 # TODO: datetime型で大丈夫なんだっけ？
                 {"chair_id": chair.id, "since": since_dt, "until": until_dt},

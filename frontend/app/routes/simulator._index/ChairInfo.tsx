@@ -40,54 +40,63 @@ function Statuses(
 }
 
 function CoordinatePickup({
-  coordinate,
-  setter,
+  coordinateState,
 }: {
-  coordinate: ReturnType<typeof useState<Coordinate>>;
-  setter: (coordinate: Coordinate) => void;
+  coordinateState: SimulatorChair["coordinateState"];
 }) {
-  const [location, setLocation] = coordinate;
-  const [currentLocation, setCurrentLocation] = useState<Coordinate>();
+  const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
+  const [mapLocation, setMapLocation] = useState<Coordinate>();
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
   const modalRef = useRef<HTMLElement & { close: () => void }>(null);
 
+  const handleOpenModal = useCallback(() => {
+    setInitialMapLocation(coordinateState.coordinate);
+    setVisibleModal(true);
+  }, [coordinateState]);
+
   const handleCloseModal = useCallback(() => {
-    setLocation(currentLocation);
-    if (currentLocation) {
-      setter(currentLocation);
+    if (mapLocation) {
+      coordinateState.setter(mapLocation);
     }
 
     modalRef.current?.close();
     setVisibleModal(false);
-  }, [setLocation, currentLocation, setter]);
+  }, [mapLocation, coordinateState]);
 
   return (
     <>
       <LocationButton
         className="w-full"
-        location={location}
+        location={coordinateState.coordinate}
         label="設定位置"
-        onClick={() => setVisibleModal(true)}
+        onClick={handleOpenModal}
       />
       {visibleModal && (
-        <Modal ref={modalRef} onClose={handleCloseModal}>
-          <div className="w-full h-full flex flex-col items-center">
-            <Map
-              className="max-h-[80%]"
-              initialCoordinate={location}
-              from={location}
-              onMove={(c) => setCurrentLocation(c)}
-              selectable
-            />
-            <Button
-              className="w-full my-6"
-              onClick={handleCloseModal}
-              variant="primary"
-            >
-              この座標で確定する
-            </Button>
-          </div>
-        </Modal>
+        <div className="fixed min-w-[1200px] min-h-[1000px] inset-0">
+          <Modal
+            ref={modalRef}
+            center
+            onClose={handleCloseModal}
+            className="absolute w-[800px] md:max-w-none max-h-none h-[700px]"
+          >
+            <div className="w-full h-full flex flex-col items-center">
+              <Map
+                className="flex-1"
+                initialCoordinate={initialMapLocation}
+                from={initialMapLocation}
+                onMove={(c) => setMapLocation(c)}
+                selectable
+              />
+              <Button
+                className="w-full mt-6"
+                onClick={handleCloseModal}
+                variant="primary"
+              >
+                この座標で確定する
+              </Button>
+            </div>
+          </Modal>
+        </div>
       )}
     </>
   );
@@ -95,50 +104,46 @@ function CoordinatePickup({
 
 export function ChairInfo(props: Props) {
   const { chair } = props;
-  const location = useState<Coordinate>();
   const [activate, setActivate] = useState<boolean>(false);
   const rideStatus = useMemo(
     () => chair.chairNotification?.status ?? "MATCHING",
     [chair],
   );
-  const currentCooridnate = useMemo(
-    () => chair.coordinateState.coordinate,
-    [chair],
-  ); // TODO: 現在位置を表示
-  console.log("curentCoordinate", currentCooridnate);
   return (
-    <div
-      className="
-        border-t
-        flex
-      "
-    >
-      <ChairModel model={props.chair.model} className="size-12 mx-3 my-auto" />
-      <div className="right-container m-3 flex-grow">
-        <div className="right-top flex">
-          <div className="right-top-left flex-grow">
-            <div className="chair-name font-bold">
-              <span>{props.chair.name}</span>
-              <span className="ml-1 text-xs font-normal text-neutral-500">
-                {props.chair.model}
-              </span>
+    <div>
+      <div className="flex">
+        <ChairModel
+          model={props.chair.model}
+          className="size-12 mx-3 my-auto"
+        />
+        <div className="right-container m-3 flex-grow">
+          <div className="right-top flex">
+            <div className="right-top-left flex-grow">
+              <div className="chair-name font-bold">
+                <span>{props.chair.name}</span>
+                <span className="ml-1 text-xs font-normal text-neutral-500">
+                  {props.chair.model}
+                </span>
+              </div>
+              <Statuses className="my-2" currentStatus={rideStatus} />
             </div>
-            <Statuses className="my-2" currentStatus={rideStatus} />
+            <div className="right-top-right flex items-center">
+              <span className="text-xs font-bold text-neutral-500 mr-3">
+                配車受付
+              </span>
+              <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+            </div>
           </div>
-          <div className="right-top-right flex items-center">
-            <span className="text-xs font-bold text-neutral-500 mr-3">
-              配車受付
-            </span>
-            <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+          <div className="right-bottom">
+            <CoordinatePickup coordinateState={chair.coordinateState} />
           </div>
-        </div>
-        <div className="right-bottom">
-          <CoordinatePickup
-            coordinate={location}
-            setter={chair.coordinateState.setter}
-          />
         </div>
       </div>
+      <p className="text-xs px-2 mt-2">
+        <span className="text-gray-500 me-1">Session ID:</span>
+        {/* TODO: Session IDの表示 */}
+        <span>xxxx</span>
+      </p>
     </div>
   );
 }

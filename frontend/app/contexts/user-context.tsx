@@ -13,42 +13,10 @@ import {
   fetchAppGetNotification,
 } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import type { ClientAppRide } from "~/types";
-
-const isApiFetchError = (
-  obj: unknown,
-): obj is {
-  name: string;
-  message: string;
-  stack: {
-    status: number;
-    payload: string;
-  };
-} => {
-  if (typeof obj === "object" && obj !== null) {
-    const typedError = obj as {
-      name?: unknown;
-      message?: unknown;
-      stack?: {
-        status?: unknown;
-        payload?: unknown;
-      };
-    };
-
-    return (
-      typeof typedError.name === "string" &&
-      typeof typedError.message === "string" &&
-      typeof typedError.stack === "object" &&
-      typedError.stack !== null &&
-      typeof typedError.stack.status === "number" &&
-      typeof typedError.stack.payload === "string"
-    );
-  }
-  return false;
-};
+import { isClientApiError, type ClientAppRide } from "~/types";
 
 /**
- * SSE用の通信をfetchで取得した時のparse関数
+ * SSE用の通信をfetchで取得した時用のparse関数
  */
 function getSSEJsonFromFetch<T>(value: string) {
   const data = value.slice("data:".length).trim();
@@ -59,6 +27,12 @@ function getSSEJsonFromFetch<T>(value: string) {
   }
 }
 
+const getCookieValue = (cookieString: string, cookieName: string) => {
+  const regex = new RegExp(`(?:^|; )${cookieName}=([^;]*)`);
+  const match = cookieString.match(regex);
+  return match ? match[1] : undefined;
+};
+
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -68,59 +42,51 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   >();
   useEffect(() => {
     const abortController = new AbortController();
-    (async () => {
-      const notification = await fetch(`${apiBaseURL}/app/notification`, {
-        signal: abortController.signal,
-      });
-      if (
-        notification?.headers
-          .get("Content-type")
-          ?.split(";")[0]
-          .includes("text/event-stream")
-      ) {
-        const reader = notification.body?.getReader();
-        const decoder = new TextDecoder();
-        const readed = (await reader?.read())?.value;
-        const decoded = decoder.decode(readed);
-        const json =
-          getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
-        setNotification(
-          json
-            ? {
-                data: json,
-                contentType: "event-stream",
-              }
-            : undefined,
-        );
-      } else {
-        const json = (await notification.json()) as
-          | AppGetNotificationResponse
-          | undefined;
-        setNotification(
-          json
-            ? {
-                ...json,
-                contentType: "json",
-              }
-            : undefined,
-        );
-      }
-    })().catch((e) => {
-      console.error(`ERROR: ${JSON.stringify(e)}`);
-      if (isApiFetchError(e)) {
-        const apiError = e as {
-          name: string;
-          message: string;
-          stack: {
-            status: number;
-            payload: string;
-          };
-        };
-        if (apiError.stack.status === 401) {
+    try {
+      void (async () => {
+        const notification = await fetch(`${apiBaseURL}/app/notification`, {
+          signal: abortController.signal,
+        });
+        if (notification.status === 401) {
           navigate("/client/register");
         }
-      }
-    });
+        if (
+          notification?.headers
+            .get("Content-type")
+            ?.split(";")[0]
+            .includes("text/event-stream")
+        ) {
+          const reader = notification.body?.getReader();
+          const decoder = new TextDecoder();
+          const readed = (await reader?.read())?.value;
+          const decoded = decoder.decode(readed);
+          const json =
+            getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
+          setNotification(
+            json
+              ? {
+                  data: json,
+                  contentType: "event-stream",
+                }
+              : undefined,
+          );
+        } else {
+          const json = (await notification.json()) as
+            | AppGetNotificationResponse
+            | undefined;
+          setNotification(
+            json
+              ? {
+                  ...json,
+                  contentType: "json",
+                }
+              : undefined,
+          );
+        }
+      })();
+    } catch (e) {
+      console.error(`ERROR: ${e as string}`);
+    }
     return () => {
       abortController.abort();
     };
@@ -195,16 +161,8 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
           timeoutId = window.setTimeout(polling, retryAfterMs);
         })().catch((e) => {
           console.error(`ERROR: ${JSON.stringify(e)}`);
-          if (isApiFetchError(e)) {
-            const apiError = e as {
-              name: string;
-              message: string;
-              stack: {
-                status: number;
-                payload: string;
-              };
-            };
-            if (apiError.stack.status === 401) {
+          if (isClientApiError(e)) {
+            if (e.stack.status === 401) {
               navigate("/client/register");
             }
           }
@@ -257,6 +215,7 @@ const ClientAppRequestContext = createContext<Partial<ClientAppRide>>({});
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const accessTokenParameter = searchParams.get("access_token");
   const userIdParameter = searchParams.get("id");
@@ -280,6 +239,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       id,
     };
   }, [accessTokenParameter, userIdParameter]);
+
+  useEffect(() => {
+    if (getCookieValue(document.cookie, "app_session") === undefined) {
+      navigate("/client/register");
+    }
+  }, [navigate]);
 
   const request = useClientAppRequest(accessToken ?? "", id ?? "");
   return (
