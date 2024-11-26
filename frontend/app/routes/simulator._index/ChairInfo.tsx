@@ -109,35 +109,41 @@ export function ChairInfo(props: Props) {
     () => chair.chairNotification?.status ?? "MATCHING",
     [chair],
   );
-  const currentCooridnate = useMemo(
-    () => chair.coordinateState.coordinate,
-    [chair],
-  );
   return (
-    <div className="flex">
-      <ChairModel model={props.chair.model} className="size-12 mx-3 my-auto" />
-      <div className="right-container m-3 flex-grow">
-        <div className="right-top flex">
-          <div className="right-top-left flex-grow">
-            <div className="chair-name font-bold">
-              <span>{props.chair.name}</span>
-              <span className="ml-1 text-xs font-normal text-neutral-500">
-                {props.chair.model}
-              </span>
+    <div>
+      <div className="flex">
+        <ChairModel
+          model={props.chair.model}
+          className="size-12 mx-3 my-auto"
+        />
+        <div className="right-container m-3 flex-grow">
+          <div className="right-top flex">
+            <div className="right-top-left flex-grow">
+              <div className="chair-name font-bold">
+                <span>{props.chair.name}</span>
+                <span className="ml-1 text-xs font-normal text-neutral-500">
+                  {props.chair.model}
+                </span>
+              </div>
+              <Statuses className="my-2" currentStatus={rideStatus} />
             </div>
-            <Statuses className="my-2" currentStatus={rideStatus} />
+            <div className="right-top-right flex items-center">
+              <span className="text-xs font-bold text-neutral-500 mr-3">
+                配車受付
+              </span>
+              <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+            </div>
           </div>
-          <div className="right-top-right flex items-center">
-            <span className="text-xs font-bold text-neutral-500 mr-3">
-              配車受付
-            </span>
-            <Toggle value={activate} onUpdate={(v) => setActivate(v)} />
+          <div className="right-bottom">
+            <CoordinatePickup coordinateState={chair.coordinateState} />
           </div>
-        </div>
-        <div className="right-bottom">
-          <CoordinatePickup coordinateState={chair.coordinateState} />
         </div>
       </div>
+      <p className="text-xs px-2 mt-2">
+        <span className="text-gray-500 me-1">Session ID:</span>
+        {/* TODO: Session IDの表示 */}
+        <span>xxxx</span>
+      </p>
     </div>
   );
 }
