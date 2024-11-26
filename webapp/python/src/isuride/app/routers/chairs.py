@@ -92,7 +92,6 @@ def chair_post_activity(
         )
 
 
-# TODO: Requestの構造体がないの、紛らわしいので要検討
 class Coordinate(BaseModel):
     latitude: int
     longitude: int
@@ -210,10 +209,9 @@ def chair_get_notification(
             ride_status = get_latest_ride_status(conn, ride.id)
 
         if (not found) or ride_status == "COMPLETED" or ride_status == "CANCELLED":
-            # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
             row = conn.execute(
                 text(
-                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                 )
             ).fetchone()
             if row is None:
