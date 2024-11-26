@@ -12,7 +12,7 @@ export const Matching: FC<{
 }> = ({ pickup, destLocation, fare }) => {
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
-      <Loading className="size-[76px] mb-4" />
+      <Loading className="mb-8" />
       <Text size="xl" className="mb-6">
         マッチングしています
       </Text>

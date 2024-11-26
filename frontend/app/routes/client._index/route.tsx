@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import colors from "tailwindcss/colors";
 import {
   fetchAppGetNearbyChairs,
   fetchAppPostRides,
@@ -14,6 +15,7 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
+import { NearByChair } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Dispatched } from "./driving-state/dispatched";
@@ -66,26 +68,26 @@ export default function Index() {
   // TODO: requestId をベースに配車キャンセルしたい
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
+
   const [fare, setFare] = useState<number>();
   const isStatusOpenModal = useMemo(
-    () => status !== undefined && status !== "COMPLETED",
+    () =>
+      status &&
+      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(status),
     [status],
   );
 
-  const [nearByChairs, setNearByChairs] = useState<
-    {
-      id: string;
-      name: string;
-      model: string;
-      current_coordinate: Coordinate;
-    }[]
-  >();
-  // 一旦useEffectで取得するようにする (currentLocationがセットされたタイミングで発火する)
+  // TODO: NearByChairのつなぎこみは後ほど行う
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [nearByChairs, setNearByChairs] = useState<NearByChair[]>();
   useEffect(() => {
-    if (currentLocation?.latitude && currentLocation?.longitude) {
-      const abortController = new AbortController();
-      (async () => {
-        const nearByChairs = await fetchAppGetNearbyChairs(
+    if (!currentLocation) {
+      return;
+    }
+    const abortController = new AbortController();
+    void (async () => {
+      try {
+        const { chairs } = await fetchAppGetNearbyChairs(
           {
             queryParams: {
               latitude: currentLocation?.latitude,
@@ -94,17 +96,13 @@ export default function Index() {
           },
           abortController.signal,
         );
-        const chairs = nearByChairs.chairs;
         setNearByChairs(chairs);
-      })().catch((e) => {
-        console.error(`CONSOLE ERROR: ${e}`);
-      });
-      return () => abortController.abort();
-    }
-    return;
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+    return () => abortController.abort();
   }, [setNearByChairs, currentLocation]);
-  // TODO: nearByChairsで表示処理
-  console.log("nearByChairs", nearByChairs);
 
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
@@ -202,6 +200,9 @@ export default function Index() {
                 onMove={onMove}
                 from={currentLocation}
                 to={destLocation}
+                selectorPinColor={
+                  action === "from" ? colors.black : colors.red[500]
+                }
                 initialCoordinate={
                   action === "from" ? currentLocation : destLocation
                 }
