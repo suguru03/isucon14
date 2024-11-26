@@ -26,6 +26,7 @@ export type ClientAppRide = {
       destination: Coordinate;
     }>;
     chair?: ClientAppChair;
+    fare?: number;
   }>;
   auth?: {
     accessToken: AccessToken;

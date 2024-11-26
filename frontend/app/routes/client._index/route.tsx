@@ -31,7 +31,7 @@ type Action = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
-  const { status, payload } = useClientAppRequestContext();
+  const { status, payload: payload } = useClientAppRequestContext();
   const [action, setAction] = useState<Action>();
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
@@ -233,21 +233,18 @@ export default function Index() {
             <Enroute
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "PICKUP" && (
             <Dispatched
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "CARRYING" && (
             <Carrying
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "ARRIVED" && <Arrived />}

@@ -136,6 +136,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
                 destination: notification.data?.destination_coordinate,
               },
               chair: notification.data?.chair,
+              fare: notification.data.fare
             },
           }
         : undefined,

@@ -10,6 +10,7 @@ export const Matching: FC<{
   destLocation?: Coordinate;
   fare?: number;
 }> = ({ pickup, destLocation, fare }) => {
+
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <CarYellowIcon className="size-[76px] mb-4" />
