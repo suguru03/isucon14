@@ -1,4 +1,4 @@
-import { ComponentProps, useCallback, useRef, useState } from "react";
+import { ComponentProps, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
@@ -48,7 +48,6 @@ function CoordinatePickup({
 }) {
   const [location, setLocation] = coordinate;
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
-
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
   const modalRef = useRef<HTMLElement & { close: () => void }>(null);
 
@@ -67,7 +66,7 @@ function CoordinatePickup({
       <LocationButton
         className="w-full"
         location={location}
-        label="初期位置"
+        label="設定位置"
         onClick={() => setVisibleModal(true)}
       />
       {visibleModal && (
@@ -98,9 +97,15 @@ export function ChairInfo(props: Props) {
   const { chair } = props;
   const location = useState<Coordinate>();
   const [activate, setActivate] = useState<boolean>(false);
-  const [rideStatus] = useState<RideStatus>(
-    chair.chairNotification?.status ?? "MATCHING",
+  const rideStatus = useMemo(
+    () => chair.chairNotification?.status ?? "MATCHING",
+    [chair],
   );
+  const currentCooridnate = useMemo(
+    () => chair.coordinateState.coordinate,
+    [chair],
+  ); // TODO: 現在位置を表示
+  console.log("curentCoordinate", currentCooridnate);
   return (
     <div
       className="
