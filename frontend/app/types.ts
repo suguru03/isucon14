@@ -55,3 +55,26 @@ export type Pos = {
 };
 
 export type Coordinate = ApiCoodinate;
+
+export type ClientApiError = {
+  message: string;
+  name: string;
+  stack: {
+    payload: string;
+    status: number;
+  };
+};
+
+export function isClientApiError(e: unknown): e is ClientApiError {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "message" in e &&
+    "name" in e &&
+    "stack" in e &&
+    typeof e.stack === "object" &&
+    e.stack !== null &&
+    "status" in e.stack &&
+    "payload" in e.stack
+  );
+}
