@@ -103,19 +103,25 @@ module Isuride
 
     # GET /api/chair/notification
     get '/notification' do
+      db.xquery('SELECT * FROM chairs WHERE id = ? FOR UPDATE', @current_chair.id)
+
+      ride = db.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', @current_chair.id).first
+
+      yet_sent_ride_status = nil
+      status = nil
+      unless ride.nil?
+        yet_sent_ride_status = db.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1', ride.fetch(:id)).first
+        if yet_sent_ride_status.nil?
+          status = get_latest_ride_status(db, ride.fetch(:id))
+        else
+          status = yet_sent_ride_status.fetch(:status)
+        end
+      end
+
       response = db_transaction do |tx|
-        tx.xquery('SELECT * FROM chairs WHERE id = ? FOR UPDATE', @current_chair.id)
-
-        ride = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', @current_chair.id).first
-
-        status =
-          unless ride.nil?
-            get_latest_ride_status(tx, ride.fetch(:id))
-          end
-
-        if ride.nil? || status == 'COMPLETED'
+        if yet_sent_ride_status.nil? && (ride.nil? || status == 'COMPLETED')
           # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-          matched = tx.query('SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE').first
+          matched = tx.query('SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE').first
           if matched.nil?
             halt json(data: nil)
           end
@@ -124,11 +130,16 @@ module Isuride
 
           if ride.nil?
             ride = matched
-            status = 'MATCHING'
+            yet_sent_ride_status = tx.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1', ride.fetch(:id)).first
+            status = yet_sent_ride_status.fetch(:status)
           end
         end
 
         user = tx.xquery('SELECT * FROM users WHERE id = ? FOR SHARE', ride.fetch(:user_id)).first
+
+        unless yet_sent_ride_status.nil?
+          tx.xquery('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', yet_sent_ride_status.fetch(:id))
+        end
 
         {
           data: {
