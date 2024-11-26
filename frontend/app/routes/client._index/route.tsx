@@ -147,7 +147,7 @@ export default function Index() {
     return () => {
       abortController.abort();
     };
-  }, [currentLocation, destLocation]);
+  }, [selectedLocation, destLocation, currentLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
 
