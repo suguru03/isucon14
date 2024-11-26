@@ -9,6 +9,16 @@ import {
 } from "./middlewares.js";
 import type { Environment } from "./types/hono.js";
 import { exec } from "./utils/exec.js";
+import {
+  appGetNearbyChairs,
+  appGetNotification,
+  appGetRides,
+  appPostPaymentMethods,
+  appPostRideEvaluatation,
+  appPostRides,
+  appPostRidesEstimatedFare,
+  appPostUsers,
+} from "./app_handlers.js";
 
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
@@ -39,7 +49,7 @@ app.post(
   appAuthMiddleware,
   appPostRidesEstimatedFare,
 );
-app.get("/api/app/rides/:ride_id", appAuthMiddleware, appGetRide);
+app.get("/api/app/rides/:ride_id", appAuthMiddleware, appGetRides);
 app.post(
   "/api/app/rides/:ride_id/evaluation",
   appAuthMiddleware,
