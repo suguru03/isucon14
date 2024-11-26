@@ -726,17 +726,21 @@ async function calculateDiscountedFare(
   dbConn: mysql.Connection,
   userId: string,
   ride: Ride | null,
-  pickupLatitude: number,
-  pickupLongitude: number,
-  destinationLatitude: number,
-  destinationLongitude: number,
+  _pickupLatitude: number,
+  _pickupLongitude: number,
+  _destinationLatitude: number,
+  _destinationLongitude: number,
 ): Promise<number> {
   let discount = 0;
+  let destinationLatitude = _destinationLatitude;
+  let destinationLongitude = _destinationLongitude;
+  let pickupLatitude = _pickupLatitude;
+  let pickupLongitude = _pickupLongitude;
   if (ride) {
-    const destinationLatitude = ride.destination_latitude;
-    const destinationLongitude = ride.destination_longitude;
-    const pickupLatitude = ride.pickup_latitude;
-    const pickupLongitude = ride.pickup_longitude;
+    destinationLatitude = ride.destination_latitude;
+    destinationLongitude = ride.destination_longitude;
+    pickupLatitude = ride.pickup_latitude;
+    pickupLongitude = ride.pickup_longitude;
 
     // すでにクーポンが紐づいているならそれの割引額を参照
     const [[coupon]] = await dbConn.query<Array<Coupon & RowDataPacket>>(
