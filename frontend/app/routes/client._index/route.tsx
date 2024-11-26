@@ -84,21 +84,23 @@ export default function Index() {
   useEffect(() => {
     if (currentLocation?.latitude && currentLocation?.longitude) {
       const abortController = new AbortController();
-      (async () => {
-        const nearByChairs = await fetchAppGetNearbyChairs(
-          {
-            queryParams: {
-              latitude: currentLocation?.latitude,
-              longitude: currentLocation?.longitude,
+      try {
+        void (async () => {
+          const nearByChairs = await fetchAppGetNearbyChairs(
+            {
+              queryParams: {
+                latitude: currentLocation?.latitude,
+                longitude: currentLocation?.longitude,
+              },
             },
-          },
-          abortController.signal,
-        );
-        const chairs = nearByChairs.chairs;
-        setNearByChairs(chairs);
-      })().catch((e) => {
-        console.error(`CONSOLE ERROR: ${e}`);
-      });
+            abortController.signal,
+          );
+          const chairs = nearByChairs.chairs;
+          setNearByChairs(chairs);
+        })();
+      } catch (e) {
+        console.error(`CONSOLE ERROR: ${e as string}`);
+      }
       return () => abortController.abort();
     }
     return;
