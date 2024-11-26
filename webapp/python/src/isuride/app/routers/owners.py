@@ -108,7 +108,7 @@ def owner_get_sales(
             text("SELECT * FROM chairs WHERE owner_id = :owner_id"),
             {"owner_id": owner.id},
         ).fetchall()
-        chairs = [Chair(**r._mapping) for r in rows]
+        chairs = [Chair.model_validate(r) for r in rows]
 
         res = OwnerGetSalesResponse(total_sales=0, chairs=[], models=[])
         model_sales_by_model: MutableMapping[str, int] = defaultdict(int)
@@ -120,7 +120,7 @@ def owner_get_sales(
                 # TODO: datetime型で大丈夫なんだっけ？
                 {"chair_id": chair.id, "since": since_dt, "until": until_dt},
             ).fetchall()
-            rides = [Ride(**r._mapping) for r in rows]
+            rides = [Ride.model_validate(r) for r in rows]
 
             chair_sales = sum_sales(rides)
 
@@ -204,7 +204,7 @@ def owner_get_chairs(
             ),
             {"owner_id": owner.id},
         )
-        chairs = [ChairWithDetail(**r) for r in rows.mappings()]
+        chairs = [ChairWithDetail.model_validate(r) for r in rows.mappings()]
 
     res = OwnerGetChairResponse(chairs=[])
     for chair in chairs:
