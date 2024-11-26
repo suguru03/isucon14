@@ -635,13 +635,13 @@ def app_get_notification(
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
-            if yet_sent_ride_status:
-                conn.execute(
-                    text(
-                        "UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = :yet_send_ride_status_id"
-                    ),
-                    {"yet_send_ride_status_id": yet_sent_ride_status.id},
-                )
+        if yet_sent_ride_status:
+            conn.execute(
+                text(
+                    "UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = :yet_send_ride_status_id"
+                ),
+                {"yet_send_ride_status_id": yet_sent_ride_status.id},
+            )
 
     return notification_response
 
