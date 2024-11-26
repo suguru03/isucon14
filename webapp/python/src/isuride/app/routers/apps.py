@@ -752,6 +752,8 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
 
         near_by_chairs = []
         for chair in chairs:
+            if not chair.is_active:
+                continue
             ride = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
@@ -765,10 +767,10 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
                 if status != "COMPLETED":
                     continue
 
-            # 5分以内に更新されている最新の位置情報を取得
+            # 最新の位置情報を取得
             row = conn.execute(
                 text(
-                    "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1"
+                    "SELECT * FROM chair_locations WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
                 ),
                 {"chair_id": chair.id},
             ).fetchone()
