@@ -40,34 +40,36 @@ function Statuses(
 }
 
 function CoordinatePickup({
-  coordinate,
-  setter,
+  coordinateState,
 }: {
-  coordinate: ReturnType<typeof useState<Coordinate>>;
-  setter: (coordinate: Coordinate) => void;
+  coordinateState: SimulatorChair["coordinateState"];
 }) {
-  const [location, setLocation] = coordinate;
-  const [currentLocation, setCurrentLocation] = useState<Coordinate>();
+  const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
+  const [mapLocation, setMapLocation] = useState<Coordinate>();
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
   const modalRef = useRef<HTMLElement & { close: () => void }>(null);
 
+  const handleOpenModal = useCallback(() => {
+    setInitialMapLocation(coordinateState.coordinate);
+    setVisibleModal(true);
+  }, [coordinateState]);
+
   const handleCloseModal = useCallback(() => {
-    setLocation(currentLocation);
-    if (currentLocation) {
-      setter(currentLocation);
+    if (mapLocation) {
+      coordinateState.setter(mapLocation);
     }
 
     modalRef.current?.close();
     setVisibleModal(false);
-  }, [setLocation, currentLocation, setter]);
+  }, [mapLocation, coordinateState]);
 
   return (
     <>
       <LocationButton
         className="w-full"
-        location={location}
+        location={coordinateState.coordinate}
         label="設定位置"
-        onClick={() => setVisibleModal(true)}
+        onClick={handleOpenModal}
       />
       {visibleModal && (
         <div className="fixed min-w-[1200px] min-h-[1000px] inset-0">
@@ -80,9 +82,9 @@ function CoordinatePickup({
             <div className="w-full h-full flex flex-col items-center">
               <Map
                 className="flex-1"
-                initialCoordinate={location}
-                from={location}
-                onMove={(c) => setCurrentLocation(c)}
+                initialCoordinate={initialMapLocation}
+                from={initialMapLocation}
+                onMove={(c) => setMapLocation(c)}
                 selectable
               />
               <Button
@@ -102,7 +104,6 @@ function CoordinatePickup({
 
 export function ChairInfo(props: Props) {
   const { chair } = props;
-  const location = useState<Coordinate>();
   const [activate, setActivate] = useState<boolean>(false);
   const rideStatus = useMemo(
     () => chair.chairNotification?.status ?? "MATCHING",
@@ -111,8 +112,7 @@ export function ChairInfo(props: Props) {
   const currentCooridnate = useMemo(
     () => chair.coordinateState.coordinate,
     [chair],
-  ); // TODO: 現在位置を表示
-  console.log("curentCoordinate", currentCooridnate);
+  );
   return (
     <div className="flex">
       <ChairModel model={props.chair.model} className="size-12 mx-3 my-auto" />
@@ -135,10 +135,7 @@ export function ChairInfo(props: Props) {
           </div>
         </div>
         <div className="right-bottom">
-          <CoordinatePickup
-            coordinate={location}
-            setter={chair.coordinateState.setter}
-          />
+          <CoordinatePickup coordinateState={chair.coordinateState} />
         </div>
       </div>
     </div>
