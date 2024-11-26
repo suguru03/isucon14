@@ -233,7 +233,6 @@ const PinLayer: FC<{
 const ChairLayer: FC<{
   chairs?: NearByChair[];
 }> = ({ chairs }) => {
-  console.log(chairs);
   return (
     <div className="flex w-full h-full absolute top-0 left-0">
       {chairs?.map(({ id, model, current_coordinate }) => {
