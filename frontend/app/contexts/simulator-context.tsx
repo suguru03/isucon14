@@ -217,7 +217,6 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
           ...owner.chair,
           coordinateState: {
             setter(coordinate) {
-              console.log("setter", coordinate);
               this.coordinate = coordinate;
             },
           },

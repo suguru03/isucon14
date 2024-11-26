@@ -82,24 +82,27 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
 
     const timeoutId = setTimeout(() => {
       currentCoodinatePost();
-
-      switch (status) {
-        case "MATCHING":
-          postEnroute();
-          break;
-        case "PICKUP":
-          postCarring();
-          break;
-        case "ENROUTE":
-          if (pickup) {
-            setter(move(coordinate, pickup));
-          }
-          break;
-        case "CARRYING":
-          if (destination) {
-            setter(move(coordinate, destination));
-          }
-          break;
+      try {
+        switch (status) {
+          case "MATCHING":
+            postEnroute();
+            break;
+          case "PICKUP":
+            postCarring();
+            break;
+          case "ENROUTE":
+            if (pickup) {
+              setter(move(coordinate, pickup));
+            }
+            break;
+          case "CARRYING":
+            if (destination) {
+              setter(move(coordinate, destination));
+            }
+            break;
+        }
+      } catch (e) {
+        // statusの更新タイミングの都合で到着状態を期待しているが必ず取れるとは限らない
       }
     }, 1000);
 

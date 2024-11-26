@@ -69,7 +69,9 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   useEffect(() => {
     const abortController = new AbortController();
     (async () => {
-      const notification = await fetch(`${apiBaseURL}/app/notification`, {signal: abortController.signal});
+      const notification = await fetch(`${apiBaseURL}/app/notification`, {
+        signal: abortController.signal,
+      });
       if (
         notification?.headers
           .get("Content-type")
@@ -123,7 +125,6 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
       abortController.abort();
     };
   }, [setNotification, navigate]);
-
   const clientAppPayloadWithStatus = useMemo(
     () =>
       notification?.data
