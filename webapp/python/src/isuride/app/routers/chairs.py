@@ -213,7 +213,7 @@ def chair_get_notification(
             # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
             row = conn.execute(
                 text(
-                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                 )
             ).fetchone()
             if row is None:
