@@ -4,7 +4,7 @@ import { CircleIcon } from "~/components/icon/circle";
 import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { OwnerHeader } from "~/components/modules/owner-header/owner-header";
 import { MainFrame } from "~/components/primitives/frame/frame";
-import { ProviderProvider } from "~/contexts/provider-context";
+import { ProviderProvider } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [

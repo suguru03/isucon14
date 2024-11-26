@@ -7,7 +7,7 @@ import { PriceText } from "~/components/modules/price-text/price-text";
 import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { DateInput } from "~/components/primitives/form/date";
 import { Tab } from "~/components/primitives/tab/tab";
-import { useClientProviderContext } from "~/contexts/provider-context";
+import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
