@@ -15,7 +15,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
   db:
-    image: mysql:8
+    image: public.ecr.aws/docker/mysql:8
     environment:
       ENV: local-dev
       MYSQL_ROOT_PASSWORD: isucon
