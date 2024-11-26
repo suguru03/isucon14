@@ -1,4 +1,3 @@
-import logging
 import subprocess
 
 from fastapi import FastAPI
@@ -8,9 +7,10 @@ from sqlalchemy import text
 from .routers import apps, chairs, owners
 from .sql import engine
 
-# TODO: sqlalchemyのログを消す
-logging.basicConfig(level=logging.INFO)
-logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+# TODO: このコメントを消す
+# SQLのログを出したいときは以下の設定を使う
+# logging.basicConfig(level=logging.INFO)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 app = FastAPI()
 app.include_router(apps.router)
 app.include_router(chairs.router)
