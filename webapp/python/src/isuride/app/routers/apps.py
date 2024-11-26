@@ -186,7 +186,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ),
             {"user_id": user.id},
         ).fetchall()
-        rides = [Ride(**row._mapping) for row in rows]
+        rides = [Ride.model_validate(row) for row in rows]
 
     items = []
     for ride in rides:
@@ -201,7 +201,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-            chair = Chair(**row._mapping)
+            chair = Chair.model_validate(row)
 
         with engine.begin() as conn:
             row = conn.execute(
@@ -209,7 +209,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-            owner = Owner(**row._mapping)
+            owner = Owner.model_validate(row)
 
         # TODO: 参照実装みたいにpartialに作るべき？
         item = GetAppRidesResponseItem(
@@ -360,7 +360,7 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride(**row._mapping)  # type: ignore
+        ride: Ride = Ride.model_validate(row)  # type: ignore
 
         fare = calculate_discounted_fare(
             conn,
@@ -450,7 +450,7 @@ def app_post_ride_evaluation(
 
         if not row:
             raise HTTPException(status_code=404, detail="ride not found")
-        ride = Ride(**row._mapping)
+        ride = Ride.model_validate(row)
         status = get_latest_ride_status(conn, ride.id)
 
         if status != "ARRIVED":
@@ -487,7 +487,7 @@ def app_post_ride_evaluation(
                 status_code=HTTPStatus.BAD_REQUEST,
                 detail="payment token not registered",
             )
-        payment_token = PaymentToken(**row._mapping)
+        payment_token = PaymentToken.model_validate(row)
 
         fare = calculate_discounted_fare(
             conn,
@@ -513,7 +513,7 @@ def app_post_ride_evaluation(
                 ),
                 {"user_id": ride.user_id},
             ).fetchall()
-            return [Ride(**r._mapping) for r in rows]
+            return [Ride.model_validate(r) for r in rows]
 
         request_payment_gateway_post_payment(
             payment_gateway_url,
@@ -576,7 +576,7 @@ def app_get_notification(
             response.status_code = HTTPStatus.OK
             return response
 
-        ride: Ride = Ride(**row._mapping)
+        ride: Ride = Ride.model_validate(row)
 
         row = conn.execute(
             text(
@@ -588,7 +588,7 @@ def app_get_notification(
         if not row:
             status = get_latest_ride_status(conn, ride.id)
         else:
-            yet_sent_ride_status = RideStatus(**row._mapping)
+            yet_sent_ride_status = RideStatus.model_validate(row)
             status = yet_sent_ride_status.status
 
         fare = calculate_discounted_fare(
@@ -627,7 +627,7 @@ def app_get_notification(
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-            chair: Chair = Chair(**row._mapping)
+            chair: Chair = Chair.model_validate(row)
 
             stats = get_chair_stats(conn, ride.chair_id)
 
@@ -696,7 +696,7 @@ def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats
             ),
             {"ride_id": ride.id},
         )
-        ride_statuses = [RideStatus(**row._mapping) for row in rows]
+        ride_statuses = [RideStatus.model_validate(row) for row in rows]
 
         arrived_at = None
         pickuped_at = None
@@ -775,7 +775,7 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
             if row is None:
                 continue
 
-            chair_location = ChairLocation(**row._mapping)
+            chair_location = ChairLocation.model_validate(row)
 
             if (
                 calculate_distance(

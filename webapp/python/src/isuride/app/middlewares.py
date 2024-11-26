@@ -31,7 +31,7 @@ def app_auth_middleware(app_session: Annotated[str | None, Cookie()] = None) -> 
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )
-        user = User(**row._mapping)
+        user = User.model_validate(row)
 
         return user
 
@@ -56,8 +56,7 @@ def owner_auth_middleware(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )
 
-        # TODO: _mapping より良いアトリビュートは無いか
-        return Owner(**row._mapping)
+        return Owner.model_validate(row)
 
 
 def chair_auth_middleware(
@@ -80,5 +79,4 @@ def chair_auth_middleware(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )
 
-        # TODO: _mapping より良いアトリビュートは無いか
-        return Chair(**row._mapping)
+        return Chair.model_validate(row)

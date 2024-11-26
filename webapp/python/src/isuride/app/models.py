@@ -7,7 +7,11 @@ TODO: このdocstringを消す
 
 from datetime import datetime
 
-from pydantic import BaseModel
+import pydantic
+
+
+class BaseModel(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(from_attributes=True)
 
 
 class Chair(BaseModel):
