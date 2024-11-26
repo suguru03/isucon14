@@ -407,7 +407,7 @@ export const Map: FC<MapProps> = ({
   return (
     <div
       className={twMerge(
-        "w-full h-full relative overflow-hidden",
+        "w-full h-full relative overflow-hidden bg-neutral-200",
         isDrag && "cursor-grab",
         className,
       )}
