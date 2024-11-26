@@ -8,6 +8,7 @@ TODO: このdocstringを消す
 from collections import defaultdict
 from collections.abc import MutableMapping
 from datetime import datetime
+from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
@@ -38,7 +39,7 @@ class OwnerPostOwnersResponse(BaseModel):
     chair_register_token: str
 
 
-@router.post("/owners", status_code=201)
+@router.post("/owners", status_code=HTTPStatus.CREATED)
 def owner_post_owners(
     req: OwnerPostOwnersRequest, response: Response
 ) -> OwnerPostOwnersResponse:
@@ -168,7 +169,7 @@ class OwnerGetChairResponse(BaseModel):
 
 @router.get(
     "/chairs",
-    status_code=200,
+    status_code=HTTPStatus.OK,
     response_model=OwnerGetChairResponse,
     response_model_exclude_none=True,
 )
