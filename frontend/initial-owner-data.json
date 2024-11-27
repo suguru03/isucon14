@@ -1,0 +1,36 @@
+{
+  "owners": [
+    {
+      "id": "01JDFEDF0032PVQ8C193WGKKPB",
+      "name": "Seat Revival",
+      "token": "7188f2fb45c7d81a6ba30d1572cfff37"
+    },
+    {
+      "id": "01JDFEDF008NTA922W12FS7800",
+      "name": "快座製作所",
+      "token": "001d0876c1197819935c6f2e32eb0320"
+    },
+    {
+      "id": "01JDFEDF00B09BNMV8MP0RB34G",
+      "name": "匠椅子製作所",
+      "token": "0811617de5c97aea5ddb433f085c3d1e"
+    },
+    {
+      "id": "01JDFEDF00RBY5VSY7C18K3NVF",
+      "name": "つくる椅子株式会社",
+      "token": "c3eb38a254ca73e84b4d01158870a06d"
+    },
+    {
+      "id": "01JDFEDF00YK9SN2RGHVCC8JAY",
+      "name": "NextStep Cab",
+      "token": "3585ccc78c507660a4802973d269849e"
+    }
+  ],
+  "targetSimulatorChair": {
+    "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
+    "owner_id": "01JDFEDF008NTA922W12FS7800",
+    "name": "QC-L13-8361",
+    "model": "クエストチェア Lite",
+    "token": "3013d5ec84e1b230f913a17d71ef27c8"
+  }
+}

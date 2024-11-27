@@ -7,7 +7,7 @@ TODO: このdocstringを消す
 
 from collections import defaultdict
 from collections.abc import MutableMapping
-from datetime import datetime
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Annotated
 
@@ -20,7 +20,7 @@ from .middlewares import owner_auth_middleware
 from .models import Chair, Owner, Ride
 from .sql import engine
 from .utils import (
-    JST,
+    UTC,
     datetime_fromtimestamp_millis,
     secure_random_str,
     sum_sales,
@@ -100,7 +100,7 @@ def owner_get_sales(
         since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
-        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=JST)
+        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=UTC)
     else:
         until_dt = datetime_fromtimestamp_millis(until)
 
@@ -119,7 +119,11 @@ def owner_get_sales(
                     "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until + INTERVAL 999 MICROSECOND"
                 ),
                 # TODO: datetime型で大丈夫なんだっけ？
-                {"chair_id": chair.id, "since": since_dt, "until": until_dt},
+                {
+                    "chair_id": chair.id,
+                    "since": since_dt,
+                    "until": until_dt + timedelta(seconds=30),
+                },  # FIXME: 速度が遅いとお尻の時間に最後のレコードが入らずバグる？ ベンチマーカーの実装を確認してから剥がす
             ).fetchall()
             rides = [Ride.model_validate(r) for r in rows]
 

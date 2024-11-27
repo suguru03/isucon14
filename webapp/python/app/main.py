@@ -1,4 +1,5 @@
 import subprocess
+from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -24,6 +25,13 @@ class PostInitializeRequest(BaseModel):
 
 class PostInitializeResponse(BaseModel):
     language: str
+
+
+@app.exception_handler(HTTPStatus.INTERNAL_SERVER_ERROR)
+async def internal_exception_handler(_request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
+    )
 
 
 @app.exception_handler(HTTPException)

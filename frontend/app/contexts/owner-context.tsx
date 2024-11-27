@@ -51,8 +51,8 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   const until = searchParams.get("until") ?? undefined;
 
   useEffect(() => {
-    if (getCookieValue(document.cookie, "app_session") === undefined) {
-      navigate("/client/register");
+    if (getCookieValue(document.cookie, "owner_session") === undefined) {
+      navigate("/owner/register");
     }
   }, [navigate]);
 

@@ -2,6 +2,8 @@ import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
 import { fetchAppPostPaymentMethods } from "~/apiClient/apiComponents";
 import { Button } from "~/components/primitives/button/button";
+import { TextInput } from "~/components/primitives/form/text";
+import { FormFrame } from "~/components/primitives/frame/form-frame";
 
 export const meta: MetaFunction = () => {
   return [
@@ -22,19 +24,21 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
 
 export default function ClientRegister() {
   return (
-    <>
-      <Form className="p-4 flex flex-col gap-4" method="POST">
+    <FormFrame>
+      <h1 className="text-2xl font-semibold mb-8">決済トークン登録</h1>
+      <Form className="flex flex-col gap-8 w-full" method="POST">
         <div>
-          <label htmlFor="payment-token">決済トークンを入力:</label>
-          <input
-            type="text"
+          <TextInput
             id="payment-token"
             name="payment-token"
-            className="mt-1 p-2 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            label="決済トークン"
+            required
           />
         </div>
-        <Button type="submit">登録</Button>
+        <Button type="submit" variant="primary" className="text-lg mt-6">
+          登録
+        </Button>
       </Form>
-    </>
+    </FormFrame>
   );
 }
