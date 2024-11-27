@@ -6,6 +6,9 @@ use Exporter 'import';
 use Carp qw(croak);
 
 our @EXPORT_OK = qw(
+    InitialFare
+    FarePerDistance
+
     secure_random_str
     calculate_distance
     calculate_fare
