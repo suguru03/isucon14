@@ -7,14 +7,14 @@ import {
   useState,
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
-import { getOwners, getSimulateChair } from "~/utils/get-initial-data";
+import { getSimulateChair } from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
 } from "~/apiClient/apiComponents";
-import type { ClientChairRide, SimulatorChair, SimulatorOwner } from "~/types";
+import type { ClientChairRide, SimulatorChair } from "~/types";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;

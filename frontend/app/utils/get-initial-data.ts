@@ -12,14 +12,12 @@ type InitialOwner = {
   token: string;
 };
 
-type JsonType = { owners: InitialOwner[]; targetSimulatorChair?: InitialChair };
-
 const initialOwnerData = __INITIAL_OWNER_DATA__;
 
-export const getOwners = () => {
+export const getOwners = (): InitialOwner[] => {
   return initialOwnerData?.owners?.map((owner) => ({
     ...owner,
-  }));
+  })) ?? [];
 };
 
 export const getSimulateChair = (): InitialChair | undefined => {
