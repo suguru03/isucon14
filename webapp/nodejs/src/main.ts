@@ -19,6 +19,18 @@ import {
   appPostRidesEstimatedFare,
   appPostUsers,
 } from "./app_handlers.js";
+import {
+  chairGetNotification,
+  chairPostActivity,
+  chairPostChairs,
+  chairPostCoordinate,
+  chairPostRideStatus,
+} from "./chair_handlers.js";
+import {
+  ownerGetChairs,
+  ownerGetSales,
+  ownerPostOwners,
+} from "./owner_handlers.js";
 
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
@@ -63,11 +75,6 @@ app.post("/api/owner/owners", ownerPostOwners);
 
 app.get("/api/owner/sales", ownerAuthMiddleware, ownerGetSales);
 app.get("/api/owner/chairs", ownerAuthMiddleware, ownerGetChairs);
-app.get(
-  "/api/owner/chairs/:chair_id",
-  ownerAuthMiddleware,
-  ownerGetChairDetail,
-);
 
 // chair handlers
 app.post("/api/chair/chairs", chairPostChairs);
@@ -75,7 +82,6 @@ app.post("/api/chair/chairs", chairPostChairs);
 app.post("/api/chair/activity", chairAuthMiddleware, chairPostActivity);
 app.post("/api/chair/coordinate", chairAuthMiddleware, chairPostCoordinate);
 app.get("/api/chair/notification", chairAuthMiddleware, chairGetNotification);
-app.get("/api/chair/rides/:ride_id", chairAuthMiddleware, chairGetRideRequest);
 app.post(
   "/api/chair/rides/:ride_id/status",
   chairAuthMiddleware,
