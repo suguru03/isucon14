@@ -71,27 +71,26 @@ export default function Index() {
             onChange={(e) => updateDate("until", e.target.value)}
           />
         </div>
-        {sales ? (
-          <div className="flex items-center font-bold">
-            <Price pre="合計" value={sales.total_sales} />
-          </div>
-        ) : null}
+        {sales ? null : null}
       </div>
       {sales ? (
-        <div className="flex flex-col">
-          <div className="my-4 space-x-4">
-            {viewTypes.map((type) => (
-              <label htmlFor={`sales-view-type-${type.key}`} key={type.key}>
-                <input
-                  type="radio"
-                  id={`sales-view-type-${type.key}`}
-                  checked={type.key === viewType}
-                  onChange={() => setViewType(type.key)}
-                  className="me-1"
-                />
-                {type.label}
-              </label>
-            ))}
+        <div className="flex flex-col mt-4">
+          <div className="flex items-center justify-between">
+            <div className="my-4 space-x-4">
+              {viewTypes.map((type) => (
+                <label htmlFor={`sales-view-type-${type.key}`} key={type.key}>
+                  <input
+                    type="radio"
+                    id={`sales-view-type-${type.key}`}
+                    checked={type.key === viewType}
+                    onChange={() => setViewType(type.key)}
+                    className="me-1"
+                  />
+                  {type.label}
+                </label>
+              ))}
+            </div>
+            <Price pre="合計" value={sales.total_sales} className="font-bold" />
           </div>
           <table className="text-sm">
             <thead className="bg-gray-50 border-b">

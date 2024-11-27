@@ -36,14 +36,16 @@ export default function Index() {
                 className="border-b hover:bg-gray-50 transition"
               >
                 <td className="p-4 font-mono">{chair.id}</td>
-                <td className="p-4">{chair.name}</td>
-                <td className="p-4">
+                <td className="p-4 max-w-48 truncate" title={chair.name}>
+                  {chair.name}
+                </td>
+                <td className="p-4 max-w-64" title={chair.model}>
                   <div className="flex">
                     <ChairIcon
                       model={chair.model}
                       className="shrink-0 size-6 me-2"
                     />
-                    {chair.model}
+                    <span className="flex-1 truncate">{chair.model}</span>
                   </div>
                 </td>
                 <td className="p-4">
