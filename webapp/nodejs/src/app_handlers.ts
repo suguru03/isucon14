@@ -21,6 +21,7 @@ import {
   calculateFare,
   calculateSale,
   FARE_PER_DISTANCE,
+  getLatestRideStatus,
   INITIAL_FARE,
 } from "./common.js";
 import type { CountResult } from "./types/util.js";
@@ -209,19 +210,6 @@ export const appGetRides = async (ctx: Context<Environment>) => {
     200,
   );
 };
-
-async function getLatestRideStatus(
-  dbConn: mysql.Connection,
-  rideId: string,
-): Promise<string> {
-  const [[{ status }]] = await dbConn.query<
-    Array<Pick<RideStatus, "status"> & RowDataPacket>
-  >(
-    "SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1",
-    [rideId],
-  );
-  return status;
-}
 
 export const appPostRides = async (ctx: Context<Environment>) => {
   const reqJson = await ctx.req.json<{

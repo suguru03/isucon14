@@ -1,4 +1,6 @@
-import type { Ride } from "./types/models.js";
+import type mysql from "mysql2/promise";
+import type { RowDataPacket } from "mysql2/promise";
+import type { Ride, RideStatus } from "./types/models.js";
 
 export const INITIAL_FARE = 500;
 export const FARE_PER_DISTANCE = 100;
@@ -37,4 +39,17 @@ export const calculateSale = (ride: Ride): number => {
     ride.destination_latitude,
     ride.destination_longitude,
   );
+};
+
+export const getLatestRideStatus = async (
+  dbConn: mysql.Connection,
+  rideId: string,
+): Promise<string> => {
+  const [[{ status }]] = await dbConn.query<
+    Array<Pick<RideStatus, "status"> & RowDataPacket>
+  >(
+    "SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1",
+    [rideId],
+  );
+  return status;
 };
