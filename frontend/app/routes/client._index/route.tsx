@@ -50,30 +50,22 @@ export default function Index() {
   // fare: 確定運賃
   const [fare, setFare] = useState<number>();
 
-  // currentLocation：現在地
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
-  // destLocation：目的地
   const [destLocation, setDestLocation] = useState<Coordinate>();
 
-  // locationSelectTarget: 座標選択モーダルが「現在地」「目的地」どの座標を選択しているかどうか
   const [locationSelectTarget, setLocationSelectTarget] =
     useState<LocationSelectTarget | null>(null);
-  // selectedLocation: 座標選択モーダルで選択している座標
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
-  // 座標選択時の処理
   const onMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
-  // isLocationSelectorModalOpen: 座標選択モーダルを表示するかどうか
   const isLocationSelectorModalOpen = useMemo(
     () => locationSelectTarget !== null,
     [locationSelectTarget],
   );
-  // locationSelectorModalRef: 座標選択モーダルの Modal 要素への参照
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
-  // handleCloseLocationSelectorModal: 座標選択モーダルを閉じるハンドラ
   const handleCloseLocationSelectorModal = useCallback(() => {
     // Modal を閉じるアニメーションをトリガーするため close() を呼ぶ
     if (locationSelectorModalRef.current) {
@@ -82,17 +74,13 @@ export default function Index() {
     // 少し時間をおいた後、Modal 要素を DOM から外す
     setTimeout(() => setLocationSelectTarget(null), 300);
   }, []);
-  // 座標選択モーダルは、領域外をクリックしたときも閉じる処理をトリガーする
   useOnClickOutside(locationSelectorModalRef, handleCloseLocationSelectorModal);
-  // handleConfirmLocation: 座標選択モーダルで選択された座標をセットする
   const handleConfirmLocation = useCallback(() => {
-    // locationSelectTarget の値によってセットする先を変える
     if (locationSelectTarget === "from") {
       setCurrentLocation(selectedLocation);
     } else if (locationSelectTarget === "to") {
       setDestLocation(selectedLocation);
     }
-    // セットし終わったらモーダルを閉じる
     handleCloseLocationSelectorModal();
   }, [
     locationSelectTarget,
@@ -100,7 +88,6 @@ export default function Index() {
     handleCloseLocationSelectorModal,
   ]);
 
-  // isStatusModalOpen: 状態遷移に応じたモーダルを表示するかどうか
   const [isStatusModalOpen, setStatusModalOpen] = useState(false);
   useEffect(() => {
     setStatusModalOpen(
@@ -111,9 +98,7 @@ export default function Index() {
     );
   }, [internalStatus]);
 
-  // statusModalRef: 状態遷移に応じたモーダルの Modal 要素への参照
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  // handleCloseStatusModal: 状態遷移に応じたモーダルを閉じるハンドラ
   const handleCloseStatusModal = useCallback(() => {
     // Modal を閉じるアニメーションをトリガーするため close() を呼ぶ
     if (statusModalRef.current) {
@@ -123,9 +108,7 @@ export default function Index() {
     setTimeout(() => setStatusModalOpen(false), 300);
   }, []);
 
-  // estimatePrice：推定運賃
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
-  // 現在地、目的地が確定したら API 問い合わせして推定運賃を算出する
   useEffect(() => {
     if (!currentLocation || !destLocation) {
       return;
@@ -152,7 +135,6 @@ export default function Index() {
     };
   }, [currentLocation, destLocation]);
 
-  // 「ISURIDE」ボタンのハンドラ
   const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
@@ -169,7 +151,6 @@ export default function Index() {
     });
   }, [currentLocation, destLocation]);
 
-  // 「現在地」が選択されたら、API 問い合わせして現在位置近傍の ISU 一覧を取得する
   // TODO: NearByChairのつなぎこみは後ほど行う
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [nearByChairs, setNearByChairs] = useState<NearByChair[]>();
