@@ -131,10 +131,10 @@ export const SimulatorChairInfo: FC<{ chair: SimulatorChair }> = ({
           <div className="right-top flex">
             <div className="right-top-left flex-grow">
               <div className="chair-name font-bold">
-                <span>{chair.name}</span>
-                <span className="ml-1 text-xs font-normal text-neutral-500">
+                <p>{chair.name}</p>
+                <p className="ml-1 text-xs font-normal text-neutral-500">
                   {chair.model}
-                </span>
+                </p>
               </div>
               <StatusList className="my-2" currentStatus={rideStatus} />
             </div>
