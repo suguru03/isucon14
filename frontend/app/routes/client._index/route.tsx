@@ -36,7 +36,9 @@ export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
   // internalState: AppRequestContext.status をもとに決定する内部 status
   // 内部で setState をしたい要件があったので実装している
-  const [internalStatus, setInternalStatus] = useState<RideStatus | undefined>(undefined);
+  const [internalStatus, setInternalStatus] = useState<RideStatus | undefined>(
+    undefined,
+  );
   useEffect(() => {
     setInternalStatus(status);
   }, [status]);
@@ -54,7 +56,8 @@ export default function Index() {
   const [destLocation, setDestLocation] = useState<Coordinate>();
 
   // locationSelectTarget: 座標選択モーダルが「現在地」「目的地」どの座標を選択しているかどうか
-  const [locationSelectTarget, setLocationSelectTarget] = useState<LocationSelectTarget | null>(null);
+  const [locationSelectTarget, setLocationSelectTarget] =
+    useState<LocationSelectTarget | null>(null);
   // selectedLocation: 座標選択モーダルで選択している座標
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   // 座標選択時の処理
@@ -64,10 +67,12 @@ export default function Index() {
   // isLocationSelectorModalOpen: 座標選択モーダルを表示するかどうか
   const isLocationSelectorModalOpen = useMemo(
     () => locationSelectTarget !== null,
-    [locationSelectTarget]
+    [locationSelectTarget],
   );
   // locationSelectorModalRef: 座標選択モーダルの Modal 要素への参照
-  const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(null);
+  const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
+    null,
+  );
   // handleCloseLocationSelectorModal: 座標選択モーダルを閉じるハンドラ
   const handleCloseLocationSelectorModal = useCallback(() => {
     // Modal を閉じるアニメーションをトリガーするため close() を呼ぶ
@@ -75,35 +80,35 @@ export default function Index() {
       locationSelectorModalRef.current.close();
     }
     // 少し時間をおいた後、Modal 要素を DOM から外す
-    setTimeout(
-      () => setLocationSelectTarget(null),
-      300,
-    );
+    setTimeout(() => setLocationSelectTarget(null), 300);
   }, []);
   // 座標選択モーダルは、領域外をクリックしたときも閉じる処理をトリガーする
   useOnClickOutside(locationSelectorModalRef, handleCloseLocationSelectorModal);
   // handleConfirmLocation: 座標選択モーダルで選択された座標をセットする
-  const handleConfirmLocation = useCallback(
-    () => {
-      // locationSelectTarget の値によってセットする先を変える
-      if (locationSelectTarget === "from") {
-        setCurrentLocation(selectedLocation);
-      } else if (locationSelectTarget === "to") {
-        setDestLocation(selectedLocation);
-      }
-      // セットし終わったらモーダルを閉じる
-      handleCloseLocationSelectorModal();
-    },
-    [locationSelectTarget, selectedLocation, handleCloseLocationSelectorModal]
-  )
+  const handleConfirmLocation = useCallback(() => {
+    // locationSelectTarget の値によってセットする先を変える
+    if (locationSelectTarget === "from") {
+      setCurrentLocation(selectedLocation);
+    } else if (locationSelectTarget === "to") {
+      setDestLocation(selectedLocation);
+    }
+    // セットし終わったらモーダルを閉じる
+    handleCloseLocationSelectorModal();
+  }, [
+    locationSelectTarget,
+    selectedLocation,
+    handleCloseLocationSelectorModal,
+  ]);
 
   // isStatusModalOpen: 状態遷移に応じたモーダルを表示するかどうか
   const [isStatusModalOpen, setStatusModalOpen] = useState(false);
   useEffect(() => {
     setStatusModalOpen(
       internalStatus !== undefined &&
-      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(internalStatus)
-    )
+        ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
+          internalStatus,
+        ),
+    );
   }, [internalStatus]);
 
   // statusModalRef: 状態遷移に応じたモーダルの Modal 要素への参照
@@ -115,10 +120,7 @@ export default function Index() {
       statusModalRef.current.close();
     }
     // 少し時間をおいた後、Modal 要素を DOM から外す
-    setTimeout(
-      () => setStatusModalOpen(false),
-      300,
-    );
+    setTimeout(() => setStatusModalOpen(false), 300);
   }, []);
 
   // estimatePrice：推定運賃
@@ -149,7 +151,6 @@ export default function Index() {
       abortController.abort();
     };
   }, [currentLocation, destLocation]);
-
 
   // 「ISURIDE」ボタンのハンドラ
   const handleRideRequest = useCallback(async () => {
@@ -296,7 +297,10 @@ export default function Index() {
         </Button>
       </div>
       {isLocationSelectorModalOpen && (
-        <Modal ref={locationSelectorModalRef} onClose={handleCloseLocationSelectorModal}>
+        <Modal
+          ref={locationSelectorModalRef}
+          onClose={handleCloseLocationSelectorModal}
+        >
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
@@ -304,17 +308,22 @@ export default function Index() {
                 from={currentLocation}
                 to={destLocation}
                 selectorPinColor={
-                  locationSelectTarget === "from" ? colors.black : colors.red[500]
+                  locationSelectTarget === "from"
+                    ? colors.black
+                    : colors.red[500]
                 }
                 initialCoordinate={
-                  locationSelectTarget === "from" ? currentLocation : destLocation
+                  locationSelectTarget === "from"
+                    ? currentLocation
+                    : destLocation
                 }
                 selectable
                 className="rounded-2xl"
               />
             </div>
             <p className="font-bold mb-4 text-base">
-              {locationSelectTarget === "from" ? "現在地" : "目的地"}を選択してください
+              {locationSelectTarget === "from" ? "現在地" : "目的地"}
+              を選択してください
             </p>
             <Button onClick={handleConfirmLocation}>
               {locationSelectTarget === "from"
@@ -352,9 +361,7 @@ export default function Index() {
             />
           )}
           {internalStatus === "ARRIVED" && (
-            <Arrived
-              onEvaluated={handleCloseStatusModal}
-            />
+            <Arrived onEvaluated={handleCloseStatusModal} />
           )}
         </Modal>
       )}

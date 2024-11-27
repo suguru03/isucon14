@@ -8,9 +8,7 @@ import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
-export const Arrived = ({ onEvaluated }: {
-  onEvaluated: () => void
-}) => {
+export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   const { auth, payload } = useClientAppRequestContext();
   const [rating, setRating] = useState(0);
 
@@ -30,7 +28,7 @@ export const Arrived = ({ onEvaluated }: {
           },
         });
       } catch (e) {
-        console.error("ERROR: %o", e)
+        console.error("ERROR: %o", e);
       }
       onEvaluated();
     },
