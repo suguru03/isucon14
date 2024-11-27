@@ -136,7 +136,7 @@ export const appPostPaymentMethods = async (ctx: Context<Environment>) => {
     "INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)",
     [user.id, reqJson.token],
   );
-  return ctx.status(204);
+  return ctx.body(null, 204);
 };
 
 type GetAppRidesResponseItem = {

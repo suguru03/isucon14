@@ -44,10 +44,9 @@ export const chairPostActivity = async (ctx: Context<Environment>) => {
       chair.id,
     ]);
   } catch (e) {
-    console.error(e);
     return ctx.text(`${e}`, 500);
   }
-  return ctx.status(204);
+  return ctx.body(null, 204);
 };
 
 export const chairPostCoordinate = async (ctx: Context<Environment>) => {
@@ -234,7 +233,7 @@ export const chairPostRideStatus = async (ctx: Context<Environment>) => {
         return ctx.text("invalid status", 400);
     }
     await ctx.var.dbConn.commit();
-    return ctx.status(204);
+    return ctx.body(null, 204);
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
