@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "~/components/primitives/button/button";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
+import { getOwners } from "~/utils/get-initial-data";
 
 export const meta: MetaFunction = () => {
   return [
@@ -16,11 +17,7 @@ export default function OwnerRegister() {
   const [sessionToken, setSessionToken] = useState<string>();
   const navigate = useNavigate();
 
-  const PRESETS = [
-    { name: "Owner 1", token: "xxx" },
-    { name: "Owner 2", token: "yyy" },
-    { name: "Owner 3", token: "zzz" },
-  ];
+  const presetOwners = getOwners();
 
   const handleOnClick = () => {
     document.cookie = `owner_session=${sessionToken}; path=/`;
@@ -36,15 +33,14 @@ export default function OwnerRegister() {
             id="sessionToken"
             name="sessionToken"
             label="セッショントークン"
+            value={sessionToken}
             onChange={setSessionToken}
           />
           <details className="mt-3 ps-2">
             <summary>presetから選択</summary>
-            {/* TODO: owner presetを設定 */}
-            （未実装）
             <ul className="list-disc ps-4">
-              {PRESETS.map((preset) => (
-                <li key={preset.name}>
+              {presetOwners.map((preset) => (
+                <li key={preset.id}>
                   <button
                     className="text-blue-600 hover:underline"
                     onClick={() => setSessionToken(preset.token)}
