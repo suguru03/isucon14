@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Loading } from "~/components/icon/loading";
+import { ChairWaitingIndicator } from "~/components/modules/chair-waiting-indicator/chair-waiting-indicator";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
@@ -15,7 +15,7 @@ export const Matching: FC<{
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
-        <Loading size={120} />
+        <ChairWaitingIndicator size={120} />
       </ModalHeader>
       <LocationButton
         label="現在地"
