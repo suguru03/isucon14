@@ -283,9 +283,10 @@ def app_post_rides(
 
     ride_id = str(ULID())
     with engine.begin() as conn:
-        rides = conn.execute(
+        rows = conn.execute(
             text("SELECT * FROM rides WHERE user_id = :user_id"), {"user_id": user.id}
         ).fetchall()
+        rides = [Ride.model_validate(row) for row in rows]
 
         continuing_ride_count: int = 0
         for ride in rides:
@@ -374,12 +375,12 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride.model_validate(row)  # type: ignore
+        ride = Ride.model_validate(row)
 
         fare = calculate_discounted_fare(
             conn,
             user.id,
-            ride,  # type: ignore
+            ride,
             r.pickup_coordinate.latitude,
             r.pickup_coordinate.longitude,
             r.destination_coordinate.latitude,
