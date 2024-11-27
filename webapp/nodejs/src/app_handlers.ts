@@ -85,27 +85,27 @@ export const appPostUsers = async (ctx: Context<Environment>) => {
       if (coupons.length >= 3) {
         return ctx.text("この招待コードは使用できません。", 400);
       }
-    }
 
-    // ユーザーチェック
-    const [inviter] = await ctx.var.dbConn.query<Array<User & RowDataPacket>>(
-      "SELECT * FROM users WHERE invitation_code = ?",
-      [reqJson.invitation_code],
-    );
-    if (inviter.length === 0) {
-      return ctx.text("この招待コードは使用できません。", 400);
-    }
+      // ユーザーチェック
+      const [inviter] = await ctx.var.dbConn.query<Array<User & RowDataPacket>>(
+        "SELECT * FROM users WHERE invitation_code = ?",
+        [reqJson.invitation_code],
+      );
+      if (inviter.length === 0) {
+        return ctx.text("この招待コードは使用できません。", 400);
+      }
 
-    // 招待クーポン付与
-    await ctx.var.dbConn.query(
-      "INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
-      [userId, `INV_${reqJson.invitation_code}`, 1500],
-    );
-    // 招待した人にもRewardを付与
-    await ctx.var.dbConn.query(
-      "INSERT INTO coupons (user_id, code, discount) VALUES (?, CONCAT(?, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), ?)",
-      [inviter[0].id, `RWD_${reqJson.invitation_code}`, 1000],
-    );
+      // 招待クーポン付与
+      await ctx.var.dbConn.query(
+        "INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)",
+        [userId, `INV_${reqJson.invitation_code}`, 1500],
+      );
+      // 招待した人にもRewardを付与
+      await ctx.var.dbConn.query(
+        "INSERT INTO coupons (user_id, code, discount) VALUES (?, CONCAT(?, '_', FLOOR(UNIX_TIMESTAMP(NOW(3))*1000)), ?)",
+        [inviter[0].id, `RWD_${reqJson.invitation_code}`, 1000],
+      );
+    }
 
     await ctx.var.dbConn.commit();
   } catch (e) {
