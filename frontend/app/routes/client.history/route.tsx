@@ -21,18 +21,18 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   const [data, setData] = useState<AppGetRidesResponse>();
+
   useEffect(() => {
     const abortController = new AbortController();
-    (async () => {
+    void (async () => {
       try {
         const res = await fetchAppGetRides({}, abortController.signal);
         setData(res);
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
         setData({ rides: [] });
       }
-    })().catch(console.error);
-
+    })();
     return () => {
       abortController.abort();
     };
@@ -42,6 +42,13 @@ export default function Index() {
     <section className="mx-8 flex-1">
       <h2 className="text-xl my-6">履歴</h2>
       <List className="border-t">
+        {data?.rides.length === 0 && (
+          <ListItem>
+            <Text className="py-10 text-neutral-500">
+              椅子の乗車履歴はありません
+            </Text>
+          </ListItem>
+        )}
         {data?.rides.map(
           ({
             id,
