@@ -24,11 +24,11 @@ export default function ProviderRegister() {
     try {
       // client validation
       if (!ownerName) {
-        setErrorMessage("ownerNameを入力してください");
+        setErrorMessage("オーナー名を入力してください");
         return;
       }
       if (ownerName.length > 30) {
-        setErrorMessage("ownerNameは30文字以内で入力してください");
+        setErrorMessage("オーナー名は30文字以内で入力してください");
         return;
       }
       await fetchOwnerPostOwners({
@@ -46,7 +46,7 @@ export default function ProviderRegister() {
           e.stack.payload.includes("Duplicate entry")
         ) {
           setErrorMessage(
-            "オーナーの登録に失敗しました。入力されたownerNameはすでに登録済みです",
+            "オーナーの登録に失敗しました。入力されたオーナー名はすでに登録済みです",
           );
         } else {
           setErrorMessage(`オーナーの登録に失敗しました。[${e.stack.payload}]`);
