@@ -13,6 +13,5 @@ def mypy(session: nox.Session) -> None:
     session.install("mypy")
     session.run(
         "mypy",
-        "-p",
-        "isuride",
+        "app",
     )

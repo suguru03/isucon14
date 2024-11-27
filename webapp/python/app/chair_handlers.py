@@ -12,11 +12,11 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
 
-from ..middlewares import chair_auth_middleware
-from ..models import Chair, ChairLocation, Owner, Ride, User
-from ..sql import engine
-from ..utils import secure_random_str, timestamp_millis
-from .apps import get_latest_ride_status
+from .app_handlers import get_latest_ride_status
+from .middlewares import chair_auth_middleware
+from .models import Chair, ChairLocation, Owner, Ride, User
+from .sql import engine
+from .utils import secure_random_str, timestamp_millis
 
 router = APIRouter(prefix="/api/chair")
 

@@ -5,7 +5,7 @@ from http import HTTPStatus
 import urllib3
 from pydantic import BaseModel
 
-from isuride.app.models import Ride
+from .models import Ride
 
 ERRORED_UPSTREAM = "errored upstream"
 

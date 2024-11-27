@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+# if typing.TYPE_CHECKINGの中に入れた方がいいかも
 from .models import Ride
 
 INITIAL_FARE: int = 500

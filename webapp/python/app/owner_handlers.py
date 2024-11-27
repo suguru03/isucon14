@@ -16,10 +16,10 @@ from pydantic import BaseModel, StringConstraints
 from sqlalchemy import text
 from ulid import ULID
 
-from ..middlewares import owner_auth_middleware
-from ..models import Chair, Owner, Ride
-from ..sql import engine
-from ..utils import (
+from .middlewares import owner_auth_middleware
+from .models import Chair, Owner, Ride
+from .sql import engine
+from .utils import (
     JST,
     datetime_fromtimestamp_millis,
     secure_random_str,
