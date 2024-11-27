@@ -74,9 +74,6 @@ export const ChairIcon: FC<{ model: string } & ComponentProps<"svg">> = ({
   const chairType = useMemo(() => {
     return ChairTypes[model ? model.charCodeAt(0) % ChairTypes.length : 0];
   }, [model]);
-
-  console.log(chairType);
-
   return <Chair chairType={chairType} {...props} />;
 };
 

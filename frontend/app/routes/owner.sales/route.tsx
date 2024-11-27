@@ -78,12 +78,7 @@ export default function Index() {
       {sales ? (
         <>
           <div className="flex">
-            <Price
-              value={sales.total_sales}
-              size="2xl"
-              bold
-              className="ms-auto px-4"
-            />
+            <Price value={sales.total_sales} className="ms-auto px-4" />
           </div>
           <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
           <List className="overflow-auto">
@@ -91,7 +86,7 @@ export default function Index() {
               <ListItem key={item.key} className="flex">
                 <ChairIcon model={item.model} />
                 <span className="ms-4">{item.name}</span>
-                <Price tagName="span" value={item.sales} className="ms-auto" />
+                <Price value={item.sales} className="ms-auto" />
               </ListItem>
             ))}
           </List>

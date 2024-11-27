@@ -8,13 +8,11 @@ type PriceTextProps = {
   value: number;
   discount?: number;
   pre?: string;
-  post?: string;
 } & ComponentProps<"div">;
 
 export const Price: FC<PriceTextProps> = ({
   value,
   pre,
-  post,
   discount,
   className,
   ...props
@@ -31,7 +29,6 @@ export const Price: FC<PriceTextProps> = ({
         </Text>
       )}
       <PriceText value={value} />
-      {post && <Text tagName="span">{post}</Text>}
       {!!discount && (
         <Text
           tagName="span"
