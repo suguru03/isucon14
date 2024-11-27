@@ -1,6 +1,6 @@
 import binascii
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 # if typing.TYPE_CHECKINGの中に入れた方がいいかも
@@ -20,7 +20,7 @@ def secure_random_str(b: int) -> str:
 
 
 def timestamp_millis(dt: datetime) -> int:
-    dt = dt.astimezone(timezone.utc)
+    dt = dt.astimezone(UTC)
     return (dt - EPOCH) // timedelta(milliseconds=1)
 
 
