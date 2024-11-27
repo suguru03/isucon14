@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, Outlet, useMatch } from "@remix-run/react";
+import { twMerge } from "tailwind-merge";
 import { ProviderProvider } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
@@ -11,25 +12,26 @@ export const meta: MetaFunction = () => {
 
 const Tab = () => {
   const tabs = [
-    { key: "index", label: "椅子一覧", to: "/owner/" },
+    { key: "index", label: "椅子", to: "/owner/" },
     { key: "sales", label: "売上", to: "/owner/sales" },
   ] as const;
 
   const match = useMatch({ path: "/owner/", end: true });
 
   return (
-    <nav className="border-b">
-      <ul className="flex">
+    <nav className="flex after:w-full after:border-b after:border-gray-300">
+      <ul className="flex shrink-0">
         {tabs.map((tab) => (
           <li
             key={tab.key}
-            className={
+            className={twMerge([
+              "rounded-tl-md rounded-tr-md",
               tab.key === (match ? "index" : "sales")
-                ? "border-b-4 border-black"
-                : ""
-            }
+                ? "border border-b-transparent"
+                : "border-l-transparent border-t-transparent border-r-transparent border",
+            ])}
           >
-            <Link to={tab.to} className="px-4 py-2">
+            <Link to={tab.to} className="block px-8 py-3">
               {tab.label}
             </Link>
           </li>
@@ -44,7 +46,7 @@ export default function ProviderLayout() {
     <ProviderProvider>
       <div className="bg-white flex xl:justify-center">
         <div className="px-4 h-screen flex flex-col overflow-x-hidden w-[1280px]">
-          <h1 className="text-3xl my-12 mb-8">
+          <h1 className="text-3xl my-12 mb-6">
             {/* TODO: ISURIDEロゴ */}
             [ISURIDE] オーナー向け管理画面
           </h1>
