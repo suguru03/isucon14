@@ -442,7 +442,9 @@ class AppPostRideEvaluationResponse(BaseModel):
     status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
-    req: AppPostRideEvaluationRequest, ride_id: str
+    req: AppPostRideEvaluationRequest,
+    ride_id: str,
+    _: User = Depends(app_auth_middleware),
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
@@ -756,7 +758,12 @@ class AppGetNearByChairsResponse(BaseModel):
     response_model=AppGetNearByChairsResponse,
     status_code=HTTPStatus.OK,
 )
-def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
+def app_get_nearby_chairs(
+    latitude: int,
+    longitude: int,
+    distance: int = 50,
+    _: User = Depends(app_auth_middleware),
+):
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
         chairs = conn.execute(
