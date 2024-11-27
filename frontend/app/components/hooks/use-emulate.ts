@@ -49,8 +49,13 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     const status = targetChair.chairNotification.status;
     const currentCoodinatePost = () => {
       if (coordinate) {
-        sessionStorage.setItem("latitude", String(coordinate.latitude));
-        sessionStorage.setItem("longitude", String(coordinate.longitude));
+        sessionStorage.setItem(
+          "simulatorCoordinate",
+          JSON.stringify({
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+          } satisfies Coordinate),
+        );
         fetchChairPostCoordinate({
           body: coordinate,
         }).catch((e) => {

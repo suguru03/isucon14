@@ -191,7 +191,23 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const request = useClientChairNotification(simulateChairData?.id);
-  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>();
+
+  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>({
+    longitude: 0,
+    latitude: 0,
+  });
+  useEffect(() => {
+    try {
+      const getItem = sessionStorage.getItem("simulatorCoordinate");
+      if (getItem === null) {
+        return;
+      }
+      const coordinate = JSON.parse(getItem) as Coordinate;
+      setCurrentCoordinate(coordinate);
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   return (
     <ClientSimulatorContext.Provider
