@@ -45,6 +45,9 @@ export default function Index() {
   const [direction, setDirection] = useState<Direction | null>(null);
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
+
+  const [fare, setFare] = useState<number>();
+
   const onMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
@@ -103,18 +106,21 @@ export default function Index() {
     };
   }, [currentLocation, destLocation]);
 
-  const handleRideRequest = useCallback(() => {
+
+
+  const handleRideRequest = useCallback(async() => {
     if (!currentLocation || !destLocation) {
       return;
     }
     setInternalRideStatus("MATCHING");
     try {
-      void fetchAppPostRides({
+      const rides = await fetchAppPostRides({
         body: {
           pickup_coordinate: currentLocation,
           destination_coordinate: destLocation,
         },
       });
+      setFare(rides.fare)
     } catch (error) {
       if (isClientApiError(error)) {
         console.error(error);
@@ -294,6 +300,7 @@ export default function Index() {
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
+              fare={fare}
             />
           )}
           {internalRideStatus === "ENROUTE" && (

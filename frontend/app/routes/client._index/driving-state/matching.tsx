@@ -10,9 +10,10 @@ import { Coordinate } from "~/types";
 export const Matching: FC<{
   pickup?: Coordinate;
   destLocation?: Coordinate;
-}> = ({ pickup, destLocation }) => {
+  fare?: number;
+}> = ({ pickup, destLocation, fare }) => {
   const { payload } = useClientAppRequestContext();
-  const fare = payload?.fare;
+  const displayFare = fare ?? payload?.fare;
 
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
@@ -32,7 +33,7 @@ export const Matching: FC<{
         className="w-80"
         disabled
       />
-      {fare && <Price value={fare} pre="予定運賃" className="mt-6" />}
+      {fare && <Price value={fare} pre="運賃" className="mt-6" />}
     </div>
   );
 };
