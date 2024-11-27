@@ -22,7 +22,7 @@ export default function ProviderRegister() {
     { name: "Owner 3", token: "zzz" },
   ];
 
-  const handleOnClick = async () => {
+  const handleOnClick = () => {
     document.cookie = `owner_session=${sessionToken}; path=/`;
     navigate("/owner");
   };
@@ -40,6 +40,7 @@ export default function ProviderRegister() {
           />
           <details className="mt-3 ps-2">
             <summary>presetから選択</summary>
+            {/* TODO: owner presetを設定 */}
             （未実装）
             <ul className="list-disc ps-4">
               {PRESETS.map((preset) => (
