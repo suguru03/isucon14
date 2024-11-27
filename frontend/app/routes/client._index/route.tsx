@@ -145,10 +145,12 @@ export default function Index() {
         pickup_coordinate: currentLocation,
         destination_coordinate: destLocation,
       },
-    }).then((res) => {
-      setRequestId(res.ride_id);
-      setFare(res.fare);
-    });
+    })
+      .then((res) => {
+        setRequestId(res.ride_id);
+        setFare(res.fare);
+      })
+      .catch((err) => console.error("Failed to POST /app/rides: %o", err));
   }, [currentLocation, destLocation]);
 
   // TODO: NearByChairのつなぎこみは後ほど行う
