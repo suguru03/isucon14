@@ -129,7 +129,7 @@ WHERE owner_id = ?`,
       id: chair.id,
       name: chair.name,
       model: chair.model,
-      active: chair.is_active,
+      active: !!chair.is_active,
       registered_at: chair.created_at.getTime(),
       total_distance: chair.total_distance,
     };
