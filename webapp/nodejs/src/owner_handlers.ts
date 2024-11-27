@@ -131,7 +131,7 @@ WHERE owner_id = ?`,
       model: chair.model,
       active: !!chair.is_active,
       registered_at: chair.created_at.getTime(),
-      total_distance: chair.total_distance,
+      total_distance: Number(chair.total_distance),
     };
     if (chair.total_distance_updated_at) {
       c.total_distance_updated_at = chair.total_distance_updated_at.getTime();
