@@ -51,6 +51,25 @@ export type ClientChairRide = {
   }>;
 };
 
+export type SimulatorChair = {
+  id: string;
+  name: string;
+  model: string;
+  token: string;
+  coordinateState: {
+    coordinate?: Coordinate;
+    setter: (coordinate: Coordinate) => void;
+  };
+  chairNotification?: ClientChairRide;
+};
+
+export type SimulatorOwner = {
+  id: string;
+  name: string;
+  token: string;
+  chair?: SimulatorChair;
+};
+
 export type DisplayPos = {
   x: number;
   y: number;

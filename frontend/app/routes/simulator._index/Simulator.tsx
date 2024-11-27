@@ -1,4 +1,4 @@
-import { useEmulator } from "~/components/hooks/emulate";
+import { useEmulator } from "~/components/hooks/use-emulate";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { ChairInfo } from "./ChairInfo";
 import { useEffect } from "react";
