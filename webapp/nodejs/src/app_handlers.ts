@@ -1,6 +1,6 @@
 import type mysql from "mysql2/promise";
+import { ulid } from "ulid";
 import type { Context } from "hono";
-import { randomUUID } from "node:crypto";
 import type { Environment } from "./types/hono.js";
 import { secureRandomStr } from "./utils/random.js";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
@@ -49,7 +49,7 @@ export const appPostUsers = async (ctx: Context<Environment>) => {
       400,
     );
   }
-  const userId = randomUUID();
+  const userId = ulid();
   const accessToken = secureRandomStr(32);
   const invitationCode = secureRandomStr(15);
   await ctx.var.dbConn.beginTransaction();
@@ -223,7 +223,7 @@ export const appPostRides = async (ctx: Context<Environment>) => {
     );
   }
   const user = ctx.var.user;
-  const rideId = randomUUID();
+  const rideId = ulid();
   await ctx.var.dbConn.beginTransaction();
   let fare: number;
   try {
@@ -254,7 +254,7 @@ export const appPostRides = async (ctx: Context<Environment>) => {
     );
     await ctx.var.dbConn.query(
       "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-      [randomUUID(), rideId, "MATCHING"],
+      [ulid(), rideId, "MATCHING"],
     );
     const [[{ "COUNT(*)": rideCount }]] = await ctx.var.dbConn.query<
       Array<CountResult & RowDataPacket>
@@ -401,7 +401,7 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
 
     await ctx.var.dbConn.query(
       "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-      [randomUUID(), rideId, "COMPLETED"],
+      [ulid(), rideId, "COMPLETED"],
     );
 
     [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(

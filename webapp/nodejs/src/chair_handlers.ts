@@ -2,12 +2,10 @@ import type { Context } from "hono";
 import type { Environment } from "./types/hono.js";
 import type { RowDataPacket } from "mysql2";
 import type { ChairLocation, Owner, Ride, RideStatus } from "./types/models.js";
-import { randomUUID } from "node:crypto";
 import { secureRandomStr } from "./utils/random.js";
-import path from "node:path";
 import { setCookie } from "hono/cookie";
-import type { Connection } from "mysql2/promise";
 import { getLatestRideStatus } from "./common.js";
+import { ulid } from "ulid";
 
 export const chairPostChairs = async (ctx: Context<Environment>) => {
   const reqJson = await ctx.req.json();
@@ -25,7 +23,7 @@ export const chairPostChairs = async (ctx: Context<Environment>) => {
   if (!owner) {
     return ctx.text("invalid chair_register_token", 401);
   }
-  const chairID = randomUUID();
+  const chairID = ulid();
   const accessToken = secureRandomStr(32);
   await ctx.var.dbConn.query(
     "INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
@@ -50,7 +48,7 @@ export const chairPostActivity = async (ctx: Context<Environment>) => {
 export const chairPostCoordinate = async (ctx: Context<Environment>) => {
   const reqJson = await ctx.req.json();
   const chair = ctx.var.chair;
-  const chairLocationID = randomUUID();
+  const chairLocationID = ulid();
   await ctx.var.dbConn.beginTransaction();
   try {
     await ctx.var.dbConn.query(
@@ -74,7 +72,7 @@ export const chairPostCoordinate = async (ctx: Context<Environment>) => {
         ) {
           await ctx.var.dbConn.query(
             "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-            [randomUUID(), ride.id, "PICKUP"],
+            [ulid(), ride.id, "PICKUP"],
           );
         }
         if (
@@ -84,7 +82,7 @@ export const chairPostCoordinate = async (ctx: Context<Environment>) => {
         ) {
           await ctx.var.dbConn.query(
             "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-            [randomUUID(), ride.id, "ARRIVED"],
+            [ulid(), ride.id, "ARRIVED"],
           );
         }
       }
@@ -212,7 +210,7 @@ export const chairPostRideStatus = async (ctx: Context<Environment>) => {
       case "ENROUTE":
         await ctx.var.dbConn.query(
           "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-          [randomUUID(), ride.id, "ENROUTE"],
+          [ulid(), ride.id, "ENROUTE"],
         );
         break;
       // After Picking up user
@@ -223,7 +221,7 @@ export const chairPostRideStatus = async (ctx: Context<Environment>) => {
         }
         await ctx.var.dbConn.query(
           "INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)",
-          [randomUUID(), ride.id, "CARRYING"],
+          [ulid(), ride.id, "CARRYING"],
         );
         break;
       }

@@ -1,11 +1,11 @@
 import type { Context } from "hono";
 import type { Environment } from "./types/hono.js";
-import { randomUUID } from "node:crypto";
 import { secureRandomStr } from "./utils/random.js";
 import { setCookie } from "hono/cookie";
 import type { RowDataPacket } from "mysql2";
 import type { Chair, Ride } from "./types/models.js";
 import { calculateSale } from "./common.js";
+import { ulid } from "ulid";
 
 export const ownerPostOwners = async (ctx: Context<Environment>) => {
   const reqJson = await ctx.req.json();
@@ -13,7 +13,7 @@ export const ownerPostOwners = async (ctx: Context<Environment>) => {
   if (!name) {
     return ctx.text("some of required fields(name) are empty", 400);
   }
-  const ownerId = randomUUID();
+  const ownerId = ulid();
   const accessToken = secureRandomStr(32);
   const chairRegisterToken = secureRandomStr(32);
   await ctx.var.dbConn.query(
