@@ -1,16 +1,20 @@
+import { twMerge } from "tailwind-merge";
+
 type TextProps<T extends string> = {
   tabs: readonly { key: T; label: string }[];
   activeTab?: T;
+  className?: string;
   onTabClick?: (tab: T) => void;
 };
 
 export const Tab = <T extends string>({
   tabs,
   activeTab,
+  className,
   onTabClick,
 }: TextProps<T>) => {
   return (
-    <nav className="border-b">
+    <nav className={twMerge(["border-b", className])}>
       <ul className="flex">
         {tabs.map((tab) => (
           <li
