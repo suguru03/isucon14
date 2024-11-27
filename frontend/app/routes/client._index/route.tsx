@@ -106,9 +106,7 @@ export default function Index() {
     };
   }, [currentLocation, destLocation]);
 
-
-
-  const handleRideRequest = useCallback(async() => {
+  const handleRideRequest = useCallback(async () => {
     if (!currentLocation || !destLocation) {
       return;
     }
@@ -120,7 +118,7 @@ export default function Index() {
           destination_coordinate: destLocation,
         },
       });
-      setFare(rides.fare)
+      setFare(rides.fare);
     } catch (error) {
       if (isClientApiError(error)) {
         console.error(error);
