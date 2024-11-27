@@ -1,6 +1,7 @@
 import subprocess
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -23,6 +24,11 @@ class PostInitializeRequest(BaseModel):
 
 class PostInitializeResponse(BaseModel):
     language: str
+
+
+@app.exception_handler(HTTPException)
+def custom_http_exception_handler(_: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
 
 
 @app.post("/api/initialize")
