@@ -54,15 +54,14 @@ export default function Index() {
 
   const [locationSelectTarget, setLocationSelectTarget] =
     useState<LocationSelectTarget | null>(null);
+  
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const onMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
-  useEffect(() => {
-    setLocationSelectorModalOpen(locationSelectTarget !== null);
-  }, [locationSelectTarget]);
+
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
@@ -228,6 +227,7 @@ export default function Index() {
           location={currentLocation}
           onClick={() => {
             setLocationSelectTarget("from");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="現在地を選択する"
           label="現在地"
@@ -238,6 +238,7 @@ export default function Index() {
           className="w-full"
           onClick={() => {
             setLocationSelectTarget("to");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="目的地を選択する"
           label="目的地"
