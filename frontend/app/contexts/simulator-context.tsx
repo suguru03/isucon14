@@ -162,7 +162,7 @@ export const useClientChairNotification = (id?: string) => {
         }
       };
 
-      void polling();
+      timeoutId = setTimeout(() => void polling(), retryAfterMs);
 
       return () => {
         abortController.abort();
