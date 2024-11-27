@@ -1,6 +1,6 @@
 import binascii
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 # if typing.TYPE_CHECKINGの中に入れた方がいいかも
@@ -8,10 +8,9 @@ from .models import Ride
 
 INITIAL_FARE: int = 500
 FARE_PER_DISTANCE: int = 100
-# TODO: タイムゾーンをUTCに戻してベンチマーカーを通す
-JST: ZoneInfo = ZoneInfo("Asia/Tokyo")
+UTC: ZoneInfo = ZoneInfo("UTC")
 
-EPOCH = datetime(1970, 1, 1, tzinfo=ZoneInfo("Asia/Tokyo"))
+EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def secure_random_str(b: int) -> str:
@@ -25,7 +24,7 @@ def timestamp_millis(dt: datetime) -> int:
 
 
 def datetime_fromtimestamp_millis(t: int) -> datetime:
-    return EPOCH + timedelta(hours=+9, milliseconds=t)
+    return EPOCH + timedelta(milliseconds=t)
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
