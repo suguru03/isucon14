@@ -341,6 +341,20 @@ sub app_post_rides ($app, $c) {
     }, AppPostRideResponse);
 }
 
+use constant AppPostRidesEstimatedFareRequest => {
+    pickup_coordinate => Coordinate,
+    pickup_coordinate => Coordinate,
+};
+
+use constant AppPostRidesEstimatedFareResponse => {
+    fare     => JSON_TYPE_INT,
+    discount => JSON_TYPE_INT,
+};
+
+sub app_post_rides_estimated_fare ($app, $c) {
+
+}
+
 sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_longitude, $dest_latitude, $dest_longitude) {
     my $coupon;
     my $discount = 0;
@@ -373,3 +387,4 @@ sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_
 
     return InitialFare + $discounted_metered_fare;
 }
+

@@ -67,7 +67,7 @@ sub _create_type_tiny_type_from_cpanel_type ($cpanel_structure) {
         ArrayRef [ map { _create_type_tiny_type_from_cpanel_type($_) } $cpanel_structure->@* ];
     }
     elsif ($cpanel_structure isa 'Cpanel::JSON::XS::Type::ArrayOf') {
-        ArrayRef [ create_type_tiny_type_from_cpanel_type($cpanel_structure->$*) ];
+        ArrayRef [ _create_type_tiny_type_from_cpanel_type($cpanel_structure->$*) ];
     }
     elsif ($cpanel_structure eq JSON_TYPE_STRING) {
         Str;
