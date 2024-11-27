@@ -10,10 +10,10 @@ import { Coordinate } from "~/types";
 export const Matching: FC<{
   pickup?: Coordinate;
   destLocation?: Coordinate;
-  fare?: number;
-}> = ({ pickup, destLocation, fare }) => {
+  optimisticFare?: number;
+}> = ({ pickup, destLocation, optimisticFare }) => {
   const { payload } = useClientAppRequestContext();
-  const displayFare = fare ?? payload?.fare;
+  const fare = optimisticFare ?? payload?.fare;
 
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
