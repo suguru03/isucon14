@@ -15,9 +15,11 @@ type InitialOwner = {
 const initialOwnerData = __INITIAL_OWNER_DATA__;
 
 export const getOwners = (): InitialOwner[] => {
-  return initialOwnerData?.owners?.map((owner) => ({
-    ...owner,
-  })) ?? [];
+  return (
+    initialOwnerData?.owners?.map((owner) => ({
+      ...owner,
+    })) ?? []
+  );
 };
 
 export const getSimulateChair = (): InitialChair | undefined => {
