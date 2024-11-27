@@ -20,7 +20,7 @@ export default function ProviderLayout() {
         <OwnerHeader />
         <Outlet />
         <FooterNavigation
-          navigationMenus={[
+          menus={[
             { icon: CircleIcon, link: "/owner/", label: "HOME" },
             { icon: CircleIcon, link: "/owner/sales", label: "SALES" },
           ]}
