@@ -11,23 +11,25 @@ export const ChairInformation: FC<
   return (
     <div
       className={twMerge(
-        "flex flex-row items-center space-x-3 px-6 py-4 bg-neutral-100 rounded-md w-full",
+        "flex flex-row items-center space-x-4 px-6 py-4 bg-neutral-100 rounded-md w-full",
         className,
       )}
       {...props}
     >
-      <div className="rounded-full bg-neutral-300 p-4">
+      <div className="rounded-full bg-neutral-200 p-5">
         <ChairIcon model={chair.model} width={40} height={40}></ChairIcon>
       </div>
-      <div className="flex flex-col space-y-1">
-        <Text tagName="span" bold>
-          {chair.name}
-          <Text tagName="span" size="xs">
-            （{chair.model}）
+      <div className="flex flex-col space-y-0.5">
+        <div className="flex flex-col space-y-0.5 mb-1">
+          <Text tagName="span" bold>
+            {chair.name}
           </Text>
-        </Text>
-        {chair.stats?.total_evaluation_avg && (
           <Text tagName="span" size="xs" className="text-neutral-500">
+            {chair.model}
+          </Text>
+        </div>
+        {chair.stats?.total_evaluation_avg && (
+          <Text tagName="span" size="xs" className="text-neutral-600">
             <Text tagName="span" className="pr-1">
               評価:
             </Text>
@@ -35,7 +37,7 @@ export const ChairInformation: FC<
           </Text>
         )}
         {chair.stats?.total_rides_count && (
-          <Text tagName="span" size="xs" className="text-neutral-500">
+          <Text tagName="span" size="xs" className="text-neutral-600">
             <Text tagName="span" className="pr-1">
               これまでの配車数:
             </Text>

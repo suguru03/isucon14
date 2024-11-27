@@ -14,12 +14,8 @@ export const Carrying: FC<{
   fare?: number;
 }> = ({ pickup, destLocation }) => {
   const { payload = {} } = useClientAppRequestContext();
-  const { fare } = payload;
-  let chair = {
-    name: "アーロン",
-    model: "1",
-    stats: { total_evaluation_avg: 500, total_rides_count: 100 },
-  };
+  const { chair, fare } = payload;
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <ModalHeader
