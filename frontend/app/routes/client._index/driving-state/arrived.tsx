@@ -1,5 +1,5 @@
 import { Form } from "@remix-run/react";
-import { MouseEventHandler, useCallback, useRef, useState } from "react";
+import { MouseEventHandler, useCallback, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
 import { ToIcon } from "~/components/icon/to";
@@ -8,10 +8,9 @@ import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
-export const Arrived = () => {
+export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   const { auth, payload } = useClientAppRequestContext();
   const [rating, setRating] = useState(0);
-  const modalRef = useRef<{ close: () => void }>(null);
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -28,13 +27,12 @@ export const Arrived = () => {
             evaluation: rating,
           },
         });
-      } finally {
-        if (modalRef.current) {
-          modalRef.current.close();
-        }
+      } catch (e) {
+        console.error("ERROR: %o", e);
       }
+      onEvaluated();
     },
-    [auth, payload, rating, modalRef],
+    [auth, payload, rating, onEvaluated],
   );
 
   return (

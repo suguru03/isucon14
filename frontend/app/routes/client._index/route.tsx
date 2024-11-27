@@ -1,13 +1,12 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
 import {
   fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
-import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
+import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { PriceText } from "~/components/modules/price-text/price-text";
@@ -29,69 +28,68 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-type Action = "from" | "to";
+type LocationSelectTarget = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
-  const [action, setAction] = useState<Action>();
-  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
-  const [currentLocation, setCurrentLocation] = useState<Coordinate>();
-  const [destLocation, setDestLocation] = useState<Coordinate>();
-  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
+  // internalState: AppRequestContext.status をもとに決定する内部 status
+  // 内部で setState をしたい要件があったので実装している
+  const [internalStatus, setInternalStatus] = useState<RideStatus | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    setInternalStatus(status);
+  }, [status]);
 
-  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
-  const selectorModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  const handleSelectorModalClose = useCallback(() => {
-    if (selectorModalRef.current) {
-      selectorModalRef.current.close();
-    }
-  }, []);
-
-  const drivingStateModalRef = useRef(null);
-
-  const onClose = useCallback(() => {
-    if (action === "from") setCurrentLocation(selectedLocation);
-    if (action === "to") setDestLocation(selectedLocation);
-    setIsSelectorModalOpen(false);
-  }, [action, selectedLocation]);
-
-  const onMove = useCallback((coordinate: Coordinate) => {
-    setSelectedLocation(coordinate);
-  }, []);
-
-  const handleOpenModal = useCallback((action: Action) => {
-    setIsSelectorModalOpen(true);
-    setAction(action);
-  }, []);
-
+  // requestId: リクエストID
   // TODO: requestId をベースに配車キャンセルしたい
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
-
+  // fare: 確定運賃
   const [fare, setFare] = useState<number>();
-  const isStatusOpenModal = useMemo(
-    () =>
-      status &&
-      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(status),
-    [status],
+
+  const [currentLocation, setCurrentLocation] = useState<Coordinate>();
+  const [destLocation, setDestLocation] = useState<Coordinate>();
+
+  const [locationSelectTarget, setLocationSelectTarget] =
+    useState<LocationSelectTarget | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
+  const onMove = useCallback((coordinate: Coordinate) => {
+    setSelectedLocation(coordinate);
+  }, []);
+  const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
+    useState(false);
+  useEffect(() => {
+    setLocationSelectorModalOpen(locationSelectTarget !== null);
+  }, [locationSelectTarget]);
+  const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
+    null,
   );
-
-  const handleRideRequest = useCallback(async () => {
-    if (!currentLocation || !destLocation) {
-      return;
+  const handleConfirmLocation = useCallback(() => {
+    if (locationSelectTarget === "from") {
+      setCurrentLocation(selectedLocation);
+    } else if (locationSelectTarget === "to") {
+      setDestLocation(selectedLocation);
     }
-    await fetchAppPostRides({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
-      },
-    }).then((res) => {
-      setRequestId(res.ride_id);
-      setFare(res.fare);
-    });
-  }, [currentLocation, destLocation]);
+    if (locationSelectorModalRef.current) {
+      locationSelectorModalRef.current.close();
+    }
+  }, [locationSelectTarget, selectedLocation]);
 
+  const [isStatusModalOpen, setStatusModalOpen] = useState(false);
+  useEffect(() => {
+    setStatusModalOpen(
+      internalStatus !== undefined &&
+        ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
+          internalStatus,
+        ),
+    );
+  }, [internalStatus]);
+
+  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
+
+  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   useEffect(() => {
     if (!currentLocation || !destLocation) {
       return;
@@ -116,9 +114,25 @@ export default function Index() {
     return () => {
       abortController.abort();
     };
-  }, [selectedLocation, destLocation, currentLocation]);
+  }, [currentLocation, destLocation]);
 
-  useOnClickOutside(selectorModalRef, handleSelectorModalClose);
+  const handleRideRequest = useCallback(async () => {
+    if (!currentLocation || !destLocation) {
+      return;
+    }
+    setInternalStatus("MATCHING");
+    await fetchAppPostRides({
+      body: {
+        pickup_coordinate: currentLocation,
+        destination_coordinate: destLocation,
+      },
+    })
+      .then((res) => {
+        setRequestId(res.ride_id);
+        setFare(res.fare);
+      })
+      .catch((err) => console.error("Failed to POST /app/rides: %o", err));
+  }, [currentLocation, destLocation]);
 
   // TODO: NearByChairのつなぎこみは後ほど行う
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -213,7 +227,7 @@ export default function Index() {
           className="w-full"
           location={currentLocation}
           onClick={() => {
-            handleOpenModal("from");
+            setLocationSelectTarget("from");
           }}
           placeholder="現在地を選択する"
           label="現在地"
@@ -223,7 +237,7 @@ export default function Index() {
           location={destLocation}
           className="w-full"
           onClick={() => {
-            handleOpenModal("to");
+            setLocationSelectTarget("to");
           }}
           placeholder="目的地を選択する"
           label="目的地"
@@ -246,8 +260,11 @@ export default function Index() {
           ISURIDE
         </Button>
       </div>
-      {isSelectorModalOpen && (
-        <Modal ref={selectorModalRef} onClose={onClose}>
+      {isLocationSelectorModalOpen && (
+        <Modal
+          ref={locationSelectorModalRef}
+          onClose={() => setLocationSelectorModalOpen(false)}
+        >
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
@@ -255,54 +272,61 @@ export default function Index() {
                 from={currentLocation}
                 to={destLocation}
                 selectorPinColor={
-                  action === "from" ? colors.black : colors.red[500]
+                  locationSelectTarget === "from"
+                    ? colors.black
+                    : colors.red[500]
                 }
                 initialCoordinate={
-                  action === "from" ? currentLocation : destLocation
+                  locationSelectTarget === "from"
+                    ? currentLocation
+                    : destLocation
                 }
                 selectable
                 className="rounded-2xl"
               />
             </div>
             <p className="font-bold mb-4 text-base">
-              {action === "from" ? "現在地" : "目的地"}を選択してください
+              {locationSelectTarget === "from" ? "現在地" : "目的地"}
+              を選択してください
             </p>
-            <Button onClick={handleSelectorModalClose}>
-              {action === "from"
+            <Button onClick={handleConfirmLocation}>
+              {locationSelectTarget === "from"
                 ? "この場所から移動する"
                 : "この場所に移動する"}
             </Button>
           </div>
         </Modal>
       )}
-      {isStatusOpenModal && (
-        <Modal ref={drivingStateModalRef}>
-          {status === "MATCHING" && (
+      {isStatusModalOpen && (
+        <Modal ref={statusModalRef} onClose={() => setStatusModalOpen(false)}>
+          {internalStatus === "MATCHING" && (
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {status === "ENROUTE" && (
+          {internalStatus === "ENROUTE" && (
             <Enroute
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "PICKUP" && (
+          {internalStatus === "PICKUP" && (
             <Dispatched
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "CARRYING" && (
+          {internalStatus === "CARRYING" && (
             <Carrying
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {status === "ARRIVED" && <Arrived />}
+          {internalStatus === "ARRIVED" && (
+            <Arrived onEvaluated={() => statusModalRef.current?.close()} />
+          )}
         </Modal>
       )}
     </>
