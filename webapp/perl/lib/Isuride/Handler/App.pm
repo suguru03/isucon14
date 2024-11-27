@@ -291,7 +291,7 @@ sub app_post_rides ($app, $c) {
             # 初回利用で、初回利用クーポンがあれば必ず使う
             $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL FOR UPDATE}, $user->{id});
 
-            if (!$coupon) {
+            if (!defined $coupon) {
                 # 無ければ他のクーポンを付与された順番に使う
                 $coupon = $app->dbh->select_row(
                     q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE},
@@ -345,8 +345,7 @@ sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_
     my $coupon;
     my $discount = 0;
 
-    # definedでもいいかも
-    if ($ride->%*) {
+    if (defined $ride) {
         $dest_latitude    = $ride->{destination_latitude};
         $dest_longitude   = $ride->{destination_longitude};
         $pickup_latitude  = $ride->{pickup_latitude};
