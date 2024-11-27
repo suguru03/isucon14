@@ -1,5 +1,5 @@
-import { Simulator } from "./Simulator";
-import { SmartPhone } from "./SmartPhone";
+import { Simulator } from "~/components/modules/simulator/simulator";
+import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
 
 export default function Index() {
   return (

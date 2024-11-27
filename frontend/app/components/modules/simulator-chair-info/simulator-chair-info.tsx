@@ -1,4 +1,11 @@
-import { ComponentProps, useCallback, useMemo, useRef, useState } from "react";
+import {
+  ComponentProps,
+  FC,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { twMerge } from "tailwind-merge";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
 
@@ -11,39 +18,31 @@ import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Coordinate, SimulatorChair } from "~/types";
 
-type Props = {
-  chair: SimulatorChair;
-};
+const LabelStyleList = {
+  MATCHING: ["空車", "text-sky-600"],
+  ENROUTE: ["迎車", "text-amber-600"],
+  PICKUP: ["乗車待ち", "text-amber-600"],
+  CARRYING: ["賃走", "text-red-600"],
+  ARRIVED: ["到着", "text-green-600"],
+  COMPLETED: ["完了", "text-green-600"],
+} as const;
 
-function Statuses(
-  props: ComponentProps<"div"> & {
+const StatusList: FC<
+  ComponentProps<"div"> & {
     currentStatus: RideStatus;
-  },
-) {
-  const labelByStatus: Record<RideStatus, [label: string, colorClass: string]> =
-    {
-      MATCHING: ["空車", "text-sky-600"],
-      ENROUTE: ["迎車", "text-amber-600"],
-      PICKUP: ["乗車待ち", "text-amber-600"],
-      CARRYING: ["賃走", "text-red-600"],
-      ARRIVED: ["到着", "text-green-600"],
-      COMPLETED: ["完了", "text-green-600"],
-    } as const;
-
-  const { currentStatus, className, ...rest } = props;
-  const [label, colorClass] = labelByStatus[currentStatus];
+  }
+> = ({ currentStatus, className, ...props }) => {
+  const [labelName, colorClass] = LabelStyleList[currentStatus];
   return (
-    <div className={twMerge(`font-bold ${colorClass}`, className)} {...rest}>
-      <span className="before:content-['●'] before:mr-2">{label}</span>
+    <div className={twMerge(`font-bold ${colorClass}`, className)} {...props}>
+      <span className="before:content-['●'] before:mr-2">{labelName}</span>
     </div>
   );
-}
+};
 
-function CoordinatePickup({
-  coordinateState,
-}: {
+const CoordinatePickup: FC<{
   coordinateState: SimulatorChair["coordinateState"];
-}) {
+}> = ({ coordinateState }) => {
   const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
   const [mapLocation, setMapLocation] = useState<Coordinate>();
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
@@ -100,10 +99,11 @@ function CoordinatePickup({
       )}
     </>
   );
-}
+};
 
-export function ChairInfo(props: Props) {
-  const { chair } = props;
+export const SimulatorChairInfo: FC<{ chair: SimulatorChair }> = ({
+  chair,
+}) => {
   const [activate, setActivate] = useState<boolean>(true);
 
   const toggleActivate = useCallback(
@@ -111,32 +111,32 @@ export function ChairInfo(props: Props) {
       try {
         void fetchChairPostActivity({ body: { is_active: activity } });
         setActivate(activity);
-      } catch (e) {
-        if (typeof e === "string") {
-          console.error(`CONSOLE ERROR: ${e}`);
-        }
+      } catch (error) {
+        console.error(error);
       }
     },
     [setActivate],
   );
+
   const rideStatus = useMemo(
     () => chair.chairNotification?.status ?? "MATCHING",
     [chair],
   );
+
   return (
     <div>
       <div className="flex">
-        <ChairIcon model={props.chair.model} className="size-12 mx-3 my-auto" />
+        <ChairIcon model={chair.model} className="size-12 mx-3 my-auto" />
         <div className="right-container m-3 flex-grow">
           <div className="right-top flex">
             <div className="right-top-left flex-grow">
               <div className="chair-name font-bold">
-                <span>{props.chair.name}</span>
+                <span>{chair.name}</span>
                 <span className="ml-1 text-xs font-normal text-neutral-500">
-                  {props.chair.model}
+                  {chair.model}
                 </span>
               </div>
-              <Statuses className="my-2" currentStatus={rideStatus} />
+              <StatusList className="my-2" currentStatus={rideStatus} />
             </div>
             <div className="right-top-right flex items-center">
               <span className="text-xs font-bold text-neutral-500 mr-3">
@@ -157,4 +157,4 @@ export function ChairInfo(props: Props) {
       </p>
     </div>
   );
-}
+};
