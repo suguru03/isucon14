@@ -7,47 +7,25 @@ import {
   useState,
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
-import { getOwners, getTargetChair } from "~/initialDataClient/getter";
+import { getOwners, getSimulateChair } from "~/utils/get-initial-data";
 
+import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
 } from "~/apiClient/apiComponents";
-import { apiBaseURL } from "~/apiClient/APIBaseURL";
-import type { ClientChairRide } from "~/types";
+import type { ClientChairRide, SimulatorChair, SimulatorOwner } from "~/types";
 
-export type SimulatorChair = {
-  id: string;
-  name: string;
-  model: string;
-  token: string;
-  coordinateState: {
-    coordinate?: Coordinate;
-    setter: (coordinate: Coordinate) => void;
-  };
-  chairNotification?: ClientChairRide;
-};
-
-export type SimulatorOwner = {
-  id: string;
-  name: string;
-  token: string;
-  chair?: SimulatorChair;
-};
-
-type ClientSimulatorContextType = {
+type ClientSimulatorContextProps = {
   owners: SimulatorOwner[];
   targetChair?: SimulatorChair;
 };
 
-const ClientSimulatorContext = createContext<ClientSimulatorContextType>({
+const ClientSimulatorContext = createContext<ClientSimulatorContextProps>({
   owners: [],
 });
 
-/**
- * SSE用の通信をfetchで取得した時のparse関数
- */
-function getSSEJsonFromFetch<T>(value: string) {
+function jsonFromSseResult<T>(value: string) {
   const data = value.slice("data:".length).trim();
   try {
     return JSON.parse(data) as T;
@@ -75,7 +53,7 @@ export const useClientChairNotification = (id?: string) => {
         const readed = (await reader?.read())?.value;
         const decoded = decoder.decode(readed);
         const json =
-          getSSEJsonFromFetch<ChairGetNotificationResponse["data"]>(decoded);
+          jsonFromSseResult<ChairGetNotificationResponse["data"]>(decoded);
         setNotification(
           json
             ? {
@@ -121,8 +99,10 @@ export const useClientChairNotification = (id?: string) => {
         : undefined,
     [notification],
   );
+
   const retryAfterMs = notification?.retry_after_ms ?? 10000;
   const isSSE = notification?.contentType === "event-stream";
+
   useEffect(() => {
     if (isSSE) {
       const eventSource = new EventSource(`${apiBaseURL}/chair/notification`);
@@ -151,35 +131,40 @@ export const useClientChairNotification = (id?: string) => {
         };
       });
     } else {
-      const abortController = new AbortController();
-      let timeoutId: number = 0;
+      let timeoutId: ReturnType<typeof setTimeout>;
+      let abortController: AbortController;
+
       const polling = () => {
-        (async () => {
-          const currentNotification = await fetchChairGetNotification(
-            {},
-            abortController.signal,
-          );
-          setNotification((preRequest) => {
-            if (
-              preRequest === undefined ||
-              currentNotification?.data?.status !== preRequest.data?.status ||
-              currentNotification?.data?.ride_id !== preRequest.data?.ride_id
-            ) {
-              return {
-                data: currentNotification.data,
-                retry_after_ms: currentNotification.retry_after_ms,
-                contentType: "json",
-              };
-            } else {
-              return preRequest;
-            }
-          });
-          timeoutId = window.setTimeout(polling, retryAfterMs);
-        })().catch((e) => {
-          console.error(`ERROR: ${JSON.stringify(e)}`);
-        });
+        try {
+          async () => {
+            abortController = new AbortController();
+            const currentNotification = await fetchChairGetNotification(
+              {},
+              abortController.signal,
+            );
+            setNotification((preRequest) => {
+              if (
+                preRequest === undefined ||
+                currentNotification?.data?.status !== preRequest.data?.status ||
+                currentNotification?.data?.ride_id !== preRequest.data?.ride_id
+              ) {
+                return {
+                  data: currentNotification.data,
+                  retry_after_ms: currentNotification.retry_after_ms,
+                  contentType: "json",
+                };
+              } else {
+                return preRequest;
+              }
+            });
+            timeoutId = setTimeout(polling, retryAfterMs);
+          };
+        } catch (error) {
+          console.error(error);
+        }
       };
-      timeoutId = window.setTimeout(polling, retryAfterMs);
+
+      polling();
 
       return () => {
         abortController.abort();
@@ -203,43 +188,52 @@ export const useClientChairNotification = (id?: string) => {
   return responseClientAppRequest;
 };
 
-export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const { id, token } = getTargetChair();
-  useEffect(() => {
-    document.cookie = `chair_session=${token}; path=/`;
-  }, [token]);
+const simulateChairData = getSimulateChair();
 
-  const owners = getOwners().map(
-    (owner) =>
-      ({
-        ...owner,
-        chair: {
-          ...owner.chair,
-          coordinateState: {
-            setter(coordinate) {
-              this.coordinate = coordinate;
-            },
-          },
-          chairNotification: undefined,
-        } satisfies SimulatorChair,
-      }) satisfies SimulatorOwner,
+export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    if (simulateChairData?.token) {
+      document.cookie = `chair_session=${simulateChairData.token}; path=/`;
+    }
+  }, []);
+
+  const owners = useMemo(
+    () =>
+      getOwners().map(
+        (owner) =>
+          ({
+            ...owner,
+            chair: {
+              ...owner.chair,
+              coordinateState: {
+                setter(coordinate) {
+                  this.coordinate = coordinate;
+                },
+              },
+              chairNotification: undefined,
+            } satisfies SimulatorChair,
+          }) satisfies SimulatorOwner,
+      ),
+    [],
   );
 
-  const request = useClientChairNotification(id);
+  const request = useClientChairNotification(simulateChairData?.id);
   const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>();
 
   return (
     <ClientSimulatorContext.Provider
       value={{
         owners,
-        targetChair: {
-          ...getTargetChair(),
-          chairNotification: request,
-          coordinateState: {
-            setter: setCurrentCoordinate,
-            coordinate: currentCoodinate,
-          },
-        },
+        targetChair: simulateChairData
+          ? {
+              ...simulateChairData,
+              chairNotification: request,
+              coordinateState: {
+                setter: setCurrentCoordinate,
+                coordinate: currentCoodinate,
+              },
+            }
+          : undefined,
       }}
     >
       {children}

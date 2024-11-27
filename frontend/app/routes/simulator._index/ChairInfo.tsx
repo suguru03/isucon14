@@ -93,7 +93,7 @@ function CoordinatePickup({
                 onClick={handleCloseModal}
                 variant="primary"
               >
-                この座標で確定する
+                この位置で確定する
               </Button>
             </div>
           </Modal>
