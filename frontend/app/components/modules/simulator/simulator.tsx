@@ -7,7 +7,6 @@ import { SimulatorChairInformation } from "../simulator-chair-information/simula
 
 export const Simulator: FC = () => {
   const { targetChair } = useSimulatorContext();
-  useEmulator(targetChair);
   useEffect(() => {
     const abortController = new AbortController();
     try {
@@ -22,6 +21,7 @@ export const Simulator: FC = () => {
     }
     return () => abortController.abort();
   }, []);
+  useEmulator(targetChair);
   return (
     <div className="bg-white rounded shadow w-[400px] px-4 py-2">
       {targetChair !== undefined ? (
