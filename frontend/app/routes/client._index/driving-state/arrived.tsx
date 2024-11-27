@@ -5,7 +5,7 @@ import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
 import { PinIcon } from "~/components/icon/pin";
 import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
-import { Rating } from "~/components/primitives/rating/rating";
+import { ClickableRating } from "~/components/primitives/rating/clickable-rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
@@ -47,7 +47,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
       </div>
       <div className="flex flex-col items-center w-80">
         <Text className="mb-4">今回のドライブはいかがでしたか？</Text>
-        <Rating
+        <ClickableRating
           name="rating"
           rating={rating}
           setRating={setRating}
