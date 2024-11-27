@@ -15,3 +15,5 @@ export const HumanIcon: FC<ComponentProps<"svg">> = function (props) {
     </svg>
   );
 };
+
+// https://github.com/google/material-design-icons/blob/master/LICENSE

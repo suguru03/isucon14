@@ -7,7 +7,7 @@ import {
 import { DateText } from "~/components/modules/date-text/date-text";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 
 export const meta: MetaFunction = () => {
   return [
@@ -51,7 +51,7 @@ export default function Index() {
                   {item.destination_coordinate.longitude})
                 </span>
               </span>
-              <PriceText value={item.fare} />
+              <Price value={item.fare} />
             </ListItem>
           ))}
       </List>

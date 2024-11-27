@@ -3,14 +3,16 @@ import { MouseEventHandler, useCallback, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
 import { PinIcon } from "~/components/icon/pin";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { auth, payload } = useClientAppRequestContext();
+  const { auth, payload = {} } = useClientAppRequestContext();
   const [rating, setRating] = useState(0);
+  const { fare } = payload;
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -36,7 +38,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   );
 
   return (
-    <Form className="h-full flex flex-col items-center justify-center">
+    <Form className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <div className="flex flex-col items-center gap-6 mb-14">
         <PinIcon className="size-[90px]" color={colors.red[500]} />
         <Text size="xl" bold>
@@ -51,6 +53,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
           setRating={setRating}
           className="mb-10"
         />
+        {fare && <Price pre="運賃" value={fare} className="mb-6"></Price>}
         <Button
           variant="primary"
           type="submit"

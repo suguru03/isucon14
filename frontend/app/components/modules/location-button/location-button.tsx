@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { ComponentProps, FC } from "react";
 import { twMerge } from "tailwind-merge";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import { PinIcon } from "~/components/icon/pin";
@@ -14,7 +14,7 @@ type LocationButtonProps = {
   className?: string;
   placeholder?: string;
   onClick?: () => void;
-};
+} & ComponentProps<typeof Button>;
 
 export const LocationButton: FC<LocationButtonProps> = ({
   direction,
@@ -24,18 +24,16 @@ export const LocationButton: FC<LocationButtonProps> = ({
   className,
   onClick,
   placeholder = "場所を選択する",
+  ...props
 }) => {
   return (
     <Button
       disabled={disabled}
       className={twMerge("relative", className)}
       onClick={onClick}
+      {...props}
     >
-      {direction === "to" && (
-        <>
-          <PinIcon />
-        </>
-      )}
+      {direction === "to" && <PinIcon />}
       {label && (
         <span className="absolute flex items-center h-full top-0 left-4 text-xs text-neutral-500 font-mono">
           {label}

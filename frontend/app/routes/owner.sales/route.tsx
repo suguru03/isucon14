@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChairIcon } from "~/components/icon/chair";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 import { DateInput } from "~/components/primitives/form/date";
 import { Tab } from "~/components/primitives/tab/tab";
 import { useClientProviderContext } from "~/contexts/owner-context";
@@ -78,7 +78,7 @@ export default function Index() {
       {sales ? (
         <>
           <div className="flex">
-            <PriceText
+            <Price
               value={sales.total_sales}
               size="2xl"
               bold
@@ -91,11 +91,7 @@ export default function Index() {
               <ListItem key={item.key} className="flex">
                 <ChairIcon model={item.model} />
                 <span className="ms-4">{item.name}</span>
-                <PriceText
-                  tagName="span"
-                  value={item.sales}
-                  className="ms-auto"
-                />
+                <Price tagName="span" value={item.sales} className="ms-auto" />
               </ListItem>
             ))}
           </List>

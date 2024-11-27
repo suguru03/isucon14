@@ -9,7 +9,7 @@ import {
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
@@ -154,57 +154,57 @@ export default function Index() {
   }, [setNearByChairs, currentLocation]);
 
   // TODO: 以下は上記が正常に返ったあとに削除する
-  // const [data, setData] = useState<NearByChair[]>([
-  //   {
-  //     id: "hoge",
-  //     current_coordinate: { latitude: 100, longitude: 100 },
-  //     model: "a",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "1",
-  //     current_coordinate: { latitude: 20, longitude: 20 },
-  //     model: "b",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "2",
-  //     current_coordinate: { latitude: -100, longitude: -100 },
-  //     model: "c",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "3",
-  //     current_coordinate: { latitude: -160, longitude: -100 },
-  //     model: "d",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "4",
-  //     current_coordinate: { latitude: -10, longitude: 100 },
-  //     model: "e",
-  //     name: "hoge",
-  //   },
-  // ]);
+  const [data, setData] = useState<NearByChair[]>([
+    {
+      id: "hoge",
+      current_coordinate: { latitude: 100, longitude: 100 },
+      model: "a",
+      name: "hoge",
+    },
+    {
+      id: "1",
+      current_coordinate: { latitude: 20, longitude: 20 },
+      model: "b",
+      name: "hoge",
+    },
+    {
+      id: "2",
+      current_coordinate: { latitude: -100, longitude: -100 },
+      model: "c",
+      name: "hoge",
+    },
+    {
+      id: "3",
+      current_coordinate: { latitude: -160, longitude: -100 },
+      model: "d",
+      name: "hoge",
+    },
+    {
+      id: "4",
+      current_coordinate: { latitude: -10, longitude: 100 },
+      model: "e",
+      name: "hoge",
+    },
+  ]);
 
-  // useEffect(() => {
-  //   const randomInt = (min: number, max: number) => {
-  //     return Math.floor(Math.random() * (max - min + 1)) + min;
-  //   };
-  //   const update = () => {
-  //     setData((data) =>
-  //       data.map((chair) => ({
-  //         ...chair,
-  //         current_coordinate: {
-  //           latitude: chair.current_coordinate.latitude + randomInt(-2, 2),
-  //           longitude: chair.current_coordinate.longitude + randomInt(-2, 2),
-  //         },
-  //       })),
-  //     );
-  //     setTimeout(update, 1000);
-  //   };
-  //   update();
-  // }, []);
+  useEffect(() => {
+    const randomInt = (min: number, max: number) => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+    const update = () => {
+      setData((data) =>
+        data.map((chair) => ({
+          ...chair,
+          current_coordinate: {
+            latitude: chair.current_coordinate.latitude + randomInt(-2, 2),
+            longitude: chair.current_coordinate.longitude + randomInt(-2, 2),
+          },
+        })),
+      );
+      setTimeout(update, 1000);
+    };
+    update();
+  }, []);
 
   return (
     <>
@@ -212,7 +212,7 @@ export default function Index() {
         from={currentLocation}
         to={destLocation}
         initialCoordinate={selectedLocation}
-        chairs={nearByChairs}
+        chairs={data}
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
         <LocationButton
@@ -237,22 +237,23 @@ export default function Index() {
           label="目的地"
         />
         {estimatePrice && (
-          <div className="flex mt-4">
-            <Text>推定運賃: </Text>
-            <PriceText className="px-4" value={estimatePrice.fare} />
-            <Text>(割引額: </Text>
-            <PriceText value={estimatePrice.discount} />
-            <Text>)</Text>
-          </div>
+          <Price
+            value={estimatePrice.fare}
+            pre="推定運賃"
+            discount={estimatePrice.discount}
+            className="mt-6 mb-4"
+          ></Price>
         )}
-        <Button
-          variant="primary"
-          className="w-full mt-6 font-bold"
-          onClick={() => void handleRideRequest()}
-          disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
-        >
-          ISURIDE
-        </Button>
+        {currentLocation && destLocation && (
+          <Button
+            variant="primary"
+            className="w-full font-bold"
+            onClick={() => void handleRideRequest()}
+            disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
+          >
+            ISURIDE
+          </Button>
+        )}
       </div>
       {isLocationSelectorModalOpen && (
         <Modal
