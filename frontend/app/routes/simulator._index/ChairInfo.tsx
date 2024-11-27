@@ -9,8 +9,7 @@ import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
-import { SimulatorChair } from "~/contexts/simulator-context";
-import { Coordinate } from "~/types";
+import { Coordinate, SimulatorChair } from "~/types";
 
 type Props = {
   chair: SimulatorChair;
