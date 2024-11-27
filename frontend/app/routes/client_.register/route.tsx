@@ -12,6 +12,7 @@ import { DateInput } from "~/components/primitives/form/date";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
+import { isClientApiError } from "~/types";
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,6 +29,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     username?: string;
     firstname?: string;
     lastname?: string;
+    register?: string;
   } = {};
 
   const username = String(formData.get("username"));
@@ -47,15 +49,35 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     return json({ errors });
   }
 
-  await fetchAppPostUsers({
-    body: {
-      date_of_birth: String(formData.get("date_of_birth")),
-      username: String(formData.get("username")),
-      firstname: String(formData.get("firstname")),
-      lastname: String(formData.get("lastname")),
-    },
-  });
-  return redirect(`/client/register-payment`);
+  try {
+    await fetchAppPostUsers({
+      body: {
+        date_of_birth: String(formData.get("date_of_birth")),
+        username: String(formData.get("username")),
+        firstname: String(formData.get("firstname")),
+        lastname: String(formData.get("lastname")),
+      },
+    });
+    return redirect(`/client/register-payment`);
+  } catch (e) {
+    console.error(`ERROR: ${JSON.stringify(e)}`);
+    if (isClientApiError(e)) {
+      if (
+        e.stack.status === 500 &&
+        e.stack.payload.includes("Duplicate entry")
+      ) {
+        errors.register =
+          "ユーザーの登録に失敗しました。入力されたユーザー名はすでに登録済みです";
+      } else {
+        errors.register = `ユーザーの登録に失敗しました。[${e.stack.payload}]`;
+      }
+    } else if (e instanceof Error) {
+      errors.register = `ユーザーの登録に失敗しました。[${e.message}]`;
+    } else {
+      errors.register = "ユーザーの登録に失敗しました。[Unknown Error]";
+    }
+    return json({ errors });
+  }
 };
 
 export default function ClientRegister() {
@@ -64,6 +86,11 @@ export default function ClientRegister() {
   return (
     <FormFrame>
       <h1 className="text-2xl font-semibold mb-8">ユーザー登録</h1>
+      {actionData?.errors?.register && (
+        <Text variant="danger" className="mt-2">
+          {actionData?.errors?.register}
+        </Text>
+      )}
       <Form className="flex flex-col gap-8" method="POST">
         <div>
           <TextInput
