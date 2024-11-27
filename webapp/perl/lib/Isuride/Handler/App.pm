@@ -291,14 +291,14 @@ sub app_post_rides ($app, $c) {
             # 初回利用で、初回利用クーポンがあれば必ず使う
             $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL FOR UPDATE}, $user->{id});
 
-            if (!$coupon->%*) {
+            if (!$coupon) {
                 # 無ければ他のクーポンを付与された順番に使う
                 $coupon = $app->dbh->select_row(
                     q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE},
                     $user->{id},
                 );
 
-                if ($coupon->%*) {
+                if ($coupon) {
                     $app->dbh->query(
                         q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?},
                         $ride_id, $user->{id}, $coupon->{code},
@@ -317,7 +317,7 @@ sub app_post_rides ($app, $c) {
                 $user->{id},
             );
 
-            if ($coupon->%*) {
+            if ($coupon) {
                 $app->dbh->query(q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?}, $ride_id, $user->{id}, $coupon->{code});
             }
         }
