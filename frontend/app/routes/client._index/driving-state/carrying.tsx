@@ -21,7 +21,13 @@ export const Carrying: FC<{
         title="目的地まで移動中"
         subTitle="快適なドライブをお楽しみください"
       >
-        <ChairIcon model={chair?.model ?? ""} width={100} />
+        <div style={{ transform: "scale(-1, 1)" }}>
+          <ChairIcon
+            model={chair?.model ?? ""}
+            width={100}
+            className="animate-shake"
+          />
+        </div>
       </ModalHeader>
       <LocationButton
         label="現在地"

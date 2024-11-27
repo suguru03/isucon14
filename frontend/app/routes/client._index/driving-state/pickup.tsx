@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { ChairIcon } from "~/components/icon/chair";
+import { HumanIcon } from "~/components/icon/human";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { RideInformation } from "~/components/modules/ride-information/ride-information";
@@ -18,7 +19,19 @@ export const Pickup: FC<{
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="椅子が到着しました" subTitle="ご乗車ください">
-        <ChairIcon model={chair?.model ?? ""} width={100} />
+        <div className="relative w-[160px]">
+          <HumanIcon
+            width={110}
+            height={110}
+            className="absolute left-0 bottom-[-5px]"
+          />
+          <ChairIcon
+            model={chair?.model ?? ""}
+            width={60}
+            height={60}
+            className="absolute bottom-0 right-0 animate-shake"
+          />
+        </div>
       </ModalHeader>
       <LocationButton
         label="現在地"

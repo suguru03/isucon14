@@ -18,7 +18,11 @@ export const Enroute: FC<{
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="椅子がマッチしました" subTitle="配車しています...">
-        <ChairIcon model={chair?.model ?? ""} width={100} />
+        <ChairIcon
+          model={chair?.model ?? ""}
+          width={100}
+          className="animate-shake"
+        />
       </ModalHeader>
       <LocationButton
         label="現在地"

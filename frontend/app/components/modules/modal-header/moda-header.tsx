@@ -17,7 +17,7 @@ export const ModalHeader: FC<
       <Text bold className={twMerge("mb-3", !!children && "mt-8")}>
         {title}
       </Text>
-      <Text size="xl" className="mb-8 text-neutral-500">
+      <Text size="xl" className="mb-8 text-neutral-500 text-center">
         {subTitle}
       </Text>
     </div>
