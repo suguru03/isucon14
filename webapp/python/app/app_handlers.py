@@ -342,12 +342,12 @@ def app_post_rides(
                 )
             else:
                 # 無ければ他のクーポンを付与された順番に使う
-                coupon = conn.execute(  # type: ignore
+                coupon = conn.execute(
                     text(
                         "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                     ),
                     {"user_id": user.id},
-                )
+                ).fetchone()
                 if coupon:
                     conn.execute(
                         text(
