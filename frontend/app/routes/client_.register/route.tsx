@@ -1,10 +1,18 @@
 import type { MetaFunction } from "@remix-run/node";
-import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
+import {
+  ClientActionFunctionArgs,
+  Form,
+  json,
+  redirect,
+  useActionData,
+} from "@remix-run/react";
 import { fetchAppPostUsers } from "~/apiClient/apiComponents";
 import { Button } from "~/components/primitives/button/button";
 import { DateInput } from "~/components/primitives/form/date";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
+import { Text } from "~/components/primitives/text/text";
+import { isClientApiError } from "~/types";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,21 +23,75 @@ export const meta: MetaFunction = () => {
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-  await fetchAppPostUsers({
-    body: {
-      date_of_birth: String(formData.get("date_of_birth")),
-      username: String(formData.get("username")),
-      firstname: String(formData.get("firstname")),
-      lastname: String(formData.get("lastname")),
-    },
-  });
-  return redirect(`/client/register-payment`);
+
+  // client validation
+  const errors: {
+    username?: string;
+    firstname?: string;
+    lastname?: string;
+    register?: string;
+  } = {};
+
+  const date_of_birth = String(formData.get("date_of_birth"));
+  const username = String(formData.get("username"));
+  const firstname = String(formData.get("firstname"));
+  const lastname = String(formData.get("lastname"));
+
+  if (username.length > 30) {
+    errors.username = "30文字以内で入力してください";
+  }
+  if (firstname.length > 30) {
+    errors.firstname = "30文字以内で入力してください";
+  }
+  if (lastname.length > 30) {
+    errors.lastname = "30文字以内で入力してください";
+  }
+  if (Object.keys(errors).length > 0) {
+    return json({ errors });
+  }
+
+  try {
+    await fetchAppPostUsers({
+      body: {
+        date_of_birth: date_of_birth,
+        username: username,
+        firstname: firstname,
+        lastname: lastname,
+      },
+    });
+    return redirect(`/client/register-payment`);
+  } catch (e) {
+    console.error(`ERROR: ${JSON.stringify(e)}`);
+    if (isClientApiError(e)) {
+      if (
+        e.stack.status === 500 &&
+        e.stack.payload.includes("Duplicate entry")
+      ) {
+        errors.register =
+          "ユーザーの登録に失敗しました。入力されたユーザー名はすでに登録済みです";
+      } else {
+        errors.register = `ユーザーの登録に失敗しました。[${e.stack.payload}]`;
+      }
+    } else if (e instanceof Error) {
+      errors.register = `ユーザーの登録に失敗しました。[${e.message}]`;
+    } else {
+      errors.register = "ユーザーの登録に失敗しました。[Unknown Error]";
+    }
+    return json({ errors });
+  }
 };
 
 export default function ClientRegister() {
+  const actionData = useActionData<typeof clientAction>();
+
   return (
     <FormFrame>
       <h1 className="text-2xl font-semibold mb-8">ユーザー登録</h1>
+      {actionData?.errors?.register && (
+        <Text variant="danger" className="mt-2">
+          {actionData?.errors?.register}
+        </Text>
+      )}
       <Form className="flex flex-col gap-8" method="POST">
         <div>
           <TextInput
@@ -38,13 +100,28 @@ export default function ClientRegister() {
             label="ユーザー名"
             required
           />
+          {actionData?.errors?.username && (
+            <Text variant="danger" className="mt-2">
+              {actionData?.errors?.username}
+            </Text>
+          )}
         </div>
         <div className="flex gap-4">
           <div className="w-full">
             <TextInput id="lastname" name="lastname" label="姓" required />
+            {actionData?.errors?.lastname && (
+              <Text variant="danger" className="mt-2">
+                {actionData?.errors?.lastname}
+              </Text>
+            )}
           </div>
           <div className="w-full">
             <TextInput id="firstname" name="firstname" label="名" required />
+            {actionData?.errors?.firstname && (
+              <Text variant="danger" className="mt-2">
+                {actionData?.errors?.firstname}
+              </Text>
+            )}
           </div>
         </div>
         <div>
