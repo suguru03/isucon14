@@ -32,6 +32,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     register?: string;
   } = {};
 
+  const date_of_birth = String(formData.get("date_of_birth"));
   const username = String(formData.get("username"));
   const firstname = String(formData.get("firstname"));
   const lastname = String(formData.get("lastname"));
@@ -52,10 +53,10 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   try {
     await fetchAppPostUsers({
       body: {
-        date_of_birth: String(formData.get("date_of_birth")),
-        username: String(formData.get("username")),
-        firstname: String(formData.get("firstname")),
-        lastname: String(formData.get("lastname")),
+        date_of_birth: date_of_birth,
+        username: username,
+        firstname: firstname,
+        lastname: lastname,
       },
     });
     return redirect(`/client/register-payment`);
