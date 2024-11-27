@@ -14,7 +14,7 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
-import { NearByChair } from "~/types";
+import { NearByChair, isClientApiError } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -38,11 +38,6 @@ export default function Index() {
   useEffect(() => {
     setInternalRideStatus(status);
   }, [status]);
-
-  // TODO: requestId をベースに配車キャンセルしたい
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const [requestId, setRequestId] = useState<string>("");
-  const [fare, setFare] = useState<number>();
 
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
@@ -108,22 +103,23 @@ export default function Index() {
     };
   }, [currentLocation, destLocation]);
 
-  const handleRideRequest = useCallback(async () => {
+  const handleRideRequest = useCallback(() => {
     if (!currentLocation || !destLocation) {
       return;
     }
     setInternalRideStatus("MATCHING");
-    await fetchAppPostRides({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
-      },
-    })
-      .then((res) => {
-        setRequestId(res.ride_id);
-        setFare(res.fare);
-      })
-      .catch((err) => console.error("Failed to POST /app/rides: %o", err));
+    try {
+      void fetchAppPostRides({
+        body: {
+          pickup_coordinate: currentLocation,
+          destination_coordinate: destLocation,
+        },
+      });
+    } catch (error) {
+      if (isClientApiError(error)) {
+        console.error(error);
+      }
+    }
   }, [currentLocation, destLocation]);
 
   // TODO: NearByChairのつなぎこみは後ほど行う
@@ -298,7 +294,6 @@ export default function Index() {
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {internalRideStatus === "ENROUTE" && (
