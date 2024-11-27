@@ -13,8 +13,8 @@ import {
   fetchAppGetNotification,
 } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import { getCookieValue } from "~/components/modules/session/cookie";
 import { isClientApiError, type ClientAppRide } from "~/types";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 /**
  * SSE用の通信をfetchで取得した時用のparse関数
