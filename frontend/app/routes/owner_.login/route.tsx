@@ -12,7 +12,7 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function ProviderRegister() {
+export default function OwnerRegister() {
   const [sessionToken, setSessionToken] = useState<string>();
   const navigate = useNavigate();
 
