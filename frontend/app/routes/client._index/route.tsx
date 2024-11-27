@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
 import {
   fetchAppGetNearbyChairs,
@@ -54,15 +54,14 @@ export default function Index() {
 
   const [locationSelectTarget, setLocationSelectTarget] =
     useState<LocationSelectTarget | null>(null);
+
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const onMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
-  useEffect(() => {
-    setLocationSelectorModalOpen(locationSelectTarget !== null);
-  }, [locationSelectTarget]);
+
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
@@ -77,13 +76,12 @@ export default function Index() {
     }
   }, [locationSelectTarget, selectedLocation]);
 
-  const [isStatusModalOpen, setStatusModalOpen] = useState(false);
-  useEffect(() => {
-    setStatusModalOpen(
+  const isStatusModalOpen = useMemo(() => {
+    return (
       internalStatus !== undefined &&
-        ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
-          internalStatus,
-        ),
+      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
+        internalStatus,
+      )
     );
   }, [internalStatus]);
 
@@ -228,6 +226,7 @@ export default function Index() {
           location={currentLocation}
           onClick={() => {
             setLocationSelectTarget("from");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="現在地を選択する"
           label="現在地"
@@ -238,6 +237,7 @@ export default function Index() {
           className="w-full"
           onClick={() => {
             setLocationSelectTarget("to");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="目的地を選択する"
           label="目的地"
@@ -298,7 +298,10 @@ export default function Index() {
         </Modal>
       )}
       {isStatusModalOpen && (
-        <Modal ref={statusModalRef} onClose={() => setStatusModalOpen(false)}>
+        <Modal
+          ref={statusModalRef}
+          onClose={() => setInternalStatus("COMPLETED")}
+        >
           {internalStatus === "MATCHING" && (
             <Matching
               destLocation={payload?.coordinate?.destination}
@@ -325,7 +328,11 @@ export default function Index() {
             />
           )}
           {internalStatus === "ARRIVED" && (
-            <Arrived onEvaluated={() => statusModalRef.current?.close()} />
+            <Arrived
+              onEvaluated={() => {
+                statusModalRef.current?.close();
+              }}
+            />
           )}
         </Modal>
       )}
