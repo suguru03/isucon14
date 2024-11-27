@@ -12,14 +12,22 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
 
-from ..middlewares import app_auth_middleware
-from ..models import Chair, ChairLocation, Owner, PaymentToken, Ride, RideStatus, User
-from ..payment_gateway import (
+from .middlewares import app_auth_middleware
+from .models import (
+    Chair,
+    ChairLocation,
+    Owner,
+    PaymentToken,
+    Ride,
+    RideStatus,
+    User,
+)
+from .payment_gateway import (
     PaymentGatewayPostPaymentRequest,
     request_payment_gateway_post_payment,
 )
-from ..sql import engine
-from ..utils import (
+from .sql import engine
+from .utils import (
     FARE_PER_DISTANCE,
     INITIAL_FARE,
     calculate_distance,

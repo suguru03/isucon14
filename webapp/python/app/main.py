@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from .routers import apps, chairs, owners
+from . import app_handlers, chair_handlers, owner_handlers
 from .sql import engine
 
 # TODO: このコメントを消す
@@ -13,9 +13,9 @@ from .sql import engine
 # logging.basicConfig(level=logging.INFO)
 # logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 app = FastAPI()
-app.include_router(apps.router)
-app.include_router(chairs.router)
-app.include_router(owners.router)
+app.include_router(app_handlers.router)
+app.include_router(chair_handlers.router)
+app.include_router(owner_handlers.router)
 
 
 class PostInitializeRequest(BaseModel):
