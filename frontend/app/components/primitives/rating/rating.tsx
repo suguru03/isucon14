@@ -1,18 +1,15 @@
-import { ComponentProps, FC } from "react";
+import type { ComponentProps, FC } from "react";
 import { twMerge } from "tailwind-merge";
+import { RatingStar } from "~/components/icon/rating-star";
 
 type RatingProps = ComponentProps<"div"> & {
-  name: string;
-  starSize?: number;
+  size?: number;
   rating: number;
-  setRating: React.Dispatch<React.SetStateAction<number>>;
 };
 
 export const Rating: FC<RatingProps> = ({
-  name,
-  starSize = 40,
+  size = 40,
   rating,
-  setRating,
   className,
   ...props
 }) => {
@@ -21,41 +18,14 @@ export const Rating: FC<RatingProps> = ({
       {Array.from({ length: 5 }).map((_, index) => {
         const starValue = index + 1;
         return (
-          <label
+          <RatingStar
             key={index}
-            htmlFor={`${name}-${starValue}`}
-            className="flex items-center"
-          >
-            <input
-              type="radio"
-              id={`${name}-${starValue}`}
-              name={name}
-              value={starValue}
-              aria-label={`Rating ${starValue}`}
-              onClick={() => setRating(starValue)}
-              className="hidden"
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill={starValue <= rating ? "currentColor" : "#d9d9d9"}
-              stroke={starValue <= rating ? "currentColor" : "#d9d9d9"}
-              className={`cursor-pointer ${rating >= index + 1 ? "text-yellow-400" : "text-neutral-300"}`}
-              width={starSize}
-              height={starSize}
-              onClick={() => setRating(starValue)}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-              />
-            </svg>
-          </label>
+            rated={starValue <= rating}
+            width={size}
+            height={size}
+          />
         );
       })}
-      <input type="hidden" name={name} value={rating} />
     </div>
   );
 };

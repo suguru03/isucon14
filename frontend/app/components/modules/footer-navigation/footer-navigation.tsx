@@ -13,7 +13,7 @@ export const FooterNavigation: FC<{
     | [NavigationMenuType, NavigationMenuType, NavigationMenuType];
 }> = ({ navigationMenus }) => {
   return (
-    <nav className="sticky bottom-[env(safe-area-inset-bottom)] z-10 border-t border-secondary-border bg-white">
+    <nav className="sticky bottom-[env(safe-area-inset-bottom)] z-10 border-t border-secondary-border bg-white h-16">
       <ul className="flex justify-around">
         {navigationMenus.map((menu, index) => (
           <li

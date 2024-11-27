@@ -213,6 +213,7 @@ export default function Index() {
         to={destLocation}
         initialCoordinate={selectedLocation}
         chairs={nearByChairs}
+        className="flex-1"
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
         <LocationButton
