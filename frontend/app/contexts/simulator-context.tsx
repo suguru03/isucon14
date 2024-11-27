@@ -134,37 +134,35 @@ export const useClientChairNotification = (id?: string) => {
       let timeoutId: ReturnType<typeof setTimeout>;
       let abortController: AbortController;
 
-      const polling = () => {
+      const polling = async () => {
         try {
-          async () => {
-            abortController = new AbortController();
-            const currentNotification = await fetchChairGetNotification(
-              {},
-              abortController.signal,
-            );
-            setNotification((preRequest) => {
-              if (
-                preRequest === undefined ||
-                currentNotification?.data?.status !== preRequest.data?.status ||
-                currentNotification?.data?.ride_id !== preRequest.data?.ride_id
-              ) {
-                return {
-                  data: currentNotification.data,
-                  retry_after_ms: currentNotification.retry_after_ms,
-                  contentType: "json",
-                };
-              } else {
-                return preRequest;
-              }
-            });
-            timeoutId = setTimeout(polling, retryAfterMs);
-          };
+          abortController = new AbortController();
+          const currentNotification = await fetchChairGetNotification(
+            {},
+            abortController.signal,
+          );
+          setNotification((preRequest) => {
+            if (
+              preRequest === undefined ||
+              currentNotification?.data?.status !== preRequest.data?.status ||
+              currentNotification?.data?.ride_id !== preRequest.data?.ride_id
+            ) {
+              return {
+                data: currentNotification.data,
+                retry_after_ms: currentNotification.retry_after_ms,
+                contentType: "json",
+              };
+            } else {
+              return preRequest;
+            }
+          });
+          timeoutId = setTimeout(() => void polling(), retryAfterMs);
         } catch (error) {
           console.error(error);
         }
       };
 
-      polling();
+      void polling();
 
       return () => {
         abortController.abort();
