@@ -47,7 +47,7 @@ export const Button: FC<
       case "sm":
         return "py-2 px-3";
       case "md":
-        return "py-3 px-4";
+        return "py-3.5 px-4";
     }
   }, [size]);
 

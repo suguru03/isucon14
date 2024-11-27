@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Loading } from "~/components/icon/loading";
 import { LocationButton } from "~/components/modules/location-button/location-button";
+import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Text } from "~/components/primitives/text/text";
 import { Coordinate } from "~/types";
@@ -12,10 +13,9 @@ export const Matching: FC<{
 }> = ({ pickup, destLocation, fare }) => {
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
-      <Loading className="mb-8" />
-      <Text size="xl" className="mb-6">
-        マッチングしています
-      </Text>
+      <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
+        <Loading size={120} />
+      </ModalHeader>
       <LocationButton
         label="現在地"
         location={pickup}

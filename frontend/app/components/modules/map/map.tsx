@@ -13,7 +13,7 @@ import {
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
 import { ChairIcon } from "~/components/icon/chair";
-import { ToIcon } from "~/components/icon/to";
+import { PinIcon } from "~/components/icon/pin";
 import { Button } from "~/components/primitives/button/button";
 import type { Coordinate, DisplayPos, NearByChair } from "~/types";
 
@@ -121,7 +121,7 @@ const SelectorLayer: FC<{
         <rect x="50%" y="0" width={2} height={"100%"} />
         <rect x="0" y="50%" width={"100%"} height={2} />
       </svg>
-      <ToIcon
+      <PinIcon
         className="absolute mt-[-8px] opacity-60"
         color={pinColor}
         width={pinSize}
@@ -205,7 +205,7 @@ const PinLayer: FC<{
   return (
     <div className="flex w-full h-full absolute top-0 left-0">
       {fromPos && (
-        <ToIcon
+        <PinIcon
           className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
           color={colors.black}
           width={PinSize}
@@ -216,7 +216,7 @@ const PinLayer: FC<{
         />
       )}
       {toPos && (
-        <ToIcon
+        <PinIcon
           className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
           color={colors.red[500]}
           width={PinSize}
@@ -224,7 +224,7 @@ const PinLayer: FC<{
           style={{
             transform: `translate(${-toPos.x - PinSize / 2}px, ${-toPos.y - PinSize - 8}px)`,
           }}
-        ></ToIcon>
+        ></PinIcon>
       )}
     </div>
   );

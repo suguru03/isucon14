@@ -67,7 +67,7 @@ const CoordinatePickup: FC<{
       <LocationButton
         className="w-full"
         location={coordinateState.coordinate}
-        label="設定位置"
+        label="椅子位置を設定"
         onClick={handleOpenModal}
       />
       {visibleModal && (
@@ -101,7 +101,7 @@ const CoordinatePickup: FC<{
   );
 };
 
-export const SimulatorChairInfo: FC<{ chair: SimulatorChair }> = ({
+export const SimulatorChairInformation: FC<{ chair: SimulatorChair }> = ({
   chair,
 }) => {
   const [activate, setActivate] = useState<boolean>(true);

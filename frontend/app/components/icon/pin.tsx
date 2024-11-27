@@ -1,6 +1,6 @@
 import type { ComponentProps, FC } from "react";
 
-export const ToIcon: FC<{ color?: string } & ComponentProps<"svg">> = ({
+export const PinIcon: FC<{ color?: string } & ComponentProps<"svg">> = ({
   color,
   ...props
 }) => {

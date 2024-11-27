@@ -2,7 +2,7 @@ import { Form } from "@remix-run/react";
 import { MouseEventHandler, useCallback, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
-import { ToIcon } from "~/components/icon/to";
+import { PinIcon } from "~/components/icon/pin";
 import { Button } from "~/components/primitives/button/button";
 import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
@@ -27,8 +27,8 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
             evaluation: rating,
           },
         });
-      } catch (e) {
-        console.error("ERROR: %o", e);
+      } catch (error) {
+        console.error(error);
       }
       onEvaluated();
     },
@@ -38,8 +38,10 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   return (
     <Form className="h-full flex flex-col items-center justify-center">
       <div className="flex flex-col items-center gap-6 mb-14">
-        <ToIcon className="size-[90px]" color={colors.red[500]} />
-        <Text size="xl">目的地に到着しました</Text>
+        <PinIcon className="size-[90px]" color={colors.red[500]} />
+        <Text size="xl" bold>
+          目的地に到着しました
+        </Text>
       </div>
       <div className="flex flex-col items-center w-80">
         <Text className="mb-4">今回のドライブはいかがでしたか？</Text>
@@ -53,9 +55,9 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
           variant="primary"
           type="submit"
           onClick={onClick}
-          className="w-full mt-1"
+          className="w-full"
         >
-          評価してドライビングを完了
+          評価して料金を支払う
         </Button>
       </div>
     </Form>
