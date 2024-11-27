@@ -1,8 +1,8 @@
 import { getCookie } from "hono/cookie";
-import type { Chair, Owner, User } from "./types/models.js";
-import type { RowDataPacket } from "mysql2/promise";
 import { createMiddleware } from "hono/factory";
+import type { RowDataPacket } from "mysql2/promise";
 import type { Environment } from "./types/hono.js";
+import type { Chair, Owner, User } from "./types/models.js";
 
 export const appAuthMiddleware = createMiddleware<Environment>(
   async (ctx, next) => {

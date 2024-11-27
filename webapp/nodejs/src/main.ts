@@ -3,13 +3,6 @@ import { Hono, type Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import mysql from "mysql2/promise";
 import {
-  appAuthMiddleware,
-  chairAuthMiddleware,
-  ownerAuthMiddleware,
-} from "./middlewares.js";
-import type { Environment } from "./types/hono.js";
-import { exec } from "./utils/exec.js";
-import {
   appGetNearbyChairs,
   appGetNotification,
   appGetRides,
@@ -27,10 +20,17 @@ import {
   chairPostRideStatus,
 } from "./chair_handlers.js";
 import {
+  appAuthMiddleware,
+  chairAuthMiddleware,
+  ownerAuthMiddleware,
+} from "./middlewares.js";
+import {
   ownerGetChairs,
   ownerGetSales,
   ownerPostOwners,
 } from "./owner_handlers.js";
+import type { Environment } from "./types/hono.js";
+import { exec } from "./utils/exec.js";
 
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",

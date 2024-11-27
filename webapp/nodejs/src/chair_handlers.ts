@@ -1,11 +1,11 @@
 import type { Context } from "hono";
-import type { Environment } from "./types/hono.js";
+import { setCookie } from "hono/cookie";
 import type { RowDataPacket } from "mysql2";
+import { ulid } from "ulid";
+import { getLatestRideStatus } from "./common.js";
+import type { Environment } from "./types/hono.js";
 import type { ChairLocation, Owner, Ride, RideStatus } from "./types/models.js";
 import { secureRandomStr } from "./utils/random.js";
-import { setCookie } from "hono/cookie";
-import { getLatestRideStatus } from "./common.js";
-import { ulid } from "ulid";
 
 export const chairPostChairs = async (ctx: Context<Environment>) => {
   const reqJson = await ctx.req.json();
@@ -38,10 +38,15 @@ export const chairPostChairs = async (ctx: Context<Environment>) => {
 export const chairPostActivity = async (ctx: Context<Environment>) => {
   const chair = ctx.var.chair;
   const reqJson = await ctx.req.json();
-  await ctx.var.dbConn.query("UPDATE chairs SET is_active = ? WHERE id = ?", [
-    reqJson.is_active,
-    chair.id,
-  ]);
+  try {
+    await ctx.var.dbConn.query("UPDATE chairs SET is_active = ? WHERE id = ?", [
+      reqJson.is_active,
+      chair.id,
+    ]);
+  } catch (e) {
+    console.error(e);
+    return ctx.text(`${e}`, 500);
+  }
   return ctx.status(204);
 };
 
