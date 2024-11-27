@@ -4,13 +4,16 @@ import { LocationButton } from "~/components/modules/location-button/location-bu
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
+import { useClientAppRequestContext } from "~/contexts/user-context";
 import { Coordinate } from "~/types";
 
 export const Matching: FC<{
   pickup?: Coordinate;
   destLocation?: Coordinate;
-  fare?: number;
-}> = ({ pickup, destLocation, fare }) => {
+}> = ({ pickup, destLocation }) => {
+  const { payload } = useClientAppRequestContext();
+  const fare = payload?.fare;
+
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
@@ -29,7 +32,7 @@ export const Matching: FC<{
         className="w-80"
         disabled
       />
-      <Price value={fare} pre="予定運賃" className="mt-6" />
+      {fare && <Price value={fare} pre="予定運賃" className="mt-6" />}
     </div>
   );
 };
