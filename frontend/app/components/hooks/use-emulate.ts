@@ -4,7 +4,7 @@ import {
   fetchChairPostRideStatus,
 } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
-import { SimulatorChair } from "~/contexts/simulator-context";
+import type { SimulatorChair } from "~/types";
 
 const move = (
   currentCoordinate: Coordinate,
