@@ -298,7 +298,7 @@ export default function Index() {
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
+              optimisticFare={fare}
             />
           )}
           {internalRideStatus === "ENROUTE" && (
