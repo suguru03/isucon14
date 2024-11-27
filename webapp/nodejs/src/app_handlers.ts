@@ -113,7 +113,7 @@ export const appPostUsers = async (ctx: Context<Environment>) => {
     return ctx.text(`${e}`, 500);
   }
 
-  setCookie(ctx, "app_sesion", accessToken, {
+  setCookie(ctx, "app_session", accessToken, {
     path: "/",
   });
 
