@@ -353,7 +353,7 @@ sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_
         $pickup_longitude = $ride->{pickup_longitude};
 
         #  すでにクーポンが紐づいているならそれの割引額を参照
-        $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE  used_by = ?}, $ride->{id});
+        $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE used_by = ?}, $ride->{id});
 
         $discount = $coupon->{discount};
 
