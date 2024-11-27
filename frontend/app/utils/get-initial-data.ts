@@ -1,30 +1,27 @@
-type SimulateChair = { id: string; name: string; model: string; token: string };
+type InitialChair = {
+  id: string;
+  owner_id: string;
+  name: string;
+  model: string;
+  token: string;
+};
 
-type SimulateOwner = {
+type InitialOwner = {
   id: string;
   name: string;
   token: string;
-  chair: SimulateChair;
 };
 
-type JsonType = { owners: SimulateOwner[] };
+type JsonType = { owners: InitialOwner[]; targetSimulatorChair?: InitialChair };
 
-const initialOwnerData =
-  __INITIAL_OWNER_DATA__ || ({ owners: [] } satisfies JsonType);
+const initialOwnerData = __INITIAL_OWNER_DATA__;
 
 export const getOwners = () => {
-  return initialOwnerData.owners?.map((owner) => ({
+  return initialOwnerData?.owners?.map((owner) => ({
     ...owner,
-    chair: owner.chairs[0],
   }));
 };
 
-export const getChairs = (ownerId: SimulateOwner["id"]) => {
-  return (
-    initialOwnerData.owners.find((owner) => owner.id === ownerId)?.chairs ?? []
-  );
-};
-
-export const getSimulateChair = (): SimulateChair | undefined => {
-  return initialOwnerData.owners?.[0]?.chairs?.[0];
+export const getSimulateChair = (): InitialChair | undefined => {
+  return initialOwnerData?.targetSimulatorChair;
 };
