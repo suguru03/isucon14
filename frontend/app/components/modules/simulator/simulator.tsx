@@ -1,10 +1,11 @@
-import { useEmulator } from "~/components/hooks/use-emulate";
-import { useSimulatorContext } from "~/contexts/simulator-context";
-import { ChairInfo } from "./ChairInfo";
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
+import { useEmulator } from "~/components/hooks/use-emulate";
+import { Text } from "~/components/primitives/text/text";
+import { useSimulatorContext } from "~/contexts/simulator-context";
+import { SimulatorChairInfo } from "../simulator-chair-info/simulator-chair-info";
 
-export function Simulator() {
+export const Simulator: FC = () => {
   const { targetChair } = useSimulatorContext();
   useEmulator(targetChair);
   useEffect(() => {
@@ -23,7 +24,13 @@ export function Simulator() {
   }, []);
   return (
     <div className="bg-white rounded shadow w-[400px] px-4 py-2">
-      {targetChair !== undefined ? <ChairInfo chair={targetChair} /> : null}
+      {targetChair !== undefined ? (
+        <SimulatorChairInfo chair={targetChair} />
+      ) : (
+        <Text className="m-4" size="sm">
+          椅子のデータがありません
+        </Text>
+      )}
     </div>
   );
-}
+};
