@@ -32,10 +32,10 @@ const StatusList: FC<
     currentStatus: RideStatus;
   }
 > = ({ currentStatus, className, ...props }) => {
-  const [display, colorClass] = LabelStyleList[currentStatus];
+  const [labelName, colorClass] = LabelStyleList[currentStatus];
   return (
     <div className={twMerge(`font-bold ${colorClass}`, className)} {...props}>
-      <span className="before:content-['●'] before:mr-2">{display}</span>
+      <span className="before:content-['●'] before:mr-2">{labelName}</span>
     </div>
   );
 };
