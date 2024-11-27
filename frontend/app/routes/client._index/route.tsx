@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
 import {
   fetchAppGetNearbyChairs,
@@ -7,7 +7,6 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { PriceText } from "~/components/modules/price-text/price-text";
@@ -59,34 +58,24 @@ export default function Index() {
   const onMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
-  const isLocationSelectorModalOpen = useMemo(
-    () => locationSelectTarget !== null,
-    [locationSelectTarget],
-  );
+  const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
+    useState(false);
+  useEffect(() => {
+    setLocationSelectorModalOpen(locationSelectTarget !== null);
+  }, [locationSelectTarget]);
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
-  const handleCloseLocationSelectorModal = useCallback(() => {
-    // Modal を閉じるアニメーションをトリガーするため close() を呼ぶ
-    if (locationSelectorModalRef.current) {
-      locationSelectorModalRef.current.close();
-    }
-    // 少し時間をおいた後、Modal 要素を DOM から外す
-    setTimeout(() => setLocationSelectTarget(null), 300);
-  }, []);
-  useOnClickOutside(locationSelectorModalRef, handleCloseLocationSelectorModal);
   const handleConfirmLocation = useCallback(() => {
     if (locationSelectTarget === "from") {
       setCurrentLocation(selectedLocation);
     } else if (locationSelectTarget === "to") {
       setDestLocation(selectedLocation);
     }
-    handleCloseLocationSelectorModal();
-  }, [
-    locationSelectTarget,
-    selectedLocation,
-    handleCloseLocationSelectorModal,
-  ]);
+    if (locationSelectorModalRef.current) {
+      locationSelectorModalRef.current.close();
+    }
+  }, [locationSelectTarget, selectedLocation]);
 
   const [isStatusModalOpen, setStatusModalOpen] = useState(false);
   useEffect(() => {
@@ -99,14 +88,6 @@ export default function Index() {
   }, [internalStatus]);
 
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  const handleCloseStatusModal = useCallback(() => {
-    // Modal を閉じるアニメーションをトリガーするため close() を呼ぶ
-    if (statusModalRef.current) {
-      statusModalRef.current.close();
-    }
-    // 少し時間をおいた後、Modal 要素を DOM から外す
-    setTimeout(() => setStatusModalOpen(false), 300);
-  }, []);
 
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   useEffect(() => {
@@ -282,7 +263,7 @@ export default function Index() {
       {isLocationSelectorModalOpen && (
         <Modal
           ref={locationSelectorModalRef}
-          onClose={handleCloseLocationSelectorModal}
+          onClose={() => setLocationSelectorModalOpen(false)}
         >
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
@@ -317,7 +298,7 @@ export default function Index() {
         </Modal>
       )}
       {isStatusModalOpen && (
-        <Modal ref={statusModalRef}>
+        <Modal ref={statusModalRef} onClose={() => setStatusModalOpen(false)}>
           {internalStatus === "MATCHING" && (
             <Matching
               destLocation={payload?.coordinate?.destination}
@@ -344,7 +325,7 @@ export default function Index() {
             />
           )}
           {internalStatus === "ARRIVED" && (
-            <Arrived onEvaluated={handleCloseStatusModal} />
+            <Arrived onEvaluated={() => statusModalRef.current?.close()} />
           )}
         </Modal>
       )}
