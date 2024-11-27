@@ -11,7 +11,6 @@ export const Matching: FC<{
   destLocation?: Coordinate;
   fare?: number;
 }> = ({ pickup, destLocation, fare }) => {
-  fare = 500;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
