@@ -30,7 +30,7 @@ import {
   ownerPostOwners,
 } from "./owner_handlers.js";
 import type { Environment } from "./types/hono.js";
-import { exec } from "./utils/exec.js";
+import { execSync } from "node:child_process";
 
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
@@ -102,7 +102,7 @@ serve(
 async function postInitialize(ctx: Context<Environment>) {
   const body = await ctx.req.json<{ payment_server: string }>();
   try {
-    await exec(["../sql/init.sh"]);
+    execSync("../sql/init.sh", { stdio: "inherit" });
   } catch (error) {
     return ctx.text(`Failed to initialize\n${error}`, 500);
   }
