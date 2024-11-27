@@ -8,10 +8,13 @@ require (
 	github.com/gavv/httpexpect/v2 v2.16.0
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/guregu/null/v5 v5.0.0
 	github.com/isucon/isucandar v0.0.0-20220322062028-6dd56dc57d72
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/mattn/go-gimei v0.0.4
 	github.com/ogen-go/ogen v1.5.0
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/samber/lo v1.47.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
@@ -28,6 +31,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect

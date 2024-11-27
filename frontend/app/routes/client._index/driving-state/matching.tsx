@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { CarYellowIcon } from "~/components/icon/car-yellow";
+import { Loading } from "~/components/icon/loading";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Text } from "~/components/primitives/text/text";
@@ -12,7 +12,7 @@ export const Matching: FC<{
 }> = ({ pickup, destLocation, fare }) => {
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
-      <CarYellowIcon className="size-[76px] mb-4" />
+      <Loading className="mb-8" />
       <Text size="xl" className="mb-6">
         マッチングしています
       </Text>

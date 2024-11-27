@@ -1,6 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import colors from "tailwindcss/colors";
 import {
+  fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
@@ -13,6 +15,7 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
+import { NearByChair } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Dispatched } from "./driving-state/dispatched";
@@ -30,8 +33,7 @@ type Action = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
-  const { status, payload } = useClientAppRequestContext();
-
+  const { status, payload: payload } = useClientAppRequestContext();
   const [action, setAction] = useState<Action>();
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
@@ -66,9 +68,12 @@ export default function Index() {
   // TODO: requestId をベースに配車キャンセルしたい
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
+
   const [fare, setFare] = useState<number>();
   const isStatusOpenModal = useMemo(
-    () => status !== undefined && status !== "COMPLETED",
+    () =>
+      status &&
+      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(status),
     [status],
   );
 
@@ -91,13 +96,16 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-
-    fetchAppPostRidesEstimatedFare({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
+    const abortController = new AbortController();
+    fetchAppPostRidesEstimatedFare(
+      {
+        body: {
+          pickup_coordinate: currentLocation,
+          destination_coordinate: destLocation,
+        },
       },
-    })
+      abortController.signal,
+    )
       .then((res) =>
         setEstimatePrice({ fare: res.fare, discount: res.discount }),
       )
@@ -105,9 +113,92 @@ export default function Index() {
         console.error(err);
         setEstimatePrice(undefined);
       });
-  }, [currentLocation, destLocation]);
+    return () => {
+      abortController.abort();
+    };
+  }, [selectedLocation, destLocation, currentLocation]);
 
   useOnClickOutside(selectorModalRef, handleSelectorModalClose);
+
+  // TODO: NearByChairのつなぎこみは後ほど行う
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [nearByChairs, setNearByChairs] = useState<NearByChair[]>();
+  useEffect(() => {
+    if (!currentLocation) {
+      return;
+    }
+    const abortController = new AbortController();
+    void (async () => {
+      try {
+        const { chairs } = await fetchAppGetNearbyChairs(
+          {
+            queryParams: {
+              latitude: currentLocation?.latitude,
+              longitude: currentLocation?.longitude,
+            },
+          },
+          abortController.signal,
+        );
+        setNearByChairs(chairs);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+    return () => abortController.abort();
+  }, [setNearByChairs, currentLocation]);
+
+  // TODO: 以下は上記が正常に返ったあとに削除する
+  // const [data, setData] = useState<NearByChair[]>([
+  //   {
+  //     id: "hoge",
+  //     current_coordinate: { latitude: 100, longitude: 100 },
+  //     model: "a",
+  //     name: "hoge",
+  //   },
+  //   {
+  //     id: "1",
+  //     current_coordinate: { latitude: 20, longitude: 20 },
+  //     model: "b",
+  //     name: "hoge",
+  //   },
+  //   {
+  //     id: "2",
+  //     current_coordinate: { latitude: -100, longitude: -100 },
+  //     model: "c",
+  //     name: "hoge",
+  //   },
+  //   {
+  //     id: "3",
+  //     current_coordinate: { latitude: -160, longitude: -100 },
+  //     model: "d",
+  //     name: "hoge",
+  //   },
+  //   {
+  //     id: "4",
+  //     current_coordinate: { latitude: -10, longitude: 100 },
+  //     model: "e",
+  //     name: "hoge",
+  //   },
+  // ]);
+
+  // useEffect(() => {
+  //   const randomInt = (min: number, max: number) => {
+  //     return Math.floor(Math.random() * (max - min + 1)) + min;
+  //   };
+  //   const update = () => {
+  //     setData((data) =>
+  //       data.map((chair) => ({
+  //         ...chair,
+  //         current_coordinate: {
+  //           latitude: chair.current_coordinate.latitude + randomInt(-2, 2),
+  //           longitude: chair.current_coordinate.longitude + randomInt(-2, 2),
+  //         },
+  //       })),
+  //     );
+  //     setTimeout(update, 1000);
+  //   };
+  //   update();
+  // }, []);
 
   return (
     <>
@@ -115,6 +206,7 @@ export default function Index() {
         from={currentLocation}
         to={destLocation}
         initialCoordinate={selectedLocation}
+        chairs={nearByChairs}
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
         <LocationButton
@@ -162,6 +254,9 @@ export default function Index() {
                 onMove={onMove}
                 from={currentLocation}
                 to={destLocation}
+                selectorPinColor={
+                  action === "from" ? colors.black : colors.red[500]
+                }
                 initialCoordinate={
                   action === "from" ? currentLocation : destLocation
                 }
@@ -193,21 +288,18 @@ export default function Index() {
             <Enroute
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "PICKUP" && (
             <Dispatched
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "CARRYING" && (
             <Carrying
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
-              fare={fare}
             />
           )}
           {status === "ARRIVED" && <Arrived />}

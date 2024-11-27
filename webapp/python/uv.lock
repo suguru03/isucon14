@@ -334,18 +334,6 @@ wheels = [
 ]
 
 [[package]]
-name = "gunicorn"
-version = "23.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029 },
-]
-
-[[package]]
 name = "h11"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -449,16 +437,17 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
-    { name = "fastapi", extra = ["standard"] },
+    { name = "fastapi" },
     { name = "pymysql" },
     { name = "python-ulid" },
     { name = "sqlalchemy" },
     { name = "urllib3" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "gunicorn" },
+    { name = "fastapi", extra = ["standard"] },
     { name = "icecream" },
     { name = "nox" },
 ]
@@ -466,16 +455,17 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cryptography", specifier = ">=43.0.3" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.5" },
+    { name = "fastapi", specifier = ">=0.115.5" },
     { name = "pymysql", specifier = ">=1.1.1" },
     { name = "python-ulid", specifier = ">=3.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.36" },
     { name = "urllib3", specifier = ">=2.2.3" },
+    { name = "uvicorn", specifier = ">=0.32.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "gunicorn", specifier = ">=23.0.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.5" },
     { name = "icecream", specifier = ">=2.1.3" },
     { name = "nox", specifier = ">=2024.10.9" },
 ]

@@ -1,3 +1,6 @@
+SET CHARACTER_SET_CLIENT = utf8mb4;
+SET CHARACTER_SET_CONNECTION = utf8mb4;
+
 USE isuride;
 
 DROP TABLE IF EXISTS settings;
@@ -12,7 +15,7 @@ CREATE TABLE settings
 DROP TABLE IF EXISTS chair_models;
 CREATE TABLE chair_models
 (
-  name  VARCHAR(30) NOT NULL COMMENT '椅子モデル名',
+  name  VARCHAR(50) NOT NULL COMMENT '椅子モデル名',
   speed INTEGER     NOT NULL COMMENT '移動速度',
   PRIMARY KEY (name)
 )

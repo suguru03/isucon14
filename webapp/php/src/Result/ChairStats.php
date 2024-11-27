@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace IsuRide\Result;
 
-use IsuRide\Model\AppGetNotification200ResponseChairStats;
+use IsuRide\Model\UserNotificationDataChairStats;
 use Throwable;
 
 readonly class ChairStats
 {
     /**
-     * @param AppGetNotification200ResponseChairStats $stats
+     * @param UserNotificationDataChairStats $stats
      * @param Throwable|null $error
      */
     public function __construct(
-        public AppGetNotification200ResponseChairStats $stats,
+        public UserNotificationDataChairStats $stats,
         public ?Throwable $error = null
     ) {
     }

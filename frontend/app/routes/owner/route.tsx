@@ -3,7 +3,8 @@ import { Outlet } from "@remix-run/react";
 import { CircleIcon } from "~/components/icon/circle";
 import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { OwnerHeader } from "~/components/modules/owner-header/owner-header";
-import { ProviderProvider } from "~/contexts/provider-context";
+import { MainFrame } from "~/components/primitives/frame/frame";
+import { ProviderProvider } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,14 +16,16 @@ export const meta: MetaFunction = () => {
 export default function ProviderLayout() {
   return (
     <ProviderProvider>
-      <OwnerHeader />
-      <Outlet />
-      <FooterNavigation
-        navigationMenus={[
-          { icon: CircleIcon, link: "/owner/", label: "HOME" },
-          { icon: CircleIcon, link: "/owner/sales", label: "SALES" },
-        ]}
-      />
+      <MainFrame>
+        <OwnerHeader />
+        <Outlet />
+        <FooterNavigation
+          navigationMenus={[
+            { icon: CircleIcon, link: "/owner/", label: "HOME" },
+            { icon: CircleIcon, link: "/owner/sales", label: "SALES" },
+          ]}
+        />
+      </MainFrame>
     </ProviderProvider>
   );
 }

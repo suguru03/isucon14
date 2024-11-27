@@ -7,10 +7,9 @@ namespace IsuRide\Handlers;
 use DateTimeImmutable;
 use DateTimeZone;
 use Fig\Http\Message\StatusCodeInterface;
-use IsuRide\Database\Model\ChairLocation;
 use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\RideStatus;
-use IsuRide\Model\AppGetNotification200ResponseChairStats;
+use IsuRide\Model\UserNotificationDataChairStats;
 use IsuRide\Result\ChairStats;
 use PDO;
 use PDOException;
@@ -147,7 +146,7 @@ abstract class AbstractHttpHandler
      */
     protected function getChairStats(PDO $tx, string $chairId): ChairStats
     {
-        $stats = new AppGetNotification200ResponseChairStats();
+        $stats = new UserNotificationDataChairStats();
         $rides = [];
         $stmt = $tx->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC');
         $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
@@ -172,30 +171,7 @@ abstract class AbstractHttpHandler
         }
         $totalRideCount = count($rides);
         $totalEvaluation = 0.0;
-        $recentRides = [];
         foreach ($rides as $ride) {
-            $chairLocations = [];
-            try {
-                $stmt = $tx->prepare(
-                    'SELECT * FROM chair_locations WHERE chair_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at'
-                );
-                $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
-                $stmt->bindValue(2, $ride->createdAt, PDO::PARAM_STR);
-                $stmt->bindValue(3, $ride->updatedAt, PDO::PARAM_STR);
-                $stmt->execute();
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($result as $row) {
-                    $chairLocations[] = new ChairLocation(
-                        id: $row['id'],
-                        chairId: $row['chair_id'],
-                        latitude: $row['latitude'],
-                        longitude: $row['longitude'],
-                        createdAt: $row['created_at']
-                    );
-                }
-            } catch (PDOException $e) {
-                return new ChairStats($stats, $e);
-            }
             /** @var RideStatus[] $rideStatuses */
             $rideStatuses = [];
             try {

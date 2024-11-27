@@ -73,21 +73,29 @@ var (
 		"ComfortWorks",
 		"Artisan Seats",
 	}
+	initOwnerNames = []string{
+		"Seat Revival",
+		"快座製作所",
+		"匠椅子製作所",
+		"つくる椅子株式会社",
+		"NextStep Cab",
+	}
 )
 
 func init() {
 	// 内部データをロードさせておく
 	_ = gimei.NewName()
-	ownerNames = lo.Shuffle(ownerNames)
+	ownerNames = lo.Shuffle(lo.Filter(ownerNames, func(name string, _ int) bool { return !lo.Contains(initOwnerNames, name) }))
 }
 
 func GenerateOwnerName() string {
 	return ownerNames[int(ownerNamesIdx.Add(1))%len(ownerNames)]
 }
-func GenerateChairName() string    { return gofakeit.PetName() }
-func GenerateChairModel() string   { return gofakeit.CarModel() }
 func GenerateLastName() string     { return gimei.NewName().Last.Kanji() }
 func GenerateFirstName() string    { return gimei.NewName().First.Kanji() }
 func GenerateUserName() string     { return gofakeit.Username() }
 func GenerateDateOfBirth() string  { return gofakeit.DateRange(dateStart, dateEnd).Format("2006-01-02") }
 func GeneratePaymentToken() string { return gofakeit.LetterN(100) }
+func GenerateHexString(n int) string {
+	return lo.RandomString(n, []rune("0123456789abcdef"))
+}

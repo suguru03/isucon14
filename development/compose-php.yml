@@ -21,7 +21,6 @@ services:
       - ../webapp/sql:/home/isucon/webapp/sql
       - ../webapp/php:/home/isucon/webapp/php
       - ./php/php-fpm.d/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
-      - ./php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment:
       ISUCON_DB_HOST: db
       ISUCON_DB_PORT: 3306
@@ -32,7 +31,7 @@ services:
       db:
         condition: service_healthy
   db:
-    image: mysql:8
+    image: public.ecr.aws/docker/library/mysql:8
     environment:
       ENV: local-dev
       MYSQL_ROOT_PASSWORD: isucon

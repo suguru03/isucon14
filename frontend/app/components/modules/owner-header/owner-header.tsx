@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { useClientProviderContext } from "~/contexts/provider-context";
+import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const OwnerHeader: FC = () => {
   const { provider } = useClientProviderContext();

@@ -5,7 +5,9 @@ https://github.com/isucon/isucon14/blob/main/webapp/go/chair_handlers.go
 TODO: このdocstringを消す
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from http import HTTPStatus
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
@@ -30,13 +32,13 @@ class ChairPostChairsResponse(BaseModel):
     owner_id: str
 
 
-@router.post("/chairs", status_code=status.HTTP_201_CREATED)
+@router.post("/chairs", status_code=HTTPStatus.CREATED)
 def chair_post_chairs(
     req: ChairPostChairsRequest, resp: Response
 ) -> ChairPostChairsResponse:
     if req.name == "" or req.model == "" or req.chair_register_token == "":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="some of required fields(name, model, chair_register_token) are empty",
         )
 
@@ -49,9 +51,10 @@ def chair_post_chairs(
         ).fetchone()
         if row is None:
             raise HTTPException(
-                status_code=status.UNAUTHORIZED, detail="invalid chair_register_token"
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="invalid chair_register_token",
             )
-        owner = Owner(**row._mapping)
+        owner = Owner.model_validate(row)
 
     chair_id = str(ULID())
     access_token = secure_random_str(32)
@@ -79,7 +82,7 @@ class PostChairActivityRequest(BaseModel):
     is_active: bool
 
 
-@router.post("/activity", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/activity", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_activity(
     req: PostChairActivityRequest, chair: Chair = Depends(chair_auth_middleware)
 ):
@@ -90,7 +93,6 @@ def chair_post_activity(
         )
 
 
-# TODO: Requestの構造体がないの、紛らわしいので要検討
 class Coordinate(BaseModel):
     latitude: int
     longitude: int
@@ -123,8 +125,8 @@ def chair_post_coordinate(
             {"id": chair_location_id},
         ).fetchone()
         if row is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        location = ChairLocation(**row._mapping)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        location = ChairLocation.model_validate(row)
 
         row = conn.execute(
             text(
@@ -133,7 +135,7 @@ def chair_post_coordinate(
             {"chair_id": chair.id},
         ).fetchone()
         if row is not None:
-            ride = Ride(**row._mapping)
+            ride = Ride.model_validate(row)
             ride_status = get_latest_ride_status(conn, ride_id=ride.id)
             if ride_status != "COMPLETED" and ride_status != "CANCELLED":
                 if (
@@ -170,7 +172,7 @@ class SimpleUser(BaseModel):
     name: str
 
 
-class ChairGetNotificationResponse(BaseModel):
+class ChairGetNotificationResponseData(BaseModel):
     ride_id: str
     user: SimpleUser
     pickup_coordinate: Coordinate
@@ -178,8 +180,14 @@ class ChairGetNotificationResponse(BaseModel):
     status: str
 
 
+class ChairGetNotificationResponse(BaseModel):
+    data: ChairGetNotificationResponseData | None = None
+
+
 @router.get("/notification")
-def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
+def chair_get_notification(
+    chair: Chair = Depends(chair_auth_middleware),
+) -> ChairGetNotificationResponse:
     with engine.begin() as conn:
         conn.execute(
             text("SELECT * FROM chairs WHERE id = :id FOR UPDATE"), {"id": chair.id}
@@ -198,19 +206,18 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
 
         if found:
             assert row is not None
-            ride = Ride(**row._mapping)
+            ride = Ride.model_validate(row)
             ride_status = get_latest_ride_status(conn, ride.id)
 
         if (not found) or ride_status == "COMPLETED" or ride_status == "CANCELLED":
-            # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
             row = conn.execute(
                 text(
-                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                 )
             ).fetchone()
             if row is None:
-                raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
-            matched = Ride(**row._mapping)
+                raise HTTPException(status_code=HTTPStatus.OK)
+            matched = Ride.model_validate(row)
 
             conn.execute(
                 text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
@@ -225,19 +232,21 @@ def chair_get_notification(chair: Chair = Depends(chair_auth_middleware)):
             text("SELECT * FROM users WHERE id = :id FOR SHARE"), {"id": ride.user_id}
         ).fetchone()
         if row is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        user = User(**row._mapping)
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        user = User.model_validate(row)
 
     return ChairGetNotificationResponse(
-        ride_id=ride.id,
-        user=SimpleUser(id=user.id, name=f"{user.firstname} {user.lastname}"),
-        pickup_coordinate=Coordinate(
-            latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-        ),
-        destination_coordinate=Coordinate(
-            latitude=ride.destination_latitude, longitude=ride.destination_longitude
-        ),
-        status=ride_status,
+        data=ChairGetNotificationResponseData(
+            ride_id=ride.id,
+            user=SimpleUser(id=user.id, name=f"{user.firstname} {user.lastname}"),
+            pickup_coordinate=Coordinate(
+                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+            ),
+            destination_coordinate=Coordinate(
+                latitude=ride.destination_latitude, longitude=ride.destination_longitude
+            ),
+            status=ride_status,
+        )
     )
 
 
@@ -245,7 +254,7 @@ class PostChairRidesRideIDStatusRequest(BaseModel):
     status: str
 
 
-@router.post("/rides/{ride_id}/status", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/rides/{ride_id}/status", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_ride_status(
     ride_id: str,
     req: PostChairRidesRideIDStatusRequest,
@@ -257,13 +266,13 @@ def chair_post_ride_status(
         ).fetchone()
         if row is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="ride not found"
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
-        ride = Ride(**row._mapping)
+        ride = Ride.model_validate(row)
 
         if ride.chair_id != chair.id:
             raise HTTPException(
-                status_code=status.BAD_REQUEST, detail="not assigned to this ride"
+                status_code=HTTPStatus.BAD_REQUEST, detail="not assigned to this ride"
             )
 
         match req.status:
@@ -288,7 +297,7 @@ def chair_post_ride_status(
                 ride_status = get_latest_ride_status(conn, ride.id)
                 if ride_status != "PICKUP":
                     raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
+                        status_code=HTTPStatus.BAD_REQUEST,
                         detail="chair has not arrived yet",
                     )
                 conn.execute(
@@ -299,5 +308,5 @@ def chair_post_ride_status(
                 )
             case _:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="invalid status"
+                    status_code=HTTPStatus.BAD_REQUEST, detail="invalid status"
                 )

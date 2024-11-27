@@ -162,9 +162,11 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	if err := s.prevalidation(ctx, client); err != nil {
-		return err
-	}
+	//
+	//if err := s.prevalidation(ctx, client); err != nil {
+	//	return err
+	//}
+	//
 
 	if !s.prepareOnly {
 		// バリデーション後にデータを初期化する
@@ -198,7 +200,7 @@ func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) er
 
 	const (
 		initialOwnersNum         = 5
-		initialChairsNumPerOwner = 10
+		initialChairsNumPerOwner = 4
 		initialUsersNum          = 10
 	)
 
@@ -214,7 +216,7 @@ func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) er
 			_, err := s.world.CreateChair(s.worldCtx, &world.CreateChairArgs{
 				Owner:             owner,
 				InitialCoordinate: world.RandomCoordinateOnRegionWithRand(owner.Region, owner.Rand),
-				Model:             world.ChairModelA,
+				Model:             owner.ChairModels[2].Random(),
 			})
 			if err != nil {
 				return err

@@ -7,7 +7,8 @@ TODO: このdocstringを消す
 
 from collections import defaultdict
 from collections.abc import MutableMapping
-from datetime import datetime, timezone
+from datetime import datetime
+from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
@@ -19,6 +20,7 @@ from ..middlewares import owner_auth_middleware
 from ..models import Chair, Owner, Ride
 from ..sql import engine
 from ..utils import (
+    JST,
     datetime_fromtimestamp_millis,
     secure_random_str,
     sum_sales,
@@ -37,7 +39,7 @@ class OwnerPostOwnersResponse(BaseModel):
     chair_register_token: str
 
 
-@router.post("/owners", status_code=201)
+@router.post("/owners", status_code=HTTPStatus.CREATED)
 def owner_post_owners(
     req: OwnerPostOwnersRequest, response: Response
 ) -> OwnerPostOwnersResponse:
@@ -98,7 +100,7 @@ def owner_get_sales(
         since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
-        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=JST)
     else:
         until_dt = datetime_fromtimestamp_millis(until)
 
@@ -107,19 +109,19 @@ def owner_get_sales(
             text("SELECT * FROM chairs WHERE owner_id = :owner_id"),
             {"owner_id": owner.id},
         ).fetchall()
-        chairs = [Chair(**r._mapping) for r in rows]
+        chairs = [Chair.model_validate(r) for r in rows]
 
         res = OwnerGetSalesResponse(total_sales=0, chairs=[], models=[])
         model_sales_by_model: MutableMapping[str, int] = defaultdict(int)
         for chair in chairs:
             rows = conn.execute(
                 text(
-                    "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until"
+                    "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until + INTERVAL 999 MICROSECOND"
                 ),
                 # TODO: datetime型で大丈夫なんだっけ？
                 {"chair_id": chair.id, "since": since_dt, "until": until_dt},
             ).fetchall()
-            rides = [Ride(**r._mapping) for r in rows]
+            rides = [Ride.model_validate(r) for r in rows]
 
             chair_sales = sum_sales(rides)
 
@@ -148,25 +150,32 @@ class ChairWithDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
     total_distance: int
-    total_distance_updated_at: datetime  # TODO: sql.NullTimeに対応する型は？
+    total_distance_updated_at: datetime | None = None
 
 
-class OwnerChair(BaseModel):
+class OwnerGetChairResponseChair(BaseModel):
     id: str
     name: str
     model: str
     active: bool
     registered_at: int
     total_distance: int
-    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも
+    total_distance_updated_at: int | None = None
 
 
 class OwnerGetChairResponse(BaseModel):
-    chairs: list[OwnerChair]
+    chairs: list[OwnerGetChairResponseChair]
 
 
-@router.get("/chairs", status_code=200)
-def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
+@router.get(
+    "/chairs",
+    status_code=HTTPStatus.OK,
+    response_model=OwnerGetChairResponse,
+    response_model_exclude_none=True,
+)
+def owner_get_chairs(
+    owner: Owner = Depends(owner_auth_middleware),
+) -> OwnerGetChairResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -196,11 +205,11 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
             ),
             {"owner_id": owner.id},
         )
-        chairs = [ChairWithDetail(**r) for r in rows.mappings()]
+        chairs = [ChairWithDetail.model_validate(r) for r in rows.mappings()]
 
     res = OwnerGetChairResponse(chairs=[])
     for chair in chairs:
-        c = OwnerChair(
+        c = OwnerGetChairResponseChair(
             id=chair.id,
             name=chair.name,
             model=chair.model,
@@ -215,13 +224,3 @@ def owner_get_chairs(owner: Owner = Depends(owner_auth_middleware)):
         res.chairs.append(c)
 
     return res
-
-
-class OwnerGetChairDetailResponse(BaseModel):
-    id: str
-    name: str
-    model: str
-    active: bool
-    registered_at: int
-    total_distance: int
-    total_distance_updated_at: int | None  # TODO: omitemptyの対応がいるかも

@@ -45,7 +45,9 @@ class AppPostUsersResponse(BaseModel):
     invitation_code: str
 
 
-@router.post("/users", response_model=AppPostUsersResponse, status_code=201)
+@router.post(
+    "/users", response_model=AppPostUsersResponse, status_code=HTTPStatus.CREATED
+)
 def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
@@ -86,7 +88,8 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             if len(coupons) >= 3:
                 raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません"
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail="この招待コードは使用できません",
                 )
 
             # ユーザーチェック
@@ -97,7 +100,8 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
 
             if not inviter:
                 raise HTTPException(
-                    status_code=400, detail="この招待コードは使用できません。"
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail="この招待コードは使用できません。",
                 )
 
             # 招待クーポン付与
@@ -119,7 +123,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 ),
                 {
                     "user_id": inviter.id,
-                    "code": "RWD_" + r.invitation_code,
+                    "code_prefix": "RWD_" + r.invitation_code,
                     "discount": 1000,
                 },
             )
@@ -186,7 +190,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ),
             {"user_id": user.id},
         ).fetchall()
-        rides = [Ride(**row._mapping) for row in rows]
+        rides = [Ride.model_validate(row) for row in rows]
 
     items = []
     for ride in rides:
@@ -201,7 +205,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-            chair = Chair(**row._mapping)
+            chair = Chair.model_validate(row)
 
         with engine.begin() as conn:
             row = conn.execute(
@@ -209,7 +213,7 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
             ).fetchone()
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-            owner = Owner(**row._mapping)
+            owner = Owner.model_validate(row)
 
         # TODO: 参照実装みたいにpartialに作るべき？
         item = GetAppRidesResponseItem(
@@ -259,13 +263,13 @@ def get_latest_ride_status(conn, ride_id: str) -> str:
     return row.status
 
 
-@router.post("/rides", status_code=202)
+@router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
     r: AppPostRidesRequest, user: User = Depends(app_auth_middleware)
 ) -> AppPostRidesResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
         )
 
@@ -278,11 +282,13 @@ def app_post_rides(
         continuing_ride_count: int = 0
         for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
-            if status != "COMPLETED" and status != "CANCELED":
+            if status != "COMPLETED":
                 continuing_ride_count += 1
 
         if continuing_ride_count > 0:
-            raise HTTPException(status_code=409, detail="ride already exists")
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT, detail="ride already exists"
+            )
 
         conn.execute(
             text(
@@ -360,7 +366,7 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride(**row._mapping)  # type: ignore
+        ride: Ride = Ride.model_validate(row)  # type: ignore
 
         fare = calculate_discounted_fare(
             conn,
@@ -388,7 +394,7 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 @router.post(
     "/rides/estimated-fare",
     response_model=AppPostRidesEstimatedFareResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_post_rides_estimated_fare(
     r: AppPostRidesEstimatedFareRequest, user: User = Depends(app_auth_middleware)
@@ -433,14 +439,15 @@ class AppPostRideEvaluationResponse(BaseModel):
 @router.post(
     "/rides/{ride_id}/evaluation",
     response_model=AppPostRideEvaluationResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
     req: AppPostRideEvaluationRequest, ride_id: str
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
-            status_code=400, detail="evaluation must be between 1 and 5"
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="evaluation must be between 1 and 5",
         )
 
     with engine.begin() as conn:
@@ -449,19 +456,25 @@ def app_post_ride_evaluation(
         ).fetchone()
 
         if not row:
-            raise HTTPException(status_code=404, detail="ride not found")
-        ride = Ride(**row._mapping)
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
+            )
+        ride = Ride.model_validate(row)
         status = get_latest_ride_status(conn, ride.id)
 
         if status != "ARRIVED":
-            raise HTTPException(status_code=400, detail="not arrived yet")
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST, detail="not arrived yet"
+            )
 
         result = conn.execute(
             text("UPDATE rides SET evaluation = :evaluation WHERE id = :id"),
             {"evaluation": req.evaluation, "id": ride_id},
         )
         if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="ride not found")
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
+            )
 
         conn.execute(
             text(
@@ -487,7 +500,7 @@ def app_post_ride_evaluation(
                 status_code=HTTPStatus.BAD_REQUEST,
                 detail="payment token not registered",
             )
-        payment_token = PaymentToken(**row._mapping)
+        payment_token = PaymentToken.model_validate(row)
 
         fare = calculate_discounted_fare(
             conn,
@@ -513,7 +526,7 @@ def app_post_ride_evaluation(
                 ),
                 {"user_id": ride.user_id},
             ).fetchall()
-            return [Ride(**r._mapping) for r in rows]
+            return [Ride.model_validate(r) for r in rows]
 
         request_payment_gateway_post_payment(
             payment_gateway_url,
@@ -541,7 +554,7 @@ class AppGetNotificationResponseChair(BaseModel):
     stats: AppGetNotificationResponseChairStats
 
 
-class AppGetNotificationResponse(BaseModel):
+class AppGetNotificationResponseData(BaseModel):
     ride_id: str
     pickup_coordinate: Coordinate
     destination_coordinate: Coordinate
@@ -552,10 +565,14 @@ class AppGetNotificationResponse(BaseModel):
     updated_at: int
 
 
+class AppGetNotificationResponse(BaseModel):
+    data: AppGetNotificationResponseData | None = None
+
+
 @router.get(
     "/notification",
     response_model=AppGetNotificationResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
     response_model_exclude_none=True,
 )
 def app_get_notification(
@@ -569,11 +586,24 @@ def app_get_notification(
             {"user_id": user.id},
         ).fetchone()
         if not row:
-            response.status_code = HTTPStatus.NO_CONTENT
+            response.status_code = HTTPStatus.OK
             return response
 
-        ride: Ride = Ride(**row._mapping)
-        status = get_latest_ride_status(conn, ride.id)
+        ride: Ride = Ride.model_validate(row)
+
+        row = conn.execute(
+            text(
+                "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
+            ),
+            {"ride_id": ride.id},
+        ).fetchone()
+        yet_sent_ride_status: RideStatus | None = None
+        if not row:
+            status = get_latest_ride_status(conn, ride.id)
+        else:
+            yet_sent_ride_status = RideStatus.model_validate(row)
+            status = yet_sent_ride_status.status
+
         fare = calculate_discounted_fare(
             conn,
             user.id,
@@ -585,18 +615,21 @@ def app_get_notification(
         )
 
         notification_response = AppGetNotificationResponse(
-            ride_id=ride.id,
-            pickup_coordinate=Coordinate(
-                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-            ),
-            destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude, longitude=ride.destination_longitude
-            ),
-            fare=fare,
-            status=status,
-            chair=None,
-            created_at=timestamp_millis(ride.created_at),
-            updated_at=timestamp_millis(ride.updated_at),
+            data=AppGetNotificationResponseData(
+                ride_id=ride.id,
+                pickup_coordinate=Coordinate(
+                    latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+                ),
+                destination_coordinate=Coordinate(
+                    latitude=ride.destination_latitude,
+                    longitude=ride.destination_longitude,
+                ),
+                fare=fare,
+                status=status,
+                chair=None,
+                created_at=timestamp_millis(ride.created_at),
+                updated_at=timestamp_millis(ride.updated_at),
+            )
         )
 
         if ride.chair_id:
@@ -607,15 +640,22 @@ def app_get_notification(
             if row is None:
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-            chair: Chair = Chair(**row._mapping)
+            chair: Chair = Chair.model_validate(row)
 
             stats = get_chair_stats(conn, ride.chair_id)
 
-            notification_response.chair = AppGetNotificationResponseChair(
+            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
-        # TODO: check the chair is here
+        if yet_sent_ride_status:
+            conn.execute(
+                text(
+                    "UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = :yet_send_ride_status_id"
+                ),
+                {"yet_send_ride_status_id": yet_sent_ride_status.id},
+            )
+
     return notification_response
 
 
@@ -663,26 +703,13 @@ def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats
     total_evaluation: float = 0.0  # noqa
 
     for ride in rides:
-        rows = conn.execute(  # noqa
-            text(
-                "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at BETWEEN :created_at AND :updated_at ORDER BY created_at"
-            ),
-            {
-                "chair_id": chair_id,
-                "created_at": ride.created_at,
-                "updated_at": ride.updated_at,
-            },
-        ).fetchall()
-        # TODO: 質問中
-        chair_locations = [ChairLocation(**row._mapping) for row in rows]  # noqa
-
         rows = conn.execute(
             text(
                 "SELECT * FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at"
             ),
             {"ride_id": ride.id},
         )
-        ride_statuses = [RideStatus(**row._mapping) for row in rows]
+        ride_statuses = [RideStatus.model_validate(row) for row in rows]
 
         arrived_at = None
         pickuped_at = None
@@ -727,7 +754,7 @@ class AppGetNearByChairsResponse(BaseModel):
 @router.get(
     "/nearby-chairs",
     response_model=AppGetNearByChairsResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
@@ -738,6 +765,8 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
 
         near_by_chairs = []
         for chair in chairs:
+            if not chair.is_active:
+                continue
             ride = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
@@ -751,17 +780,17 @@ def app_get_nearby_chairs(latitude: int, longitude: int, distance: int = 50):
                 if status != "COMPLETED":
                     continue
 
-            # 5分以内に更新されている最新の位置情報を取得
+            # 最新の位置情報を取得
             row = conn.execute(
                 text(
-                    "SELECT * FROM chair_locations WHERE chair_id = :chair_id AND created_at > DATE_SUB(CURRENT_TIMESTAMP(6), INTERVAL 5 MINUTE) ORDER BY created_at DESC LIMIT 1"
+                    "SELECT * FROM chair_locations WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
                 ),
                 {"chair_id": chair.id},
             ).fetchone()
             if row is None:
                 continue
 
-            chair_location = ChairLocation(**row._mapping)
+            chair_location = ChairLocation.model_validate(row)
 
             if (
                 calculate_distance(

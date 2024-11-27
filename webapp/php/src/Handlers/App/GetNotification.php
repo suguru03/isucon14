@@ -10,8 +10,9 @@ use IsuRide\Database\Model\Ride;
 use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppGetNotification200Response;
-use IsuRide\Model\AppGetNotification200ResponseChair;
 use IsuRide\Model\Coordinate;
+use IsuRide\Model\UserNotificationData;
+use IsuRide\Model\UserNotificationDataChair;
 use IsuRide\Response\ErrorResponse;
 use PDO;
 use PDOException;
@@ -47,7 +48,7 @@ class GetNotification extends AbstractHttpHandler
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
-                return $this->writeNoContent($response);
+                return $this->writeJson($response, new AppGetNotification200Response());
             }
             $ride = new Ride(
                 id: $result['id'],
@@ -61,14 +62,14 @@ class GetNotification extends AbstractHttpHandler
                 createdAt: $result['created_at'],
                 updatedAt: $result['updated_at']
             );
-            $status = $this->getLatestRideStatus($this->db, $ride->id);
-            if ($status === '') {
-                $this->db->rollBack();
-                return (new ErrorResponse())->write(
-                    $response,
-                    StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
-                    new \Exception('ride status not found')
-                );
+
+            $stmt = $this->db->prepare('SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1');
+            $stmt->execute([$ride->id]);
+            $yetSentRideStatus = $stmt->fetch(PDO::FETCH_ASSOC);
+            if(!$yetSentRideStatus) {
+                $status = $this->getLatestRideStatus($this->db, $ride->id);
+            } else {
+                $status = $yetSentRideStatus['status'];
             }
 
             $fare = $this->calculateDiscountedFare(
@@ -81,7 +82,7 @@ class GetNotification extends AbstractHttpHandler
                 $ride->destinationLongitude
             );
 
-            $res = new AppGetNotification200Response(
+            $res = new UserNotificationData(
                 [
                     'ride_id' => $ride->id,
                     'pickup_coordinate' => new Coordinate([
@@ -131,7 +132,7 @@ class GetNotification extends AbstractHttpHandler
                     );
                 }
                 $res->setChair(
-                    new AppGetNotification200ResponseChair([
+                    new UserNotificationDataChair([
                         'id' => $chair->id,
                         'name' => $chair->name,
                         'model' => $chair->model,
@@ -139,8 +140,13 @@ class GetNotification extends AbstractHttpHandler
                     ])
                 );
             }
+
+            if (isset($yetSentRideStatus['id'])) {
+                $stmt = $this->db->prepare('UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?');
+                $stmt->execute([$yetSentRideStatus['id']]);
+            }
             $this->db->commit();
-            return $this->writeJson($response, $res);
+            return $this->writeJson($response, new AppGetNotification200Response(['data' => $res]));
         } catch (PDOException  $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();

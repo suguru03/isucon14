@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build-ami:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-problem-github-actions-${{ github.run_id }}-${{ github.run_attempt }}
     name: build isucon14 contestant image
 
     steps:
@@ -45,6 +45,7 @@ jobs:
         uses: arduino/setup-task@v2
         with:
           version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

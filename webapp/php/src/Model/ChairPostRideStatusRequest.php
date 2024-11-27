@@ -228,7 +228,6 @@ class ChairPostRideStatusRequest implements ModelInterface, ArrayAccess, \JsonSe
         return self::$openAPIModelName;
     }
 
-    public const STATUS_MATCHING = 'MATCHING';
     public const STATUS_ENROUTE = 'ENROUTE';
     public const STATUS_CARRYING = 'CARRYING';
 
@@ -240,7 +239,6 @@ class ChairPostRideStatusRequest implements ModelInterface, ArrayAccess, \JsonSe
     public function getStatusAllowableValues()
     {
         return [
-            self::STATUS_MATCHING,
             self::STATUS_ENROUTE,
             self::STATUS_CARRYING,
         ];
@@ -331,7 +329,7 @@ class ChairPostRideStatusRequest implements ModelInterface, ArrayAccess, \JsonSe
     /**
      * Sets status
      *
-     * @param string $status ライドの状態 MATCHING: マッチングを拒否し、再度マッチング状態に戻す ENROUTE: マッチングを承認し、乗車位置に向かう CARRYING: ユーザーが乗車し、椅子が目的地に向かう
+     * @param string $status ライドの状態 ENROUTE: マッチしたライドを確認し、乗車位置に向かう CARRYING: ユーザーが乗車し、椅子が目的地に向かう
      *
      * @return self
      */

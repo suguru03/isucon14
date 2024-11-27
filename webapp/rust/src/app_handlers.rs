@@ -168,7 +168,6 @@ struct GetAppRidesResponse {
     rides: Vec<GetAppRidesResponseItem>,
 }
 
-// Ride
 #[derive(Debug, serde::Serialize)]
 struct GetAppRidesResponseItem {
     id: String,
@@ -272,7 +271,7 @@ async fn app_post_rides(
     let mut continuing_ride_count = 0;
     for ride in rides {
         let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
-        if status != "COMPLETED" && status != "CANCELED" {
+        if status != "COMPLETED" {
             continuing_ride_count += 1;
         }
     }
@@ -574,7 +573,18 @@ async fn app_get_notification(
         return Ok(axum::Json(AppGetNotificationResponse { data: None }));
     };
 
-    let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
+    let yet_sent_ride_status: Option<RideStatus> = sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1")
+        .bind(&ride.id)
+        .fetch_optional(&mut *tx)
+        .await?;
+    let (ride_status_id, status) = if let Some(yet_sent_ride_status) = yet_sent_ride_status {
+        (Some(yet_sent_ride_status.id), yet_sent_ride_status.status)
+    } else {
+        (
+            None,
+            crate::get_latest_ride_status(&mut *tx, &ride.id).await?,
+        )
+    };
 
     let fare = calculate_discounted_fare(
         &mut tx,
@@ -619,6 +629,15 @@ async fn app_get_notification(
             stats,
         });
     }
+
+    if let Some(ride_status_id) = ride_status_id {
+        sqlx::query("UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?")
+            .bind(ride_status_id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    tx.commit().await?;
 
     Ok(axum::Json(AppGetNotificationResponse { data: Some(data) }))
 }

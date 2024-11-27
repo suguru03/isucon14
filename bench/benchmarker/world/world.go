@@ -237,6 +237,7 @@ func (w *World) CreateOwner(ctx *Context, args *CreateOwnerArgs) (*Owner, error)
 		ChairDB:            concurrent.NewSimpleMap[ChairID, *Chair](),
 		CompletedRequest:   concurrent.NewSimpleSlice[*Request](),
 		RegisteredData:     registeredData,
+		ChairModels:        PickModels(),
 		Client:             res.Client,
 		Rand:               random.CreateChildRand(w.RootRand),
 		chairCountPerModel: map[*ChairModel]int{},
@@ -256,7 +257,7 @@ type CreateChairArgs struct {
 // CreateChair 仮想世界に椅子を作成する
 func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error) {
 	registeredData := RegisteredChairData{
-		Name: random.GenerateChairName(),
+		Name: args.Model.GenerateName(),
 	}
 
 	res, err := w.Client.RegisterChair(ctx, args.Owner, &RegisterChairRequest{

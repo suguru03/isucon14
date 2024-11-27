@@ -1,13 +1,12 @@
 import type { MetaFunction } from "@remix-run/node";
 import { FC } from "react";
 import { OwnerGetChairsResponse } from "~/apiClient/apiComponents";
+import { ChairIcon } from "~/components/icon/chair";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { Badge } from "~/components/primitives/badge/badge";
-import { ButtonLink } from "~/components/primitives/button/button";
-import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { Text } from "~/components/primitives/text/text";
-import { useClientProviderContext } from "~/contexts/provider-context";
+import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -30,7 +29,7 @@ const Chair: FC<{ chair: OwnerGetChairsResponse["chairs"][number] }> = ({
             <div className="w-36">
               <dt className="text-sm text-gray-500">モデル</dt>
               <dd className="flex">
-                <ChairModel model={chair.model} className="shrink-0" />
+                <ChairIcon model={chair.model} className="shrink-0" />
                 <span className="truncate ms-2">{chair.model}</span>
               </dd>
             </div>
@@ -55,12 +54,8 @@ export default function Index() {
 
   return (
     <section className="flex-1 overflow-hidden flex flex-col mx-4">
-      <div className="flex items-center justify-between border-b">
-        <h1 className="text-2xl my-4">椅子一覧</h1>
-        {/* // TODO: UI */}
-        <ButtonLink to={"/driver/register"} className="w-32">
-          + 追加
-        </ButtonLink>
+      <div className="flex items-center border-b my-4">
+        <h1 className="text-2xl pb-4">椅子一覧</h1>
       </div>
       {chairs?.length ? (
         <List className="overflow-auto">

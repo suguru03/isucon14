@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
 import { fetchAppPostUsers } from "~/apiClient/apiComponents";
+import { Button } from "~/components/primitives/button/button";
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,7 +12,7 @@ export const meta: MetaFunction = () => {
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const formData = await request.formData();
-  const data = await fetchAppPostUsers({
+  await fetchAppPostUsers({
     body: {
       date_of_birth: String(formData.get("date_of_birth")),
       username: String(formData.get("username")),
@@ -19,16 +20,13 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       lastname: String(formData.get("lastname")),
     },
   });
-  return redirect(`/client?id=${data.id}`);
+  return redirect(`/client/register-payment`);
 };
 
 export default function ClientRegister() {
   return (
     <>
-      <Form
-        className="w-full h-full p-4 bg-white rounded-lg shadow-md flex flex-col gap-4"
-        method="POST"
-      >
+      <Form className="p-4 flex flex-col gap-4" method="POST">
         <div>
           <label htmlFor="username">Username:</label>
           <input
@@ -63,7 +61,7 @@ export default function ClientRegister() {
             required
           />
         </div>
-        <button type="submit">登録</button>
+        <Button type="submit">登録</Button>
       </Form>
     </>
   );

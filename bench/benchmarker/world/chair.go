@@ -305,80 +305,8 @@ func (c *Chair) Tick(ctx *Context) error {
 	return nil
 }
 
-func (c *Chair) moveToward(target Coordinate) (to Coordinate) {
-	prev := c.Location.Current()
-	to = c.Location.Current()
-
-	// ランダムにx, y方向で近づける
-	x := c.Rand.IntN(c.Model.Speed + 1)
-	y := c.Model.Speed - x
-	remain := 0
-
-	switch {
-	case prev.X < target.X:
-		xDiff := target.X - (prev.X + x)
-		if xDiff < 0 {
-			// X座標で追い越すので、追い越す分をyの移動に加える
-			to.X = target.X
-			y += -xDiff
-		} else {
-			to.X += x
-		}
-	case prev.X > target.X:
-		xDiff := (prev.X - x) - target.X
-		if xDiff < 0 {
-			// X座標で追い越すので、追い越す分をyの移動に加える
-			to.X = target.X
-			y += -xDiff
-		} else {
-			to.X -= x
-		}
-	default:
-		y = c.Model.Speed
-	}
-
-	switch {
-	case prev.Y < target.Y:
-		yDiff := target.Y - (prev.Y + y)
-		if yDiff < 0 {
-			to.Y = target.Y
-			remain += -yDiff
-		} else {
-			to.Y += y
-		}
-	case prev.Y > target.Y:
-		yDiff := (prev.Y - y) - target.Y
-		if yDiff < 0 {
-			to.Y = target.Y
-			remain += -yDiff
-		} else {
-			to.Y -= y
-		}
-	default:
-		remain = y
-	}
-
-	if remain > 0 {
-		x = remain
-		switch {
-		case to.X < target.X:
-			xDiff := target.X - (to.X + x)
-			if xDiff < 0 {
-				to.X = target.X
-			} else {
-				to.X += x
-			}
-		case to.X > target.X:
-			xDiff := (to.X - x) - target.X
-			if xDiff < 0 {
-				to.X = target.X
-			} else {
-				to.X -= x
-			}
-		}
-	}
-
-	return to
+func (c *Chair) moveToward(target Coordinate) Coordinate {
+	return c.Location.Current().MoveToward(target, c.Model.Speed, c.Rand)
 }
 
 func (c *Chair) moveOppositeTo(target Coordinate) (to Coordinate) {

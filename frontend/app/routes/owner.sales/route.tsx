@@ -1,13 +1,13 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { useMemo, useState } from "react";
+import { ChairIcon } from "~/components/icon/chair";
 import { List } from "~/components/modules/list/list";
 import { ListItem } from "~/components/modules/list/list-item";
 import { PriceText } from "~/components/modules/price-text/price-text";
-import { ChairModel } from "~/components/primitives/chair-model/chair-model";
 import { DateInput } from "~/components/primitives/form/date";
 import { Tab } from "~/components/primitives/tab/tab";
-import { useClientProviderContext } from "~/contexts/provider-context";
+import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -89,7 +89,7 @@ export default function Index() {
           <List className="overflow-auto">
             {items.map((item) => (
               <ListItem key={item.key} className="flex">
-                <ChairModel model={item.model} />
+                <ChairIcon model={item.model} />
                 <span className="ms-4">{item.name}</span>
                 <PriceText
                   tagName="span"
