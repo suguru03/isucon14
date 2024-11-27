@@ -9,7 +9,7 @@ import {
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
@@ -17,9 +17,9 @@ import { useClientAppRequestContext } from "~/contexts/user-context";
 import { NearByChair } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
-import { Dispatched } from "./driving-state/dispatched";
 import { Enroute } from "./driving-state/enroute";
 import { Matching } from "./driving-state/matching";
+import { Pickup } from "./driving-state/pickup";
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,32 +28,26 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-type LocationSelectTarget = "from" | "to";
+type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
-  // internalState: AppRequestContext.status をもとに決定する内部 status
-  // 内部で setState をしたい要件があったので実装している
-  const [internalStatus, setInternalStatus] = useState<RideStatus | undefined>(
-    undefined,
-  );
+  const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
+
   useEffect(() => {
-    setInternalStatus(status);
+    setInternalRideStatus(status);
   }, [status]);
 
-  // requestId: リクエストID
   // TODO: requestId をベースに配車キャンセルしたい
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [requestId, setRequestId] = useState<string>("");
-  // fare: 確定運賃
   const [fare, setFare] = useState<number>();
 
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
 
-  const [locationSelectTarget, setLocationSelectTarget] =
-    useState<LocationSelectTarget | null>(null);
+  const [direction, setDirection] = useState<Direction | null>(null);
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const onMove = useCallback((coordinate: Coordinate) => {
@@ -66,24 +60,24 @@ export default function Index() {
     null,
   );
   const handleConfirmLocation = useCallback(() => {
-    if (locationSelectTarget === "from") {
+    if (direction === "from") {
       setCurrentLocation(selectedLocation);
-    } else if (locationSelectTarget === "to") {
+    } else if (direction === "to") {
       setDestLocation(selectedLocation);
     }
     if (locationSelectorModalRef.current) {
       locationSelectorModalRef.current.close();
     }
-  }, [locationSelectTarget, selectedLocation]);
+  }, [direction, selectedLocation]);
 
   const isStatusModalOpen = useMemo(() => {
     return (
-      internalStatus !== undefined &&
+      internalRideStatus &&
       ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
-        internalStatus,
+        internalRideStatus,
       )
     );
-  }, [internalStatus]);
+  }, [internalRideStatus]);
 
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
 
@@ -118,7 +112,7 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-    setInternalStatus("MATCHING");
+    setInternalRideStatus("MATCHING");
     await fetchAppPostRides({
       body: {
         pickup_coordinate: currentLocation,
@@ -225,7 +219,7 @@ export default function Index() {
           className="w-full"
           location={currentLocation}
           onClick={() => {
-            setLocationSelectTarget("from");
+            setDirection("from");
             setLocationSelectorModalOpen(true);
           }}
           placeholder="現在地を選択する"
@@ -236,29 +230,30 @@ export default function Index() {
           location={destLocation}
           className="w-full"
           onClick={() => {
-            setLocationSelectTarget("to");
+            setDirection("to");
             setLocationSelectorModalOpen(true);
           }}
           placeholder="目的地を選択する"
           label="目的地"
         />
         {estimatePrice && (
-          <div className="flex mt-4">
-            <Text>推定運賃: </Text>
-            <PriceText className="px-4" value={estimatePrice.fare} />
-            <Text>(割引額: </Text>
-            <PriceText value={estimatePrice.discount} />
-            <Text>)</Text>
-          </div>
+          <Price
+            value={estimatePrice.fare}
+            pre="推定運賃"
+            discount={estimatePrice.discount}
+            className="mt-6 mb-4"
+          ></Price>
         )}
-        <Button
-          variant="primary"
-          className="w-full mt-6 font-bold"
-          onClick={() => void handleRideRequest()}
-          disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
-        >
-          ISURIDE
-        </Button>
+        {currentLocation && destLocation && (
+          <Button
+            variant="primary"
+            className="w-full font-bold"
+            onClick={() => void handleRideRequest()}
+            disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
+          >
+            ISURIDE
+          </Button>
+        )}
       </div>
       {isLocationSelectorModalOpen && (
         <Modal
@@ -272,25 +267,21 @@ export default function Index() {
                 from={currentLocation}
                 to={destLocation}
                 selectorPinColor={
-                  locationSelectTarget === "from"
-                    ? colors.black
-                    : colors.red[500]
+                  direction === "from" ? colors.black : colors.red[500]
                 }
                 initialCoordinate={
-                  locationSelectTarget === "from"
-                    ? currentLocation
-                    : destLocation
+                  direction === "from" ? currentLocation : destLocation
                 }
                 selectable
                 className="rounded-2xl"
               />
             </div>
             <p className="font-bold mb-4 text-base">
-              {locationSelectTarget === "from" ? "現在地" : "目的地"}
+              {direction === "from" ? "現在地" : "目的地"}
               を選択してください
             </p>
             <Button onClick={handleConfirmLocation}>
-              {locationSelectTarget === "from"
+              {direction === "from"
                 ? "この場所から移動する"
                 : "この場所に移動する"}
             </Button>
@@ -300,34 +291,34 @@ export default function Index() {
       {isStatusModalOpen && (
         <Modal
           ref={statusModalRef}
-          onClose={() => setInternalStatus("COMPLETED")}
+          onClose={() => setInternalRideStatus("COMPLETED")}
         >
-          {internalStatus === "MATCHING" && (
+          {internalRideStatus === "MATCHING" && (
             <Matching
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
               fare={fare}
             />
           )}
-          {internalStatus === "ENROUTE" && (
+          {internalRideStatus === "ENROUTE" && (
             <Enroute
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {internalStatus === "PICKUP" && (
-            <Dispatched
+          {internalRideStatus === "PICKUP" && (
+            <Pickup
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {internalStatus === "CARRYING" && (
+          {internalRideStatus === "CARRYING" && (
             <Carrying
               destLocation={payload?.coordinate?.destination}
               pickup={payload?.coordinate?.pickup}
             />
           )}
-          {internalStatus === "ARRIVED" && (
+          {internalRideStatus === "ARRIVED" && (
             <Arrived
               onEvaluated={() => {
                 statusModalRef.current?.close();

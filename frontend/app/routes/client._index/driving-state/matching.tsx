@@ -1,7 +1,8 @@
 import { FC } from "react";
 import { Loading } from "~/components/icon/loading";
 import { LocationButton } from "~/components/modules/location-button/location-button";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { ModalHeader } from "~/components/modules/modal-header/moda-header";
+import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
 import { Coordinate } from "~/types";
 
@@ -10,12 +11,12 @@ export const Matching: FC<{
   destLocation?: Coordinate;
   fare?: number;
 }> = ({ pickup, destLocation, fare }) => {
+  fare = 500;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
-      <Loading className="mb-8" />
-      <Text size="xl" className="mb-6">
-        マッチングしています
-      </Text>
+      <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
+        <Loading size={120} />
+      </ModalHeader>
       <LocationButton
         label="現在地"
         location={pickup}
@@ -29,13 +30,7 @@ export const Matching: FC<{
         className="w-80"
         disabled
       />
-      <p className="mt-8">
-        {typeof fare === "number" ? (
-          <>
-            予定運賃: <PriceText tagName="span" value={fare} />
-          </>
-        ) : null}
-      </p>
+      <Price value={fare} pre="予定運賃" className="mt-6" />
     </div>
   );
 };

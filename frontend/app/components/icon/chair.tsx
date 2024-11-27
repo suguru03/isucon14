@@ -1,4 +1,5 @@
 import { ComponentProps, FC, useMemo } from "react";
+import colors from "tailwindcss/colors";
 
 const ChairTypes = [
   {
@@ -14,6 +15,12 @@ const ChairTypes = [
     wheelColor: "#226b9f",
   },
   { type: "red", bodyColor: "#f63", windowColor: "#f93", wheelColor: "#099" },
+  {
+    type: "gray",
+    bodyColor: colors.neutral[300],
+    windowColor: colors.neutral[400],
+    wheelColor: colors.neutral[600],
+  },
 ] as const;
 
 const Chair: FC<
@@ -65,7 +72,7 @@ export const ChairIcon: FC<{ model: string } & ComponentProps<"svg">> = ({
   ...props
 }) => {
   const chairType = useMemo(() => {
-    return ChairTypes[model.charCodeAt(0) % ChairTypes.length];
+    return ChairTypes[model ? model.charCodeAt(0) % ChairTypes.length : 0];
   }, [model]);
   return <Chair chairType={chairType} {...props} />;
 };
@@ -73,6 +80,9 @@ export const ChairIcon: FC<{ model: string } & ComponentProps<"svg">> = ({
 export const ChairTypeIcon: FC<
   { type: (typeof ChairTypes)[number]["type"] } & ComponentProps<"svg">
 > = ({ type, ...props }) => {
-  const chairType = ChairTypes.find((c) => c.type === type) ?? ChairTypes[0];
+  const chairType = useMemo(
+    () => ChairTypes.find((c) => c.type === type) ?? ChairTypes[0],
+    [type],
+  );
   return <Chair chairType={chairType} {...props} />;
 };

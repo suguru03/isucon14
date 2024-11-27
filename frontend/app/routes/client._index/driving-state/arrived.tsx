@@ -2,15 +2,17 @@ import { Form } from "@remix-run/react";
 import { MouseEventHandler, useCallback, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
-import { ToIcon } from "~/components/icon/to";
+import { PinIcon } from "~/components/icon/pin";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { auth, payload } = useClientAppRequestContext();
+  const { auth, payload = {} } = useClientAppRequestContext();
   const [rating, setRating] = useState(0);
+  const { fare } = payload;
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -27,8 +29,8 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
             evaluation: rating,
           },
         });
-      } catch (e) {
-        console.error("ERROR: %o", e);
+      } catch (error) {
+        console.error(error);
       }
       onEvaluated();
     },
@@ -36,10 +38,12 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   );
 
   return (
-    <Form className="h-full flex flex-col items-center justify-center">
+    <Form className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <div className="flex flex-col items-center gap-6 mb-14">
-        <ToIcon className="size-[90px]" color={colors.red[500]} />
-        <Text size="xl">目的地に到着しました</Text>
+        <PinIcon className="size-[90px]" color={colors.red[500]} />
+        <Text size="xl" bold>
+          目的地に到着しました
+        </Text>
       </div>
       <div className="flex flex-col items-center w-80">
         <Text className="mb-4">今回のドライブはいかがでしたか？</Text>
@@ -49,13 +53,14 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
           setRating={setRating}
           className="mb-10"
         />
+        {fare && <Price pre="運賃" value={fare} className="mb-6"></Price>}
         <Button
           variant="primary"
           type="submit"
           onClick={onClick}
-          className="w-full mt-1"
+          className="w-full"
         >
-          評価してドライビングを完了
+          評価して料金を支払う
         </Button>
       </div>
     </Form>

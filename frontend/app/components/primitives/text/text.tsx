@@ -46,6 +46,7 @@ export const Text: FC<TextProps> = ({
   variant,
   className,
   children,
+  ...props
 }) => {
   const Tag = tagName;
   return (
@@ -56,6 +57,7 @@ export const Text: FC<TextProps> = ({
         getVariantClass(variant),
         className,
       ])}
+      {...props}
     >
       {children}
     </Tag>
