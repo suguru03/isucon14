@@ -1,12 +1,12 @@
 import type { ComponentProps, FC } from "react";
 import { twMerge } from "tailwind-merge";
-import { ChairTypeIcon } from "./chair";
+import { ChairTypeIcon } from "../../icon/chair";
 
 type Props = {
   size?: number;
 } & ComponentProps<"div">;
 
-export const Loading: FC<Props> = function ({
+export const ChairWaitingIndicator: FC<Props> = function ({
   className,
   size = 80,
   ...props
