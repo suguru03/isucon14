@@ -68,7 +68,7 @@ source "amazon-ebs" "isucon14" {
   temporary_key_pair_type = "ed25519"
 
   launch_block_device_mappings {
-    volume_size = 8
+    volume_size = 16
     device_name = "/dev/sda1"
   }
 }
