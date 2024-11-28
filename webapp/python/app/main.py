@@ -2,6 +2,7 @@ import subprocess
 from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -25,9 +26,18 @@ class PostInitializeResponse(BaseModel):
 
 
 @app.exception_handler(HTTPStatus.INTERNAL_SERVER_ERROR)
-def internal_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+def internal_exception_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
+    )
+
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(
+    _: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=HTTPStatus.METHOD_NOT_ALLOWED, content={"message": str(exc)}
     )
 
 
