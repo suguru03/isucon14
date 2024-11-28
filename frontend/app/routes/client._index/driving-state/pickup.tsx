@@ -7,7 +7,6 @@ import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
-import { Coordinate } from "~/types";
 
 export const Pickup: FC = () => {
   const { payload = {} } = useClientAppRequestContext();

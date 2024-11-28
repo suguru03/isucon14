@@ -7,7 +7,7 @@ import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
-export const Carrying: FC<{}> = () => {
+export const Carrying: FC = () => {
   const { payload = {} } = useClientAppRequestContext();
   const { chair, fare, coordinate } = payload;
 
