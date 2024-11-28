@@ -492,7 +492,7 @@ def app_post_ride_evaluation(
             text(
                 "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
             ),
-            {"id": str(ULID()), "ride_id": ride.id, "status": "COMPLETED"},
+            {"id": str(ULID()), "ride_id": ride_id, "status": "COMPLETED"},
         )
 
         row = conn.execute(
