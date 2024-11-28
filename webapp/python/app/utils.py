@@ -24,7 +24,9 @@ def datetime_fromtimestamp_millis(t: int) -> datetime:
     return EPOCH + timedelta(milliseconds=t)
 
 
-def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude):
+def calculate_fare(
+    pickup_latitude: int, pickup_longitude: int, dest_latitude: int, dest_longitude: int
+) -> int:
     metered_fare = FARE_PER_DISTANCE * calculate_distance(
         pickup_latitude, pickup_longitude, dest_latitude, dest_longitude
     )

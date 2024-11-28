@@ -85,7 +85,7 @@ class PostChairActivityRequest(BaseModel):
 @router.post("/activity", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_activity(
     req: PostChairActivityRequest, chair: Chair = Depends(chair_auth_middleware)
-):
+) -> None:
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE chairs SET is_active = :is_active WHERE id = :id"),
@@ -105,7 +105,7 @@ class ChairPostCoordinateResponse(BaseModel):
 @router.post("/coordinate")
 def chair_post_coordinate(
     req: Coordinate, chair: Chair = Depends(chair_auth_middleware)
-):
+) -> ChairPostCoordinateResponse:
     with engine.begin() as conn:
         chair_location_id = str(ULID())
         conn.execute(
@@ -259,7 +259,7 @@ def chair_post_ride_status(
     ride_id: str,
     req: PostChairRidesRideIDStatusRequest,
     chair: Chair = Depends(chair_auth_middleware),
-):
+) -> None:
     with engine.begin() as conn:
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :id FOR UPDATE"), {"id": ride_id}
