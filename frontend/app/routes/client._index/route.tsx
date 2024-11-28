@@ -163,7 +163,7 @@ export default function Index() {
   useEffect(() => {
     const storedData = localStorage.getItem("campaign");
     if (storedData) {
-      const data: CampaignData = JSON.parse(storedData);
+      const data: CampaignData = JSON.parse(storedData) as CampaignData;
       const registeredDate = new Date(data.registedAt);
       const currentDate = new Date();
 
@@ -184,11 +184,17 @@ export default function Index() {
     }
   };
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
     if (campaign) {
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(campaign.invitationCode);
-        alert("招待コードがコピーされました！");
+        try {
+          await navigator.clipboard.writeText(campaign.invitationCode);
+          alert("招待コードがコピーされました！");
+        } catch (error) {
+          alert(
+            `コピーに失敗しました。\n招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+          );
+        }
       } else {
         alert(
           `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
@@ -206,7 +212,7 @@ export default function Index() {
           </span>
           <div className="flex items-center">
             <button
-              onClick={handleCopyCode}
+              onClick={() => handleCopyCode()}
               className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
             >
               <CopyIcon />
