@@ -9,7 +9,13 @@ declare const __INITIAL_OWNER_DATA__:
         id: string;
         name: string;
         token: string;
-        chairs: { id: string; name: string; model: string; token: string }[];
       }[];
+      targetSimulatorChair: {
+        id: string;
+        owner_id: string;
+        name: string;
+        model: string;
+        token: string;
+      };
     }
   | undefined;

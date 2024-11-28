@@ -58,7 +58,7 @@ source "amazon-ebs" "isucon14" {
 
   source_ami    = "${data.amazon-ami.base-image.id}"
   region        = "ap-northeast-1"
-  instance_type = "c5.4xlarge"
+  instance_type = "c6i.4xlarge"
 
   run_tags        = local.run_tags
   run_volume_tags = local.run_tags
@@ -68,7 +68,7 @@ source "amazon-ebs" "isucon14" {
   temporary_key_pair_type = "ed25519"
 
   launch_block_device_mappings {
-    volume_size = 8
+    volume_size = 16
     device_name = "/dev/sda1"
   }
 }

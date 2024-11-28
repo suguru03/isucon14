@@ -13,8 +13,8 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/apiClient/apiComponents";
-import { getCookieValue } from "~/components/modules/session/cookie";
 import { isClientApiError } from "~/types";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 type ClientProviderRequest = Partial<{
   chairs: OwnerGetChairsResponse["chairs"];
@@ -39,7 +39,7 @@ const DUMMY_DATA = {
 
 const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
 
-const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
+const timestamp = (date: string) => Math.floor(new Date(date).getTime());
 
 export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
@@ -51,8 +51,8 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   const until = searchParams.get("until") ?? undefined;
 
   useEffect(() => {
-    if (getCookieValue(document.cookie, "app_session") === undefined) {
-      navigate("/client/register");
+    if (getCookieValue(document.cookie, "owner_session") === undefined) {
+      navigate("/owner/register");
     }
   }, [navigate]);
 

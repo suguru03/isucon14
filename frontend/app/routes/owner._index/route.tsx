@@ -1,10 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { FC } from "react";
-import { OwnerGetChairsResponse } from "~/apiClient/apiComponents";
 import { ChairIcon } from "~/components/icon/chair";
-import { List } from "~/components/modules/list/list";
-import { ListItem } from "~/components/modules/list/list-item";
-import { Badge } from "~/components/primitives/badge/badge";
 import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/owner-context";
 
@@ -14,60 +9,67 @@ export const meta: MetaFunction = () => {
 
 const formatDateTime = (timestamp: number) => {
   const d = new Date(timestamp);
-  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}`;
-};
-
-const Chair: FC<{ chair: OwnerGetChairsResponse["chairs"][number] }> = ({
-  chair,
-}) => {
-  return (
-    <>
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-lg ms-2">{chair.name}</p>
-          <dl className="flex gap-6 mt-3 px-2">
-            <div className="w-36">
-              <dt className="text-sm text-gray-500">モデル</dt>
-              <dd className="flex">
-                <ChairIcon model={chair.model} className="shrink-0" />
-                <span className="truncate ms-2">{chair.model}</span>
-              </dd>
-            </div>
-            <div className="w-20">
-              <dt className="text-sm text-gray-500">総走行距離</dt>
-              <dd className="text-end">{chair.total_distance}</dd>
-            </div>
-            <div className="ms-12">
-              <dt className="text-sm text-gray-500">登録日</dt>
-              <dd>{formatDateTime(chair.registered_at)}</dd>
-            </div>
-          </dl>
-        </div>
-        <Badge>{chair.active ? "稼働中" : "停止中"}</Badge>
-      </div>
-    </>
-  );
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 };
 
 export default function Index() {
   const { chairs } = useClientProviderContext();
 
   return (
-    <section className="flex-1 overflow-hidden flex flex-col mx-4">
-      <div className="flex items-center border-b my-4">
-        <h1 className="text-2xl pb-4">椅子一覧</h1>
-      </div>
+    <div className="min-w-[1050px]">
       {chairs?.length ? (
-        <List className="overflow-auto">
-          {chairs.map((chair) => (
-            <ListItem key={chair.id}>
-              <Chair chair={chair} />
-            </ListItem>
-          ))}
-        </List>
+        <table className="text-sm w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr className="text-gray-500">
+              <th className="px-4 py-3 text-left">ID</th>
+              <th className="px-4 py-3 text-left">名前</th>
+              <th className="px-4 py-3 text-left">モデル</th>
+              <th className="px-4 py-3 text-left">状態</th>
+              <th className="px-4 py-3 text-left">総走行距離</th>
+              <th className="px-4 py-3 text-left">登録日</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chairs.map((chair) => (
+              <tr
+                key={chair.id}
+                className="border-b hover:bg-gray-50 transition"
+              >
+                <td className="p-4 font-mono">{chair.id}</td>
+                <td className="p-4 max-w-48 truncate" title={chair.name}>
+                  {chair.name}
+                </td>
+                <td className="p-4 max-w-64" title={chair.model}>
+                  <div className="flex">
+                    <ChairIcon
+                      model={chair.model}
+                      className="shrink-0 size-6 me-2"
+                    />
+                    <span className="flex-1 truncate">{chair.model}</span>
+                  </div>
+                </td>
+                <td className="p-4">
+                  <div className="">
+                    <span
+                      className={`before:content-['●'] before:mr-2 ${chair.active ? "before:text-green-600" : "before:text-red-600"}`}
+                    >
+                      {chair.active ? "稼働中" : "停止中"}
+                    </span>
+                  </div>
+                </td>
+                <td className="p-4 text-right font-mono">
+                  {chair.total_distance}
+                </td>
+                <td className="p-4 font-mono">
+                  {formatDateTime(chair.registered_at)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : (
         <Text>登録されている椅子がありません</Text>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,26 +1,19 @@
 [project]
 name = "isuride"
 version = "0.1.0"
-description = "isuride"
-readme = "README.md"
-authors = [
-    { name = "Yiyang Zhan", email = "pon.zhan@gmail.com" }
-]
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = [
     "cryptography>=43.0.3",
     "fastapi>=0.115.5",
+    "gunicorn>=23.0.0",
     "pymysql>=1.1.1",
     "python-ulid>=3.0.0",
     "sqlalchemy>=2.0.36",
     "urllib3>=2.2.3",
-    "uvicorn>=0.32.0",
+    "uvicorn-worker>=0.2.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
+# TODDO: 本番前に削除
 [dependency-groups]
 dev = [
     "fastapi[standard]>=0.115.5",
@@ -28,13 +21,11 @@ dev = [
     "nox>=2024.10.9",
 ]
 
-# インデックスを明示的に指定しておく
-[[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple"
-
 [tool.ruff.lint]
 extend-select = [
     "UP", # pyupgrade
     "I", # isort
 ]
+
+[tool.mypy]
+strict = true

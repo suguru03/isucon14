@@ -1,37 +1,76 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useSearchParams } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  OwnerGetSalesResponse,
+  fetchOwnerGetSales,
+} from "~/apiClient/apiComponents";
 import { ChairIcon } from "~/components/icon/chair";
-import { List } from "~/components/modules/list/list";
-import { ListItem } from "~/components/modules/list/list-item";
 import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 import { DateInput } from "~/components/primitives/form/date";
-import { Tab } from "~/components/primitives/tab/tab";
+import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 
+const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
+
+const viewTypes = [
+  { key: "chair", label: "椅子別" },
+  { key: "model", label: "モデル別" },
+] as const;
+
+type OwnerSalesType = OwnerGetSalesResponse;
 export default function Index() {
-  const [, setSearchParams] = useSearchParams();
+  const [viewType, setViewType] =
+    useState<(typeof viewTypes)[number]["key"]>("chair");
 
-  const tabs = [
-    { key: "chair", label: "椅子別" },
-    { key: "model", label: "モデル別" },
-  ] as const;
+  const { chairs } = useClientProviderContext();
+  const [salesDate, setSalesDate] = useState<{
+    since?: string;
+    until?: string;
+  }>({});
+  const [sales, setSales] = useState<OwnerSalesType>();
 
-  type Tab = (typeof tabs)[number]["key"];
-  const [tab, setTab] = useState<Tab>("chair");
+  useEffect(() => {
+    const since = salesDate?.since;
+    const until = salesDate?.until;
+    if (!since || !until) return;
+    let abortController: AbortController | undefined;
+    void (async () => {
+      try {
+        abortController = new AbortController();
+        setSales(
+          await fetchOwnerGetSales(
+            {
+              queryParams: {
+                until: timestamp(until),
+                since: timestamp(since),
+              },
+            },
+            abortController.signal,
+          ),
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    })();
 
-  const { sales, chairs } = useClientProviderContext();
+    return () => abortController?.abort();
+  }, [salesDate, setSales]);
+
+  const chairModelMap = useMemo(
+    () => new Map(chairs?.map((c) => [c.id, c.model])),
+    [chairs],
+  );
 
   const items = useMemo(() => {
     if (!sales || !chairs) {
       return [];
     }
-    const chairModelMap = new Map(chairs.map((c) => [c.id, c.model]));
-    return tab === "chair"
+    return viewType === "chair"
       ? sales.chairs.map((item) => ({
           key: item.id,
           name: item.name,
@@ -44,63 +83,90 @@ export default function Index() {
           model: item.model,
           sales: item.sales,
         }));
-  }, [sales, chairs, tab]);
+  }, [sales, chairs, viewType, chairModelMap]);
 
   const updateDate = (key: "since" | "until", value: string) => {
-    setSearchParams((prev) => {
-      prev.set(key, value);
-      return prev;
+    setSalesDate((prev) => {
+      return { ...prev, [key]: value };
     });
   };
 
-  const switchTab = (tab: Tab) => {
-    setTab(tab);
-  };
-
   return (
-    <section className="flex-1 overflow-hidden flex flex-col mx-4">
-      <h1 className="text-2xl my-4">売上</h1>
-      <div className="flex items-baseline gap-2 mb-2">
-        <DateInput
-          id="sales-since"
-          name="since"
-          className="w-48"
-          onChange={(e) => updateDate("since", e.target.value)}
-        />
-        →
-        <DateInput
-          id="sales-until"
-          name="until"
-          className="w-48"
-          onChange={(e) => updateDate("until", e.target.value)}
-        />
+    <div className="min-w-[800px]">
+      <div className="flex items-center justify-between">
+        <div className="flex items-baseline gap-2">
+          <DateInput
+            id="sales-since"
+            name="since"
+            size="sm"
+            className="w-48 ms-[2px]"
+            onChange={(e) => updateDate("since", e.target.value)}
+          />
+          →
+          <DateInput
+            id="sales-until"
+            name="until"
+            size="sm"
+            className="w-48"
+            onChange={(e) => updateDate("until", e.target.value)}
+          />
+        </div>
+        {sales ? null : null}
       </div>
       {sales ? (
-        <>
-          <div className="flex">
-            <PriceText
-              value={sales.total_sales}
-              size="2xl"
-              bold
-              className="ms-auto px-4"
-            />
+        <div className="flex flex-col mt-4">
+          <div className="flex items-center justify-between">
+            <div className="my-4 space-x-4">
+              {viewTypes.map((type) => (
+                <label htmlFor={`sales-view-type-${type.key}`} key={type.key}>
+                  <input
+                    type="radio"
+                    id={`sales-view-type-${type.key}`}
+                    checked={type.key === viewType}
+                    onChange={() => setViewType(type.key)}
+                    className="me-1"
+                  />
+                  {type.label}
+                </label>
+              ))}
+            </div>
+            <Price pre="合計" value={sales.total_sales} className="font-bold" />
           </div>
-          <Tab tabs={tabs} activeTab={tab} onTabClick={switchTab} />
-          <List className="overflow-auto">
-            {items.map((item) => (
-              <ListItem key={item.key} className="flex">
-                <ChairIcon model={item.model} />
-                <span className="ms-4">{item.name}</span>
-                <PriceText
-                  tagName="span"
-                  value={item.sales}
-                  className="ms-auto"
-                />
-              </ListItem>
-            ))}
-          </List>
-        </>
-      ) : null}
-    </section>
+          <table className="text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr className="text-gray-500">
+                <th className="px-4 py-3 text-left">
+                  {viewType === "chair" ? "椅子" : "モデル"}
+                </th>
+                <th className="px-4 py-3 text-left">売上</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr
+                  key={item.key}
+                  className="border-b hover:bg-gray-50 transition"
+                >
+                  <td className="p-4">
+                    <div className="flex items-center">
+                      <ChairIcon
+                        model={item.model}
+                        className="shrink-0 size-6 me-2"
+                      />
+                      <span>{item.name}</span>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <PriceText value={item.sales} className="justify-end" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Text className="px-2 py-8">該当するデータがありません</Text>
+      )}
+    </div>
   );
 }

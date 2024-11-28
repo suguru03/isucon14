@@ -1,13 +1,13 @@
-import { ComponentProps, PropsWithChildren } from "react";
+import { ComponentProps, FC, PropsWithChildren } from "react";
 
-export function List({
+export const List: FC<PropsWithChildren<ComponentProps<"ul">>> = ({
   children,
   className,
   ...props
-}: PropsWithChildren<ComponentProps<"ul">>) {
+}) => {
   return (
     <ul {...props} className={className}>
       {children}
     </ul>
   );
-}
+};
