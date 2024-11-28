@@ -70,8 +70,9 @@
     --enable-sysvsem --enable-sysvshm --enable-sysvmsg --enable-mbregex \
     --enable-mbstring --enable-pcntl --enable-sockets --with-curl --enable-zip
 
-- name: Install Python
+- name: Install uv for Python
   become: true
   become_user: isucon
   shell:
-    cmd: /opt/xbuild/python-install 3.13.0 /home/isucon/local/python
+    cmd: curl -LsSf https://astral.sh/uv/install.sh | sh
+    creates: /home/isucon/.local/bin/uv
