@@ -19,18 +19,19 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+type Ride = AppGetRidesResponse["rides"][number];
+
 export default function Index() {
-  const [data, setData] = useState<AppGetRidesResponse>();
+  const [rides, setRides] = useState<Ride[]>([]);
 
   useEffect(() => {
     const abortController = new AbortController();
     void (async () => {
       try {
         const res = await fetchAppGetRides({}, abortController.signal);
-        setData(res);
+        setRides(res.rides);
       } catch (error) {
         console.error(error);
-        setData({ rides: [] });
       }
     })();
     return () => {
@@ -42,14 +43,14 @@ export default function Index() {
     <section className="mx-8 flex-1">
       <h2 className="text-xl my-6">履歴</h2>
       <List className="border-t">
-        {data?.rides.length === 0 && (
+        {rides.length === 0 && (
           <ListItem>
             <Text className="py-10 text-neutral-500">
               椅子の乗車履歴はありません
             </Text>
           </ListItem>
         )}
-        {data?.rides.map(
+        {rides.map(
           ({
             id,
             fare,
