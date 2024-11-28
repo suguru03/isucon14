@@ -12,7 +12,10 @@ export const Enroute: FC = () => {
   const { chair, fare, coordinate } = payload;
   return (
     <div className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
-      <ModalHeader title="椅子が見つかりました" subTitle="配車しています...">
+      <ModalHeader
+        title="椅子が見つかりました"
+        subTitle="あなたのもとに向かっています"
+      >
         <ChairIcon
           model={chair?.model ?? ""}
           width={100}

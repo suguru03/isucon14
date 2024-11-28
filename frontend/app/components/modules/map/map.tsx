@@ -1,6 +1,7 @@
 import {
   ComponentProps,
   FC,
+  memo,
   MouseEventHandler,
   TouchEventHandler,
   useCallback,
@@ -15,7 +16,9 @@ import colors from "tailwindcss/colors";
 import { ChairIcon } from "~/components/icon/chair";
 import { PinIcon } from "~/components/icon/pin";
 import { Button } from "~/components/primitives/button/button";
+import { Text } from "~/components/primitives/text/text";
 import type { Coordinate, DisplayPos, NearByChair } from "~/types";
+import { CityObjects, TownList } from "./map-data";
 
 const GridDistance = 20;
 const PinSize = 50;
@@ -113,7 +116,7 @@ const SelectorLayer: FC<{
   const inputLongitudeRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="flex items-center justify-center w-full h-full select-none">
       <svg
         className="absolute top-0 left-0 w-full h-full opacity-10"
         xmlns="http://www.w3.org/2000/svg"
@@ -203,7 +206,7 @@ const PinLayer: FC<{
   const fromPos = useMemo(() => from && coordinateToPos(from), [from]);
   const toPos = useMemo(() => to && coordinateToPos(to), [to]);
   return (
-    <div className="flex w-full h-full absolute top-0 left-0">
+    <div className="flex w-full h-full absolute top-0 left-0 select-none">
       {fromPos && (
         <PinIcon
           className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
@@ -234,7 +237,7 @@ const ChairLayer: FC<{
   chairs?: NearByChair[];
 }> = ({ chairs }) => {
   return (
-    <div className="flex w-full h-full absolute top-0 left-0">
+    <div className="flex w-full h-full absolute top-0 left-0 select-none">
       {chairs?.map(({ id, model, current_coordinate }) => {
         const pos = coordinateToPos(current_coordinate);
         return (
@@ -253,6 +256,77 @@ const ChairLayer: FC<{
     </div>
   );
 };
+
+const TownLayer = memo(function TownLayer() {
+  return (
+    <div className="flex w-full h-full absolute top-0 left-0 select-none">
+      {TownList.map(({ centerCoordinate, name, image }) => {
+        const pos = coordinateToPos(centerCoordinate);
+        return (
+          <div
+            key={name}
+            className="absolute top-0 left-0"
+            style={{
+              transform: `translate(${-pos.x - image.width / 2}px, ${-pos.y - image.height / 2}px)`,
+            }}
+          >
+            <div
+              className="relative"
+              style={{
+                width: image.width,
+                height: image.height,
+              }}
+            >
+              <div
+                role="presentation"
+                className="absolute rounded-full bg-neutral-100 bg-opacity-40 border-2 border-neutral-200"
+                style={{
+                  width: image.width + 20,
+                  height: image.width + 20,
+                  top: -10,
+                  left: -10,
+                }}
+              ></div>
+              <img
+                className="absolute top-0 left-0"
+                src={image.src}
+                alt={name}
+                width={image.width}
+                height={image.height}
+              />
+              <div className="absolute bottom-[-54px] w-full text-center">
+                <Text
+                  tagName="span"
+                  className="px-3 py-1 bg-neutral-400 text-white rounded-md"
+                  size="sm"
+                >
+                  {name}
+                </Text>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {CityObjects.map(({ image, coordinate }) => {
+        const pos = coordinateToPos(coordinate);
+        return (
+          <img
+            key={`${coordinate.latitude}+${coordinate.longitude}`}
+            className="absolute top-0 left-0"
+            style={{
+              transform: `translate(${-pos.x - image.width / 2}px, ${-pos.y - image.height / 2}px)`,
+            }}
+            src={image.src}
+            alt={"city object"}
+            width={image.width}
+            height={image.height}
+            loading="lazy"
+          />
+        );
+      })}
+    </div>
+  );
+});
 
 type MapProps = ComponentProps<"div"> & {
   onMove?: (coordinate: Coordinate) => void;
@@ -403,7 +477,7 @@ export const Map: FC<MapProps> = ({
   return (
     <div
       className={twMerge(
-        "w-full h-full relative overflow-hidden bg-neutral-200",
+        "w-full h-full relative overflow-hidden bg-neutral-200 select-none",
         isDrag && "cursor-grab",
         className,
       )}
@@ -429,6 +503,7 @@ export const Map: FC<MapProps> = ({
           height={DisplayMapSize}
           ref={canvasRef}
         />
+        <TownLayer />
         {chairs && chairs.length !== 0 && <ChairLayer chairs={chairs} />}
         <PinLayer from={from} to={to} />
       </div>
