@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -175,20 +176,6 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		}
 	}
 
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				if err := sendResult(s, false, false); err != nil {
-					// TODO: エラーをadmin側に出力する
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-			}
-		}
-	}()
-
 	return nil
 }
 
@@ -238,6 +225,26 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	if s.prepareOnly {
 		return nil
 	}
+
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+	sendResultWait := sync.WaitGroup{}
+	defer sendResultWait.Wait()
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				sendResultWait.Add(1)
+				if err := sendResult(s, false, false); err != nil {
+					slog.Error(err.Error())
+				}
+				sendResultWait.Done()
+			}
+		}
+	}()
 
 	s.world.RestTicker()
 LOOP:
