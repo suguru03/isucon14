@@ -15,7 +15,7 @@ export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
 };
 
-const timestamp = (date: string) => Math.floor(new Date(date).getTime());
+const timestamp = (date: string) => Math.floor(new Date(date).getTime()/1000);
 
 const viewTypes = [
   { key: "chair", label: "椅子別" },
