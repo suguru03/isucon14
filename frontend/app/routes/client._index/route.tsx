@@ -213,7 +213,11 @@ export default function Index() {
           <div className="flex items-center">
             <button
               onClick={() => {
-                handleCopyCode().catch(console.error);
+                try {
+                  void handleCopyCode();
+                } catch (error) {
+                  console.error(error);
+                }
               }}
               className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
             >
