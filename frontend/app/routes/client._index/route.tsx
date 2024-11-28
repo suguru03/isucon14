@@ -243,24 +243,16 @@ export default function Index() {
         >
           {internalRideStatus === "MATCHING" && (
             <Matching
-              optimistic={
-                {
-                  destLocation: payload?.coordinate?.destination,
-                  pickup: payload?.coordinate?.pickup,
-                  fare: fare,
-                }
-              }
+              optimistic={{
+                destLocation: payload?.coordinate?.destination,
+                pickup: payload?.coordinate?.pickup,
+                fare: fare,
+              }}
             />
           )}
-          {internalRideStatus === "ENROUTE" && (
-            <Enroute/>
-          )}
-          {internalRideStatus === "PICKUP" && (
-            <Pickup/>
-          )}
-          {internalRideStatus === "CARRYING" && (
-            <Carrying/>
-          )}
+          {internalRideStatus === "ENROUTE" && <Enroute />}
+          {internalRideStatus === "PICKUP" && <Pickup />}
+          {internalRideStatus === "CARRYING" && <Carrying />}
           {internalRideStatus === "ARRIVED" && (
             <Arrived
               onEvaluated={() => {

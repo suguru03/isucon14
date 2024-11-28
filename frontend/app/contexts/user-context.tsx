@@ -134,8 +134,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         eventSource.close();
       };
     });
-
-  },[isSSE, setNotification])
+  }, [isSSE, setNotification]);
 
   useEffect(() => {
     if (isSSE) return;
@@ -162,7 +161,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         timeoutId = window.setTimeout(polling, retryAfterMs);
       })().catch((error) => {
         if (isClientApiError(error)) {
-          console.error(error.message)
+          console.error(error.message);
         }
       });
     };

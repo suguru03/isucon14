@@ -9,15 +9,15 @@ import { Coordinate } from "~/types";
 
 export const Matching: FC<{
   optimistic: {
-    pickup?: Coordinate,
-    destLocation?: Coordinate,
-    fare?: number,
-  }
-
+    pickup?: Coordinate;
+    destLocation?: Coordinate;
+    fare?: number;
+  };
 }> = ({ optimistic }) => {
   const { payload } = useClientAppRequestContext();
   const fare = optimistic.fare ?? payload?.fare;
-  const destLocation = optimistic.destLocation ?? payload?.coordinate?.destination;
+  const destLocation =
+    optimistic.destLocation ?? payload?.coordinate?.destination;
   const pickup = optimistic.pickup ?? payload?.coordinate?.pickup;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
