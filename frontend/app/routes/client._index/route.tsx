@@ -7,6 +7,7 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import { CopyIcon } from "~/components/icon/copy";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Price } from "~/components/modules/price/price";
@@ -30,6 +31,11 @@ export const meta: MetaFunction = () => {
 
 type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
+type CampaignData = {
+  invitationCode: string;
+  registedAt: string; // Dateの文字列形式
+  used: boolean;
+};
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
@@ -153,8 +159,81 @@ export default function Index() {
     return () => abortController.abort();
   }, [setNearByChairs, currentLocation]);
 
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
+  useEffect(() => {
+    const storedData = localStorage.getItem("campaign");
+    if (storedData) {
+      const data: CampaignData = JSON.parse(storedData) as CampaignData;
+      const registeredDate = new Date(data.registedAt);
+      const currentDate = new Date();
+
+      if (
+        !data.used &&
+        currentDate.getTime() - registeredDate.getTime() < 60 * 60 * 1000
+      ) {
+        setCampaign(data);
+      }
+    }
+  }, []);
+
+  const handleCloseBanner = () => {
+    if (campaign) {
+      const updatedCampaign = { ...campaign, used: true };
+      localStorage.setItem("campaign", JSON.stringify(updatedCampaign));
+      setCampaign(null);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (campaign) {
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(campaign.invitationCode);
+          alert("招待コードがコピーされました！");
+        } catch (error) {
+          alert(
+            `コピーに失敗しました。\n招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+          );
+        }
+      } else {
+        alert(
+          `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+        );
+      }
+    }
+  };
+
   return (
     <>
+      {campaign && (
+        <div className="bg-blue-100 p-4 rounded-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-xl flex items-center justify-between">
+          <span className="flex items-center">
+            &#8505; 友達キャンペーン 招待すると1000円OFF
+          </span>
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                try {
+                  void handleCopyCode();
+                } catch (error) {
+                  console.error(error);
+                }
+              }}
+              className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            >
+              <CopyIcon />
+              招待コードをコピー
+            </button>
+            <button
+              onClick={handleCloseBanner}
+              aria-label="閉じる"
+              className="ml-4"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
       <Map
         from={currentLocation}
         to={destLocation}

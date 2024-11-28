@@ -30,12 +30,14 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     firstname?: string;
     lastname?: string;
     register?: string;
+    invitation_code?: string;
   } = {};
 
   const date_of_birth = String(formData.get("date_of_birth"));
   const username = String(formData.get("username"));
   const firstname = String(formData.get("firstname"));
   const lastname = String(formData.get("lastname"));
+  const invitation_code = String(formData.get("invitation_code"));
 
   if (username.length > 30) {
     errors.username = "30文字以内で入力してください";
@@ -51,14 +53,25 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   }
 
   try {
-    await fetchAppPostUsers({
+    const res = await fetchAppPostUsers({
       body: {
         date_of_birth: date_of_birth,
         username: username,
         firstname: firstname,
         lastname: lastname,
+        invitation_code: invitation_code,
       },
     });
+
+    localStorage.setItem(
+      "campaign",
+      JSON.stringify({
+        invitationCode: res.invitation_code,
+        registedAt: new Date(),
+        used: false,
+      }),
+    );
+
     return redirect(`/client/register-payment`);
   } catch (e) {
     console.error(`ERROR: ${JSON.stringify(e)}`);
@@ -132,6 +145,18 @@ export default function ClientRegister() {
             defaultValue="2000-04-01"
             required
           />
+        </div>
+        <div>
+          <TextInput
+            id="invitation_code"
+            name="invitation_code"
+            label="招待コード (お持ちの方のみ入力)"
+          />
+          {actionData?.errors?.invitation_code && (
+            <Text variant="danger" className="mt-2">
+              {actionData?.errors?.invitation_code}
+            </Text>
+          )}
         </div>
         <Button type="submit" variant="primary" className="text-lg mt-6">
           登録
