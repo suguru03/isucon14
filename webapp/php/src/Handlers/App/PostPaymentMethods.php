@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IsuRide\Handlers\App;
 
 use Fig\Http\Message\StatusCodeInterface;
+use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppPostPaymentMethodsRequest;
 use IsuRide\Response\ErrorResponse;
@@ -54,6 +55,7 @@ class PostPaymentMethods extends AbstractHttpHandler
             );
         }
         $user = $request->getAttribute('user');
+        assert($user instanceof User);
         try {
             $stmt = $this->db->prepare('INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)');
             $stmt->execute([$user->id, $token]);

@@ -10,7 +10,7 @@ use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppPostRides202Response;
 use IsuRide\Model\AppPostRidesRequest;
 use IsuRide\Model\Coordinate;
-use IsuRide\Model\User;
+use IsuRide\Database\Model\User;
 use IsuRide\Response\ErrorResponse;
 use PDO;
 use PDOException;
@@ -51,7 +51,7 @@ class PostRides extends AbstractHttpHandler
         }
 
         $user = $request->getAttribute('user');
-        assert($user instanceof \IsuRide\Database\Model\User);
+        assert($user instanceof User);
         $rideId = new Ulid();
         $this->db->beginTransaction();
         try {
