@@ -1,14 +1,15 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useEffect, useMemo, useState } from "react";
-import {  OwnerGetSalesResponse, fetchOwnerGetSales } from "~/apiClient/apiComponents";
+import {
+  OwnerGetSalesResponse,
+  fetchOwnerGetSales,
+} from "~/apiClient/apiComponents";
 import { ChairIcon } from "~/components/icon/chair";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";
 import { DateInput } from "~/components/primitives/form/date";
 import { Text } from "~/components/primitives/text/text";
 import { useClientProviderContext } from "~/contexts/owner-context";
-
-
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -21,14 +22,16 @@ const viewTypes = [
   { key: "model", label: "モデル別" },
 ] as const;
 
-type OwnerSalesType = OwnerGetSalesResponse
+type OwnerSalesType = OwnerGetSalesResponse;
 export default function Index() {
-
   const [viewType, setViewType] =
     useState<(typeof viewTypes)[number]["key"]>("chair");
 
   const { chairs } = useClientProviderContext();
-  const [salesDate, setSalesDate] = useState<{since?: string, until?: string}>({});
+  const [salesDate, setSalesDate] = useState<{
+    since?: string;
+    until?: string;
+  }>({});
   const [sales, setSales] = useState<OwnerSalesType>();
 
   useEffect(() => {
@@ -39,20 +42,29 @@ export default function Index() {
     void (async () => {
       try {
         abortController = new AbortController();
-        setSales(await fetchOwnerGetSales({queryParams: {
-          until: timestamp(until),
-          since: timestamp(since)
-        }},abortController.signal))
-      } catch(error) {
-        console.error(error)
+        setSales(
+          await fetchOwnerGetSales(
+            {
+              queryParams: {
+                until: timestamp(until),
+                since: timestamp(since),
+              },
+            },
+            abortController.signal,
+          ),
+        );
+      } catch (error) {
+        console.error(error);
       }
-    })()
+    })();
 
     return () => abortController?.abort();
+  }, [salesDate, setSales]);
 
-  },[salesDate, setSales])
-
-  const chairModelMap = useMemo(() => new Map(chairs?.map((c) => [c.id, c.model])),[chairs]);
+  const chairModelMap = useMemo(
+    () => new Map(chairs?.map((c) => [c.id, c.model])),
+    [chairs],
+  );
 
   const items = useMemo(() => {
     if (!sales || !chairs) {
@@ -75,8 +87,8 @@ export default function Index() {
 
   const updateDate = (key: "since" | "until", value: string) => {
     setSalesDate((prev) => {
-      return {...prev, [key]: value}
-    })
+      return { ...prev, [key]: value };
+    });
   };
 
   return (
