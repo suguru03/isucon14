@@ -67,7 +67,8 @@ const CoordinatePickup: FC<{
       <LocationButton
         className="w-full"
         location={coordinateState.coordinate}
-        label="椅子位置を設定"
+        label="椅子位置"
+        placeholder="現在位置を設定"
         onClick={handleOpenModal}
       />
       {visibleModal && (
