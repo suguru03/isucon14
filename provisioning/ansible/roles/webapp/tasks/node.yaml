@@ -3,7 +3,7 @@
   become: true
   become_user: isucon
   ansible.builtin.file:
-    path: /home/isucon/webapp/node
+    path: /home/isucon/webapp/nodejs
     state: directory
 
 - name: Build isuride-node
@@ -12,7 +12,7 @@
   shell: |
     /home/isucon/.x npm install
   args:
-    chdir: /home/isucon/webapp/node
+    chdir: /home/isucon/webapp/nodejs
 
 - name: Put systemd service
   become: true
