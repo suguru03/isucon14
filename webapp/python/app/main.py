@@ -27,9 +27,8 @@ class PostInitializeResponse(BaseModel):
     language: str
 
 
-# TODO: asyncを削除
 @app.exception_handler(HTTPStatus.INTERNAL_SERVER_ERROR)
-async def internal_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+def internal_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
     )
