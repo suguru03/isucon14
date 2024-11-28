@@ -56,9 +56,7 @@ class PostPaymentMethods extends AbstractHttpHandler
         $user = $request->getAttribute('user');
         try {
             $stmt = $this->db->prepare('INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->bindValue(2, $token, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id, $token]);
             return $this->writeNoContent($response);
         } catch (\PDOException $e) {
             return (new ErrorResponse())->write(

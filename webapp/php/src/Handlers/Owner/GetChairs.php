@@ -69,8 +69,7 @@ FROM chairs
 WHERE owner_id = ?
 SQL
             );
-            $stmt->bindValue(1, $owner->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$owner->id]);
             $chairs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
