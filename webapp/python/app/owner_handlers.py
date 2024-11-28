@@ -9,10 +9,9 @@ from collections import defaultdict
 from collections.abc import MutableMapping
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
-from pydantic import BaseModel, StringConstraints
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
 
@@ -30,7 +29,7 @@ router = APIRouter(prefix="/api/owner")
 
 
 class OwnerPostOwnersRequest(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=1)]
+    name: str
 
 
 class OwnerPostOwnersResponse(BaseModel):
@@ -42,8 +41,11 @@ class OwnerPostOwnersResponse(BaseModel):
 def owner_post_owners(
     req: OwnerPostOwnersRequest, response: Response
 ) -> OwnerPostOwnersResponse:
-    # TODO: implement
-    # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/owner_handlers.go#L20
+    if req.name == "":
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="some of required fields(name) are empty",
+        )
 
     owner_id = str(ULID())
     access_token = secure_random_str(32)
