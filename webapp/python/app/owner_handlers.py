@@ -20,7 +20,6 @@ from .middlewares import owner_auth_middleware
 from .models import Chair, Owner, Ride
 from .sql import engine
 from .utils import (
-    UTC,
     datetime_fromtimestamp_millis,
     secure_random_str,
     sum_sales,
@@ -100,7 +99,7 @@ def owner_get_sales(
         since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
-        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=UTC)
+        until_dt = datetime(9999, 12, 31, 23, 59, 59)
     else:
         until_dt = datetime_fromtimestamp_millis(until)
 
