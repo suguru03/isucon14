@@ -62,7 +62,7 @@
   become: true
   become_user: isucon
   shell: |
-    /opt/xbuild/php-install 8.4.1 /home/isucon/local/php -- \
+    /opt/xbuild/php-install 8.3.13 /home/isucon/local/php -- \
     --with-pcre-regex --with-zlib --enable-fpm --enable-pdo --with-pear \
     --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-openssl \
     --with-pcre-regex --with-pcre-dir --with-libxml-dir --enable-opcache \
