@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn>=0.32.0",
 ]
 
+# TODDO: 本番前に削除
 [dependency-groups]
 dev = [
     "fastapi[standard]>=0.115.5",
@@ -19,13 +20,3 @@ dev = [
     "nox>=2024.10.9",
 ]
 
-# インデックスを明示的に指定しておく
-[[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple"
-
-[tool.ruff.lint]
-extend-select = [
-    "UP", # pyupgrade
-    "I", # isort
-]

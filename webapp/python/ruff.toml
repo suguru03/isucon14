@@ -1,0 +1,6 @@
+# AMIには含めない
+[lint]
+extend-select = [
+    "UP", # pyupgrade
+    "I", # isort
+]
