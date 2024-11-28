@@ -259,17 +259,18 @@ class AppPostRidesResponse(BaseModel):
 
 
 def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
-    row = conn.execute(
+    status = conn.execute(
         text(
             "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
         ),
         {"ride_id": ride_id},
-    ).fetchone()
+    ).scalar()
 
-    if not row:
+    if not status:
         return ""
 
-    return row.status
+    assert isinstance(status, str)
+    return status
 
 
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
