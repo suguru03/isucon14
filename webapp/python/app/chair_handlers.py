@@ -276,14 +276,6 @@ def chair_post_ride_status(
             )
 
         match req.status:
-            # Deny matching
-            case "MATCHING":
-                conn.execute(
-                    text(
-                        "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
-                    ),
-                    {"id": str(ULID()), "ride_id": ride.id, "status": "MATCHING"},
-                )
             # Accept matching
             case "ENROUTE":
                 conn.execute(

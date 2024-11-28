@@ -7,15 +7,10 @@ import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
-import { Coordinate } from "~/types";
 
-export const Pickup: FC<{
-  pickup?: Coordinate;
-  destLocation?: Coordinate;
-  fare?: number;
-}> = ({ pickup, destLocation }) => {
+export const Pickup: FC = () => {
   const { payload = {} } = useClientAppRequestContext();
-  const { chair, fare } = payload;
+  const { chair, fare, coordinate } = payload;
   return (
     <div className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <ModalHeader title="目的地に向けて出発します" subTitle="お座りください">
@@ -36,14 +31,14 @@ export const Pickup: FC<{
       {chair && <ChairInformation className="mb-8" chair={chair} />}
       <LocationButton
         label="現在地"
-        location={pickup}
+        location={coordinate?.pickup}
         className="w-full"
         disabled
       />
       <Text size="xl">↓</Text>
       <LocationButton
         label="目的地"
-        location={destLocation}
+        location={coordinate?.destination}
         className="w-full"
         disabled
       />

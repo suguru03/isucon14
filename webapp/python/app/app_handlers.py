@@ -283,9 +283,10 @@ def app_post_rides(
 
     ride_id = str(ULID())
     with engine.begin() as conn:
-        rides = conn.execute(
+        rows = conn.execute(
             text("SELECT * FROM rides WHERE user_id = :user_id"), {"user_id": user.id}
         ).fetchall()
+        rides = [Ride.model_validate(row) for row in rows]
 
         continuing_ride_count: int = 0
         for ride in rides:
@@ -342,12 +343,12 @@ def app_post_rides(
                 )
             else:
                 # 無ければ他のクーポンを付与された順番に使う
-                coupon = conn.execute(  # type: ignore
+                coupon = conn.execute(
                     text(
                         "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                     ),
                     {"user_id": user.id},
-                )
+                ).fetchone()
                 if coupon:
                     conn.execute(
                         text(
@@ -374,12 +375,12 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride.model_validate(row)  # type: ignore
+        ride = Ride.model_validate(row)
 
         fare = calculate_discounted_fare(
             conn,
             user.id,
-            ride,  # type: ignore
+            ride,
             r.pickup_coordinate.latitude,
             r.pickup_coordinate.longitude,
             r.destination_coordinate.latitude,
@@ -409,7 +410,7 @@ def app_post_rides_estimated_fare(
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
         )
 

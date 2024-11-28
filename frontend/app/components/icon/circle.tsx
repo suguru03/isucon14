@@ -1,3 +1,4 @@
+// TODO: 後で消す
 import type { ComponentProps, FC } from "react";
 
 export const CircleIcon: FC<ComponentProps<"svg">> = function (props) {

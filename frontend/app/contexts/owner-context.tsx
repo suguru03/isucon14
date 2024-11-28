@@ -13,8 +13,8 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/apiClient/apiComponents";
-import { getCookieValue } from "~/components/modules/session/cookie";
 import { isClientApiError } from "~/types";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 type ClientProviderRequest = Partial<{
   chairs: OwnerGetChairsResponse["chairs"];
