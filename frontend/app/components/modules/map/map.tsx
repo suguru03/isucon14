@@ -20,7 +20,7 @@ import type { Coordinate, DisplayPos, NearByChair } from "~/types";
 const GridDistance = 20;
 const PinSize = 50;
 const ChairSize = 40;
-const DisplayMapSize = GridDistance * 80;
+const DisplayMapSize = GridDistance * 200;
 const WorldSize = 1000;
 
 const minmax = (num: number, min: number, max: number) => {
@@ -280,10 +280,7 @@ export const Map: FC<MapProps> = ({
   const [isDrag, setIsDrag] = useState(false);
   const [{ x, y }, setPos] = useState({ x: 0, y: 0 });
   const [movingStartPos, setMovingStartPos] = useState({ x: 0, y: 0 });
-  const [movingStartPagePos, setMovingStartPagePos] = useState({
-    x: 0,
-    y: 0,
-  });
+  const [movingStartPagePos, setMovingStartPagePos] = useState({ x: 0, y: 0 });
   const [outerRect, setOuterRect] = useState<DOMRect | undefined>(undefined);
 
   const updateViewLocation = useCallback((loc?: Coordinate) => {
