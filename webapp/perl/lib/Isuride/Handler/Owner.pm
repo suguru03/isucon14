@@ -14,16 +14,10 @@ use Cpanel::JSON::XS::Type qw(
     json_type_arrayof
     json_type_null_or_anyof
 );
-use List::Util qw(max);
 
-use Isuride::Models qw(Coordinate);
 use Isuride::Time qw(unix_milli_from_str unix_milli_from_time_moment);
 use Isuride::Util qw(
-    InitialFare
-    FarePerDistance
     secure_random_str
-    calculate_distance
-    calculate_fare
     calculate_sale
 
     check_params
