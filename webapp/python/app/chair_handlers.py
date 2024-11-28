@@ -226,6 +226,7 @@ def chair_get_notification(
         if (yet_sent_ride_status is None) and (
             (not found) or ride_status == "COMPLETED"
         ):
+            # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
             row = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
