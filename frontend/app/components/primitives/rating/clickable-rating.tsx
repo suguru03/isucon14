@@ -25,7 +25,7 @@ export const ClickableRating: FC<ClickableRatingProps> = ({
           <label
             key={index}
             htmlFor={`${name}-${starValue}`}
-            className="flex items-center"
+            className="cursor-pointer flex items-center"
           >
             <input
               type="radio"

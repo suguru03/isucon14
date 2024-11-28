@@ -3,7 +3,7 @@ import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
 
 export default function Index() {
   return (
-    <div className="h-screen min-h-[1000px] min-w-[1200px] flex justify-center items-center gap-32">
+    <div className="h-screen flex justify-center items-center space-x-16">
       <SmartPhone>
         <iframe title="ユーザー画面" src="/client" className="w-full h-full" />
       </SmartPhone>
