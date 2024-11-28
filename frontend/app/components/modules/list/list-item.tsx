@@ -1,14 +1,14 @@
-import { ComponentProps, PropsWithChildren } from "react";
+import type { ComponentProps, FC, PropsWithChildren } from "react";
 import { twMerge } from "tailwind-merge";
 
-export function ListItem({
+export const ListItem: FC<PropsWithChildren<ComponentProps<"li">>> = ({
   children,
   className,
   ...props
-}: PropsWithChildren<ComponentProps<"li">>) {
+}) => {
   return (
-    <li {...props} className={twMerge("px-4 py-3 border-b", className)}>
+    <li className={twMerge("border-b", className)} {...props}>
       {children}
     </li>
   );
-}
+};

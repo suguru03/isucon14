@@ -128,7 +128,7 @@ export const useClientChairNotification = (id?: string) => {
 
   useEffect(() => {
     if (isSSE) return;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: number;
     let abortController: AbortController | undefined;
     const polling = async () => {
       try {
@@ -152,13 +152,13 @@ export const useClientChairNotification = (id?: string) => {
             return preRequest;
           }
         });
-        timeoutId = setTimeout(() => void polling(), retryAfterMs);
+        timeoutId = window.setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
         console.error(error);
       }
     };
 
-    timeoutId = setTimeout(() => void polling(), retryAfterMs);
+    timeoutId = window.setTimeout(() => void polling(), retryAfterMs);
 
     return () => {
       abortController?.abort();
@@ -191,7 +191,23 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const request = useClientChairNotification(simulateChairData?.id);
-  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>();
+
+  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>({
+    longitude: 0,
+    latitude: 0,
+  });
+  useEffect(() => {
+    try {
+      const getItem = sessionStorage.getItem("simulatorCoordinate");
+      if (getItem === null) {
+        return;
+      }
+      const coordinate = JSON.parse(getItem) as Coordinate;
+      setCurrentCoordinate(coordinate);
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   return (
     <ClientSimulatorContext.Provider

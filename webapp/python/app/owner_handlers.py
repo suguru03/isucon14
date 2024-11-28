@@ -9,10 +9,9 @@ from collections import defaultdict
 from collections.abc import MutableMapping
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
-from pydantic import BaseModel, StringConstraints
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
 from sqlalchemy import text
 from ulid import ULID
 
@@ -20,7 +19,6 @@ from .middlewares import owner_auth_middleware
 from .models import Chair, Owner, Ride
 from .sql import engine
 from .utils import (
-    UTC,
     datetime_fromtimestamp_millis,
     secure_random_str,
     sum_sales,
@@ -31,7 +29,7 @@ router = APIRouter(prefix="/api/owner")
 
 
 class OwnerPostOwnersRequest(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=1)]
+    name: str
 
 
 class OwnerPostOwnersResponse(BaseModel):
@@ -43,8 +41,11 @@ class OwnerPostOwnersResponse(BaseModel):
 def owner_post_owners(
     req: OwnerPostOwnersRequest, response: Response
 ) -> OwnerPostOwnersResponse:
-    # TODO: implement
-    # https://github.com/isucon/isucon14/blob/9571164b2b053f453dc0d24e0202d95c2fef253b/webapp/go/owner_handlers.go#L20
+    if req.name == "":
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="some of required fields(name) are empty",
+        )
 
     owner_id = str(ULID())
     access_token = secure_random_str(32)
@@ -93,14 +94,13 @@ def owner_get_sales(
     until: int | None = None,
     owner: Owner = Depends(owner_auth_middleware),
 ) -> OwnerGetSalesResponse:
-    # TODO: タイムゾーンの扱いに自信なし
     if since is None:
         since_dt = datetime_fromtimestamp_millis(0)
     else:
         since_dt = datetime_fromtimestamp_millis(since)
 
     if until is None:
-        until_dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=UTC)
+        until_dt = datetime(9999, 12, 31, 23, 59, 59)
     else:
         until_dt = datetime_fromtimestamp_millis(until)
 
@@ -118,7 +118,6 @@ def owner_get_sales(
                 text(
                     "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until + INTERVAL 999 MICROSECOND"
                 ),
-                # TODO: datetime型で大丈夫なんだっけ？
                 {
                     "chair_id": chair.id,
                     "since": since_dt,

@@ -10,6 +10,7 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.engine import Connection
 from ulid import ULID
 
 from .middlewares import app_auth_middleware
@@ -147,7 +148,7 @@ class AppPostPaymentMethodsRequest(BaseModel):
 @router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
 def app_post_payment_methods(
     req: AppPostPaymentMethodsRequest, user: User = Depends(app_auth_middleware)
-):
+) -> None:
     if req.token == "":
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="token is required but was empty"
@@ -190,7 +191,7 @@ class GetAppRidesResponse(BaseModel):
 
 
 @router.get("/rides")
-def app_get_rides(user: User = Depends(app_auth_middleware)):
+def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -237,7 +238,6 @@ def app_get_rides(user: User = Depends(app_auth_middleware)):
                 id=chair.id, owner=owner.name, name=chair.name, model=chair.model
             ),
             fare=calculate_sale(ride),
-            # TODO: 型エラーを修正
             evaluation=ride.evaluation,  # type: ignore[arg-type]
             requested_at=timestamp_millis(ride.created_at),
             completed_at=timestamp_millis(ride.updated_at),
@@ -257,18 +257,19 @@ class AppPostRidesResponse(BaseModel):
     fare: int
 
 
-def get_latest_ride_status(conn, ride_id: str) -> str:
-    row = conn.execute(
+def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
+    status = conn.execute(
         text(
             "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
         ),
         {"ride_id": ride_id},
-    ).fetchone()
+    ).scalar()
 
-    if not row:
+    if not status:
         return ""
 
-    return row.status
+    assert isinstance(status, str)
+    return status
 
 
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
@@ -283,9 +284,10 @@ def app_post_rides(
 
     ride_id = str(ULID())
     with engine.begin() as conn:
-        rides = conn.execute(
+        rows = conn.execute(
             text("SELECT * FROM rides WHERE user_id = :user_id"), {"user_id": user.id}
         ).fetchall()
+        rides = [Ride.model_validate(row) for row in rows]
 
         continuing_ride_count: int = 0
         for ride in rides:
@@ -342,12 +344,12 @@ def app_post_rides(
                 )
             else:
                 # 無ければ他のクーポンを付与された順番に使う
-                coupon = conn.execute(  # type: ignore
+                coupon = conn.execute(
                     text(
                         "SELECT * FROM coupons WHERE user_id = :user_id AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
                     ),
                     {"user_id": user.id},
-                )
+                ).fetchone()
                 if coupon:
                     conn.execute(
                         text(
@@ -374,12 +376,12 @@ def app_post_rides(
         row = conn.execute(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
-        ride: Ride = Ride.model_validate(row)  # type: ignore
+        ride = Ride.model_validate(row)
 
         fare = calculate_discounted_fare(
             conn,
             user.id,
-            ride,  # type: ignore
+            ride,
             r.pickup_coordinate.latitude,
             r.pickup_coordinate.longitude,
             r.destination_coordinate.latitude,
@@ -409,7 +411,7 @@ def app_post_rides_estimated_fare(
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
         )
 
@@ -529,7 +531,7 @@ def app_post_ride_evaluation(
         if not isinstance(payment_gateway_url, str):
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        def retrieve_rides_order_by_created_at_asc():
+        def retrieve_rides_order_by_created_at_asc() -> list[Ride]:
             rows = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE user_id = :user_id ORDER BY created_at ASC",
@@ -704,7 +706,9 @@ class AppGetRideResponse(BaseModel):
     updated_at: int
 
 
-def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats:
+def get_chair_stats(
+    conn: Connection, chair_id: str
+) -> AppGetNotificationResponseChairStats:
     rides = conn.execute(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
@@ -771,7 +775,7 @@ def app_get_nearby_chairs(
     longitude: int,
     distance: int = 50,
     _: User = Depends(app_auth_middleware),
-):
+) -> AppGetNearByChairsResponse:
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
         chairs = conn.execute(
@@ -837,7 +841,7 @@ def app_get_nearby_chairs(
 
 
 def calculate_discounted_fare(
-    conn,
+    conn: Connection,
     user_id: str,
     ride: Ride | None,
     pickup_latitude: int,

@@ -28,14 +28,14 @@ class PostInitializeResponse(BaseModel):
 
 
 @app.exception_handler(HTTPStatus.INTERNAL_SERVER_ERROR)
-async def internal_exception_handler(_request: Request, exc: Exception):
+def internal_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
     )
 
 
 @app.exception_handler(HTTPException)
-def custom_http_exception_handler(_: Request, exc: HTTPException):
+def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
 
 

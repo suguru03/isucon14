@@ -1,3 +1,4 @@
+import { LinksFunction } from "@remix-run/node";
 import {
   isRouteErrorResponse,
   Links,
@@ -53,3 +54,30 @@ export function ErrorBoundary() {
 export function HydrateFallback() {
   return <></>;
 }
+
+export const links: LinksFunction = () => {
+  return [
+    {
+      rel: "icon",
+      href: "/public/favicon.ico",
+      type: "image/ico",
+    },
+    {
+      rel: "icon",
+      href: "/public/favicon-32x32.png",
+      type: "image/png",
+      sizes: "32x32",
+    },
+    {
+      rel: "icon",
+      href: "/public/favicon-128x128.png",
+      type: "image/png",
+      sizes: "128x128",
+    },
+    {
+      rel: "apple-touch-icon",
+      href: "/public/apple-touch-icon-180x180.png",
+      sizes: "180x18",
+    },
+  ];
+};
