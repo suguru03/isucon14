@@ -21,7 +21,7 @@ export const Matching: FC<{
   const pickup = optimistic.pickup ?? payload?.coordinate?.pickup;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
-      <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">
+      <ModalHeader title="マッチング中" subTitle="椅子をさがしています">
         <ChairWaitingIndicator size={120} />
       </ModalHeader>
       <LocationButton
