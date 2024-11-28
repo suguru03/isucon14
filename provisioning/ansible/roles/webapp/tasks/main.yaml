@@ -66,5 +66,5 @@
 - name: Tasks for isuride-ruby
   include_tasks: ruby.yaml
 
-#- name: Tasks for isuride-rust
-#  include_tasks: rust.yaml
+- name: Tasks for isuride-rust
+  include_tasks: rust.yaml
