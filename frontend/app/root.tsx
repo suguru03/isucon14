@@ -70,7 +70,7 @@ export const links: LinksFunction = () => {
     },
     {
       rel: "icon",
-      href: "/public/favicon-32x32.png",
+      href: "/public/favicon-128x128.png",
       type: "image/png",
       sizes: "128x128",
     },
