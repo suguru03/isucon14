@@ -306,22 +306,13 @@ export default function Index() {
             />
           )}
           {internalRideStatus === "ENROUTE" && (
-            <Enroute
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
+            <Enroute/>
           )}
           {internalRideStatus === "PICKUP" && (
-            <Pickup
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
+            <Pickup/>
           )}
           {internalRideStatus === "CARRYING" && (
-            <Carrying
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
+            <Carrying/>
           )}
           {internalRideStatus === "ARRIVED" && (
             <Arrived
