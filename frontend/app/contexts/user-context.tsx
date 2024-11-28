@@ -106,70 +106,72 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
   );
   const retryAfterMs = notification?.retry_after_ms ?? 10000;
   const isSSE = notification?.contentType === "event-stream";
+
   useEffect(() => {
-    if (isSSE) {
-      const eventSource = new EventSource(`${apiBaseURL}/app/notification`);
-      eventSource.addEventListener("message", (event) => {
-        if (typeof event.data === "string") {
-          const eventData = JSON.parse(
-            event.data,
-          ) as AppGetNotificationResponse["data"];
-          setNotification((preRequest) => {
-            if (
-              preRequest === undefined ||
-              eventData?.status !== preRequest?.data?.status ||
-              eventData?.ride_id !== preRequest?.data?.ride_id
-            ) {
-              return {
-                data: eventData,
-                contentType: "event-stream",
-              };
-            } else {
-              return preRequest;
-            }
-          });
-        }
-        return () => {
-          eventSource.close();
-        };
-      });
-    } else {
-      const abortController = new AbortController();
-      let timeoutId: number = 0;
-      const polling = () => {
-        (async () => {
-          const currentNotification = await fetchAppGetNotification(
-            {},
-            abortController.signal,
-          );
-          setNotification((prev) => {
-            if (
-              prev?.data === undefined ||
-              prev?.data?.status !== currentNotification.data?.status ||
-              prev?.data?.ride_id !== currentNotification.data?.ride_id
-            ) {
-              return { ...currentNotification, contentType: "json" };
-            } else {
-              return prev;
-            }
-          });
-          timeoutId = window.setTimeout(polling, retryAfterMs);
-        })().catch((e) => {
-          console.error(`ERROR: ${JSON.stringify(e)}`);
-          if (isClientApiError(e)) {
-            if (e.stack.status === 401) {
-              navigate("/client/register");
-            }
+    if (!isSSE) return;
+    const eventSource = new EventSource(`${apiBaseURL}/app/notification`);
+    eventSource.addEventListener("message", (event) => {
+      if (typeof event.data === "string") {
+        const eventData = JSON.parse(
+          event.data,
+        ) as AppGetNotificationResponse["data"];
+        setNotification((preRequest) => {
+          if (
+            preRequest === undefined ||
+            eventData?.status !== preRequest?.data?.status ||
+            eventData?.ride_id !== preRequest?.data?.ride_id
+          ) {
+            return {
+              data: eventData,
+              contentType: "event-stream",
+            };
+          } else {
+            return preRequest;
           }
         });
-      };
-      timeoutId = window.setTimeout(polling, retryAfterMs);
-
+      }
       return () => {
-        abortController.abort();
-        clearTimeout(timeoutId);
+        eventSource.close();
       };
-    }
+    });
+
+  },[isSSE, setNotification])
+
+  useEffect(() => {
+    if (isSSE) return;
+    let timeoutId: number;
+    let abortController: AbortController | undefined;
+    const polling = () => {
+      (async () => {
+        const abortController = new AbortController();
+        const currentNotification = await fetchAppGetNotification(
+          {},
+          abortController.signal,
+        );
+        setNotification((prev) => {
+          if (
+            prev?.data === undefined ||
+            prev?.data?.status !== currentNotification.data?.status ||
+            prev?.data?.ride_id !== currentNotification.data?.ride_id
+          ) {
+            return { ...currentNotification, contentType: "json" };
+          } else {
+            return prev;
+          }
+        });
+        timeoutId = window.setTimeout(polling, retryAfterMs);
+      })().catch((error) => {
+        if (isClientApiError(error)) {
+          console.error(error.message)
+        }
+      });
+    };
+    timeoutId = window.setTimeout(polling, retryAfterMs);
+
+    return () => {
+      abortController?.abort();
+      clearTimeout(timeoutId);
+    };
   }, [accessToken, isSSE, navigate, retryAfterMs]);
 
   const responseClientAppRequest = useMemo<ClientAppRide | undefined>(() => {

@@ -128,7 +128,7 @@ export const useClientChairNotification = (id?: string) => {
 
   useEffect(() => {
     if (isSSE) return;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: number;
     let abortController: AbortController | undefined;
     const polling = async () => {
       try {
@@ -152,13 +152,13 @@ export const useClientChairNotification = (id?: string) => {
             return preRequest;
           }
         });
-        timeoutId = setTimeout(() => void polling(), retryAfterMs);
+        timeoutId = window.setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
         console.error(error);
       }
     };
 
-    timeoutId = setTimeout(() => void polling(), retryAfterMs);
+    timeoutId = window.setTimeout(() => void polling(), retryAfterMs);
 
     return () => {
       abortController?.abort();
