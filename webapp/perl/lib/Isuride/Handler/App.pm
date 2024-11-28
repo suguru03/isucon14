@@ -630,9 +630,9 @@ use constant AppGetNearbyChairsResponse => {
 };
 
 sub app_get_nearby_chairs ($app, $c) {
-    my $lat      = $c->args->{latitude};
-    my $lon      = $c->args->{longitude};
-    my $distance = $c->args->{distance};
+    my $lat      = $c->query_parameters->{latitude};
+    my $lon      = $c->query_parameters->{longitude};
+    my $distance = $c->query_parameters->{distance};
 
     if ($lat eq '' || $lon eq '') {
         return $c->halt_json(HTTP_BAD_REQUEST, 'latitude or longitude is empty');
