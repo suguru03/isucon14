@@ -106,6 +106,11 @@ func setup() http.Handler {
 		authedMux.HandleFunc("POST /api/chair/rides/{ride_id}/status", chairPostRideStatus)
 	}
 
+	// internal handlers
+	{
+		mux.HandleFunc("GET /api/internal/matching", internalGetMatching)
+	}
+
 	return mux
 }
 
