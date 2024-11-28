@@ -238,7 +238,6 @@ def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesRespo
                 id=chair.id, owner=owner.name, name=chair.name, model=chair.model
             ),
             fare=calculate_sale(ride),
-            # TODO: 型エラーを修正
             evaluation=ride.evaluation,  # type: ignore[arg-type]
             requested_at=timestamp_millis(ride.created_at),
             completed_at=timestamp_millis(ride.updated_at),

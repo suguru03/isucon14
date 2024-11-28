@@ -94,7 +94,6 @@ def owner_get_sales(
     until: int | None = None,
     owner: Owner = Depends(owner_auth_middleware),
 ) -> OwnerGetSalesResponse:
-    # TODO: タイムゾーンの扱いに自信なし
     if since is None:
         since_dt = datetime_fromtimestamp_millis(0)
     else:
@@ -119,7 +118,6 @@ def owner_get_sales(
                 text(
                     "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = :chair_id AND status = 'COMPLETED' AND updated_at BETWEEN :since AND :until + INTERVAL 999 MICROSECOND"
                 ),
-                # TODO: datetime型で大丈夫なんだっけ？
                 {
                     "chair_id": chair.id,
                     "since": since_dt,

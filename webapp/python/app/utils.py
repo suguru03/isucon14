@@ -2,7 +2,6 @@ import binascii
 import os
 from datetime import datetime, timedelta
 
-# TODO: if typing.TYPE_CHECKINGの中に入れた方がいいかも
 from .models import Ride
 
 INITIAL_FARE: int = 500
