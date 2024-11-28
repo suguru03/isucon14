@@ -502,6 +502,7 @@ def app_post_ride_evaluation(
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
+        ride = Ride.model_validate(row)
 
         row = conn.execute(
             text("SELECT * FROM payment_tokens WHERE user_id = :user_id"),
