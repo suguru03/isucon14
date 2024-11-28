@@ -1,16 +1,14 @@
 import binascii
 import os
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 
-# if typing.TYPE_CHECKINGの中に入れた方がいいかも
+# TODO: if typing.TYPE_CHECKINGの中に入れた方がいいかも
 from .models import Ride
 
 INITIAL_FARE: int = 500
 FARE_PER_DISTANCE: int = 100
-UTC: ZoneInfo = ZoneInfo("UTC")
 
-EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+EPOCH = datetime(1970, 1, 1)
 
 
 def secure_random_str(b: int) -> str:
@@ -19,7 +17,6 @@ def secure_random_str(b: int) -> str:
 
 
 def timestamp_millis(dt: datetime) -> int:
-    dt = dt.astimezone(UTC)
     return (dt - EPOCH) // timedelta(milliseconds=1)
 
 
