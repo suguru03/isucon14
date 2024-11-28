@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link, Outlet, useMatch } from "@remix-run/react";
+import { Link, Outlet, useMatches } from "@remix-run/react";
 import { twMerge } from "tailwind-merge";
 import { IsurideIcon } from "~/components/icon/isuride";
 import { ProviderProvider } from "~/contexts/owner-context";
@@ -17,7 +17,8 @@ const tabs = [
 ] as const;
 
 const Tab = () => {
-  const match = useMatch({ path: "/owner/", end: true });
+  const matches = useMatches();
+  const activeTab = matches[2].pathname.split("/").at(-1) || "index";
 
   return (
     <nav className="flex after:w-full after:border-b after:border-gray-300">
@@ -27,7 +28,7 @@ const Tab = () => {
             key={tab.key}
             className={twMerge([
               "rounded-tl-md rounded-tr-md",
-              tab.key === (match ? "index" : "sales")
+              tab.key === activeTab
                 ? "border border-b-transparent"
                 : "border-l-transparent border-t-transparent border-r-transparent border",
             ])}
