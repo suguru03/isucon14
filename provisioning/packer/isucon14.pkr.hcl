@@ -58,7 +58,7 @@ source "amazon-ebs" "isucon14" {
 
   source_ami    = "${data.amazon-ami.base-image.id}"
   region        = "ap-northeast-1"
-  instance_type = "c5.4xlarge"
+  instance_type = "c6i.4xlarge"
 
   run_tags        = local.run_tags
   run_volume_tags = local.run_tags
