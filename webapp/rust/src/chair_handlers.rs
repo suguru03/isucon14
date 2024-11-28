@@ -202,66 +202,30 @@ async fn chair_get_notification(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(chair): axum::Extension<Chair>,
 ) -> Result<axum::Json<ChairGetNotificationResponse>, Error> {
-    sqlx::query("SELECT * FROM chairs WHERE id = ? FOR UPDATE")
-        .bind(&chair.id)
-        .execute(&pool)
-        .await?;
-
-    let ride: Option<Ride> =
-        sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1")
-            .bind(&chair.id)
-            .fetch_optional(&pool)
-            .await?;
-
-    let (mut yet_sent_ride_status_id, ride_and_status) = if let Some(ride) = ride {
-        let yet_sent_ride_status: Option<RideStatus> =
-            sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1")
-                .bind(&ride.id)
-                .fetch_optional(&pool)
-                .await?;
-        if let Some(yet_sent_ride_status) = yet_sent_ride_status {
-            (
-                Some(yet_sent_ride_status.id),
-                Some((ride, yet_sent_ride_status.status)),
-            )
-        } else {
-            let status = crate::get_latest_ride_status(&pool, &ride.id).await?;
-            (None, Some((ride, status)))
-        }
-    } else {
-        (None, None)
-    };
-
     let mut tx = pool.begin().await?;
 
-    let (ride, status) = match ride_and_status {
-        Some((ride, status)) if yet_sent_ride_status_id.is_some() || status != "COMPLETED" => {
-            (ride, status)
-        }
-        _ => {
-            // MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-            let Some(matched): Option<Ride> = sqlx::query_as(
-                "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE",
-            )
+    let Some(ride): Option<Ride> =
+        sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1")
+            .bind(&chair.id)
             .fetch_optional(&mut *tx)
             .await?
-            else {
-                return Ok(axum::Json(ChairGetNotificationResponse { data: None }));
-            };
+    else {
+        return Ok(axum::Json(ChairGetNotificationResponse { data: None }));
+    };
 
-            if let Some((ride, status)) = ride_and_status {
-                (ride, status)
-            } else {
-                sqlx::query("UPDATE rides SET chair_id = ? WHERE id = ?")
-                    .bind(chair.id)
-                    .bind(&matched.id)
-                    .execute(&mut *tx)
-                    .await?;
-                let yet_sent_ride_status: RideStatus = sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1").bind(&matched.id).fetch_one(&mut *tx).await?;
-                yet_sent_ride_status_id = Some(yet_sent_ride_status.id);
-                (matched, yet_sent_ride_status.status)
-            }
-        }
+    let yet_sent_ride_status: Option<RideStatus> =
+        sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1")
+        .bind(&ride.id)
+        .fetch_optional(&mut *tx)
+        .await?;
+    let (yet_sent_ride_status_id, status) = if let Some(yet_sent_ride_status) = yet_sent_ride_status
+    {
+        (Some(yet_sent_ride_status.id), yet_sent_ride_status.status)
+    } else {
+        (
+            None,
+            crate::get_latest_ride_status(&mut *tx, &ride.id).await?,
+        )
     };
 
     let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ? FOR SHARE")

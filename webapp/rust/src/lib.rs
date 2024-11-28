@@ -112,6 +112,7 @@ pub fn calculate_sale(ride: &crate::models::Ride) -> i32 {
 
 pub mod app_handlers;
 pub mod chair_handlers;
+pub mod internal_handlers;
 pub mod middlewares;
 pub mod models;
 pub mod owner_handlers;

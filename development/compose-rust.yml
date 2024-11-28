@@ -29,3 +29,6 @@ services:
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
       start_period: 60s
+  matcher:
+    image: mirror.gcr.io/curlimages/curl:latest
+    command: /bin/sh -c "while true; do curl -s http://webapp:8080/api/internal/matching; sleep 0.5; done"
