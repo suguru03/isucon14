@@ -18,7 +18,7 @@ const tabs = [
 
 const Tab = () => {
   const matches = useMatches();
-  const activeTab = matches[2].pathname.split("/").at(-1) || "index";
+  const activeTab = matches[2]?.pathname.split("/").at(-1) || "index";
 
   return (
     <nav className="flex after:w-full after:border-b after:border-gray-300">
