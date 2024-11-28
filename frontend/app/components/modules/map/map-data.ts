@@ -25,7 +25,7 @@ const CityObjectImages = [
 ] as const;
 
 // prettier-ignore
-const CityObjectCoodinates = [
+const CityObjectCoordinates = [
   [-307,-327],[310,-237],[165,-347],[178,-126],[71,-194],
   [-148,352],[-129,90],[248,149],[-261,-295],[-274,397],
   [-380,-215],[-132,124],[-235,-63],[-316,104],[-420,-120],
@@ -44,7 +44,7 @@ const CityObjectCoodinates = [
   [-277,-249],[-430,-334],[-81,-279],[-168,-51],[-250,145]
 ];
 
-export const CityObjects = CityObjectCoodinates.map(
+export const CityObjects = CityObjectCoordinates.map(
   ([latitude, longitude], i) => ({
     image: CityObjectImages[i % CityObjectImages.length],
     coordinate: { latitude, longitude },
