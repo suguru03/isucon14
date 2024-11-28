@@ -8,13 +8,17 @@ import { useClientAppRequestContext } from "~/contexts/user-context";
 import { Coordinate } from "~/types";
 
 export const Matching: FC<{
-  pickup?: Coordinate;
-  destLocation?: Coordinate;
-  optimisticFare?: number;
-}> = ({ pickup, destLocation, optimisticFare }) => {
+  optimistic: {
+    pickup?: Coordinate;
+    destLocation?: Coordinate;
+    fare?: number;
+  };
+}> = ({ optimistic }) => {
   const { payload } = useClientAppRequestContext();
-  const fare = optimisticFare ?? payload?.fare;
-
+  const fare = optimistic.fare ?? payload?.fare;
+  const destLocation =
+    optimistic.destLocation ?? payload?.coordinate?.destination;
+  const pickup = optimistic.pickup ?? payload?.coordinate?.pickup;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="マッチング中" subTitle="椅子をさがしています...">

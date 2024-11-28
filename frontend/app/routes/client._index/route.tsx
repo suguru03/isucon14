@@ -153,59 +153,6 @@ export default function Index() {
     return () => abortController.abort();
   }, [setNearByChairs, currentLocation]);
 
-  // TODO: 以下は上記が正常に返ったあとに削除する
-  // const [data, setData] = useState<NearByChair[]>([
-  //   {
-  //     id: "hoge",
-  //     current_coordinate: { latitude: 100, longitude: 100 },
-  //     model: "a",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "1",
-  //     current_coordinate: { latitude: 20, longitude: 20 },
-  //     model: "b",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "2",
-  //     current_coordinate: { latitude: -100, longitude: -100 },
-  //     model: "c",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "3",
-  //     current_coordinate: { latitude: -160, longitude: -100 },
-  //     model: "d",
-  //     name: "hoge",
-  //   },
-  //   {
-  //     id: "4",
-  //     current_coordinate: { latitude: -10, longitude: 100 },
-  //     model: "e",
-  //     name: "hoge",
-  //   },
-  // ]);
-
-  // useEffect(() => {
-  //   const randomInt = (min: number, max: number) => {
-  //     return Math.floor(Math.random() * (max - min + 1)) + min;
-  //   };
-  //   const update = () => {
-  //     setData((data) =>
-  //       data.map((chair) => ({
-  //         ...chair,
-  //         current_coordinate: {
-  //           latitude: chair.current_coordinate.latitude + randomInt(-2, 2),
-  //           longitude: chair.current_coordinate.longitude + randomInt(-2, 2),
-  //         },
-  //       })),
-  //     );
-  //     setTimeout(update, 1000);
-  //   };
-  //   update();
-  // }, []);
-
   return (
     <>
       <Map
@@ -296,29 +243,16 @@ export default function Index() {
         >
           {internalRideStatus === "MATCHING" && (
             <Matching
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-              optimisticFare={fare}
+              optimistic={{
+                destLocation: payload?.coordinate?.destination,
+                pickup: payload?.coordinate?.pickup,
+                fare: fare,
+              }}
             />
           )}
-          {internalRideStatus === "ENROUTE" && (
-            <Enroute
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
-          )}
-          {internalRideStatus === "PICKUP" && (
-            <Pickup
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
-          )}
-          {internalRideStatus === "CARRYING" && (
-            <Carrying
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
-          )}
+          {internalRideStatus === "ENROUTE" && <Enroute />}
+          {internalRideStatus === "PICKUP" && <Pickup />}
+          {internalRideStatus === "CARRYING" && <Carrying />}
           {internalRideStatus === "ARRIVED" && (
             <Arrived
               onEvaluated={() => {
