@@ -410,7 +410,7 @@ def app_post_rides_estimated_fare(
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
         )
 
