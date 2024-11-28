@@ -7,6 +7,7 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import { CopyIcon } from "~/components/icon/copy";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Price } from "~/components/modules/price/price";
@@ -30,6 +31,11 @@ export const meta: MetaFunction = () => {
 
 type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
+type CampaignData = {
+  invitationCode: string;
+  registedAt: string; // Dateの文字列形式
+  used: boolean;
+};
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
@@ -153,6 +159,44 @@ export default function Index() {
     return () => abortController.abort();
   }, [setNearByChairs, currentLocation]);
 
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
+  useEffect(() => {
+    const storedData = localStorage.getItem("campaign");
+    if (storedData) {
+      const data: CampaignData = JSON.parse(storedData);
+      const registeredDate = new Date(data.registedAt);
+      const currentDate = new Date();
+
+      if (
+        !data.used &&
+        currentDate.getTime() - registeredDate.getTime() < 60 * 60 * 1000
+      ) {
+        setCampaign(data);
+      }
+    }
+  }, []);
+
+  const handleCloseBanner = () => {
+    if (campaign) {
+      const updatedCampaign = { ...campaign, used: true };
+      localStorage.setItem("campaign", JSON.stringify(updatedCampaign));
+      setCampaign(null);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (campaign) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(campaign.invitationCode);
+        alert("招待コードがコピーされました！");
+      } else {
+        alert(
+          `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+        );
+      }
+    }
+  };
+
   // TODO: 以下は上記が正常に返ったあとに削除する
   // const [data, setData] = useState<NearByChair[]>([
   //   {
@@ -208,6 +252,29 @@ export default function Index() {
 
   return (
     <>
+      {campaign && (
+        <div className="bg-blue-100 p-4 rounded-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-xl flex items-center justify-between">
+          <span className="flex items-center">
+            &#8505; 友達キャンペーン 招待すると1000円OFF
+          </span>
+          <div className="flex items-center">
+            <button
+              onClick={handleCopyCode}
+              className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            >
+              <CopyIcon />
+              招待コードをコピー
+            </button>
+            <button
+              onClick={handleCloseBanner}
+              aria-label="閉じる"
+              className="ml-4"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
       <Map
         from={currentLocation}
         to={destLocation}
