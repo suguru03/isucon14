@@ -7,7 +7,7 @@ TODO: このdocstringを消す
 
 from collections import defaultdict
 from collections.abc import MutableMapping
-from datetime import datetime, timedelta
+from datetime import datetime
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -121,8 +121,8 @@ def owner_get_sales(
                 {
                     "chair_id": chair.id,
                     "since": since_dt,
-                    "until": until_dt + timedelta(seconds=30),
-                },  # FIXME: 速度が遅いとお尻の時間に最後のレコードが入らずバグる？ ベンチマーカーの実装を確認してから剥がす
+                    "until": until_dt,
+                },
             ).fetchall()
             rides = [Ride.model_validate(r) for r in rows]
 
