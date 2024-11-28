@@ -9,8 +9,14 @@ def lint(session: nox.Session) -> None:
 
 @nox.session(python="3.13")
 def mypy(session: nox.Session) -> None:
-    session.install(".")
-    session.install("mypy")
+    session.install(
+        "mypy",
+        "cryptography",
+        "fastapi",
+        "python-ulid",
+        "sqlalchemy",
+        "urllib3",
+    )
     session.run(
         "mypy",
         "app",
