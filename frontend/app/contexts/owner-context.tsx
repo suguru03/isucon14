@@ -39,7 +39,7 @@ const DUMMY_DATA = {
 
 const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
 
-const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
+const timestamp = (date: string) => Math.floor(new Date(date).getTime());
 
 export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
