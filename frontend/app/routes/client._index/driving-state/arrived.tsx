@@ -40,7 +40,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   );
 
   useEffect(() => {
-    confetti({
+    void confetti({
       origin: { y: 0.7 },
       spread: 60,
       colors: [
