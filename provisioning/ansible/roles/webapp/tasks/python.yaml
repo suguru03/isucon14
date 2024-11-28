@@ -6,17 +6,12 @@
     path: /home/isucon/webapp/python
     state: directory
 
-- name: install pipenv
-  become: true
-  become_user: isucon
-  shell: |
-    /home/isucon/.x pip install pipenv
-
+# ここでPythonインタプリタもダウンロードされる
 - name: Build isuride-python
   become: true
   become_user: isucon
   shell: |
-    /home/isucon/.x pipenv install
+    /home/isucon/.local/bin/uv sync --locked --no-dev
   args:
     chdir: /home/isucon/webapp/python
 
