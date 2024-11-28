@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useEffect, useMemo, useState } from "react";
 import {
-  OwnerGetSalesResponse,
+  OwnerGetSalesResponse as OwnerSalesType,
   fetchOwnerGetSales,
 } from "~/apiClient/apiComponents";
 import { ChairIcon } from "~/components/icon/chair";
@@ -9,7 +9,7 @@ import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";
 import { DateInput } from "~/components/primitives/form/date";
 import { Text } from "~/components/primitives/text/text";
-import { useClientProviderContext } from "~/contexts/owner-context";
+import { useOwnerContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
@@ -22,12 +22,11 @@ const viewTypes = [
   { key: "model", label: "モデル別" },
 ] as const;
 
-type OwnerSalesType = OwnerGetSalesResponse;
 export default function Index() {
   const [viewType, setViewType] =
     useState<(typeof viewTypes)[number]["key"]>("chair");
 
-  const { chairs } = useClientProviderContext();
+  const { chairs } = useOwnerContext();
   const [salesDate, setSalesDate] = useState<{
     since?: string;
     until?: string;
@@ -92,7 +91,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-w-[800px]">
+    <div className="min-w-[800px] w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-2">
           <DateInput
