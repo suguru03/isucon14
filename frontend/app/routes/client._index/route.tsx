@@ -206,12 +206,15 @@ export default function Index() {
   return (
     <>
       {campaign && (
-        <div className="bg-blue-100 p-4 rounded-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-xl flex items-center justify-between">
-          <span className="flex items-center">
-            &#8505; 友達キャンペーン 招待すると1000円OFF
-          </span>
-          <div className="flex items-center">
-            <button
+        <div
+          className="fixed z-50 w-full md:max-w-screen-md py-4 md:px-8 md:py-6 shadow-lg
+            flex flex-col md:flex-row items-center justify-between gap-3 md:gap-8 bg-gradient-to-br from-sky-700 from-50% to-cyan-400"
+        >
+          <p className="text-white font-bold">友達を招待して1000円OFF</p>
+          <div className="flex items-center justify-center">
+            <Button
+              size="sm"
+              className="flex items-center"
               onClick={() => {
                 try {
                   void handleCopyCode();
@@ -219,15 +222,14 @@ export default function Index() {
                   console.error(error);
                 }
               }}
-              className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
             >
-              <CopyIcon />
+              <CopyIcon className="me-1" />
               招待コードをコピー
-            </button>
+            </Button>
             <button
               onClick={handleCloseBanner}
               aria-label="閉じる"
-              className="ml-4"
+              className="grid content-center size-10 ms-2 rounded-full text-white text-2xl hover:bg-cyan-600 transition"
             >
               &times;
             </button>
