@@ -12,7 +12,7 @@ export const meta: MetaFunction = () => {
 };
 
 const tabs = [
-  { key: "index", label: "椅子", to: "/owner/" },
+  { key: "index", label: "椅子", to: "/owner" },
   { key: "sales", label: "売上", to: "/owner/sales" },
 ] as const;
 
