@@ -212,7 +212,9 @@ export default function Index() {
           </span>
           <div className="flex items-center">
             <button
-              onClick={() => handleCopyCode()}
+              onClick={() => {
+                handleCopyCode().catch(console.error);
+              }}
               className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
             >
               <CopyIcon />
