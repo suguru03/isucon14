@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { useSearchParams } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { ChairIcon } from "~/components/icon/chair";
+import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";
 import { DateInput } from "~/components/primitives/form/date";
 import { Text } from "~/components/primitives/text/text";
@@ -116,10 +117,8 @@ export default function Index() {
                       <span>{item.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex">
-                      <Price value={item.sales} className="ms-auto" />
-                    </div>
+                  <td className="p-4">
+                    <PriceText value={item.sales} className="justify-end" />
                   </td>
                 </tr>
               ))}
