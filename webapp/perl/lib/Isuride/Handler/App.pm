@@ -4,7 +4,14 @@ use utf8;
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
-use Cpanel::JSON::XS::Type qw(JSON_TYPE_STRING JSON_TYPE_INT JSON_TYPE_STRING_OR_NULL json_type_arrayof);
+use Cpanel::JSON::XS::Type qw(
+    JSON_TYPE_STRING
+    JSON_TYPE_INT
+    JSON_TYPE_STRING_OR_NULL
+    JSON_TYPE_FLOAT
+    json_type_arrayof
+    json_type_null_or_anyof
+);
 use List::Util qw(max);
 
 use Isuride::Models qw(Coordinate);
@@ -14,6 +21,7 @@ use Isuride::Util qw(
     FarePerDistance
     secure_random_str
     calculate_distance
+    calculate_fare
     calculate_sale
 
     check_params
@@ -220,15 +228,18 @@ sub app_get_rides ($app, $c) {
 }
 
 sub get_latest_ride_status ($c, $ride_id) {
-    $c->dbh->select_row(
+    my $status = $c->dbh->select_row(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id
     );
+
+    die 'sql: no rows in result set' unless $status;
+    return $status;
 }
 
 use constant AppPostRideRequest => {
-    pickup_coordinate      => Coordinate,
-    destination_coordinate => Coordinate,
+    pickup_coordinate      => json_type_null_or_anyof(Coordinate),
+    destination_coordinate => json_type_null_or_anyof(Coordinate),
 };
 
 use constant AppPostRideResponse => {
@@ -342,8 +353,8 @@ sub app_post_rides ($app, $c) {
 }
 
 use constant AppPostRidesEstimatedFareRequest => {
-    pickup_coordinate => Coordinate,
-    pickup_coordinate => Coordinate,
+    pickup_coordinate => json_type_null_or_anyof(Coordinate),
+    pickup_coordinate => json_type_null_or_anyof(Coordinate),
 };
 
 use constant AppPostRidesEstimatedFareResponse => {
@@ -352,6 +363,331 @@ use constant AppPostRidesEstimatedFareResponse => {
 };
 
 sub app_post_rides_estimated_fare ($app, $c) {
+    my $params = $c->req->json_parameters;
+    my $fare;
+
+    unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    }
+
+    if (!defined $params->{pickup_coordinate} || !defined $params->{destination_coordinate}) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(pickup_coordinate, destination_coordinate) are empty');
+    }
+    my $user       = $c->stash->{user};
+    my $discounted = 0;
+
+    try {
+        my $txn = $app->dbh->txn_scope;
+        $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
+
+        $txn->commit;
+    } catch ($e) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    }
+    return $c->render_json({
+            fare     => $discounted,
+            discount => calculate_fare($params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude}) - $discounted,
+    }, AppPostRidesEstimatedFareResponse);
+}
+
+use constant AppPostRideEvaluationRequest => {
+    evaluation => JSON_TYPE_INT,
+};
+
+use constant AppPostRideEvaluationResponse => {
+    completed_at => JSON_TYPE_INT,
+};
+
+sub app_post_ride_evaluation ($app, $c) {
+    my $params  = $c->req->json_parameters;
+    my $ride_id = $c->args->{ride_id};
+    my $ride;
+
+    unless (check_params($params, AppPostRideEvaluationRequest)) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    }
+
+    if ($params->{evaluation} < 1 || $params->{evaluation} > 5) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'evaluation must be between 1 and 5');
+    }
+
+    my $txn = $app->dbh->txn_scope;
+
+    try {
+        $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
+
+        unless (defined $ride) {
+            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
+        }
+
+        my $status = get_latest_ride_status($c, $ride_id);
+
+        if ($status ne 'ARRIVED') {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'not arrived yet"');
+        }
+
+        my $result = $app->dbh->query(
+            q{UPDATE rides SET evaluation = ? WHERE id = ?},
+            $params->{evaluation}, $ride_id
+        );
+
+        if (!defined $result) {
+            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'sql: no rows in result set');
+        } elsif ($result == 0) {
+            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
+        }
+
+        $app->dbh->query(
+            q{INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)},
+            ulid(), $ride_id, 'COMPLETED'
+        );
+
+        $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
+
+        unless (defined $ride) {
+            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
+        }
+
+        my $payment_token = $app->dbh->select_row(q{SELECT * FROM payment_tokens WHERE user_id = ?}, $ride->{user_id});
+
+        unless (defined $payment_token) {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'payment token not registered');
+        }
+
+        my $fare = calculate_discounted_fare($app, $ride->{user_id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+
+        my $payment_gateway_request = {
+            amount => $fare,
+        };
+
+        my $payment_gateway_url = $app->dbh->select_row(q{SELECT value FROM settings WHERE name = 'payment_gateway_url'});
+
+        my $error = request_payment_gateway_post_payment($payment_gateway_url, $payment_token->{token}, $payment_gateway_request, sub {
+                return $app->dbh->select_all(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC}, $ride->{user_id});
+        });
+
+        if (defined $error) {
+            if (PaymentGateWayErroredUpstream->check($error)) {
+                return $c->halt_json(HTTP_BAD_GATEWAY, $error->{message});
+            }
+            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $error->{message});
+        }
+
+        $txn->commit;
+
+        return $app->render_json({
+                completed_at => unix_milli_from_str($ride->{updated_at}),
+        }, AppPostRideEvaluationResponse);
+
+    } catch ($e) {
+        $txn->rollback;
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    }
+}
+
+use constant AppGetNotificationResponseChairStatus => {
+    total_rides_count    => JSON_TYPE_INT,
+    total_evaluation_avg => JSON_TYPE_FLOAT,
+};
+
+use constant AppGetNotificationResponseChair => {
+    id     => JSON_TYPE_STRING,
+    name   => JSON_TYPE_STRING,
+    model  => JSON_TYPE_STRING,
+    status => AppGetNotificationResponseChairStatus,
+};
+
+use constant AppGetNotificationResponseData => {
+    ride_id                => JSON_TYPE_STRING,
+    pickup_coordinate      => Coordinate,
+    destination_coordinate => Coordinate,
+    fare                   => JSON_TYPE_INT,
+    status                 => JSON_TYPE_STRING,
+    chair                  => AppGetNotificationResponseChair,
+    created_at             => JSON_TYPE_INT,
+    update_at              => JSON_TYPE_INT,
+};
+
+sub app_get_notification ($app, $c) {
+    my $user = $c->stash->{user};
+
+    my $txn = $app->dbh->txn_scope;
+    try {
+        my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
+
+        unless (defined $ride) {
+            return $c->render_json({});
+        }
+
+        my $yet_sent_ride_status = $app->dbh->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});
+        my $status;
+
+        unless (defined $yet_sent_ride_status) {
+            $status = get_latest_ride_status($c, $ride->{id});
+        } else {
+            $status = $yet_sent_ride_status->{status};
+        }
+
+        my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+
+        my $response = {
+            data => {
+                ride_id           => $ride->{id},
+                pickup_coordinate => {
+                    latitude  => $ride->{pickup_latitude},
+                    longitude => $ride->{pickup_longitude},
+                },
+                destination_coordinate => {
+                    latitude  => $ride->{destination_latitude},
+                    longitude => $ride->{destination_longitude},
+                },
+                fare       => $fare,
+                status     => $status,
+                created_at => unix_milli_from_str($ride->{created_at}),
+                update_at  => unix_milli_from_str($ride->{updated_at}),
+            },
+        };
+
+        if ($ride->{chair_id}) {
+            my $chair = $app->dbh->select_row(q{SELECT * FROM chairs WHERE id = ?}, $ride->{chair_id});
+
+            my $stats = get_chair_stats($app, $chair->{id});
+
+            $response->{data}->{chair} = {
+                id     => $chair->{id},
+                name   => $chair->{name},
+                model  => $chair->{model},
+                status => $stats,
+            };
+        }
+
+        if (defined $yet_sent_ride_status && $yet_sent_ride_status->{id} ne '') {
+            $app->dbh->query(q{UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?}, $yet_sent_ride_status->{id});
+        }
+
+        $txn->commit;
+
+        return $c->render_json($response, AppGetNotificationResponseData);
+
+    } catch ($e) {
+        $txn->rollback;
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    }
+}
+
+sub get_chair_stats ($app, $chair_id) {
+    my $stats = {};
+    my $rides = $app->dbh->select_all(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC}, $chair_id);
+
+    my $total_rides_count    = scalar $rides->@*;
+    my $total_evaluation_avg = 0;
+
+    for my $ride ($rides->@*) {
+        my $ride_statuses = $app->dbh->select_all(q{SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at}, $ride->{id});
+        my ($arrived_at, $pickuped_at, $is_completed);
+
+        for my $status ($ride_statuses->@*) {
+            if ($status->{status} eq 'ARRIVED') {
+                $arrived_at = $status->{created_at};
+            } elsif ($status->{status} eq 'CARRYING') {
+                $pickuped_at = $status->{created_at};
+            }
+
+            if ($status->{status} eq 'COMPLETED') {
+                $is_completed = true;
+            }
+        }
+
+        if (!defined $arrived_at || !defined $pickuped_at) {
+            next;
+        }
+
+        if (!$is_completed) {
+            next;
+        }
+
+        $total_evaluation_avg += $ride->{evaluation};
+    }
+    $stats->{total_rides_count} = $total_rides_count;
+
+    if ($total_rides_count > 0) {
+        $stats->{total_evaluation_avg} = $total_evaluation_avg / $total_rides_count;
+    }
+
+    return $stats;
+}
+
+use constant AppGetNearbyChairsResponseChair => {
+    id                 => JSON_TYPE_STRING,
+    name               => JSON_TYPE_STRING,
+    model              => JSON_TYPE_STRING,
+    current_coordinate => Coordinate,
+};
+
+use constant AppGetNearbyChairsResponse => {
+    chairs       => json_type_arrayof(AppGetNearbyChairsResponseChair),
+    retrieved_at => JSON_TYPE_INT,
+};
+
+sub app_get_nearby_chairs ($app, $c) {
+    my $lat      = $c->args->{latitude};
+    my $lon      = $c->args->{longitude};
+    my $distance = $c->args->{distance};
+
+    if ($lat eq '' || $lon eq '') {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'latitude or longitude is empty');
+    }
+
+    my $coordinate = { latitude => $lat, longitude => $lon };
+
+    my $txn = $app->dbh->txn_scope;
+
+    try {
+        my $nearby_chairs = [];
+        my $chairs        = $app->dbh->select_all(q{SELECT * FROM chairs });
+
+        for my $chair ($chairs->@*) {
+            if (!$chair->{is_active}) {
+                next;
+            }
+
+            my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
+
+            # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
+            my $status = get_latest_ride_status($c, $ride->{id});
+
+            if ($status ne 'COMPLETED') {
+                next;
+            }
+
+            my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
+
+            unless (defined $chair_location) {
+                next;
+            }
+
+            if (calculate_distance($coordinate->{latitude}, $coordinate->{latitude}, $chair_location->{latitude}, $chair_location->{longitude}) <= $distance) {
+                push $nearby_chairs->@*, {
+                    id                 => $chair->{id},
+                    name               => $chair->{name},
+                    model              => $chair->{model},
+                    current_coordinate => {
+                        latitude  => $chair_location->{latitude},
+                        longitude => $chair_location->{longitude},
+                    },
+                };
+            }
+        }
+
+        my $retrieved_at = $app->dbh->select_row(q{SELECT CURRENT_TIMESTAMP(6)});
+        return $c->render_json({
+                chairs       => $nearby_chairs,
+                retrieved_at => unix_milli_from_str($retrieved_at),
+        }, AppGetNearbyChairsResponse);
+
+    } catch ($e) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    }
 
 }
 

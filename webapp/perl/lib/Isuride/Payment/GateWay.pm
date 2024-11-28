@@ -74,13 +74,13 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
 
                 # GET /payments は障害と関係なく200が返るので、200以外は回復不能なエラーとする
                 if ($get_res_status_code != HTTP_OK) {
-                    die '[GET /payments] unexpected status code (' . $get_res_status_code . ')';
+                    die { message => '[GET /payments] unexpected status code (' . $get_res_status_code . ')' };
                 }
 
                 my $payments = Cpanel::JSON::XS->new()->ascii(0)->utf8->decode_json($get_res_body);
 
                 unless (check_params($payments, json_type_arrayof(PaymentGateWayPostPaymentResponseOne))) {
-                    die { status => 'failed to decode the request body as json' };
+                    die { message => 'failed to decode the request body as json' };
                 }
 
                 my ($rides, $err) = $retrieve_rides_order_by_created_at_asc->();
@@ -97,6 +97,9 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
                 sleep 0.1;
                 next;
             } else {
+                unless (ref $e eq 'HASH' && $e->{message}) {
+                    return { message => $e };
+                }
                 return $e;
             }
         }

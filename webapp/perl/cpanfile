@@ -9,6 +9,7 @@ requires 'Crypt::URandom','0.40';
 requires 'Time::Moment';
 requires 'Furl';
 requires 'HTTP::Parser::XS';
+requires 'Syntax::Keyword::Match';
 
 # DB
 requires 'DBD::mysql', '5.009';
