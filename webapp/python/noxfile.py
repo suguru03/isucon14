@@ -1,3 +1,5 @@
+# AMIには含めない
+
 import nox
 
 
