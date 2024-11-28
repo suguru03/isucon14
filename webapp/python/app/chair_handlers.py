@@ -14,7 +14,7 @@ from ulid import ULID
 
 from .app_handlers import get_latest_ride_status
 from .middlewares import chair_auth_middleware
-from .models import Chair, ChairLocation, Owner, Ride, User
+from .models import Chair, ChairLocation, Owner, Ride, RideStatus, User
 from .sql import engine
 from .utils import secure_random_str, timestamp_millis
 
@@ -204,12 +204,28 @@ def chair_get_notification(
         if row is None:
             found = False
 
+        yet_sent_ride_status: RideStatus | None = None
         if found:
             assert row is not None
             ride = Ride.model_validate(row)
-            ride_status = get_latest_ride_status(conn, ride.id)
+            row = conn.execute(
+                text(
+                    "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
+                ),
+                {"ride_id": ride.id},
+            ).fetchone()
 
-        if (not found) or ride_status == "COMPLETED" or ride_status == "CANCELLED":
+            if not row:
+                ride_status = get_latest_ride_status(conn, ride.id)
+            else:
+                yet_sent_ride_status = RideStatus.model_validate(row)
+                assert yet_sent_ride_status is not None
+                ride_status = yet_sent_ride_status.status
+
+    with engine.begin() as conn:
+        if (yet_sent_ride_status is None) and (
+            (not found) or ride_status == "COMPLETED"
+        ):
             row = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
@@ -226,7 +242,15 @@ def chair_get_notification(
 
             if not found:
                 ride = matched
-                ride_status = "MATCHING"
+                row = conn.execute(
+                    text(
+                        "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
+                    ),
+                    {"ride_id": ride.id},
+                ).fetchone()
+                yet_sent_ride_status = RideStatus.model_validate(row)
+                assert yet_sent_ride_status
+                ride_status = yet_sent_ride_status.status
 
         row = conn.execute(
             text("SELECT * FROM users WHERE id = :id FOR SHARE"), {"id": ride.user_id}
@@ -234,6 +258,14 @@ def chair_get_notification(
         if row is None:
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
         user = User.model_validate(row)
+
+        if yet_sent_ride_status:
+            conn.execute(
+                text(
+                    "UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = :id"
+                ),
+                {"id": yet_sent_ride_status.id},
+            )
 
     return ChairGetNotificationResponse(
         data=ChairGetNotificationResponseData(
