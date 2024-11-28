@@ -10,6 +10,7 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.engine import Connection
 from ulid import ULID
 
 from .middlewares import app_auth_middleware
@@ -147,7 +148,7 @@ class AppPostPaymentMethodsRequest(BaseModel):
 @router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
 def app_post_payment_methods(
     req: AppPostPaymentMethodsRequest, user: User = Depends(app_auth_middleware)
-):
+) -> None:
     if req.token == "":
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="token is required but was empty"
@@ -190,7 +191,7 @@ class GetAppRidesResponse(BaseModel):
 
 
 @router.get("/rides")
-def app_get_rides(user: User = Depends(app_auth_middleware)):
+def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -257,7 +258,7 @@ class AppPostRidesResponse(BaseModel):
     fare: int
 
 
-def get_latest_ride_status(conn, ride_id: str) -> str:
+def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
     row = conn.execute(
         text(
             "SELECT status FROM ride_statuses WHERE ride_id = :ride_id ORDER BY created_at DESC LIMIT 1"
@@ -530,7 +531,7 @@ def app_post_ride_evaluation(
         if not isinstance(payment_gateway_url, str):
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        def retrieve_rides_order_by_created_at_asc():
+        def retrieve_rides_order_by_created_at_asc() -> list[Ride]:
             rows = conn.execute(
                 text(
                     "SELECT * FROM rides WHERE user_id = :user_id ORDER BY created_at ASC",
@@ -705,7 +706,9 @@ class AppGetRideResponse(BaseModel):
     updated_at: int
 
 
-def get_chair_stats(conn, chair_id: str) -> AppGetNotificationResponseChairStats:
+def get_chair_stats(
+    conn: Connection, chair_id: str
+) -> AppGetNotificationResponseChairStats:
     rides = conn.execute(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
@@ -772,7 +775,7 @@ def app_get_nearby_chairs(
     longitude: int,
     distance: int = 50,
     _: User = Depends(app_auth_middleware),
-):
+) -> AppGetNearByChairsResponse:
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
         chairs = conn.execute(
@@ -838,7 +841,7 @@ def app_get_nearby_chairs(
 
 
 def calculate_discounted_fare(
-    conn,
+    conn: Connection,
     user_id: str,
     ride: Ride | None,
     pickup_latitude: int,
