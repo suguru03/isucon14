@@ -16,15 +16,16 @@ import {
 import { isClientApiError } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
-type ClientProviderRequest = Partial<{
+type OwnerContextProps = Partial<{
   chairs: OwnerGetChairsResponse["chairs"];
   sales: OwnerGetSalesResponse;
-  provider?: {
+  provider: {
     id: string;
     name: string;
   };
 }>;
 
+// TODO
 const DUMMY_DATA = {
   total_sales: 8087,
   chairs: [
@@ -37,11 +38,11 @@ const DUMMY_DATA = {
   ],
 } as const satisfies OwnerGetSalesResponse;
 
-const ClientProviderContext = createContext<Partial<ClientProviderRequest>>({});
+const OwnerContext = createContext<Partial<OwnerContextProps>>({});
 
 const timestamp = (date: string) => Math.floor(new Date(date).getTime());
 
-export const ProviderProvider = ({ children }: { children: ReactNode }) => {
+export const OwnerProvider = ({ children }: { children: ReactNode }) => {
   // TODO:
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [setChairs, setSales, since, until, isDummy, navigate]);
 
-  const responseClientProvider = useMemo<ClientProviderRequest>(() => {
+  const responseClientProvider = useMemo<OwnerContextProps>(() => {
     return {
       chairs: chairs?.chairs ?? [],
       sales,
@@ -118,10 +119,10 @@ export const ProviderProvider = ({ children }: { children: ReactNode }) => {
   }, [chairs, sales, id, name]);
 
   return (
-    <ClientProviderContext.Provider value={responseClientProvider}>
+    <OwnerContext.Provider value={responseClientProvider}>
       {children}
-    </ClientProviderContext.Provider>
+    </OwnerContext.Provider>
   );
 };
 
-export const useClientProviderContext = () => useContext(ClientProviderContext);
+export const useOwnerContext = () => useContext(OwnerContext);

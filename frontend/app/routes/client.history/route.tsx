@@ -6,9 +6,9 @@ import {
 } from "~/apiClient/apiComponents";
 import { ChairIcon } from "~/components/icon/chair";
 import { DateText } from "~/components/modules/date-text/date-text";
-import { List } from "~/components/modules/list/list";
-import { ListItem } from "~/components/modules/list/list-item";
 import { Price } from "~/components/modules/price/price";
+import { List } from "~/components/primitives/list/list";
+import { ListItem } from "~/components/primitives/list/list-item";
 import { Rating } from "~/components/primitives/rating/rating";
 import { Text } from "~/components/primitives/text/text";
 

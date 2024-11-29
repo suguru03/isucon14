@@ -81,7 +81,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
         e.stack.payload.includes("Duplicate entry")
       ) {
         errors.register =
-          "ユーザーの登録に失敗しました。入力されたユーザー名はすでに登録済みです";
+          "ユーザーの登録に失敗しました。入力されたユーザー名はすでに登録済みです。";
       } else {
         errors.register = `ユーザーの登録に失敗しました。[${e.stack.payload}]`;
       }
@@ -99,13 +99,13 @@ export default function ClientRegister() {
 
   return (
     <FormFrame>
-      <h1 className="text-2xl font-semibold mb-8">ユーザー登録</h1>
+      <h1 className="text-2xl font-semibold mb-6">ユーザー登録</h1>
       {actionData?.errors?.register && (
-        <Text variant="danger" className="mt-2">
+        <Text variant="danger" size="sm" className="mb-6">
           {actionData?.errors?.register}
         </Text>
       )}
-      <Form className="flex flex-col gap-8" method="POST">
+      <Form className="flex flex-col gap-4" method="POST">
         <div>
           <TextInput
             id="username"
@@ -146,7 +146,7 @@ export default function ClientRegister() {
             required
           />
         </div>
-        <div>
+        <div className="mb-6">
           <TextInput
             id="invitation_code"
             name="invitation_code"
@@ -158,7 +158,7 @@ export default function ClientRegister() {
             </Text>
           )}
         </div>
-        <Button type="submit" variant="primary" className="text-lg mt-6">
+        <Button type="submit" variant="primary" className="text-lg">
           登録
         </Button>
       </Form>

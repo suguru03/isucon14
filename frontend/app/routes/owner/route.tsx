@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link, Outlet, useMatches } from "@remix-run/react";
 import { twMerge } from "tailwind-merge";
 import { IsurideIcon } from "~/components/icon/isuride";
-import { ProviderProvider } from "~/contexts/owner-context";
+import { OwnerProvider } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
   return [
@@ -43,14 +43,14 @@ const Tab = () => {
   );
 };
 
-export default function ProviderLayout() {
+export default function OwnerLayout() {
   return (
-    <ProviderProvider>
-      <div className="bg-white flex xl:justify-center">
-        <div className="px-4 h-screen flex flex-col overflow-x-hidden w-[1280px]">
-          <h1 className="flex items-center text-3xl my-12 mb-6">
-            <IsurideIcon className="me-2" />
-            オーナー向け管理画面
+    <OwnerProvider>
+      <div className="bg-neutral-100 flex xl:justify-center">
+        <div className="p-6 xl:p-10 h-screen flex flex-col overflow-x-hidden w-full max-w-6xl bg-white">
+          <h1 className="flex items-baseline text-3xl mb-6">
+            <IsurideIcon className="me-2" width={40} height={40} />
+            オーナー様向け管理画面
           </h1>
           <Tab />
           <div className="flex-1 overflow-auto pt-8 pb-16 max-w-7xl xl:flex justify-center">
@@ -58,6 +58,6 @@ export default function ProviderLayout() {
           </div>
         </div>
       </div>
-    </ProviderProvider>
+    </OwnerProvider>
   );
 }

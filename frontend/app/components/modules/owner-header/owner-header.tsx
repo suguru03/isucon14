@@ -1,8 +1,8 @@
 import { FC } from "react";
-import { useClientProviderContext } from "~/contexts/owner-context";
+import { useOwnerContext } from "~/contexts/owner-context";
 
 export const OwnerHeader: FC = () => {
-  const { provider } = useClientProviderContext();
+  const { provider } = useOwnerContext();
 
   return (
     <div className="flex items-center my-8 px-6">
