@@ -16,6 +16,7 @@ use Isuride::Middleware;
 use Isuride::Handler::App;
 use Isuride::Handler::Owner;
 use Isuride::Handler::Chair;
+use Isuride::Handler::Internal;
 use Isuride::Util qw(check_params);
 
 sub connect_db() {
@@ -83,6 +84,11 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
 
         get '/api/owner/sales'  => [OwnerAuthMiddleware] => \&Isuride::Handler::Owner::owner_get_sales;
         get '/api/owner/chairs' => [OwnerAuthMiddleware] => \&Isuride::Handler::Owner::owner_get_chairs;
+    }
+
+    # internal handlers
+    {
+        get '/api/internal/matching' => \&Isuride::Handler::Internal::internal_get_matching;
     }
 }
 
