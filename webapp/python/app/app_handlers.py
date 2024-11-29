@@ -6,6 +6,7 @@ TODO: このdocstringを消す
 """
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -54,9 +55,7 @@ class AppPostUsersResponse(BaseModel):
     invitation_code: str
 
 
-@router.post(
-    "/users", response_model=AppPostUsersResponse, status_code=HTTPStatus.CREATED
-)
+@router.post("/users", status_code=HTTPStatus.CREATED)
 def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
@@ -147,7 +146,8 @@ class AppPostPaymentMethodsRequest(BaseModel):
 
 @router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
 def app_post_payment_methods(
-    req: AppPostPaymentMethodsRequest, user: User = Depends(app_auth_middleware)
+    req: AppPostPaymentMethodsRequest,
+    user: Annotated[User, Depends(app_auth_middleware)],
 ) -> None:
     if req.token == "":
         raise HTTPException(
@@ -191,7 +191,9 @@ class GetAppRidesResponse(BaseModel):
 
 
 @router.get("/rides")
-def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesResponse:
+def app_get_rides(
+    user: Annotated[User, Depends(app_auth_middleware)],
+) -> GetAppRidesResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -274,7 +276,7 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
 
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
-    r: AppPostRidesRequest, user: User = Depends(app_auth_middleware)
+    r: AppPostRidesRequest, user: Annotated[User, Depends(app_auth_middleware)]
 ) -> AppPostRidesResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -403,11 +405,11 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 
 @router.post(
     "/rides/estimated-fare",
-    response_model=AppPostRidesEstimatedFareResponse,
     status_code=HTTPStatus.OK,
 )
 def app_post_rides_estimated_fare(
-    r: AppPostRidesEstimatedFareRequest, user: User = Depends(app_auth_middleware)
+    r: AppPostRidesEstimatedFareRequest,
+    user: Annotated[User, Depends(app_auth_middleware)],
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -448,13 +450,12 @@ class AppPostRideEvaluationResponse(BaseModel):
 
 @router.post(
     "/rides/{ride_id}/evaluation",
-    response_model=AppPostRideEvaluationResponse,
     status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
     req: AppPostRideEvaluationRequest,
     ride_id: str,
-    _: User = Depends(app_auth_middleware),
+    _: Annotated[User, Depends(app_auth_middleware)],
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
@@ -589,7 +590,7 @@ class AppGetNotificationResponse(BaseModel):
     response_model_exclude_none=True,
 )
 def app_get_notification(
-    response: Response, user: User = Depends(app_auth_middleware)
+    response: Response, user: Annotated[User, Depends(app_auth_middleware)]
 ) -> AppGetNotificationResponse | Response:
     with engine.begin() as conn:
         row = conn.execute(
@@ -768,14 +769,13 @@ class AppGetNearByChairsResponse(BaseModel):
 
 @router.get(
     "/nearby-chairs",
-    response_model=AppGetNearByChairsResponse,
     status_code=HTTPStatus.OK,
 )
 def app_get_nearby_chairs(
+    _: Annotated[User, Depends(app_auth_middleware)],
     latitude: int,
     longitude: int,
     distance: int = 50,
-    _: User = Depends(app_auth_middleware),
 ) -> AppGetNearByChairsResponse:
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:
