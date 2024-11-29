@@ -40,5 +40,5 @@ export const internalGetMatching = async (ctx: Context<Environment>) => {
     ride.id,
   ]);
 
-  ctx.body(null, 204);
+  return ctx.body(null, 204);
 };
