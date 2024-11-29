@@ -6,6 +6,7 @@ TODO: このdocstringを消す
 """
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -84,7 +85,8 @@ class PostChairActivityRequest(BaseModel):
 
 @router.post("/activity", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_activity(
-    req: PostChairActivityRequest, chair: Chair = Depends(chair_auth_middleware)
+    req: PostChairActivityRequest,
+    chair: Annotated[Chair, Depends(chair_auth_middleware)],
 ) -> None:
     with engine.begin() as conn:
         conn.execute(
@@ -104,7 +106,7 @@ class ChairPostCoordinateResponse(BaseModel):
 
 @router.post("/coordinate")
 def chair_post_coordinate(
-    req: Coordinate, chair: Chair = Depends(chair_auth_middleware)
+    req: Coordinate, chair: Annotated[Chair, Depends(chair_auth_middleware)]
 ) -> ChairPostCoordinateResponse:
     with engine.begin() as conn:
         chair_location_id = str(ULID())
@@ -186,7 +188,7 @@ class ChairGetNotificationResponse(BaseModel):
 
 @router.get("/notification")
 def chair_get_notification(
-    chair: Chair = Depends(chair_auth_middleware),
+    chair: Annotated[Chair, Depends(chair_auth_middleware)],
 ) -> ChairGetNotificationResponse:
     with engine.begin() as conn:
         conn.execute(
@@ -291,7 +293,7 @@ class PostChairRidesRideIDStatusRequest(BaseModel):
 def chair_post_ride_status(
     ride_id: str,
     req: PostChairRidesRideIDStatusRequest,
-    chair: Chair = Depends(chair_auth_middleware),
+    chair: Annotated[Chair, Depends(chair_auth_middleware)],
 ) -> None:
     with engine.begin() as conn:
         row = conn.execute(
