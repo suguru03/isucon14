@@ -1,5 +1,4 @@
-import type mysql from "mysql2/promise";
-import type { RowDataPacket } from "mysql2/promise";
+import type { Connection, RowDataPacket } from "mysql2/promise";
 import type { Ride, RideStatus } from "./types/models.js";
 
 export const INITIAL_FARE = 500;
@@ -42,7 +41,7 @@ export const calculateSale = (ride: Ride): number => {
 };
 
 export const getLatestRideStatus = async (
-  dbConn: mysql.Connection,
+  dbConn: Connection,
   rideId: string,
 ): Promise<string> => {
   const [[{ status }]] = await dbConn.query<
