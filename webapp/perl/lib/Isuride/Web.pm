@@ -51,14 +51,22 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
 # router
 {
     post '/api/initialize' => \&post_initialize;
+
+    #  app handlers
     {
-        #  app handlers
         post '/api/app/users' => \&Isuride::Handler::App::app_post_users;
 
         post '/api/app/payment-methods' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_payment_methods;
         get '/api/app/rides' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_rides;
-        post '/api/app/rides' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides;
-        get '/app/requests/{request_id}' => [AppAuthMiddleware] => \&app_get_resuest;
+        post '/api/app/rides'                     => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides;
+        post '/api/app/rides/estimated-fare'      => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_estimated_fare;
+        post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_evaluation;
+        get '/api/app/notification'  => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_notification;
+        get '/api/app/nearby-chairs' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_nearby_chairs;
+    }
+
+    # owner handlers
+    {
     }
 }
 
@@ -91,11 +99,6 @@ sub post_initialize ($self, $c) {
     }
 
     return $c->render_json({ language => 'perl' }, PostInitializeResponse);
-}
-
-sub app_get_resuest ($self, $c) {
-    my $request_id = $c->args->{request_id};
-
 }
 
 # XXX hack Kossy

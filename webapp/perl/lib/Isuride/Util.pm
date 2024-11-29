@@ -23,6 +23,7 @@ use constant FarePerDistance => 100;
 use Types::Standard -types;
 use Cpanel::JSON::XS::Type;
 use Type::Params qw(compile);
+use Syntax::Keyword::Match;
 
 use Scalar::Util qw(refaddr);
 use Hash::Util qw(lock_hashref);
@@ -59,24 +60,60 @@ sub calculate_sale ($ride) {
 use constant ASSERT => ($ENV{PLACK_ENV} || '') ne 'deployment';
 
 # Cpanel::JSON::XS::Typeの型定義からType::Tinyの型定義を生成する
+# 例: { a => JSON_TYPE_STRING, b => JSON_TYPE_INT } -> Dict[a => Str, b => Int]
+# OR_NULLの型はOptional[]で表現する
 sub _create_type_tiny_type_from_cpanel_type ($cpanel_structure) {
-    if (ref $cpanel_structure eq 'HASH') {
+    if (my $type = _defined_cpanel_type_to_type_tiny_type($cpanel_structure)) {
+        $type;
+    }
+    elsif (ref $cpanel_structure eq 'HASH') {
         Dict [ map { $_ => _create_type_tiny_type_from_cpanel_type($cpanel_structure->{$_}) } keys $cpanel_structure->%* ];
     }
     elsif (ref $cpanel_structure eq 'ARRAY') {
         ArrayRef [ map { _create_type_tiny_type_from_cpanel_type($_) } $cpanel_structure->@* ];
     }
     elsif ($cpanel_structure isa 'Cpanel::JSON::XS::Type::ArrayOf') {
-        ArrayRef [ create_type_tiny_type_from_cpanel_type($cpanel_structure->$*) ];
+        ArrayRef [ _create_type_tiny_type_from_cpanel_type($cpanel_structure->$*) ];
     }
-    elsif ($cpanel_structure eq JSON_TYPE_STRING) {
-        Str;
-    }
-    elsif ($cpanel_structure eq JSON_TYPE_INT) {
-        Int;
+    elsif ($cpanel_structure isa 'Cpanel::JSON::XS::Type::AnyOf') {
+        defined $cpanel_structure->[0] && $cpanel_structure->[0] == JSON_TYPE_NULL ?
+            Optional [ map { _create_type_tiny_type_from_cpanel_type($_) } grep { defined } $cpanel_structure->@[ 1 .. 2 ] ] :
+            map { _create_type_tiny_type_from_cpanel_type($_) } grep { defined } $cpanel_structure->@[ 0 .. 2 ];
     }
     else {
         die "Unsupported type: $cpanel_structure";
+    }
+}
+
+sub _defined_cpanel_type_to_type_tiny_type ($cpanel_type) {
+    match ($cpanel_type : ==) {
+      case (JSON_TYPE_STRING) {
+        Str;
+      }
+      case (JSON_TYPE_STRING_OR_NULL) {
+        Optional[Str];
+      }
+      case (JSON_TYPE_INT) {
+        Int;
+      }
+      case (JSON_TYPE_INT_OR_NULL) {
+        Optional[Int];
+      }
+      case (JSON_TYPE_FLOAT) {
+        Num;
+      }
+      case (JSON_TYPE_FLOAT_OR_NULL) {
+        Optional[Num];
+      }
+      case (JSON_TYPE_BOOL) {
+        Bool;
+      }
+      case (JSON_TYPE_BOOL_OR_NULL) {
+        Optional[Bool];
+      }
+      default {
+        undef;
+      }
     }
 }
 
