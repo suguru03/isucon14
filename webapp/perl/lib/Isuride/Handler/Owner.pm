@@ -96,8 +96,6 @@ sub owner_get_sales ($app, $c) {
     my $since_tm = Time::Moment->from_epoch(0);
 
     if ($c->req->query_parameters->{since}) {
-        $since_tm = Time::Moment->from_epoch($c->req->query_parameters->{since});
-
         my ($parsed, $err) = parse_int($c->req->query_parameters->{since});
 
         if ($err) {
