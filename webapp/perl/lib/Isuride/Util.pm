@@ -59,7 +59,7 @@ sub calculate_sale ($ride) {
 
 sub parse_int ($str) {
   my $is_valid = Int->check($str);
-  return $str, $is_valid;
+  return $str, !$is_valid;
 }
 
 # XXX: 以下はPerlでの型チェック支援用のユーティリティ
