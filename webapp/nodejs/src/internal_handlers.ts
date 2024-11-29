@@ -21,12 +21,13 @@ export const internalGetMatching = async (ctx: Context<Environment>) => {
     if (!matched) {
       return ctx.body(null, 204);
     }
-    [[{ completed: empty }]] = await ctx.var.dbConn.query<
-      Array<{ completed: boolean } & RowDataPacket>
+    const [[result]] = await ctx.var.dbConn.query<
+      Array<{ "COUNT(*) = 0": number } & RowDataPacket>
     >(
       "SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE",
       [matched.id],
     );
+    empty = !!result["COUNT(*) = 0"];
     if (empty) {
       break;
     }
