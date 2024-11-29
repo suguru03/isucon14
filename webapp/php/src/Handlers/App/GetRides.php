@@ -43,8 +43,7 @@ class GetRides extends AbstractHttpHandler
         assert($user instanceof User);
         try {
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id]);
             $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
@@ -82,8 +81,7 @@ class GetRides extends AbstractHttpHandler
             $chair = null;
             try {
                 $stmt = $this->db->prepare('SELECT * FROM chairs WHERE id = ?');
-                $stmt->bindValue(1, $ride->chairId, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$ride->chairId]);
                 $chairResult = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$chairResult) {
                     return (new ErrorResponse())->write(
@@ -112,8 +110,7 @@ class GetRides extends AbstractHttpHandler
             $owner = null;
             try {
                 $stmt = $this->db->prepare('SELECT * FROM owners WHERE id = ?');
-                $stmt->bindValue(1, $chair->ownerId, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$chair->ownerId]);
                 $ownerResult = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$ownerResult) {
                     throw new \Exception('Owner not found');

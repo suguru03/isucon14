@@ -41,8 +41,7 @@ abstract class AbstractHttpHandler
     protected function getLatestRideStatus(PDO $db, string $rideId): string
     {
         $stmt = $db->prepare('SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1');
-        $stmt->bindValue(1, $rideId, PDO::PARAM_STR);
-        $stmt->execute();
+        $stmt->execute([$rideId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$result) {
             return '';
@@ -102,8 +101,7 @@ abstract class AbstractHttpHandler
             $pickupLongitude = $ride->pickupLongitude;
             // すでにクーポンが紐づいているならそれの割引額を参照
             $stmt = $db->prepare('SELECT * FROM coupons WHERE used_by = ?');
-            $stmt->bindValue(1, $ride->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$ride->id]);
             $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($coupon !== false) {
                 $discount = $coupon['discount'];
@@ -113,16 +111,14 @@ abstract class AbstractHttpHandler
             $stmt = $db->prepare(
                 'SELECT * FROM coupons WHERE user_id = ? AND code = \'CP_NEW2024\' AND used_by IS NULL'
             );
-            $stmt->bindValue(1, $userId, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$userId]);
             $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
             // 無いなら他のクーポンを付与された順番に使う
             if ($coupon === false) {
                 $stmt = $db->prepare(
                     'SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1'
                 );
-                $stmt->bindValue(1, $userId, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$userId]);
                 $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($coupon !== false) {
                     $discount = $coupon['discount'];
@@ -149,8 +145,7 @@ abstract class AbstractHttpHandler
         $stats = new UserNotificationDataChairStats();
         $rides = [];
         $stmt = $tx->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC');
-        $stmt->bindValue(1, $chairId, PDO::PARAM_STR);
-        $stmt->execute();
+        $stmt->execute([$chairId]);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (!$result) {
             return new ChairStats($stats, new \Exception('chair not found'));
@@ -176,8 +171,7 @@ abstract class AbstractHttpHandler
             $rideStatuses = [];
             try {
                 $stmt = $tx->prepare('SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at');
-                $stmt->bindValue(1, $ride->id, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$ride->id]);
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($result as $row) {
                     $rideStatuses[] = new RideStatus(

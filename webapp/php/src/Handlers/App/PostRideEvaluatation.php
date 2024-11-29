@@ -57,8 +57,7 @@ class PostRideEvaluatation extends AbstractHttpHandler
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE id = ?');
-            $stmt->bindValue(1, $rideId, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$rideId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
@@ -90,9 +89,7 @@ class PostRideEvaluatation extends AbstractHttpHandler
                 );
             }
             $stmt = $this->db->prepare('UPDATE rides SET evaluation = ? WHERE id = ?');
-            $stmt->bindValue(1, $req->getEvaluation(), PDO::PARAM_INT);
-            $stmt->bindValue(2, $rideId, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$req->getEvaluation(), $rideId]);
             if ($stmt->rowCount() === 0) {
                 $this->db->rollBack();
                 return (new ErrorResponse())->write(
@@ -105,14 +102,10 @@ class PostRideEvaluatation extends AbstractHttpHandler
             $stmt = $this->db->prepare(
                 'INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)'
             );
-            $stmt->bindValue(1, (string)$statusID, PDO::PARAM_STR);
-            $stmt->bindValue(2, $rideId, PDO::PARAM_STR);
-            $stmt->bindValue(3, 'COMPLETED', PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([(string)$statusID, $rideId, 'COMPLETED']);
 
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE id = ?');
-            $stmt->bindValue(1, $rideId, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$rideId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
@@ -135,7 +128,6 @@ class PostRideEvaluatation extends AbstractHttpHandler
                 updatedAt: $result['updated_at']
             );
             $stmt = $this->db->prepare('SELECT * FROM payment_tokens WHERE user_id = ?');
-            $stmt->bindValue(1, $ride->userId, PDO::PARAM_STR);
             $stmt->execute([$ride->userId]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
@@ -180,8 +172,7 @@ class PostRideEvaluatation extends AbstractHttpHandler
                     ),
                     function () use ($ride): \IsuRide\Result\Ride {
                         $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC');
-                        $stmt->bindValue(1, $ride->userId, PDO::PARAM_STR);
-                        $stmt->execute();
+                        $stmt->execute([$ride->userId]);
                         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         if (!$result) {
                             return new \IsuRide\Result\Ride([], new Exception('rides not found'));

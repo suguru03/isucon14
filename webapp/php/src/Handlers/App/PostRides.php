@@ -10,7 +10,7 @@ use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppPostRides202Response;
 use IsuRide\Model\AppPostRidesRequest;
 use IsuRide\Model\Coordinate;
-use IsuRide\Model\User;
+use IsuRide\Database\Model\User;
 use IsuRide\Response\ErrorResponse;
 use PDO;
 use PDOException;
@@ -51,13 +51,12 @@ class PostRides extends AbstractHttpHandler
         }
 
         $user = $request->getAttribute('user');
-        assert($user instanceof \IsuRide\Database\Model\User);
+        assert($user instanceof User);
         $rideId = new Ulid();
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ?');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id]);
             $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $continuingRideCount = 0;
             foreach ($rides as $row) {
@@ -95,79 +94,64 @@ INSERT INTO rides (id, user_id, pickup_latitude, pickup_longitude, destination_l
 VALUES (?, ?, ?, ?, ?, ?)
 SQL
             );
-            $stmt->bindValue(1, (string)$rideId, PDO::PARAM_STR);
-            $stmt->bindValue(2, $user->id, PDO::PARAM_STR);
-            $stmt->bindValue(3, (new Coordinate($req->getPickupCoordinate()))->getLatitude(), PDO::PARAM_INT);
-            $stmt->bindValue(4, (new Coordinate($req->getPickupCoordinate()))->getLongitude(), PDO::PARAM_INT);
-            $stmt->bindValue(5, (new Coordinate($req->getDestinationCoordinate()))->getLatitude(), PDO::PARAM_INT);
-            $stmt->bindValue(6, (new Coordinate($req->getDestinationCoordinate()))->getLongitude(), PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([
+                (string)$rideId,
+                $user->id,
+                (new Coordinate($req->getPickupCoordinate()))->getLatitude(),
+                (new Coordinate($req->getPickupCoordinate()))->getLongitude(),
+                (new Coordinate($req->getDestinationCoordinate()))->getLatitude(),
+                (new Coordinate($req->getDestinationCoordinate()))->getLongitude(),
+            ]);
 
             $stmt = $this->db->prepare('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)');
-            $stmt->bindValue(1, (new Ulid())->toString(), PDO::PARAM_STR);
-            $stmt->bindValue(2, (string)$rideId, PDO::PARAM_STR);
-            $stmt->bindValue(3, 'MATCHING', PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([(new Ulid())->toString(), (string)$rideId, 'MATCHING']);
 
             $stmt = $this->db->prepare('SELECT COUNT(*) FROM rides WHERE user_id = ?');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id]);
             $rideCount = $stmt->fetchColumn(0);
             if ($rideCount === 1) {
                 // 初回利用で、初回利用クーポンがあれば必ず使う
                 $stmt = $this->db->prepare(
                     'SELECT * FROM coupons WHERE user_id = ? AND code = \'CP_NEW2024\' AND used_by IS NULL FOR UPDATE'
                 );
-                $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$user->id]);
                 $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($coupon === false) {
                     // 無ければ他のクーポンを付与された順番に使う
                     $stmt = $this->db->prepare(
                         'SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE'
                     );
-                    $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-                    $stmt->execute();
+                    $stmt->execute([$user->id]);
                     $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
                     if ($coupon !== false) {
                         $stmt = $this->db->prepare(
                             'UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?'
                         );
-                        $stmt->bindValue(1, (string)$rideId, PDO::PARAM_STR);
-                        $stmt->bindValue(2, $user->id, PDO::PARAM_STR);
-                        $stmt->bindValue(3, $coupon['code'], PDO::PARAM_STR);
-                        $stmt->execute();
+                        $stmt->execute([(string)$rideId, $user->id, $coupon['code']]);
                     }
                 } else {
                     $stmt = $this->db->prepare(
                         'UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = \'CP_NEW2024\''
                     );
-                    $stmt->bindValue(1, (string)$rideId, PDO::PARAM_STR);
-                    $stmt->bindValue(2, $user->id, PDO::PARAM_STR);
-                    $stmt->execute();
+                    $stmt->execute([(string)$rideId, $user->id]);
                 }
             } else {
                 // 他のクーポンを付与された順番に使う
                 $stmt = $this->db->prepare(
                     'SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE'
                 );
-                $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$user->id]);
                 $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($coupon !== false) {
                     $stmt = $this->db->prepare(
                         'UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?'
                     );
-                    $stmt->bindValue(1, (string)$rideId, PDO::PARAM_STR);
-                    $stmt->bindValue(2, $user->id, PDO::PARAM_STR);
-                    $stmt->bindValue(3, $coupon['code'], PDO::PARAM_STR);
-                    $stmt->execute();
+                    $stmt->execute([(string)$rideId, $user->id, $coupon['code']]);
                 }
             }
 
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE id = ?');
-            $stmt->bindValue(1, (string)$rideId, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([(string)$rideId]);
             $rideResult = $stmt->fetch(PDO::FETCH_ASSOC);
             $ride = null;
             if ($rideResult !== false) {

@@ -58,8 +58,7 @@ class PostInitialize extends AbstractHttpHandler
         }
         try {
             $stmt = $this->db->prepare('UPDATE settings SET value = ? WHERE name = \'payment_gateway_url\'');
-            $stmt->bindValue(1, $req->getPaymentServer(), PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$req->getPaymentServer()]);
         } catch (PDOException $e) {
             return (new ErrorResponse())->write(
                 $response,
