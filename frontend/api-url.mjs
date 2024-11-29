@@ -7,6 +7,7 @@
  * @type {string}
  */
 export const alternativeAPIURLString = "__API_BASE_URL__";
+
 /**
  * 任意のURLExpressionの代替
  * @type {string}

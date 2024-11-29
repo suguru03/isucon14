@@ -12,13 +12,13 @@
     "typecheck": "tsc",
     "fmtcheck": "prettier ./*.{cjs,ts,js} ./app --check",
     "fmt": "prettier ./*.{cjs,ts,js} ./app --write",
-    "codegen": "rm -rf ./app/apiClient && npx openapi-codegen gen isucon",
-    "create-initial-data": "node  ./create-initial-owner-data.mjs"
+    "codegen": "rm -rf ./app/apiClient && npx openapi-codegen gen isucon"
   },
   "dependencies": {
     "@remix-run/node": "^2.11.1",
     "@remix-run/react": "^2.11.1",
     "@tanstack/react-query": "^5.56.2",
+    "canvas-confetti": "^1.9.3",
     "event-source-polyfill": "^1.0.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -28,6 +28,7 @@
     "@openapi-codegen/cli": "^2.0.2",
     "@openapi-codegen/typescript": "^8.0.2",
     "@remix-run/dev": "^2.11.1",
+    "@types/canvas-confetti": "^1.6.4",
     "@types/event-source-polyfill": "^1.0.5",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",

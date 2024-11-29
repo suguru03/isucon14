@@ -17,6 +17,7 @@ export type ClientAppChair = {
   }>;
 };
 
+// TODO: この型はデバッグ用の型なので削除する
 export type ClientAppRide = {
   status?: RideStatus;
   payload?: Partial<{
@@ -37,6 +38,7 @@ export type ClientAppRide = {
   };
 };
 
+// TODO: この型はデバッグ用の型なので削除する
 export type ClientChairRide = {
   status?: RideStatus;
   payload?: Partial<{
@@ -49,9 +51,35 @@ export type ClientChairRide = {
   }>;
 };
 
-export type Pos = {
+export type SimulatorChair = {
+  id: string;
+  name: string;
+  model: string;
+  token: string;
+  coordinateState: {
+    coordinate?: Coordinate;
+    setter: (coordinate: Coordinate) => void;
+  };
+  chairNotification?: ClientChairRide;
+};
+
+export type SimulatorOwner = {
+  id: string;
+  name: string;
+  token: string;
+  chair?: SimulatorChair;
+};
+
+export type DisplayPos = {
   x: number;
   y: number;
+};
+
+export type NearByChair = {
+  id: string;
+  name: string;
+  model: string;
+  current_coordinate: Coordinate;
 };
 
 export type Coordinate = ApiCoodinate;

@@ -738,6 +738,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /internal/matching:
+    get:
+      tags:
+        - internal
+      summary: ライドのマッチングを行う
+      operationId: internal-get-matching
+      responses:
+        "204":
+          description: マッチングが正常に完了した
 components:
   parameters:
     ride_id:

@@ -43,8 +43,7 @@ class GetNotification extends AbstractHttpHandler
         try {
             $this->db->beginTransaction();
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$result) {
                 $this->db->rollBack();
@@ -101,8 +100,7 @@ class GetNotification extends AbstractHttpHandler
             );
             if ($ride->chairId !== null) {
                 $stmt = $this->db->prepare('SELECT * FROM chairs WHERE id = ?');
-                $stmt->bindValue(1, $ride->chairId, PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$ride->chairId]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$result) {
                     $this->db->rollBack();

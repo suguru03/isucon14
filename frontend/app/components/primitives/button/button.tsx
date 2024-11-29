@@ -47,7 +47,7 @@ export const Button: FC<
       case "sm":
         return "py-2 px-3";
       case "md":
-        return "py-3 px-4";
+        return "py-3.5 px-4";
     }
   }, [size]);
 
@@ -55,7 +55,7 @@ export const Button: FC<
     <button
       type="button"
       className={twMerge(
-        "rounded-md bg-neutral-800 border border-transparent text-center text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none ml-2",
+        "rounded-md bg-neutral-800 border border-transparent text-center text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none",
         variantClasses,
         sizeClasses,
         className,

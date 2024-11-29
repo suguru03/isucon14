@@ -11,7 +11,7 @@
   become: true
   become_user: isucon
   shell:
-    cmd: /usr/bin/sh -x /home/isucon/local/rustup-init.sh -y --no-modify-path --profile default --default-toolchain 1.74.0 -c rustfmt
+    cmd: /usr/bin/sh -x /home/isucon/local/rustup-init.sh -y --no-modify-path --profile default --default-toolchain 1.82.0 -c rustfmt
     chdir: /home/isucon
 
 - name: mkdir opt/xbuild/var
@@ -36,13 +36,13 @@
   become: true
   become_user: isucon
   shell:
-    cmd: /opt/xbuild/node-install v20.10.0 /home/isucon/local/node
+    cmd: /opt/xbuild/node-install v22.11.0 /home/isucon/local/node
 
 - name: Install Perl
   become: true
   become_user: isucon
   shell:
-    cmd: /opt/xbuild/perl-install 5.38.0 /home/isucon/local/perl -- -Duselongdouble -j $(nproc)
+    cmd: /opt/xbuild/perl-install 5.40.0 /home/isucon/local/perl -- -Duselongdouble -j $(nproc)
 
 - name: Install cpm for Perl
   become: true
@@ -56,13 +56,13 @@
   become: true
   become_user: isucon
   shell:
-    cmd: MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.2.2 /home/isucon/local/ruby
+    cmd: MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.3.6 /home/isucon/local/ruby
 
 - name: Install PHP
   become: true
   become_user: isucon
   shell: |
-    /opt/xbuild/php-install 8.2.11 /home/isucon/local/php -- \
+    /opt/xbuild/php-install 8.3.13 /home/isucon/local/php -- \
     --with-pcre-regex --with-zlib --enable-fpm --enable-pdo --with-pear \
     --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-openssl \
     --with-pcre-regex --with-pcre-dir --with-libxml-dir --enable-opcache \
@@ -70,8 +70,9 @@
     --enable-sysvsem --enable-sysvshm --enable-sysvmsg --enable-mbregex \
     --enable-mbstring --enable-pcntl --enable-sockets --with-curl --enable-zip
 
-- name: Install Python
+- name: Install uv for Python
   become: true
   become_user: isucon
   shell:
-    cmd: /opt/xbuild/python-install 3.12.0 /home/isucon/local/python
+    cmd: curl -LsSf https://astral.sh/uv/install.sh | sh
+    creates: /home/isucon/.local/bin/uv

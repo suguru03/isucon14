@@ -1,24 +1,26 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import colors from "tailwindcss/colors";
 import {
   fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
-import { useOnClickOutside } from "~/components/hooks/use-on-click-outside";
+import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import { CopyIcon } from "~/components/icon/copy";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
-import { PriceText } from "~/components/modules/price-text/price-text";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
+import { NearByChair, isClientApiError } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
-import { Dispatched } from "./driving-state/dispatched";
 import { Enroute } from "./driving-state/enroute";
 import { Matching } from "./driving-state/matching";
+import { Pickup } from "./driving-state/pickup";
 
 export const meta: MetaFunction = () => {
   return [
@@ -27,102 +29,64 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-type Action = "from" | "to";
+type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
+type CampaignData = {
+  invitationCode: string;
+  registedAt: string; // Dateの文字列形式
+  used: boolean;
+};
 
 export default function Index() {
   const { status, payload: payload } = useClientAppRequestContext();
-  const [action, setAction] = useState<Action>();
-  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
+  const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
+
+  useEffect(() => {
+    setInternalRideStatus(status);
+  }, [status]);
+
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
-  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
 
-  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
-  const selectorModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  const handleSelectorModalClose = useCallback(() => {
-    if (selectorModalRef.current) {
-      selectorModalRef.current.close();
-    }
-  }, []);
+  const [direction, setDirection] = useState<Direction | null>(null);
 
-  const drivingStateModalRef = useRef(null);
+  const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
 
-  const onClose = useCallback(() => {
-    if (action === "from") setCurrentLocation(selectedLocation);
-    if (action === "to") setDestLocation(selectedLocation);
-    setIsSelectorModalOpen(false);
-  }, [action, selectedLocation]);
+  const [fare, setFare] = useState<number>();
 
-  const onMove = useCallback((coordinate: Coordinate) => {
+  const onSelectMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
 
-  const handleOpenModal = useCallback((action: Action) => {
-    setIsSelectorModalOpen(true);
-    setAction(action);
-  }, []);
+  const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
+    useState(false);
 
-  // TODO: requestId をベースに配車キャンセルしたい
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const [requestId, setRequestId] = useState<string>("");
-  const [fare, setFare] = useState<number>();
-  const isStatusOpenModal = useMemo(
-    () => status !== undefined && status !== "COMPLETED",
-    [status],
+  const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
+    null,
   );
-
-  const [nearByChairs, setNearByChairs] = useState<
-    {
-      id: string;
-      name: string;
-      model: string;
-      current_coordinate: Coordinate;
-    }[]
-  >();
-  // 一旦useEffectで取得するようにする (currentLocationがセットされたタイミングで発火する)
-  useEffect(() => {
-    if (currentLocation?.latitude && currentLocation?.longitude) {
-      const abortController = new AbortController();
-      try {
-        void (async () => {
-          const nearByChairs = await fetchAppGetNearbyChairs(
-            {
-              queryParams: {
-                latitude: currentLocation?.latitude,
-                longitude: currentLocation?.longitude,
-              },
-            },
-            abortController.signal,
-          );
-          const chairs = nearByChairs.chairs;
-          setNearByChairs(chairs);
-        })();
-      } catch (e) {
-        console.error(`CONSOLE ERROR: ${e as string}`);
-      }
-      return () => abortController.abort();
+  const handleConfirmLocation = useCallback(() => {
+    if (direction === "from") {
+      setCurrentLocation(selectedLocation);
+    } else if (direction === "to") {
+      setDestLocation(selectedLocation);
     }
-    return;
-  }, [setNearByChairs, currentLocation]);
-  // TODO: nearByChairsで表示処理
-  console.log("nearByChairs", nearByChairs);
-
-  const handleRideRequest = useCallback(async () => {
-    if (!currentLocation || !destLocation) {
-      return;
+    if (locationSelectorModalRef.current) {
+      locationSelectorModalRef.current.close();
     }
-    await fetchAppPostRides({
-      body: {
-        pickup_coordinate: currentLocation,
-        destination_coordinate: destLocation,
-      },
-    }).then((res) => {
-      setRequestId(res.ride_id);
-      setFare(res.fare);
-    });
-  }, [currentLocation, destLocation]);
+  }, [direction, selectedLocation]);
 
+  const isStatusModalOpen = useMemo(() => {
+    return (
+      internalRideStatus &&
+      ["MATCHING", "ENROUTE", "PICKUP", "CARRYING", "ARRIVED"].includes(
+        internalRideStatus,
+      )
+    );
+  }, [internalRideStatus]);
+
+  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
+
+  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   useEffect(() => {
     if (!currentLocation || !destLocation) {
       return;
@@ -149,21 +113,172 @@ export default function Index() {
     };
   }, [currentLocation, destLocation]);
 
-  useOnClickOutside(selectorModalRef, handleSelectorModalClose);
+  const handleRideRequest = useCallback(async () => {
+    if (!currentLocation || !destLocation) {
+      return;
+    }
+    setInternalRideStatus("MATCHING");
+    try {
+      const rides = await fetchAppPostRides({
+        body: {
+          pickup_coordinate: currentLocation,
+          destination_coordinate: destLocation,
+        },
+      });
+      setFare(rides.fare);
+    } catch (error) {
+      if (isClientApiError(error)) {
+        console.error(error);
+      }
+    }
+  }, [currentLocation, destLocation]);
+
+  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>();
+
+  const setNearByChairs = useCallback(
+    (coordinate: Coordinate, abortSignal?: AbortSignal) => {
+      const { latitude, longitude } = coordinate;
+      void (async () => {
+        try {
+          const { chairs } = await fetchAppGetNearbyChairs(
+            {
+              queryParams: {
+                latitude,
+                longitude,
+                distance: 150,
+              },
+            },
+            abortSignal,
+          );
+          setDisplayedChairs(chairs);
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    },
+    [],
+  );
+
+  const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
+  const onCenterMove = useCallback(
+    (coordinate: Coordinate) => {
+      setCenterCoodirnate(coordinate);
+    },
+    [setCenterCoodirnate],
+  );
+
+  useEffect(() => {
+    if (!centerCoordinate) return;
+    let abortController: AbortController;
+    let timeoutId: number;
+
+    timeoutId = window.setTimeout(() => {
+      abortController = new AbortController();
+      setNearByChairs(centerCoordinate, abortController.signal);
+      const polling = () => {
+        abortController = new AbortController();
+        setNearByChairs(centerCoordinate, abortController.signal);
+        timeoutId = window.setTimeout(polling, 10000);
+      };
+      timeoutId = window.setTimeout(polling, 10000);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController?.abort();
+    };
+  }, [centerCoordinate, setNearByChairs]);
+
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
+  useEffect(() => {
+    const storedData = localStorage.getItem("campaign");
+    if (storedData) {
+      const data: CampaignData = JSON.parse(storedData) as CampaignData;
+      const registeredDate = new Date(data.registedAt);
+      const currentDate = new Date();
+
+      if (
+        !data.used &&
+        currentDate.getTime() - registeredDate.getTime() < 60 * 60 * 1000
+      ) {
+        setCampaign(data);
+      }
+    }
+  }, []);
+
+  const handleCloseBanner = () => {
+    if (campaign) {
+      const updatedCampaign = { ...campaign, used: true };
+      localStorage.setItem("campaign", JSON.stringify(updatedCampaign));
+      setCampaign(null);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (campaign) {
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(campaign.invitationCode);
+          alert("招待コードがコピーされました！");
+        } catch (error) {
+          alert(
+            `コピーに失敗しました。\n招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+          );
+        }
+      } else {
+        alert(
+          `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
+        );
+      }
+    }
+  };
 
   return (
     <>
+      {campaign && (
+        <div className="bg-blue-100 p-4 rounded-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-xl flex items-center justify-between">
+          <span className="flex items-center">
+            &#8505; 友達キャンペーン 招待すると1000円OFF
+          </span>
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                try {
+                  void handleCopyCode();
+                } catch (error) {
+                  console.error(error);
+                }
+              }}
+              className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            >
+              <CopyIcon />
+              招待コードをコピー
+            </button>
+            <button
+              onClick={handleCloseBanner}
+              aria-label="閉じる"
+              className="ml-4"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
       <Map
         from={currentLocation}
         to={destLocation}
+        onMove={onCenterMove}
         initialCoordinate={selectedLocation}
+        chairs={displayedChairs}
+        className="flex-1"
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
         <LocationButton
           className="w-full"
           location={currentLocation}
           onClick={() => {
-            handleOpenModal("from");
+            setDirection("from");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="現在地を選択する"
           label="現在地"
@@ -173,83 +288,88 @@ export default function Index() {
           location={destLocation}
           className="w-full"
           onClick={() => {
-            handleOpenModal("to");
+            setDirection("to");
+            setLocationSelectorModalOpen(true);
           }}
           placeholder="目的地を選択する"
           label="目的地"
         />
         {estimatePrice && (
-          <div className="flex mt-4">
-            <Text>推定運賃: </Text>
-            <PriceText className="px-4" value={estimatePrice.fare} />
-            <Text>(割引額: </Text>
-            <PriceText value={estimatePrice.discount} />
-            <Text>)</Text>
-          </div>
+          <Price
+            value={estimatePrice.fare}
+            pre="推定運賃"
+            discount={estimatePrice.discount}
+            className="mt-6 mb-4"
+          ></Price>
         )}
-        <Button
-          variant="primary"
-          className="w-full mt-6 font-bold"
-          onClick={() => void handleRideRequest()}
-          disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
-        >
-          ISURIDE
-        </Button>
+        {currentLocation && destLocation && (
+          <Button
+            variant="primary"
+            className="w-full font-bold"
+            onClick={() => void handleRideRequest()}
+            disabled={!(Boolean(currentLocation) && Boolean(destLocation))}
+          >
+            ISURIDE
+          </Button>
+        )}
       </div>
-      {isSelectorModalOpen && (
-        <Modal ref={selectorModalRef} onClose={onClose}>
+      {isLocationSelectorModalOpen && (
+        <Modal
+          ref={locationSelectorModalRef}
+          onClose={() => setLocationSelectorModalOpen(false)}
+        >
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
-                onMove={onMove}
+                onMove={onSelectMove}
                 from={currentLocation}
                 to={destLocation}
+                selectorPinColor={
+                  direction === "from" ? colors.black : colors.red[500]
+                }
                 initialCoordinate={
-                  action === "from" ? currentLocation : destLocation
+                  direction === "from" ? currentLocation : destLocation
                 }
                 selectable
                 className="rounded-2xl"
               />
             </div>
             <p className="font-bold mb-4 text-base">
-              {action === "from" ? "現在地" : "目的地"}を選択してください
+              {direction === "from" ? "現在地" : "目的地"}
+              を選択してください
             </p>
-            <Button onClick={handleSelectorModalClose}>
-              {action === "from"
+            <Button onClick={handleConfirmLocation}>
+              {direction === "from"
                 ? "この場所から移動する"
                 : "この場所に移動する"}
             </Button>
           </div>
         </Modal>
       )}
-      {isStatusOpenModal && (
-        <Modal ref={drivingStateModalRef}>
-          {status === "MATCHING" && (
+      {isStatusModalOpen && (
+        <Modal
+          ref={statusModalRef}
+          onClose={() => setInternalRideStatus("COMPLETED")}
+        >
+          {internalRideStatus === "MATCHING" && (
             <Matching
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-              fare={fare}
+              optimistic={{
+                destLocation: payload?.coordinate?.destination,
+                pickup: payload?.coordinate?.pickup,
+                fare: fare,
+              }}
             />
           )}
-          {status === "ENROUTE" && (
-            <Enroute
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
+          {internalRideStatus === "ENROUTE" && <Enroute />}
+          {internalRideStatus === "PICKUP" && <Pickup />}
+          {internalRideStatus === "CARRYING" && <Carrying />}
+          {internalRideStatus === "ARRIVED" && (
+            <Arrived
+              onEvaluated={() => {
+                statusModalRef.current?.close();
+              }}
             />
           )}
-          {status === "PICKUP" && (
-            <Dispatched
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
-          )}
-          {status === "CARRYING" && (
-            <Carrying
-              destLocation={payload?.coordinate?.destination}
-              pickup={payload?.coordinate?.pickup}
-            />
-          )}
-          {status === "ARRIVED" && <Arrived />}
         </Modal>
       )}
     </>

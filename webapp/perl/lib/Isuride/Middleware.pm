@@ -5,7 +5,7 @@ use HTTP::Status qw(:constants);
 
 sub app_auth_middleware ($app) {
     sub ($self, $c) {
-        my $access_token = $c->req->cookies->{apps_session};
+        my $access_token = $c->req->cookies->{app_session};
 
         unless ($access_token) {
             return $c->halt_json(HTTP_UNAUTHORIZED, 'app_session cookie is required');

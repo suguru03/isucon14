@@ -7,6 +7,9 @@ requires 'Type::Tiny', '2.006000';
 requires 'Cpanel::JSON::XS', '4.38';
 requires 'Crypt::URandom','0.40';
 requires 'Time::Moment';
+requires 'Furl';
+requires 'HTTP::Parser::XS';
+requires 'Syntax::Keyword::Match';
 
 # DB
 requires 'DBD::mysql', '5.009';

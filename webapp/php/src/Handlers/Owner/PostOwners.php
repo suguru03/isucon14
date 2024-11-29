@@ -53,11 +53,7 @@ class PostOwners extends AbstractHttpHandler
             $stmt = $this->db->prepare(
                 'INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)'
             );
-            $stmt->bindValue(1, $ownerId, PDO::PARAM_STR);
-            $stmt->bindValue(2, $req->getName(), PDO::PARAM_STR);
-            $stmt->bindValue(3, $accessToken, PDO::PARAM_STR);
-            $stmt->bindValue(4, $chairRegisterToken, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$ownerId, $req->getName(), $accessToken, $chairRegisterToken]);
             return $this->writeJson(
                 $response->withHeader(
                     'Set-Cookie',

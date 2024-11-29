@@ -1,17 +1,20 @@
 import { Form } from "@remix-run/react";
-import { MouseEventHandler, useCallback, useRef, useState } from "react";
+import { MouseEventHandler, useCallback, useEffect, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
-import { ToIcon } from "~/components/icon/to";
+import { PinIcon } from "~/components/icon/pin";
+import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
-import { Rating } from "~/components/primitives/rating/rating";
+import { ClickableRating } from "~/components/primitives/rating/clickable-rating";
 import { Text } from "~/components/primitives/text/text";
 import { useClientAppRequestContext } from "~/contexts/user-context";
 
-export const Arrived = () => {
-  const { auth, payload } = useClientAppRequestContext();
+import confetti from "canvas-confetti";
+
+export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
+  const { auth, payload = {} } = useClientAppRequestContext();
   const [rating, setRating] = useState(0);
-  const modalRef = useRef<{ close: () => void }>(null);
+  const { fare } = payload;
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -28,36 +31,52 @@ export const Arrived = () => {
             evaluation: rating,
           },
         });
-      } finally {
-        if (modalRef.current) {
-          modalRef.current.close();
-        }
+      } catch (error) {
+        console.error(error);
       }
+      onEvaluated();
     },
-    [auth, payload, rating, modalRef],
+    [auth, payload, rating, onEvaluated],
   );
 
+  useEffect(() => {
+    void confetti({
+      origin: { y: 0.7 },
+      spread: 60,
+      colors: [
+        colors.yellow[500],
+        colors.cyan[300],
+        colors.green[500],
+        colors.indigo[500],
+        colors.red[500],
+      ],
+    });
+  }, []);
+
   return (
-    <Form className="h-full flex flex-col items-center justify-center">
+    <Form className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <div className="flex flex-col items-center gap-6 mb-14">
-        <ToIcon className="size-[90px]" color={colors.red[500]} />
-        <Text size="xl">目的地に到着しました</Text>
+        <PinIcon className="size-[90px]" color={colors.red[500]} />
+        <Text size="xl" bold>
+          目的地に到着しました
+        </Text>
       </div>
       <div className="flex flex-col items-center w-80">
         <Text className="mb-4">今回のドライブはいかがでしたか？</Text>
-        <Rating
+        <ClickableRating
           name="rating"
           rating={rating}
           setRating={setRating}
           className="mb-10"
         />
+        {fare && <Price pre="運賃" value={fare} className="mb-6"></Price>}
         <Button
           variant="primary"
           type="submit"
           onClick={onClick}
-          className="w-full mt-1"
+          className="w-full"
         >
-          評価してドライビングを完了
+          評価して料金を支払う
         </Button>
       </div>
     </Form>

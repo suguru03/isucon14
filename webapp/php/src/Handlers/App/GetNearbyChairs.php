@@ -100,7 +100,7 @@ class GetNearbyChairs extends AbstractHttpHandler
                     continue;
                 }
                 $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1');
-                $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
+                $stmt->execute([$chair->id]);
                 $ride = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($ride) {
                     // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
