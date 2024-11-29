@@ -4,7 +4,13 @@ import type { RowDataPacket } from "mysql2";
 import { ulid } from "ulid";
 import { getLatestRideStatus } from "./common.js";
 import type { Environment } from "./types/hono.js";
-import type { ChairLocation, Owner, Ride, RideStatus } from "./types/models.js";
+import type {
+  ChairLocation,
+  Owner,
+  Ride,
+  RideStatus,
+  User,
+} from "./types/models.js";
 import { secureRandomStr } from "./utils/random.js";
 
 export const chairPostChairs = async (ctx: Context<Environment>) => {
@@ -101,64 +107,36 @@ export const chairPostCoordinate = async (ctx: Context<Environment>) => {
 
 export const chairGetNotification = async (ctx: Context<Environment>) => {
   const chair = ctx.var.chair;
-  await ctx.var.dbConn.query("SELECT * FROM chairs WHERE id = ? FOR UPDATE", [
-    chair.id,
-  ]);
 
-  let [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
-    "SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1",
-    [chair.id],
-  );
-  const found = !!ride;
+  await ctx.var.dbConn.beginTransaction();
+  try {
+    const [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
+      "SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1",
+      [chair.id],
+    );
+    if (!ride) {
+      return ctx.json({}, 200);
+    }
 
-  let status = "";
-  let yetSentRideStatus: RideStatus | undefined = undefined;
-  if (found) {
-    [[yetSentRideStatus]] = await ctx.var.dbConn.query<
+    const [[yetSentRideStatus]] = await ctx.var.dbConn.query<
       Array<RideStatus & RowDataPacket>
     >(
       "SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1",
       [ride.id],
     );
-    status = yetSentRideStatus
-      ? yetSentRideStatus.status
-      : await getLatestRideStatus(ctx.var.dbConn, ride.id);
-  }
-
-  await ctx.var.dbConn.beginTransaction();
-  try {
-    if (!yetSentRideStatus?.id && (!found || status === "COMPLETED")) {
-      // MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-      const [[matched]] = await ctx.var.dbConn.query<
-        Array<Ride & RowDataPacket>
-      >(
-        "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE",
-      );
-      if (!matched) {
-        return ctx.json({}, 200);
-      }
-      await ctx.var.dbConn.query("UPDATE rides SET chair_id = ? WHERE id = ?", [
-        chair.id,
-        matched.id,
-      ]);
-      if (!found) {
-        ride = matched;
-        [[yetSentRideStatus]] = await ctx.var.dbConn.query<
-          Array<RideStatus & RowDataPacket>
-        >(
-          "SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1",
-          [ride.id],
-        );
-        status = yetSentRideStatus.status;
-      }
+    let status = "";
+    if (!yetSentRideStatus) {
+      status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
+    } else {
+      status = yetSentRideStatus.status;
     }
 
-    const [[user]] = await ctx.var.dbConn.query<Array<Owner & RowDataPacket>>(
+    const [[user]] = await ctx.var.dbConn.query<Array<User & RowDataPacket>>(
       "SELECT * FROM users WHERE id = ? FOR SHARE",
       [ride.user_id],
     );
 
-    if (yetSentRideStatus) {
+    if (yetSentRideStatus?.id) {
       await ctx.var.dbConn.query(
         "UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?",
         [yetSentRideStatus.id],
