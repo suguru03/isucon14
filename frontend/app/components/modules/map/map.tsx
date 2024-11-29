@@ -134,7 +134,7 @@ const SelectorLayer: FC<{
         }}
       />
       {loc && (
-        <div className="absolute right-6 bottom-5 text-neutral-500 font-mono">
+        <div className="absolute right-6 bottom-5 text-white font-mono bg-neutral-800 px-3 py-1 rounded-md">
           <span>{`${loc.latitude}, ${loc.longitude}`}</span>
         </div>
       )}
@@ -146,7 +146,7 @@ const SelectorLayer: FC<{
       </Button>
       {isOpenCustomSelector && loc && (
         <div className="p-4 bg-neutral-50 bg-opacity-80 absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col">
-          <div className="flex space-x-4 w-full">
+          <div className="flex flex-col w-full max-w-80">
             <div className="mb-3 flex-1">
               <label htmlFor="latitude" className="block text-neutral-600 mb-1">
                 Latitude:
@@ -154,8 +154,8 @@ const SelectorLayer: FC<{
               <input
                 type="number"
                 id="latitude"
-                min={0}
-                max={DisplayMapSize}
+                min={Math.ceil(-WorldSize / 2)}
+                max={Math.ceil(WorldSize / 2)}
                 defaultValue={loc.latitude}
                 placeholder="latitude"
                 className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
@@ -172,8 +172,8 @@ const SelectorLayer: FC<{
               <input
                 type="number"
                 id="longtiude"
-                min={0}
-                max={DisplayMapSize}
+                min={Math.ceil(-WorldSize / 2)}
+                max={Math.ceil(WorldSize / 2)}
                 defaultValue={loc.longitude}
                 placeholder="longitude"
                 className="px-3 py-2 w-full border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-neutral-400"
