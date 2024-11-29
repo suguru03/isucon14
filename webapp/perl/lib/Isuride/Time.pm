@@ -7,6 +7,7 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     unix_milli_from_str
+    unix_milli_from_time_moment
 );
 
 use Time::Moment;
@@ -35,4 +36,9 @@ sub unix_milli_from_str ($str) {
         return $milliepoch;
     }
     die "Invalid time format: $str";
+}
+
+sub unix_milli_from_time_moment ($tm) {
+    my $milliepoch = $tm->epoch * 1000 + $tm->millisecond;
+    return $milliepoch;
 }

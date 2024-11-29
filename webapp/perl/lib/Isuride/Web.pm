@@ -14,6 +14,7 @@ $Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed
 
 use Isuride::Middleware;
 use Isuride::Handler::App;
+use Isuride::Handler::Owner;
 use Isuride::Util qw(check_params);
 
 sub connect_db() {
@@ -67,6 +68,10 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
 
     # owner handlers
     {
+        post '/api/owner/owners' => \&Isuride::Handler::Owner::owner_post_owners;
+
+        get '/api/owner/sales'  => [OwnerAuthMiddleware] => \&Isuride::Handler::Owner::owner_get_sales;
+        get '/api/owner/chairs' => [OwnerAuthMiddleware] => \&Isuride::Handler::Owner::owner_get_chairs;
     }
 }
 
