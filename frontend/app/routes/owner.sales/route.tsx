@@ -22,6 +22,11 @@ const viewTypes = [
   { key: "model", label: "モデル別" },
 ] as const;
 
+const currentDateString = (() => {
+  const now = new Date();
+  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+})();
+
 export default function Index() {
   const [viewType, setViewType] =
     useState<(typeof viewTypes)[number]["key"]>("chair");
@@ -30,7 +35,7 @@ export default function Index() {
   const [salesDate, setSalesDate] = useState<{
     since?: string;
     until?: string;
-  }>({});
+  }>({ since: currentDateString, until: currentDateString });
   const [sales, setSales] = useState<OwnerSalesType>();
 
   useEffect(() => {
@@ -99,6 +104,7 @@ export default function Index() {
             name="since"
             size="sm"
             className="w-48 ms-[2px]"
+            defaultValue={salesDate.since}
             onChange={(e) => updateDate("since", e.target.value)}
           />
           →
@@ -107,6 +113,7 @@ export default function Index() {
             name="until"
             size="sm"
             className="w-48"
+            defaultValue={salesDate.until}
             onChange={(e) => updateDate("until", e.target.value)}
           />
         </div>
