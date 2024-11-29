@@ -101,7 +101,7 @@ sub chair_post_activity ($app, $c) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
-    return $c->halt_no_content;
+    return $c->halt_no_content(HTTP_NO_CONTENT);
 }
 
 use constant ChairPostCoordinateRequest => {
@@ -273,7 +273,8 @@ sub chair_post_ride_status ($app, $c) {
         }
 
         $txn->commit;
-        return $c->halt_no_content;
+        return $c->halt_no_content(HTTP_NO_CONTENT);
+
     } catch ($e) {
         $txn->rollback;
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
