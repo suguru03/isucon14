@@ -54,4 +54,7 @@ return function (App $app, array $config) {
     })->addMiddleware(
         new Middlewares\ChairAuthMiddleware($database, $app->getResponseFactory())
     );
+
+    // internal handlers
+    $app->get('/api/internal/matching',new Handlers\Internal\GetMatching($database));
 };
