@@ -14,6 +14,8 @@ our @EXPORT_OK = qw(
     calculate_fare
     calculate_sale
 
+    parse_int
+
     check_params
 );
 
@@ -53,6 +55,11 @@ sub calculate_fare ($pickup_latitude, $pickup_longitude, $dest_latitude, $dest_l
 
 sub calculate_sale ($ride) {
     return calculate_fare($ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+}
+
+sub parse_int ($str) {
+  my $is_valid = Int->check($str);
+  return $str, $is_valid;
 }
 
 # XXX: 以下はPerlでの型チェック支援用のユーティリティ
