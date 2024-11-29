@@ -10,7 +10,7 @@ RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-install opcache
+#RUN docker-php-ext-install opcache
 
 RUN locale-gen en_US.UTF-8
 RUN useradd --uid=1001 --create-home isucon
