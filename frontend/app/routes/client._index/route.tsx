@@ -54,9 +54,10 @@ export default function Index() {
 
   const [fare, setFare] = useState<number>();
 
-  const onMove = useCallback((coordinate: Coordinate) => {
+  const onSelectMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
+
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
 
@@ -132,32 +133,61 @@ export default function Index() {
     }
   }, [currentLocation, destLocation]);
 
-  // TODO: NearByChairのつなぎこみは後ほど行う
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [nearByChairs, setNearByChairs] = useState<NearByChair[]>();
-  useEffect(() => {
-    if (!currentLocation) {
-      return;
-    }
-    const abortController = new AbortController();
-    void (async () => {
-      try {
-        const { chairs } = await fetchAppGetNearbyChairs(
-          {
-            queryParams: {
-              latitude: currentLocation?.latitude,
-              longitude: currentLocation?.longitude,
+  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>();
+
+  const setNearByChairs = useCallback(
+    (coordinate: Coordinate, abortSignal?: AbortSignal) => {
+      const { latitude, longitude } = coordinate;
+      void (async () => {
+        try {
+          const { chairs } = await fetchAppGetNearbyChairs(
+            {
+              queryParams: {
+                latitude,
+                longitude,
+                distance: 150,
+              },
             },
-          },
-          abortController.signal,
-        );
-        setNearByChairs(chairs);
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-    return () => abortController.abort();
-  }, [setNearByChairs, currentLocation]);
+            abortSignal,
+          );
+          setDisplayedChairs(chairs);
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    },
+    [],
+  );
+
+  const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
+  const onCenterMove = useCallback(
+    (coordinate: Coordinate) => {
+      setCenterCoodirnate(coordinate);
+    },
+    [setCenterCoodirnate],
+  );
+
+  useEffect(() => {
+    if (!centerCoordinate) return;
+    let abortController: AbortController;
+    let timeoutId: number;
+
+    timeoutId = window.setTimeout(() => {
+      abortController = new AbortController();
+      setNearByChairs(centerCoordinate, abortController.signal);
+      const polling = () => {
+        abortController = new AbortController();
+        setNearByChairs(centerCoordinate, abortController.signal);
+        timeoutId = window.setTimeout(polling, 10000);
+      };
+      timeoutId = window.setTimeout(polling, 10000);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController?.abort();
+    };
+  }, [centerCoordinate, setNearByChairs]);
 
   const [campaign, setCampaign] = useState<CampaignData | null>(null);
   useEffect(() => {
@@ -237,8 +267,9 @@ export default function Index() {
       <Map
         from={currentLocation}
         to={destLocation}
+        onMove={onCenterMove}
         initialCoordinate={selectedLocation}
-        chairs={nearByChairs}
+        chairs={displayedChairs}
         className="flex-1"
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
@@ -290,7 +321,7 @@ export default function Index() {
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
-                onMove={onMove}
+                onMove={onSelectMove}
                 from={currentLocation}
                 to={destLocation}
                 selectorPinColor={
