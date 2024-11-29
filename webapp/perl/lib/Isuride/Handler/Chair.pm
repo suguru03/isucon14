@@ -159,14 +159,14 @@ sub chair_post_coordinate ($app, $c) {
     }
 }
 
-use constant simpleUser => {
+use constant SimpleUser => {
     id   => JSON_TYPE_STRING,
     name => JSON_TYPE_STRING
 };
 
 use constant ChairGetNotificationResponseData => {
     ride_id                => JSON_TYPE_STRING,
-    user                   => simpleUser,
+    user                   => SimpleUser,
     pickup_coordinate      => Coordinate,
     destination_coordinate => Coordinate,
     status                 => JSON_TYPE_STRING,
