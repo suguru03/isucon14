@@ -19,6 +19,7 @@ use Isuride::Time qw(unix_milli_from_str unix_milli_from_time_moment);
 use Isuride::Util qw(
     secure_random_str
     calculate_sale
+    parse_int
 
     check_params
 );
@@ -92,13 +93,27 @@ use constant OwnerGetSalesResponse => {
 };
 
 sub owner_get_sales ($app, $c) {
-    my $since = $c->req->query_parameters->{since} ?
-        unix_milli_from_time_moment(Time::Moment->from_epoch($c->req->query_parameters->{since}))
-        : 0;
+    my $since_tm = Time::Moment->from_epoch(0);
 
-    my $until = $c->req->query_parameters->{until} ?
-        unix_milli_from_time_moment(Time::Moment->from_epoch($c->req->query_parameters->{until})) :
-        unix_milli_from_time_moment(Time::Moment->new(year => 9999, month => 12, day => 31, hour => 23, minute => 59, second => 59, nanosecond => 0));
+    if ($c->req->query_parameters->{since}) {
+        my ($parsed, $err) = parse_int($c->req->query_parameters->{since});
+
+        if ($err) {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: since');
+        }
+        $since_tm = Time::Moment->from_epoch($parsed);
+    }
+
+    my $until_tm = Time::Moment->new(year => 9999, month => 12, day => 31, hour => 23, minute => 59, second => 59, nanosecond => 0);
+
+    if ($c->req->query_parameters->{until}) {
+        my ($parsed, $err) = parse_int($c->req->query_parameters->{until});
+
+        if ($err) {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: until');
+        }
+        $until_tm = Time::Moment->from_epoch($parsed);
+    }
 
     my $owner  = $app->stash->{owner};
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
@@ -110,7 +125,11 @@ sub owner_get_sales ($app, $c) {
     my $model_sales_by_model = {};
 
     for my $chair ($chairs->@*) {
-        my $rides = $app->dbh->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND", $chair->{id}, $since, $until);
+        my $rides = $app->dbh->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
+            $chair->{id},
+            unix_milli_from_time_moment($since_tm),
+            unix_milli_from_time_moment($until_tm),
+        );
 
         unless ($rides) {
             return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch rides');
