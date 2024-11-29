@@ -546,7 +546,7 @@ export const appGetNotification = async (ctx: Context<Environment>) => {
       };
     }
 
-    if (yetSentRideStatus.id) {
+    if (yetSentRideStatus?.id) {
       await ctx.var.dbConn.query(
         "UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?",
         [yetSentRideStatus.id],
