@@ -188,14 +188,10 @@ class ChairGetNotificationResponse(BaseModel):
 
 @router.get("/notification")
 def chair_get_notification(
+    response: Response,
     chair: Annotated[Chair, Depends(chair_auth_middleware)],
-) -> ChairGetNotificationResponse:
+) -> ChairGetNotificationResponse | Response:
     with engine.begin() as conn:
-        conn.execute(
-            text("SELECT * FROM chairs WHERE id = :id FOR UPDATE"), {"id": chair.id}
-        )
-
-        found = True
         ride_status = ""
         row = conn.execute(
             text(
@@ -203,57 +199,26 @@ def chair_get_notification(
             ),
             {"chair_id": chair.id},
         ).fetchone()
+
         if row is None:
-            found = False
+            response.status_code = HTTPStatus.OK
+            return response
 
+        ride = Ride.model_validate(row)
         yet_sent_ride_status: RideStatus | None = None
-        if found:
-            assert row is not None
-            ride = Ride.model_validate(row)
-            row = conn.execute(
-                text(
-                    "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
-                ),
-                {"ride_id": ride.id},
-            ).fetchone()
+        row = conn.execute(
+            text(
+                "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
+            ),
+            {"ride_id": ride.id},
+        ).fetchone()
 
-            if not row:
-                ride_status = get_latest_ride_status(conn, ride.id)
-            else:
-                yet_sent_ride_status = RideStatus.model_validate(row)
-                assert yet_sent_ride_status is not None
-                ride_status = yet_sent_ride_status.status
-
-    with engine.begin() as conn:
-        if (yet_sent_ride_status is None) and (
-            (not found) or ride_status == "COMPLETED"
-        ):
-            # MEMO: 一旦最も待たせているリクエストにマッチさせる実装とする。おそらくもっといい方法があるはず…
-            row = conn.execute(
-                text(
-                    "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE"
-                )
-            ).fetchone()
-            if row is None:
-                raise HTTPException(status_code=HTTPStatus.OK)
-            matched = Ride.model_validate(row)
-
-            conn.execute(
-                text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
-                {"chair_id": chair.id, "id": matched.id},
-            )
-
-            if not found:
-                ride = matched
-                row = conn.execute(
-                    text(
-                        "SELECT * FROM ride_statuses WHERE ride_id = :ride_id AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1"
-                    ),
-                    {"ride_id": ride.id},
-                ).fetchone()
-                yet_sent_ride_status = RideStatus.model_validate(row)
-                assert yet_sent_ride_status
-                ride_status = yet_sent_ride_status.status
+        if row is None:
+            ride_status = get_latest_ride_status(conn, ride.id)
+        else:
+            yet_sent_ride_status = RideStatus.model_validate(row)
+            assert yet_sent_ride_status is not None
+            ride_status = yet_sent_ride_status.status
 
         row = conn.execute(
             text("SELECT * FROM users WHERE id = :id FOR SHARE"), {"id": ride.user_id}
