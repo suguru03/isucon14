@@ -62,7 +62,7 @@ sub chair_post_chairs ($app, $c) {
     try {
         $app->dbh->query(
             "INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-            $chair_id, $owner->{id}, $params->{name}, $params->{model}, false, $access_token
+            $chair_id, $owner->{id}, $params->{name}, $params->{model}, 0, $access_token
         );
     } catch ($e) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
@@ -74,10 +74,13 @@ sub chair_post_chairs ($app, $c) {
         value => $access_token,
     };
 
-    return $c->render_json({
+    my $res = $c->render_json({
             id       => $chair_id,
             owner_id => $owner->{id},
     }, ChairPostChairsResponse);
+
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 use constant PostChairActivityRequest => {

@@ -1,4 +1,4 @@
-package Isuride::Handler::Owener;
+package Isuride::Handler::Owner;
 use v5.40;
 use utf8;
 use Time::Moment;
@@ -66,13 +66,15 @@ sub owner_post_owners ($app, $c) {
         value => $access_token,
     };
 
-    return $c->render_json(
+    my $res = $c->render_json(
         {
             id                   => $owner_id,
             chair_register_token => $chair_register_token,
         },
         OwnerPostOwnersResponse,
     );
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 use constant ChairSales => {
