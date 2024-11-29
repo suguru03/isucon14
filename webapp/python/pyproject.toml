@@ -25,6 +25,7 @@ dev = [
 extend-select = [
     "UP", # pyupgrade
     "I", # isort
+    "FAST", # FastAPI
 ]
 
 [tool.mypy]
