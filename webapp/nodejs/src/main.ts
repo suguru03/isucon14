@@ -31,6 +31,7 @@ import {
 } from "./owner_handlers.js";
 import type { Environment } from "./types/hono.js";
 import { execSync } from "node:child_process";
+import { internalGetMatching } from "./internal_handlers.js";
 
 const connection = await mysql.createConnection({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
@@ -87,6 +88,9 @@ app.post(
   chairAuthMiddleware,
   chairPostRideStatus,
 );
+
+// internal handlers
+app.get("/api/internal/matching", internalGetMatching);
 
 const port = 8080;
 serve(
