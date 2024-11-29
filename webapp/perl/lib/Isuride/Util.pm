@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(
     FarePerDistance
 
     secure_random_str
+    get_latest_ride_status
     calculate_distance
     calculate_fare
     calculate_sale
@@ -36,6 +37,16 @@ sub secure_random_str ($byte_length) {
     return unpack('H*', $bytes);
 }
 
+sub get_latest_ride_status ($c, $ride_id) {
+    my $status = $c->dbh->select_row(
+        q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
+        $ride_id
+    );
+
+    die 'sql: no rows in result set' unless $status;
+    return $status;
+}
+
 # マンハッタン距離を求める
 sub calculate_distance ($a_latitude, $a_longitude, $b_latitude, $b_longitude) {
     return abs($a_latitude - $b_latitude) + abs($a_longitude - $b_longitude);
@@ -58,8 +69,8 @@ sub calculate_sale ($ride) {
 }
 
 sub parse_int ($str) {
-  my $is_valid = Int->check($str);
-  return $str, !$is_valid;
+    my $is_valid = Int->check($str);
+    return $str, !$is_valid;
 }
 
 # XXX: 以下はPerlでの型チェック支援用のユーティリティ
@@ -93,34 +104,34 @@ sub _create_type_tiny_type_from_cpanel_type ($cpanel_structure) {
 }
 
 sub _defined_cpanel_type_to_type_tiny_type ($cpanel_type) {
-    match ($cpanel_type : ==) {
-      case (JSON_TYPE_STRING) {
-        Str;
-      }
-      case (JSON_TYPE_STRING_OR_NULL) {
-        Optional[Str];
-      }
-      case (JSON_TYPE_INT) {
-        Int;
-      }
-      case (JSON_TYPE_INT_OR_NULL) {
-        Optional[Int];
-      }
-      case (JSON_TYPE_FLOAT) {
-        Num;
-      }
-      case (JSON_TYPE_FLOAT_OR_NULL) {
-        Optional[Num];
-      }
-      case (JSON_TYPE_BOOL) {
-        Bool;
-      }
-      case (JSON_TYPE_BOOL_OR_NULL) {
-        Optional[Bool];
-      }
-      default {
-        undef;
-      }
+    match($cpanel_type : ==) {
+        case (JSON_TYPE_STRING) {
+            Str;
+        }
+        case (JSON_TYPE_STRING_OR_NULL) {
+            Optional [Str];
+        }
+        case (JSON_TYPE_INT) {
+            Int;
+        }
+        case (JSON_TYPE_INT_OR_NULL) {
+            Optional [Int];
+        }
+        case (JSON_TYPE_FLOAT) {
+            Num;
+        }
+        case (JSON_TYPE_FLOAT_OR_NULL) {
+            Optional [Num];
+        }
+        case (JSON_TYPE_BOOL) {
+            Bool;
+        }
+        case (JSON_TYPE_BOOL_OR_NULL) {
+            Optional [Bool];
+        }
+        default {
+            undef;
+        }
     }
 }
 

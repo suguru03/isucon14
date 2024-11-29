@@ -15,6 +15,7 @@ $Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed
 use Isuride::Middleware;
 use Isuride::Handler::App;
 use Isuride::Handler::Owner;
+use Isuride::Handler::Chair;
 use Isuride::Util qw(check_params);
 
 sub connect_db() {
@@ -64,6 +65,16 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
         post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_evaluation;
         get '/api/app/notification'  => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_notification;
         get '/api/app/nearby-chairs' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_nearby_chairs;
+    }
+
+    # chair handlers
+    {
+        post '/api/chair/chairs' => \&Isuride::Handler::Chair::chair_post_chairs;
+
+        post '/api/chair/activity'   => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_activity;
+        post '/api/chair/coordinate' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_coordinate;
+        get '/api/chair/notification' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_get_notification;
+        post '/api/chair/rides/:ride_id/status' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_rides_status;
     }
 
     # owner handlers

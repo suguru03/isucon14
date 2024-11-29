@@ -20,6 +20,7 @@ use Isuride::Util qw(
     InitialFare
     FarePerDistance
     secure_random_str
+    get_latest_ride_status
     calculate_distance
     calculate_fare
     calculate_sale
@@ -100,7 +101,7 @@ sub app_post_users ($app, $c) {
 
     $txn->commit;
 
-    $c->res->cookies->{apps_session} = {
+    $c->res->cookies->{app_session} = {
         path  => '/',
         name  => 'app_session',
         value => $access_token,
@@ -225,16 +226,6 @@ sub app_get_rides ($app, $c) {
     }
 
     return $c->render_json({ rides => $items }, AppGetRidesResponse);
-}
-
-sub get_latest_ride_status ($c, $ride_id) {
-    my $status = $c->dbh->select_row(
-        q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
-        $ride_id
-    );
-
-    die 'sql: no rows in result set' unless $status;
-    return $status;
 }
 
 use constant AppPostRideRequest => {
