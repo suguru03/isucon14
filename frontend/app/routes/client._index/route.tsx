@@ -145,6 +145,7 @@ export default function Index() {
               queryParams: {
                 latitude,
                 longitude,
+                distance: 150,
               },
             },
             abortSignal,
