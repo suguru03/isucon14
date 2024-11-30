@@ -24,7 +24,7 @@ import { Pickup } from "./driving-state/pickup";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Top | ISURIDE" },
+    { title: "ISURIDE" },
     { name: "description", content: "目的地まで椅子で快適に移動しましょう" },
   ];
 };

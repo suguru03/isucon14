@@ -14,8 +14,8 @@ import { Text } from "~/components/primitives/text/text";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "履歴 | ISURIDE" },
-    { name: "description", content: "配椅子履歴" },
+    { title: "History | ISURIDE" },
+    { name: "description", content: "椅子の配車履歴" },
   ];
 };
 

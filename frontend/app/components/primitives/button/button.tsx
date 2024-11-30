@@ -1,29 +1,8 @@
-import { Link } from "@remix-run/react";
 import { ComponentProps, FC, PropsWithChildren, useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 
-type Variant = "light" | "primary" | "danger" | "skelton";
+type Variant = "light" | "primary" | "skelton";
 type Size = "sm" | "md";
-
-export const ButtonLink: FC<PropsWithChildren<ComponentProps<typeof Link>>> = ({
-  to,
-  className,
-  children,
-  ...props
-}) => {
-  return (
-    <Link
-      {...props}
-      to={to}
-      className={twMerge(
-        "w-full py-2 text-center border border-neutral-500 rounded-md bg-neutral-200",
-        className,
-      )}
-    >
-      {children}
-    </Link>
-  );
-};
 
 export const Button: FC<
   PropsWithChildren<
@@ -41,8 +20,6 @@ export const Button: FC<
     switch (variant) {
       case "primary":
         return "text-white bg-sky-700";
-      case "danger":
-        return "text-white bg-rose-600";
       case "light":
         return "bg-[#F0EFED]";
       default:
