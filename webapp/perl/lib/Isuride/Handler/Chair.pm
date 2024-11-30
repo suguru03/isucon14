@@ -1,6 +1,8 @@
 package Isuride::Handler::Chair;
 use v5.40;
 use utf8;
+use experimental qw(defer);
+no warnings 'experimental::defer';
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -127,6 +129,7 @@ sub chair_post_coordinate ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     my $chair_location_id = ulid();
 
@@ -158,7 +161,6 @@ sub chair_post_coordinate ($app, $c) {
         return $c->render_json({ recorded_at => unix_milli_from_str($location->{created_at}) }, ChairPostCoordinateResponse);
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
@@ -185,6 +187,8 @@ sub chair_get_notification ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
+
     try {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
@@ -232,7 +236,6 @@ sub chair_get_notification ($app, $c) {
         }, ChairGetNotificationResponse);
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
@@ -253,6 +256,7 @@ sub chair_post_ride_status ($app, $c) {
     }
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     try {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
@@ -286,7 +290,6 @@ sub chair_post_ride_status ($app, $c) {
         return $c->halt_no_content(HTTP_NO_CONTENT);
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }

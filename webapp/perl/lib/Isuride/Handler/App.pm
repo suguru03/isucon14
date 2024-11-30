@@ -1,6 +1,8 @@
 package Isuride::Handler::App;
 use v5.40;
 use utf8;
+use experimental qw(defer);
+no warnings 'experimental::defer';
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -58,6 +60,7 @@ sub app_post_users ($app, $c) {
     my $invitation_code = secure_random_str(15);
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     try {
         $app->dbh->query(
@@ -117,7 +120,6 @@ sub app_post_users ($app, $c) {
         return $res;
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
@@ -172,6 +174,7 @@ sub app_get_rides ($app, $c) {
     my $user = $c->stash->{user};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     my $rides = $app->dbh->select_all(
         q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC},
@@ -267,6 +270,8 @@ sub app_post_rides ($app, $c) {
     my $ride_id = ulid();
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
+
     try {
         my $rides = $app->dbh->select_all(
             q{SELECT * FROM rides WHERE user_id = ? },
@@ -346,7 +351,6 @@ sub app_post_rides ($app, $c) {
         $txn->commit;
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
@@ -386,6 +390,7 @@ sub app_post_rides_estimated_fare ($app, $c) {
 
     try {
         my $txn = $app->dbh->txn_scope;
+        defer { $txn->rollback };
         $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
         $txn->commit;
     } catch ($e) {
@@ -419,6 +424,7 @@ sub app_post_ride_evaluation ($app, $c) {
     }
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     try {
         $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
@@ -487,7 +493,6 @@ sub app_post_ride_evaluation ($app, $c) {
         }, AppPostRideEvaluationResponse);
 
     } catch ($e) {
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
@@ -524,6 +529,7 @@ sub app_get_notification ($app, $c) {
     my $user = $c->stash->{user};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
     try {
         my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
@@ -583,7 +589,6 @@ sub app_get_notification ($app, $c) {
 
     } catch ($e) {
         warn $e;
-        $txn->rollback;
         return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
