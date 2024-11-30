@@ -343,10 +343,13 @@ sub app_post_rides ($app, $c) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
-    return $c->render_json({
+    my $res = $c->render_json({
             ride_id => $ride_id,
             fare    => $fare,
     }, AppPostRideResponse);
+
+    $res->status(HTTP_ACCEPTED);
+    return $res;
 }
 
 use constant AppPostRidesEstimatedFareRequest => {
