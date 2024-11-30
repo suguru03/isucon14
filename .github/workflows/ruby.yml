@@ -7,11 +7,15 @@ on:
       - bench/**/*
       - webapp/ruby/**/*
       - .github/workflows/ruby.yml
+      - development/compose-ruby.yml
+      - development/dockerfiles/Dockerfile.ruby
   pull_request:
     paths:
       - bench/**/*
       - webapp/ruby/**/*
       - .github/workflows/ruby.yml
+      - development/compose-ruby.yml
+      - development/dockerfiles/Dockerfile.ruby
 jobs:
   build:
     name: Build

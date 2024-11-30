@@ -7,14 +7,14 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import { CopyIcon } from "~/components/icon/copy";
+import { CampaignBanner } from "~/components/modules/campaign-banner/campaign-banner";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
-import { useClientAppRequestContext } from "~/contexts/user-context";
+import { useUserContext } from "~/contexts/user-context";
 import { NearByChair, isClientApiError } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
@@ -31,36 +31,28 @@ export const meta: MetaFunction = () => {
 
 type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
-type CampaignData = {
-  invitationCode: string;
-  registedAt: string; // Dateの文字列形式
-  used: boolean;
-};
 
 export default function Index() {
-  const { status, payload: payload } = useClientAppRequestContext();
+  const { status, payload: payload } = useUserContext();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
-
-  useEffect(() => {
-    setInternalRideStatus(status);
-  }, [status]);
-
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
-
   const [direction, setDirection] = useState<Direction | null>(null);
-
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
-
   const [fare, setFare] = useState<number>();
-
+  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>();
+  const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
+  const onCenterMove = useCallback(
+    (coordinate: Coordinate) => {
+      setCenterCoodirnate(coordinate);
+    },
+    [setCenterCoodirnate],
+  );
   const onSelectMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
-
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
-
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
@@ -74,7 +66,6 @@ export default function Index() {
       locationSelectorModalRef.current.close();
     }
   }, [direction, selectedLocation]);
-
   const isStatusModalOpen = useMemo(() => {
     return (
       internalRideStatus &&
@@ -83,10 +74,13 @@ export default function Index() {
       )
     );
   }, [internalRideStatus]);
-
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
+
+  useEffect(() => {
+    setInternalRideStatus(status);
+  }, [status]);
+
   useEffect(() => {
     if (!currentLocation || !destLocation) {
       return;
@@ -133,139 +127,45 @@ export default function Index() {
     }
   }, [currentLocation, destLocation]);
 
-  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>();
-
-  const setNearByChairs = useCallback(
-    (coordinate: Coordinate, abortSignal?: AbortSignal) => {
-      const { latitude, longitude } = coordinate;
-      void (async () => {
-        try {
-          const { chairs } = await fetchAppGetNearbyChairs(
-            {
-              queryParams: {
-                latitude,
-                longitude,
-                distance: 150,
-              },
-            },
-            abortSignal,
-          );
-          setDisplayedChairs(chairs);
-        } catch (error) {
-          console.error(error);
-        }
-      })();
-    },
-    [],
-  );
-
-  const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
-  const onCenterMove = useCallback(
-    (coordinate: Coordinate) => {
-      setCenterCoodirnate(coordinate);
-    },
-    [setCenterCoodirnate],
-  );
-
   useEffect(() => {
     if (!centerCoordinate) return;
-    let abortController: AbortController;
-    let timeoutId: number;
+    let abortController: AbortController | undefined;
+    let timeoutId: NodeJS.Timeout | undefined;
 
-    timeoutId = window.setTimeout(() => {
-      abortController = new AbortController();
-      setNearByChairs(centerCoordinate, abortController.signal);
-      const polling = () => {
+    const updateNearByChairs = async (coordinate: Coordinate) => {
+      const { latitude, longitude } = coordinate;
+      try {
+        abortController?.abort();
         abortController = new AbortController();
-        setNearByChairs(centerCoordinate, abortController.signal);
-        timeoutId = window.setTimeout(polling, 10000);
-      };
-      timeoutId = window.setTimeout(polling, 10000);
-    }, 300);
+        const { chairs } = await fetchAppGetNearbyChairs({
+          queryParams: {
+            latitude,
+            longitude,
+            distance: 150,
+          },
+        });
+        setDisplayedChairs(chairs);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const polling = () => {
+      void updateNearByChairs(centerCoordinate);
+      timeoutId = setTimeout(polling, 10_000);
+    };
+
+    timeoutId = setTimeout(polling, 300);
 
     return () => {
       clearTimeout(timeoutId);
       abortController?.abort();
     };
-  }, [centerCoordinate, setNearByChairs]);
-
-  const [campaign, setCampaign] = useState<CampaignData | null>(null);
-  useEffect(() => {
-    const storedData = localStorage.getItem("campaign");
-    if (storedData) {
-      const data: CampaignData = JSON.parse(storedData) as CampaignData;
-      const registeredDate = new Date(data.registedAt);
-      const currentDate = new Date();
-
-      if (
-        !data.used &&
-        currentDate.getTime() - registeredDate.getTime() < 60 * 60 * 1000
-      ) {
-        setCampaign(data);
-      }
-    }
-  }, []);
-
-  const handleCloseBanner = () => {
-    if (campaign) {
-      const updatedCampaign = { ...campaign, used: true };
-      localStorage.setItem("campaign", JSON.stringify(updatedCampaign));
-      setCampaign(null);
-    }
-  };
-
-  const handleCopyCode = async () => {
-    if (campaign) {
-      if (navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(campaign.invitationCode);
-          alert("招待コードがコピーされました！");
-        } catch (error) {
-          alert(
-            `コピーに失敗しました。\n招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
-          );
-        }
-      } else {
-        alert(
-          `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
-        );
-      }
-    }
-  };
+  }, [centerCoordinate]);
 
   return (
     <>
-      {campaign && (
-        <div
-          className="fixed z-50 w-full md:max-w-screen-md py-4 md:px-8 md:py-6 shadow-lg
-            flex flex-col md:flex-row items-center justify-between gap-3 md:gap-8 bg-gradient-to-br from-sky-700 from-50% to-cyan-400"
-        >
-          <p className="text-white font-bold">友達を招待して1000円OFF</p>
-          <div className="flex items-center justify-center">
-            <Button
-              size="sm"
-              className="flex items-center"
-              onClick={() => {
-                try {
-                  void handleCopyCode();
-                } catch (error) {
-                  console.error(error);
-                }
-              }}
-            >
-              <CopyIcon className="me-1" />
-              招待コードをコピー
-            </Button>
-            <button
-              onClick={handleCloseBanner}
-              aria-label="閉じる"
-              className="grid content-center size-10 ms-2 rounded-full text-white text-2xl hover:bg-cyan-600 transition"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
+      <CampaignBanner />
       <Map
         from={currentLocation}
         to={destLocation}

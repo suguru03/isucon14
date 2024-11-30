@@ -15,6 +15,7 @@ import {
   fetchChairGetNotification,
 } from "~/apiClient/apiComponents";
 import type { ClientChairRide, SimulatorChair } from "~/types";
+import { getSimulatorCoordinate } from "~/utils/storage";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;
@@ -192,22 +193,10 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
 
   const request = useClientChairNotification(simulateChairData?.id);
 
-  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>({
-    longitude: 0,
-    latitude: 0,
+  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
+    const coordinate = getSimulatorCoordinate();
+    return coordinate ?? { latitude: 0, longitude: 0 };
   });
-  useEffect(() => {
-    try {
-      const getItem = sessionStorage.getItem("simulatorCoordinate");
-      if (getItem === null) {
-        return;
-      }
-      const coordinate = JSON.parse(getItem) as Coordinate;
-      setCurrentCoordinate(coordinate);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
 
   return (
     <ClientSimulatorContext.Provider

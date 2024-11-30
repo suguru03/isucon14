@@ -5,6 +5,7 @@ import {
 } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import type { SimulatorChair } from "~/types";
+import { setSimulatorCoordinate } from "~/utils/storage";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -32,6 +33,16 @@ const move = (
   }
 };
 
+const currentCoodinatePost = (coordinate: Coordinate) => {
+  if (coordinate) {
+    setSimulatorCoordinate(coordinate);
+    fetchChairPostCoordinate({
+      body: coordinate,
+    }).catch((e) => {
+      console.error(`CONSOLE ERROR: ${e}`);
+    });
+  }
+};
 const postEnroute = (chair: SimulatorChair) => {
   if (chair.chairNotification?.payload?.ride_id) {
     fetchChairPostRideStatus({
@@ -53,24 +64,6 @@ const postCarring = (chair: SimulatorChair) => {
     }).catch((e) => console.error(e));
   }
 };
-
-const currentCoodinatePost = (coordinate: Coordinate) => {
-  if (coordinate) {
-    sessionStorage.setItem(
-      "simulatorCoordinate",
-      JSON.stringify({
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-      } satisfies Coordinate),
-    );
-    fetchChairPostCoordinate({
-      body: coordinate,
-    }).catch((e) => {
-      console.error(`CONSOLE ERROR: ${e}`);
-    });
-  }
-};
-
 export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (

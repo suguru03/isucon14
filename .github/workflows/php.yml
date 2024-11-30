@@ -7,11 +7,15 @@ on:
       - bench/**/*
       - webapp/php/**/*
       - .github/workflows/php.yml
+      - development/compose-php.ci.yml
+      - development/dockerfiles/Dockerfile.ci.php
   pull_request:
     paths:
       - bench/**/*
       - webapp/php/**/*
       - .github/workflows/php.yml
+      - development/compose-php.ci.yml
+      - development/dockerfiles/Dockerfile.ci.php
 jobs:
   build:
     name: Build

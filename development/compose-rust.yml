@@ -2,6 +2,7 @@ services:
   webapp:
     build:
       context: ../webapp/rust
+      dockerfile: ../../development/dockerfiles/Dockerfile.rust
     image: webapp-rust
     ports:
       - 8080:8080

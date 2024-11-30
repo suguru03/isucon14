@@ -13,6 +13,7 @@ import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
 import { isClientApiError } from "~/types";
+import { saveCampaignData } from "~/utils/storage";
 
 export const meta: MetaFunction = () => {
   return [
@@ -63,14 +64,11 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       },
     });
 
-    localStorage.setItem(
-      "campaign",
-      JSON.stringify({
-        invitationCode: res.invitation_code,
-        registedAt: new Date(),
-        used: false,
-      }),
-    );
+    saveCampaignData({
+      invitationCode: res.invitation_code,
+      registedAt: new Date().toISOString(),
+      used: false,
+    });
 
     return redirect(`/client/register-payment`);
   } catch (e) {

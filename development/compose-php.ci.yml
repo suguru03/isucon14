@@ -14,7 +14,7 @@ services:
     mem_limit: 4g
     build:
       context: ../webapp/php
-      dockerfile: ../../development/dockerfiles/Dockerfile.php
+      dockerfile: ../../development/dockerfiles/Dockerfile.ci.php
     init: true
     container_name: webapp
     working_dir: /home/isucon/webapp/php
