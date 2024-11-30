@@ -164,6 +164,7 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 	}
 
 	if err := s.initializeData(ctx, client); err != nil {
+		s.contestantLogger.Error("initializeに失敗しました", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -257,7 +258,7 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				s.contestantLogger.Info("仮想世界の時間が60分経過しました", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
+				slog.Debug("仮想世界の時間が60分経過", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
 			}
 		}
 	}
