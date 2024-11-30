@@ -29,7 +29,7 @@ use Type::Params qw(compile);
 use Syntax::Keyword::Match;
 
 use Scalar::Util qw(refaddr);
-use Hash::Util qw(lock_hashref);
+use Hash::Util qw(lock_ref_keys);
 use Crypt::URandom ();
 
 sub secure_random_str ($byte_length) {
@@ -159,7 +159,7 @@ sub _check_params ($params, $cpanel_type) {
 
         # 開発環境では、存在しないキーにアクセスした時にエラーになるようにしておく
         if (ASSERT && $flag) {
-            lock_hashref($params);
+            lock_ref_keys($params, keys $cpanel_type->%*);
         }
 
         return 1;
