@@ -12,7 +12,7 @@ requires 'HTTP::Parser::XS';
 requires 'Syntax::Keyword::Match';
 
 # DB
-requires 'DBD::mysql', '5.009';
+requires 'DBD::mysql', '5.010';
 requires 'DBIx::Sunny', '0.9993';
 
 requires 'HTTP::Parser::XS', '0.17';
