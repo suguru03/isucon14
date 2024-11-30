@@ -507,6 +507,10 @@ use constant AppGetNotificationResponseData => {
     update_at              => JSON_TYPE_INT,
 };
 
+use constant AppGetNotificationResponse => {
+    data => json_type_null_or_anyof(AppGetNotificationResponseData),
+};
+
 sub app_get_notification ($app, $c) {
     my $user = $c->stash->{user};
 
@@ -566,9 +570,10 @@ sub app_get_notification ($app, $c) {
 
         $txn->commit;
 
-        return $c->render_json($response, AppGetNotificationResponseData);
+        return $c->render_json($response, AppGetNotificationResponse);
 
     } catch ($e) {
+        warn $e;
         $txn->rollback;
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
