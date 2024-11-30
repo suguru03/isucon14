@@ -244,8 +244,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 	u.InvitingLock.Lock()
 	defer u.InvitingLock.Unlock()
 
-	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)
-	dest := RandomCoordinateAwayFromHereWithRand(pickup, u.Rand.IntN(100)+5, u.Rand)
+	pickup, dest := RandomTwoCoordinateWithRand(u.Region, u.Rand.IntN(100)+5, u.Rand)
 
 	req := &Request{
 		User:             u,

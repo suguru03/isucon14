@@ -145,6 +145,27 @@ func RandomCoordinateAwayFromHereWithRand(here Coordinate, distance int, rand *r
 	return C(here.X+x, here.Y+y)
 }
 
+func RandomTwoCoordinateWithRand(region *Region, distance int, rand *rand.Rand) (Coordinate, Coordinate) {
+	c1 := RandomCoordinateOnRegionWithRand(region, rand)
+
+	shiftX := rand.IntN(distance + 1)
+	shiftY := distance - shiftX
+
+	if rand.IntN(2) == 0 {
+		shiftX = -shiftX
+	}
+	if rand.IntN(2) == 0 {
+		shiftY = -shiftY
+	}
+
+	c2 := C(c1.X+shiftX, c1.Y+shiftY)
+	if !region.Contains(c2) {
+		return RandomTwoCoordinateWithRand(region, distance, rand) // Retry
+	}
+
+	return c1, c2
+}
+
 func CalculateRandomDetourPoint(start, dest Coordinate, speed int, rand *rand.Rand) Coordinate {
 	halfT := start.DistanceTo(dest) / speed / 2
 	move := halfT * speed
