@@ -7,11 +7,15 @@ on:
       - bench/**/*
       - webapp/perl/**/*
       - .github/workflows/perl.yml
+      - development/compose-perl.yml
+      - development/dockerfiles/Dockerfile.perl
   pull_request:
     paths:
       - bench/**/*
       - webapp/perl/**/*
       - .github/workflows/perl.yml
+      - development/compose-perl.yml
+      - development/dockerfiles/Dockerfile.perl
 jobs:
   build:
     name: Build

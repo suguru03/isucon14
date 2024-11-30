@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get clean \
     && apt-get update \
-    && apt-get install -y locales locales-all default-mysql-client \
+    && apt-get install -y locales locales-all default-mysql-client git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -21,6 +21,7 @@ COPY --chown=isucon:isucon ./ /home/isucon/webapp/php/
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN /usr/bin/composer install --no-dev --no-interaction --no-progress --no-suggest
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 ENV LANG en_US.UTF-8
