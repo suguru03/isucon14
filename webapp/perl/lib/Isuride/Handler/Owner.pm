@@ -159,9 +159,7 @@ sub owner_get_sales ($app, $c) {
     }
 
     $response_data->{models} = $models;
-    my $res = $c->render_json($response_data, OwnerGetSalesResponse);
-    $res->status(HTTP_CREATED);
-    return $res;
+    return $c->render_json($response_data, OwnerGetSalesResponse);
 }
 
 sub sum_sales ($rides) {
