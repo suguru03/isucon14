@@ -10,6 +10,6 @@ my $root_dir = File::Basename::dirname(__FILE__);
 my $app = Isuride::Web->psgi($root_dir);
 
 builder {
-
+    enable 'ReverseProxy';
     $app;
 };
