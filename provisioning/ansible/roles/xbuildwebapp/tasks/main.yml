@@ -56,7 +56,8 @@
   become: true
   become_user: isucon
   shell:
-    cmd: MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.3.6 /home/isucon/local/ruby
+    # Add rustc path to enable YJIT
+    cmd: PATH=/home/isucon/.cargo/bin:$PATH MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.3.6 /home/isucon/local/ruby
 
 - name: Install PHP
   become: true
