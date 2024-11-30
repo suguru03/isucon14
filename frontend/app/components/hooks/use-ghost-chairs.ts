@@ -17,7 +17,7 @@ const emulateChairs = [...Array(100).keys()].map((i) => {
 }) satisfies NearByChair[];
 
 export const useGhostChairs = (): NearByChair[] => {
-  const [enabled, setEnabled] = useState<boolean>(true);
+  const [enabled, setEnabled] = useState<boolean>(false);
   const [chairs, setChairs] = useState<NearByChair[]>(emulateChairs);
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export const useGhostChairs = (): NearByChair[] => {
       type: "isuride.simulator.config";
       payload?: { ghostChairEnabled?: boolean };
     }>) => {
-      console.log(origin, data);
       const isSameOrigin = origin == location.origin;
       if (isSameOrigin && data.type === "isuride.simulator.config") {
         setEnabled(data?.payload?.ghostChairEnabled ?? false);

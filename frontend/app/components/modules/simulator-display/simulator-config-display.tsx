@@ -14,11 +14,16 @@ export const SimulatorConfigDisplay: FC<{
   });
 
   useEffect(() => {
-    console.log(config);
-    simulatorRef.current?.contentWindow?.postMessage(
-      { type: "isuride.simulator.config", payload: config },
-      "*",
-    );
+    const sendMessage = () => {
+      simulatorRef.current?.contentWindow?.postMessage(
+        { type: "isuride.simulator.config", payload: config },
+        "*",
+      );
+    };
+    const timer = setTimeout(sendMessage, 500);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [config, simulatorRef]);
 
   return (
