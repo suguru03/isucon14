@@ -80,9 +80,13 @@ export default function Index() {
                     )}
                   >
                     <Icon />
-                    <p>
-                      <Text bold>{title}</Text>
-                      <Text size="xs">{description}</Text>
+                    <p className="space-y-1 flex flex-col">
+                      <Text tagName="span" bold>
+                        {title}
+                      </Text>
+                      <Text tagName="span" size="xs">
+                        {description}
+                      </Text>
                     </p>
                   </Link>
                 </li>
