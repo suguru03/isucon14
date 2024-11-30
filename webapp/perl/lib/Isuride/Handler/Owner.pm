@@ -117,7 +117,7 @@ sub owner_get_sales ($app, $c) {
         $until_tm = Time::Moment->from_epoch($parsed);
     }
 
-    my $owner  = $app->stash->{owner};
+    my $owner  = $c->stash->{owner};
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
     my $res = {
@@ -199,7 +199,7 @@ use constant OwnerGetChairResponse => {
 };
 
 sub owner_get_chairs ($app, $c) {
-    my $owner  = $app->stash->{owner};
+    my $owner  = $c->stash->{owner};
     my $chairs = $app->dbh->select_all(q{
 SELECT id,
        owner_id,

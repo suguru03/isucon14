@@ -132,7 +132,7 @@ sub app_post_payment_methods ($app, $c) {
     my $user = $c->stash->{user};
 
     $app->dbh->query(
-        q{INSERT INTO payment_methods (user_id, token) VALUES (?, ?)},
+        q{INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)},
         $user->{id}, $params->{token}
     );
 
@@ -621,9 +621,9 @@ use constant AppGetNearbyChairsResponse => {
 };
 
 sub app_get_nearby_chairs ($app, $c) {
-    my $lat      = $c->query_parameters->{latitude};
-    my $lon      = $c->query_parameters->{longitude};
-    my $distance = $c->query_parameters->{distance};
+    my $lat      = $c->req->query_parameters->{latitude};
+    my $lon      = $c->req->query_parameters->{longitude};
+    my $distance = $c->req->query_parameters->{distance};
 
     if ($lat eq '' || $lon eq '') {
         return $c->halt_json(HTTP_BAD_REQUEST, 'latitude or longitude is empty');
