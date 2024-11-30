@@ -487,16 +487,16 @@ sub app_post_ride_evaluation ($app, $c) {
     }
 }
 
-use constant AppGetNotificationResponseChairStatus => {
+use constant AppGetNotificationResponseChairStats => {
     total_rides_count    => JSON_TYPE_INT,
     total_evaluation_avg => JSON_TYPE_FLOAT,
 };
 
 use constant AppGetNotificationResponseChair => {
-    id     => JSON_TYPE_STRING,
-    name   => JSON_TYPE_STRING,
-    model  => JSON_TYPE_STRING,
-    status => AppGetNotificationResponseChairStatus,
+    id    => JSON_TYPE_STRING,
+    name  => JSON_TYPE_STRING,
+    model => JSON_TYPE_STRING,
+    stats => AppGetNotificationResponseChairStats,
 };
 
 use constant AppGetNotificationResponseData => {
@@ -560,10 +560,10 @@ sub app_get_notification ($app, $c) {
             my $stats = get_chair_stats($app, $chair->{id});
 
             $response->{data}->{chair} = {
-                id     => $chair->{id},
-                name   => $chair->{name},
-                model  => $chair->{model},
-                status => $stats,
+                id    => $chair->{id},
+                name  => $chair->{name},
+                model => $chair->{model},
+                stats => $stats,
             };
         }
 
