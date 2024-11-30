@@ -37,6 +37,7 @@ sub internal_get_matching($app, $c) {
     try {
         $app->dbh->query('UPDATE rides SET chair_id = ? WHERE id = ?', $matched->{id}, $ride->{id});
     } catch ($e) {
+        return $e if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to update ride');
     }
 

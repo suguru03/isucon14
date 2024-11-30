@@ -118,6 +118,7 @@ sub app_post_users ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -340,6 +341,7 @@ sub app_post_rides ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
@@ -480,6 +482,7 @@ sub app_post_ride_evaluation ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -519,7 +522,7 @@ sub app_get_notification ($app, $c) {
         my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
         unless (defined $ride) {
-            return $c->render_json({});
+            return $c->render_json({ data => undef });
         }
 
         my $yet_sent_ride_status = $app->dbh->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});
@@ -575,6 +578,7 @@ sub app_get_notification ($app, $c) {
     } catch ($e) {
         warn $e;
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -689,6 +693,7 @@ sub app_get_nearby_chairs ($app, $c) {
         }, AppGetNearbyChairsResponse);
     } catch ($e) {
         warn $e;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 

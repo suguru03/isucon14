@@ -101,6 +101,7 @@ sub chair_post_activity ($app, $c) {
             $params->{is_active}, $chair->{id}
         );
     } catch ($e) {
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
@@ -158,6 +159,7 @@ sub chair_post_coordinate ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -187,7 +189,7 @@ sub chair_get_notification ($app, $c) {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
         unless ($ride) {
-            return $c->render_json({}, ChairGetNotificationResponse);
+            return $c->render_json({ data => undef });
         }
 
         my $status;
@@ -231,6 +233,7 @@ sub chair_get_notification ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -284,6 +287,7 @@ sub chair_post_ride_status ($app, $c) {
 
     } catch ($e) {
         $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
