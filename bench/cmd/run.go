@@ -85,10 +85,10 @@ var runCmd = &cobra.Command{
 			contestantLogger.Info("負荷走行を開始します")
 			result := b.Start(context.Background())
 			errors = result.Errors.All()
-			contestantLogger.Info("負荷走行が終了しました",
-				slog.Int64("score", s.Score(true)),
-				slog.Any("errors", errors),
-			)
+			contestantLogger.Info("負荷走行が終了しました", slog.Int64("score", s.Score(true)))
+			if len(errors) > 0 {
+				slog.Error("発生したエラー", slog.Any("errors", errors))
+			}
 		}
 
 		if failOnError && len(errors) > 0 {
