@@ -35,6 +35,7 @@ import (
 //   - シナリオの結果検証処理を行う
 //   - 料金の整合性をみたいかも
 type Scenario struct {
+	language         string
 	target           string
 	addr             string
 	paymentURL       string
@@ -176,10 +177,13 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 }
 
 func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) error {
-	_, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
+	resp, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
 	if err != nil {
 		return err
 	}
+
+	// 言語情報を追加
+	s.language = resp.Language
 
 	const (
 		initialOwnersNum         = 5
@@ -310,6 +314,9 @@ func sendResult(s *Scenario, finished bool, passed bool) error {
 		// Reason以外はsupervisorが設定する
 		Execution: &resources.BenchmarkResult_Execution{
 			Reason: "実行終了",
+		},
+		SurveyResponse: &resources.SurveyResponse{
+			Language: s.language,
 		},
 	}); err != nil {
 		return err
