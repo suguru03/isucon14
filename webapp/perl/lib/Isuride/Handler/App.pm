@@ -148,7 +148,7 @@ sub app_post_payment_methods ($app, $c) {
 use constant AppGetRidesResponseItemChair => {
     id    => JSON_TYPE_STRING,
     owner => JSON_TYPE_STRING,
-    model => JSON_TYPE_STRING,
+    name  => JSON_TYPE_STRING,
     model => JSON_TYPE_STRING,
 };
 
