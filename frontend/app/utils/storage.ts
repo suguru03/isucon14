@@ -58,9 +58,9 @@ export const getUserId = (): string | null => {
 };
 
 export const setUserAccessToken = (id: string) => {
-  return setStorage("user.accessToekn", id, sessionStorage);
+  return setStorage("user.accessToken", id, sessionStorage);
 };
 
 export const getUserAccessToken = (): string | null => {
-  return getStorage("user.accessToekn", sessionStorage);
+  return getStorage("user.accessToken", sessionStorage);
 };
