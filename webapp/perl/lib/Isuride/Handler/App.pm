@@ -482,7 +482,7 @@ sub app_post_ride_evaluation ($app, $c) {
 
         $txn->commit;
 
-        return $app->render_json({
+        return $c->render_json({
                 completed_at => unix_milli_from_str($ride->{updated_at}),
         }, AppPostRideEvaluationResponse);
 
@@ -666,13 +666,14 @@ sub app_get_nearby_chairs ($app, $c) {
             my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
 
             if (defined $ride) {
-                # 過去にライドが存在し、かつ、それが完了していない場合はスキップj0j
+                # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
                 my $status = get_latest_ride_status($app, $ride->{id});
 
                 if ($status ne 'COMPLETED') {
                     next;
                 }
             }
+            # 最新の位置情報を取得
             my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
 
             unless (defined $chair_location) {
