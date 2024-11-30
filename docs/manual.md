@@ -248,7 +248,7 @@ $ sudo systemctl enable isuride-{各言語}.service
 以下のコマンドでstartとenableを両方行うことができます。
 
 ```sh
-$ sudo systemctl enable --now isupipe-{各言語}.service
+$ sudo systemctl enable --now isuride-{各言語}.service
 ```
 
 #### PHPへの切り替え
@@ -290,6 +290,7 @@ $ ~/webapp/sql/init.sh
 - `webapp/sql/0-init.sql`: データベースおよびユーザーの作成
 - `webapp/sql/1-schema.sql`: 各種テーブルの作成
 - `webapp/sql/2-master-data.sql`: マスターデータの作成
+- `webapp/sql/3-initial-data.sql.gz`: 初期データ
 
 `isuride`データベースを初期化するにはデータベースを`DROP DATABASE isuride`および`CREATE DATABASE isuride` で再作成し、以下のコマンドでテーブルの作成を行ったのち、データの初期化を行なってください。
 
@@ -342,13 +343,19 @@ $ cat webapp/sql/1-schema.sql | sudo mysql isuride
 
 スコアの合計額がサーバーとベンチマーカーとで差分がある場合、ベンチマーカーで計測している値をスコアとします。
 
-## 特別賞
+### 特別賞
 <!-- TODO: 後で決める -->
 競技中のスコアが、最初にXXX点に到達した1チームを特別賞とします。
 
-### 企業賞・言語賞
+### 言語賞
+`POST /api/initialize` レスポンスで出力された言語情報を元に、Go・PHP・Python・Rubyで参加したチームのうち最も高いスコアを出したチームに言語賞を授与します。
 
-<!-- TODO: 書く -->
+`POST /api/initialize`のレスポンスには正確に実装に利用した言語を出力してください。
+
+言語賞該当チームには確認のために、ソースコードの提出を求める可能性があります。
+
+### 企業賞
+各企業賞の受賞条件は、競技終了後に主催者が発表します。
 
 ### 最終スコア
 <!-- TODO: 決める -->
@@ -370,7 +377,7 @@ $ cat webapp/sql/1-schema.sql | sudo mysql isuride
 
 ##### POST /api/initialize での実装言語の出力
 
-`POST /api/initialize`レスポンスにて、本競技で利用した言語を出力してください。参考実装はそのようになっています。この情報は集計しISUCON公式Blogでの公表や、参考情報として利用させていただきます。
+`POST /api/initialize`レスポンスにて、本競技で利用した言語を出力してください。参考実装はそのようになっています。この情報は集計しISUCON公式Blogでの公表や、言語賞の判定として利用します。
 
 `POST /api/initialize`のレスポンスは以下のようなJSONとなります。
 
