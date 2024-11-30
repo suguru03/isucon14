@@ -34,7 +34,6 @@ from .utils import (
     INITIAL_FARE,
     calculate_distance,
     calculate_fare,
-    calculate_sale,
     secure_random_str,
     timestamp_millis,
 )
@@ -203,14 +202,22 @@ def app_get_rides(
         ).fetchall()
         rides = [Ride.model_validate(row) for row in rows]
 
-    items = []
-    for ride in rides:
-        with engine.begin() as conn:
+        items = []
+        for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
-        if status != "COMPLETED":
-            continue
+            if status != "COMPLETED":
+                continue
 
-        with engine.begin() as conn:
+            fare = calculate_discounted_fare(
+                conn,
+                user.id,
+                ride,
+                ride.pickup_latitude,
+                ride.pickup_longitude,
+                ride.destination_latitude,
+                ride.destination_longitude,
+            )
+
             row = conn.execute(
                 text("SELECT * FROM chairs WHERE id = :id"), {"id": ride.chair_id}
             ).fetchone()
@@ -218,7 +225,6 @@ def app_get_rides(
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             chair = Chair.model_validate(row)
 
-        with engine.begin() as conn:
             row = conn.execute(
                 text("SELECT * FROM owners WHERE id = :id"), {"id": chair.owner_id}
             ).fetchone()
@@ -226,25 +232,25 @@ def app_get_rides(
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             owner = Owner.model_validate(row)
 
-        # TODO: 参照実装みたいにpartialに作るべき？
-        item = GetAppRidesResponseItem(
-            id=ride.id,
-            pickup_coordinate=Coordinate(
-                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-            ),
-            destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude,
-                longitude=ride.destination_longitude,
-            ),
-            chair=GetAppRidesResponseItemChair(
-                id=chair.id, owner=owner.name, name=chair.name, model=chair.model
-            ),
-            fare=calculate_sale(ride),
-            evaluation=ride.evaluation,  # type: ignore[arg-type]
-            requested_at=timestamp_millis(ride.created_at),
-            completed_at=timestamp_millis(ride.updated_at),
-        )
-        items.append(item)
+            # TODO: 参照実装みたいにpartialに作るべき？
+            item = GetAppRidesResponseItem(
+                id=ride.id,
+                pickup_coordinate=Coordinate(
+                    latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+                ),
+                destination_coordinate=Coordinate(
+                    latitude=ride.destination_latitude,
+                    longitude=ride.destination_longitude,
+                ),
+                chair=GetAppRidesResponseItemChair(
+                    id=chair.id, owner=owner.name, name=chair.name, model=chair.model
+                ),
+                fare=fare,
+                evaluation=ride.evaluation,  # type: ignore[arg-type]
+                requested_at=timestamp_millis(ride.created_at),
+                completed_at=timestamp_millis(ride.updated_at),
+            )
+            items.append(item)
 
     return GetAppRidesResponse(rides=items)
 
