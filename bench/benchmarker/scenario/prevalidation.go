@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -22,6 +23,7 @@ func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) err
 	}
 
 	if err := validateInitialData(ctx, clientConfig); err != nil {
+		s.contestantLogger.Error("初期データのチェックに失敗しました", slog.String("error", err.Error()))
 		return err
 	}
 
