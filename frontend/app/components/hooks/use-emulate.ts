@@ -33,6 +33,37 @@ const move = (
   }
 };
 
+const currentCoodinatePost = (coordinate: Coordinate) => {
+  if (coordinate) {
+    setSimulatorCoordinate(coordinate);
+    fetchChairPostCoordinate({
+      body: coordinate,
+    }).catch((e) => {
+      console.error(`CONSOLE ERROR: ${e}`);
+    });
+  }
+};
+const postEnroute = (chair: SimulatorChair) => {
+  if (chair.chairNotification?.payload?.ride_id) {
+    fetchChairPostRideStatus({
+      body: { status: "ENROUTE" },
+      pathParams: {
+        rideId: chair.chairNotification?.payload?.ride_id,
+      },
+    }).catch((e) => console.error(e));
+  }
+};
+
+const postCarring = (chair: SimulatorChair) => {
+  if (chair.chairNotification?.payload?.ride_id) {
+    fetchChairPostRideStatus({
+      body: { status: "CARRYING" },
+      pathParams: {
+        rideId: chair.chairNotification?.payload?.ride_id,
+      },
+    }).catch((e) => console.error(e));
+  }
+};
 export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (
@@ -48,47 +79,16 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     const { pickup, destination } =
       targetChair.chairNotification.payload.coordinate;
     const status = targetChair.chairNotification.status;
-    const currentCoodinatePost = () => {
-      if (coordinate) {
-        setSimulatorCoordinate(coordinate);
-        fetchChairPostCoordinate({
-          body: coordinate,
-        }).catch((e) => {
-          console.error(`CONSOLE ERROR: ${e}`);
-        });
-      }
-    };
-    const postEnroute = () => {
-      if (targetChair.chairNotification?.payload?.ride_id) {
-        fetchChairPostRideStatus({
-          body: { status: "ENROUTE" },
-          pathParams: {
-            rideId: targetChair.chairNotification?.payload?.ride_id,
-          },
-        }).catch((e) => console.error(e));
-      }
-    };
-
-    const postCarring = () => {
-      if (targetChair.chairNotification?.payload?.ride_id) {
-        fetchChairPostRideStatus({
-          body: { status: "CARRYING" },
-          pathParams: {
-            rideId: targetChair.chairNotification?.payload?.ride_id,
-          },
-        }).catch((e) => console.error(e));
-      }
-    };
 
     const timeoutId = setTimeout(() => {
-      currentCoodinatePost();
+      currentCoodinatePost(coordinate);
       try {
         switch (status) {
           case "MATCHING":
-            postEnroute();
+            postEnroute(targetChair);
             break;
           case "PICKUP":
-            postCarring();
+            postCarring(targetChair);
             break;
           case "ENROUTE":
             if (pickup) {
