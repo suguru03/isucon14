@@ -167,6 +167,7 @@ sub _check_params ($params, $cpanel_type) {
     catch ($e) {
         warn("Failed to check params: ", $type->get_message($params));
         warn("Checked params: ",         $params);
+        warn("call point: ",             $call_point);
 
         return 0;
     }

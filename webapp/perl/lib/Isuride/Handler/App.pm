@@ -172,7 +172,7 @@ sub app_get_rides ($app, $c) {
     my $items = [];
 
     for my $ride ($rides->@*) {
-        my $status = get_latest_ride_status($c, $ride->{id});
+        my $status = get_latest_ride_status($app, $ride->{id});
 
         unless ($status) {
             return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'sql: no rows in result set');
@@ -357,9 +357,9 @@ sub app_post_rides_estimated_fare ($app, $c) {
     my $params = $c->req->json_parameters;
     my $fare;
 
-    unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
-        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
-    }
+    # unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
+    #     return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    # }
 
     if (!defined $params->{pickup_coordinate} || !defined $params->{destination_coordinate}) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(pickup_coordinate, destination_coordinate) are empty');
@@ -370,7 +370,6 @@ sub app_post_rides_estimated_fare ($app, $c) {
     try {
         my $txn = $app->dbh->txn_scope;
         $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
-
         $txn->commit;
     } catch ($e) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
@@ -696,7 +695,9 @@ sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_
         #  すでにクーポンが紐づいているならそれの割引額を参照
         $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE used_by = ?}, $ride->{id});
 
-        $discount = $coupon->{discount};
+        if (defined $coupon) {
+            $discount = $coupon->{discount};
+        }
 
     } else {
         # 初回利用クーポンを最優先で使う
@@ -707,7 +708,9 @@ sub calculate_discounted_fare ($app, $user_id, $ride, $pickup_latitude, $pickup_
             $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1}, $user_id);
         }
 
-        $discount = $coupon->{discount};
+        if (defined $coupon) {
+            $discount = $coupon->{discount};
+        }
     }
 
     my $metered_fare            = FarePerDistance * calculate_distance($pickup_latitude, $pickup_longitude, $dest_latitude, $dest_longitude);
