@@ -29,7 +29,7 @@ use Isuride::Util qw(
 
     check_params
 );
-use Isuride::Payment::GateWay qw(request_payment_gateway_post_payment PaymentGateWayErroredUpstream);
+use Isuride::Payment::Gateway qw(request_payment_gateway_post_payment PaymentGatewayErroredUpstream);
 
 use constant AppPostUsersRequest => {
     username        => JSON_TYPE_STRING,
@@ -480,7 +480,7 @@ sub app_post_ride_evaluation ($app, $c) {
         });
 
         if (defined $error) {
-            if (PaymentGateWayErroredUpstream->check($error)) {
+            if (PaymentGatewayErroredUpstream->check($error)) {
                 return $c->halt_json(HTTP_BAD_GATEWAY, $error->{message});
             }
             return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $error->{message});

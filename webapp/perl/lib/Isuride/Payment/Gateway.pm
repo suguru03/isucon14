@@ -1,4 +1,4 @@
-package Isuride::Payment::GateWay;
+package Isuride::Payment::Gateway;
 use v5.40;
 use utf8;
 
@@ -7,7 +7,7 @@ use Carp qw(croak);
 
 our @EXPORT_OK = qw(
     request_payment_gateway_post_payment
-    PaymentGateWayErroredUpstream
+    PaymentGatewayErroredUpstream
 );
 
 use Isuride::Util qw(check_params);
@@ -20,28 +20,28 @@ use Furl::HTTP;
 use Types::Common -types;
 use Type::Tiny;
 
-use constant PaymentGateWayUnexpectedStatusCodeKind => Str & sub { $_ eq 'unexpected status code' };
+use constant PaymentGatewayUnexpectedStatusCodeKind => Str & sub { $_ eq 'unexpected status code' };
 
 use constant erroredUpstream                   => 'errored upstream';
-use constant PaymentGateWayErroredUpstreamKind => Str & sub { $_ eq erroredUpstream };
+use constant PaymentGatewayErroredUpstreamKind => Str & sub { $_ eq erroredUpstream };
 
-use constant PaymentGateWayErroredUpstream => Dict [ kind => PaymentGateWayErroredUpstreamKind, message => Str ];
+use constant PaymentGatewayErroredUpstream => Dict [ kind => PaymentGatewayErroredUpstreamKind, message => Str ];
 
-use constant PaymentGateWayPostPaymentRequest => {
+use constant PaymentGatewayPostPaymentRequest => {
     amount => JSON_TYPE_INT,
 };
 
-use constant PaymentGateWayPostPaymentResponseOne => {
+use constant PaymentGatewayPostPaymentResponseOne => {
     amount => JSON_TYPE_INT,
     status => JSON_TYPE_STRING,
 };
 
 sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, $retrieve_rides_order_by_created_at_asc) {
-    unless (check_params($param, PaymentGateWayPostPaymentRequest)) {
+    unless (check_params($param, PaymentGatewayPostPaymentRequest)) {
         return { status => 'failed to decode the request body as json' };
     }
 
-    my $param_json = encode_json($param, PaymentGateWayPostPaymentRequest);
+    my $param_json = encode_json($param, PaymentGatewayPostPaymentRequest);
 
     # 失敗したらとりあえずリトライ
     # FIXME: 社内決済マイクロサービスのインフラに異常が発生していて、同時にたくさんリクエストすると変なことになる可能性あり
@@ -82,7 +82,7 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
 
                 my $payments = decode_json($get_res_body);
 
-                unless (check_params($payments, json_type_arrayof(PaymentGateWayPostPaymentResponseOne))) {
+                unless (check_params($payments, json_type_arrayof(PaymentGatewayPostPaymentResponseOne))) {
                     die { message => 'failed to decode the request body as json' };
                 }
 
