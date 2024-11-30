@@ -1,7 +1,7 @@
 import { Coordinate } from "~/types";
 
 type Image = {
-  src: `/public/${string}`;
+  src: `/${string}`;
   width: number;
   height: number;
 };
@@ -14,14 +14,14 @@ type Town = {
 };
 
 const CityObjectImages = [
-  { src: "/public/buildings1.svg", width: 170, height: 100 },
-  { src: "/public/buildings2.svg", width: 112, height: 64 },
-  { src: "/public/buildings3.svg", width: 112, height: 64 },
-  { src: "/public/buildings4.svg", width: 101, height: 38 },
-  { src: "/public/buildings5.svg", width: 79, height: 32 },
-  { src: "/public/buildings6.svg", width: 125, height: 60 },
-  { src: "/public/house1.svg", width: 81, height: 46 },
-  { src: "/public/house2.svg", width: 71, height: 53 },
+  { src: "/buildings1.svg", width: 170, height: 100 },
+  { src: "/buildings2.svg", width: 112, height: 64 },
+  { src: "/buildings3.svg", width: 112, height: 64 },
+  { src: "/buildings4.svg", width: 101, height: 38 },
+  { src: "/buildings5.svg", width: 79, height: 32 },
+  { src: "/buildings6.svg", width: 125, height: 60 },
+  { src: "/house1.svg", width: 81, height: 46 },
+  { src: "/house2.svg", width: 71, height: 53 },
 ] as const;
 
 // prettier-ignore
@@ -55,11 +55,11 @@ export const TownList = [
   {
     name: "チェアタウン",
     centerCoordinate: { latitude: 0, longitude: 0 },
-    image: { src: "/public/town.svg", width: 500, height: 500 },
+    image: { src: "/town.svg", width: 500, height: 500 },
   },
   {
     name: "コシカケシティ",
     centerCoordinate: { latitude: 300, longitude: 300 },
-    image: { src: "/public/town.svg", width: 500, height: 500 },
+    image: { src: "/town.svg", width: 500, height: 500 },
   },
 ] satisfies Town[];
