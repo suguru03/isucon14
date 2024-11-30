@@ -49,9 +49,9 @@ const Links = [
 export default function Index() {
   return (
     <main>
-      <MainFrame className="top-bg">
+      <MainFrame>
         <img
-          src="/top-bg.png"
+          src="/images/top-bg.png"
           alt=""
           role="presentation"
           className="absolute top-0 left-0 w-full opacity-90"
@@ -59,7 +59,7 @@ export default function Index() {
         <div className="relative z-10">
           <h1 className="mt-[35%] flex justify-center w-full mb-24">
             <img
-              src="/top-logo.svg"
+              src="/images/top-logo.svg"
               alt="ISURIDE"
               role="presentation"
               style={{ aspectRatio: 544 / 140 }}
