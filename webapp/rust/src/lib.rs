@@ -101,15 +101,6 @@ pub fn calculate_fare(
     INITIAL_FARE + metered_fare
 }
 
-pub fn calculate_sale(ride: &crate::models::Ride) -> i32 {
-    calculate_fare(
-        ride.pickup_latitude,
-        ride.pickup_longitude,
-        ride.destination_latitude,
-        ride.destination_longitude,
-    )
-}
-
 pub mod app_handlers;
 pub mod chair_handlers;
 pub mod internal_handlers;

@@ -98,10 +98,6 @@ module Isuride
         metered_fare = FARE_PER_DISTANCE * calculate_distance(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude)
         INITIAL_FARE + metered_fare
       end
-
-      def calculate_sale(ride)
-        calculate_fare(*ride.values_at(:pickup_latitude, :pickup_longitude, :destination_latitude, :destination_longitude))
-      end
     end
   end
 end
