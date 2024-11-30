@@ -16,12 +16,14 @@ services:
       ISUCON_DB_HOST: db
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "http://webapp:8080/no_exist"]
   db:
     image: public.ecr.aws/docker/library/mysql:8
     environment:
       ENV: local-dev
       MYSQL_ROOT_PASSWORD: isucon
-      MYSQL_DATABASE: isuride
+      MYSQL_DATABASE: isucon
     ports:
       - 3306:3306
     volumes:

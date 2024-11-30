@@ -55,6 +55,8 @@ jobs:
         working-directory: ./development
         run: |
           sudo docker compose -f compose-node.yml up -d --wait
+      - name: sleep
+        run: sleep 20
       - name: Run bench
         working-directory: ./bench
         run: |

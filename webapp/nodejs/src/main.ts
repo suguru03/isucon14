@@ -31,21 +31,24 @@ import {
 import type { Environment } from "./types/hono.js";
 import { execSync } from "node:child_process";
 import { internalGetMatching } from "./internal_handlers.js";
-import { createConnection } from "mysql2/promise";
+import { createPool } from "mysql2/promise";
 
-const connection = await createConnection({
+const pool = createPool({
   host: process.env.ISUCON_DB_HOST || "127.0.0.1",
   port: Number(process.env.ISUCON_DB_PORT || "3306"),
   user: process.env.ISUCON_DB_USER || "isucon",
   password: process.env.ISUCON_DB_PASSWORD || "isucon",
   database: process.env.ISUCON_DB_NAME || "isuride",
+  timezone: "+00:00",
 });
 
 const app = new Hono<Environment>();
 app.use(
   createMiddleware<Environment>(async (ctx, next) => {
+    const connection = await pool.getConnection();
     ctx.set("dbConn", connection);
     await next();
+    pool.releaseConnection(connection);
   }),
 );
 

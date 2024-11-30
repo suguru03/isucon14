@@ -32,11 +32,11 @@ export const ownerPostOwners = async (ctx: Context<Environment>) => {
 export const ownerGetSales = async (ctx: Context<Environment>) => {
   const since = new Date(0);
   const until = new Date("9999-12-31T23:59:59Z");
-  if (ctx.req.param("since")) {
-    since.setTime(Number(ctx.req.param("since")));
+  if (ctx.req.query("since")) {
+    since.setTime(Number(ctx.req.query("since")));
   }
-  if (ctx.req.param("until")) {
-    until.setTime(Number(ctx.req.param("until")));
+  if (ctx.req.query("until")) {
+    until.setTime(Number(ctx.req.query("until")));
   }
 
   const owner = ctx.var.owner;
