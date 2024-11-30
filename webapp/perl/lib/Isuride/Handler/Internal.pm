@@ -23,7 +23,7 @@ sub internal_get_matching($app, $c) {
             return $c->halt_no_content(HTTP_NO_CONTENT);
         }
 
-        $empty = $app->dbh->select_row("SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE", $matched->{id});
+        $empty = $app->dbh->select_one("SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE", $matched->{id});
 
         if ($empty) {
             last;
@@ -37,6 +37,7 @@ sub internal_get_matching($app, $c) {
     try {
         $app->dbh->query('UPDATE rides SET chair_id = ? WHERE id = ?', $matched->{id}, $ride->{id});
     } catch ($e) {
+        return $e if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to update ride');
     }
 

@@ -1,6 +1,8 @@
 package Isuride::Handler::Chair;
 use v5.40;
 use utf8;
+use experimental qw(defer);
+no warnings 'experimental::defer';
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -62,7 +64,7 @@ sub chair_post_chairs ($app, $c) {
     try {
         $app->dbh->query(
             "INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-            $chair_id, $owner->{id}, $params->{name}, $params->{model}, false, $access_token
+            $chair_id, $owner->{id}, $params->{name}, $params->{model}, 0, $access_token
         );
     } catch ($e) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
@@ -74,10 +76,13 @@ sub chair_post_chairs ($app, $c) {
         value => $access_token,
     };
 
-    return $c->render_json({
+    my $res = $c->render_json({
             id       => $chair_id,
             owner_id => $owner->{id},
     }, ChairPostChairsResponse);
+
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 use constant PostChairActivityRequest => {
@@ -98,6 +103,7 @@ sub chair_post_activity ($app, $c) {
             $params->{is_active}, $chair->{id}
         );
     } catch ($e) {
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
@@ -123,6 +129,7 @@ sub chair_post_coordinate ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     my $chair_location_id = ulid();
 
@@ -138,7 +145,7 @@ sub chair_post_coordinate ($app, $c) {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ?  ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
         if (defined $ride) {
-            my $status = get_latest_ride_status($app, $ride);
+            my $status = get_latest_ride_status($app, $ride->{id});
 
             if ($status ne 'COMPLETED' && $status ne 'CANCELED') {
                 if ($params->{latitude} == $ride->{pickup_latitude} && $params->{longitude} == $ride->{pickup_longitude} && $status eq 'ENROUTE') {
@@ -154,7 +161,7 @@ sub chair_post_coordinate ($app, $c) {
         return $c->render_json({ recorded_at => unix_milli_from_str($location->{created_at}) }, ChairPostCoordinateResponse);
 
     } catch ($e) {
-        $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -180,11 +187,13 @@ sub chair_get_notification ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
+
     try {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
         unless ($ride) {
-            return $c->render_json({ data => undef }, ChairGetNotificationResponse);
+            return $c->render_json({ data => undef });
         }
 
         my $status;
@@ -193,10 +202,14 @@ sub chair_get_notification ($app, $c) {
         if (defined $yet_sent_ride_status) {
             $status = $yet_sent_ride_status->{status};
         } else {
-            $status = get_latest_ride_status($app, $ride);
+            $status = get_latest_ride_status($app, $ride->{id});
         }
 
         my $user = $app->dbh->select_row('SELECT * FROM users WHERE id = ? FOR SHARE', $ride->{user_id});
+
+        unless (defined $user) {
+            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch user');
+        }
 
         if (defined $yet_sent_ride_status) {
             $app->dbh->query('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', $yet_sent_ride_status->{id});
@@ -208,7 +221,7 @@ sub chair_get_notification ($app, $c) {
                     ride_id => $ride->{id},
                     user    => {
                         id   => $user->{id},
-                        name => sprintf("%s %s", $user->{first_name}, $user->{last_name})
+                        name => sprintf("%s %s", $user->{firstname}, $user->{lastname})
                     },
                     pickup_coordinate => {
                         latitude  => $ride->{pickup_latitude},
@@ -223,7 +236,7 @@ sub chair_get_notification ($app, $c) {
         }, ChairGetNotificationResponse);
 
     } catch ($e) {
-        $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }
@@ -243,9 +256,10 @@ sub chair_post_ride_status ($app, $c) {
     }
 
     my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
 
     try {
-        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id, $chair->{id});
+        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
 
         unless (defined $ride) {
             return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
@@ -260,7 +274,7 @@ sub chair_post_ride_status ($app, $c) {
                 $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'ENROUTE');
             }
             case ('CARRYING') {
-                my $status = get_latest_ride_status($app, $ride);
+                my $status = get_latest_ride_status($app, $ride->{id});
 
                 if ($status ne 'PICKUP') {
                     return $c->halt_json(HTTP_BAD_REQUEST, 'chair has not arrived yet');
@@ -276,7 +290,7 @@ sub chair_post_ride_status ($app, $c) {
         return $c->halt_no_content(HTTP_NO_CONTENT);
 
     } catch ($e) {
-        $txn->rollback;
+        return $e->response if $e isa 'Kossy::Exception';
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 }

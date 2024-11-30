@@ -1,4 +1,4 @@
-package Isuride::Handler::Owener;
+package Isuride::Handler::Owner;
 use v5.40;
 use utf8;
 use Time::Moment;
@@ -66,13 +66,15 @@ sub owner_post_owners ($app, $c) {
         value => $access_token,
     };
 
-    return $c->render_json(
+    my $res = $c->render_json(
         {
             id                   => $owner_id,
             chair_register_token => $chair_register_token,
         },
         OwnerPostOwnersResponse,
     );
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 use constant ChairSales => {
@@ -101,7 +103,7 @@ sub owner_get_sales ($app, $c) {
         if ($err) {
             return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: since');
         }
-        $since_tm = Time::Moment->from_epoch($parsed);
+        $since_tm = Time::Moment->from_epoch($parsed / 1000);
     }
 
     my $until_tm = Time::Moment->new(year => 9999, month => 12, day => 31, hour => 23, minute => 59, second => 59, nanosecond => 0);
@@ -112,14 +114,15 @@ sub owner_get_sales ($app, $c) {
         if ($err) {
             return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: until');
         }
-        $until_tm = Time::Moment->from_epoch($parsed);
+        $until_tm = Time::Moment->from_epoch($parsed / 1000);
     }
 
-    my $owner  = $app->stash->{owner};
+    my $owner  = $c->stash->{owner};
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
-    my $res = {
+    my $response_data = {
         total_sales => 0,
+        chairs      => [],
     };
 
     my $model_sales_by_model = {};
@@ -127,24 +130,24 @@ sub owner_get_sales ($app, $c) {
     for my $chair ($chairs->@*) {
         my $rides = $app->dbh->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
             $chair->{id},
-            unix_milli_from_time_moment($since_tm),
-            unix_milli_from_time_moment($until_tm),
+            $since_tm,
+            $until_tm,
         );
 
         unless ($rides) {
             return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch rides');
         }
 
-        my $sales = sum_sales($rides);
-        $res->{total_sales} += $sales;
+        my $chair_sales = sum_sales($rides);
+        $response_data->{total_sales} += $chair_sales;
 
-        push $res->{chairs}->@*, {
+        push $response_data->{chairs}->@*, {
             id    => $chair->{id},
             name  => $chair->{name},
-            sales => $sales,
+            sales => $chair_sales,
         };
 
-        $model_sales_by_model->{ $chair->{model} } += $sales;
+        $model_sales_by_model->{ $chair->{model} } += $chair_sales;
     }
 
     my $models = [];
@@ -156,8 +159,8 @@ sub owner_get_sales ($app, $c) {
         };
     }
 
-    $res->{models} = $models;
-    return $c->render_json($res, OwnerGetSalesResponse);
+    $response_data->{models} = $models;
+    return $c->render_json($response_data, OwnerGetSalesResponse);
 }
 
 sub sum_sales ($rides) {
@@ -197,7 +200,7 @@ use constant OwnerGetChairResponse => {
 };
 
 sub owner_get_chairs ($app, $c) {
-    my $owner  = $app->stash->{owner};
+    my $owner  = $c->stash->{owner};
     my $chairs = $app->dbh->select_all(q{
 SELECT id,
        owner_id,

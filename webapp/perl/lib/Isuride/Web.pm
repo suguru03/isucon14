@@ -63,7 +63,7 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
         get '/api/app/rides' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_rides;
         post '/api/app/rides'                     => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides;
         post '/api/app/rides/estimated-fare'      => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_estimated_fare;
-        post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_evaluation;
+        post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_ride_evaluation;
         get '/api/app/notification'  => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_notification;
         get '/api/app/nearby-chairs' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_nearby_chairs;
     }
@@ -75,7 +75,7 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
         post '/api/chair/activity'   => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_activity;
         post '/api/chair/coordinate' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_coordinate;
         get '/api/chair/notification' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_get_notification;
-        post '/api/chair/rides/:ride_id/status' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_rides_status;
+        post '/api/chair/rides/:ride_id/status' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_ride_status;
     }
 
     # owner handlers

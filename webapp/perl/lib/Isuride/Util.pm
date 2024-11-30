@@ -29,7 +29,7 @@ use Type::Params qw(compile);
 use Syntax::Keyword::Match;
 
 use Scalar::Util qw(refaddr);
-use Hash::Util qw(lock_hashref);
+use Hash::Util qw(lock_ref_keys);
 use Crypt::URandom ();
 
 sub secure_random_str ($byte_length) {
@@ -37,8 +37,8 @@ sub secure_random_str ($byte_length) {
     return unpack('H*', $bytes);
 }
 
-sub get_latest_ride_status ($c, $ride_id) {
-    my $status = $c->dbh->select_row(
+sub get_latest_ride_status ($app, $ride_id) {
+    my $status = $app->dbh->select_one(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id
     );
@@ -159,7 +159,7 @@ sub _check_params ($params, $cpanel_type) {
 
         # 開発環境では、存在しないキーにアクセスした時にエラーになるようにしておく
         if (ASSERT && $flag) {
-            lock_hashref($params);
+            lock_ref_keys($params, keys $cpanel_type->%*);
         }
 
         return 1;
@@ -167,6 +167,7 @@ sub _check_params ($params, $cpanel_type) {
     catch ($e) {
         warn("Failed to check params: ", $type->get_message($params));
         warn("Checked params: ",         $params);
+        warn("call point: ",             $call_point);
 
         return 0;
     }
