@@ -683,12 +683,10 @@ sub app_get_nearby_chairs ($app, $c) {
         }
 
         my $retrieved_at = $app->dbh->select_one(q{SELECT CURRENT_TIMESTAMP(6)});
-        my $res          = $c->render_json({
+        return $c->render_json({
                 chairs       => $nearby_chairs,
                 retrieved_at => unix_milli_from_str($retrieved_at),
         }, AppGetNearbyChairsResponse);
-        $res->status(HTTP_OK);
-        return $res;
     } catch ($e) {
         warn $e;
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
