@@ -661,7 +661,7 @@ sub app_get_nearby_chairs ($app, $c) {
                 next;
             }
 
-            if (calculate_distance($coordinate->{latitude}, $coordinate->{latitude}, $chair_location->{latitude}, $chair_location->{longitude}) <= $distance) {
+            if (calculate_distance($coordinate->{latitude}, $coordinate->{longitude}, $chair_location->{latitude}, $chair_location->{longitude}) <= $distance) {
                 push $nearby_chairs->@*, {
                     id                 => $chair->{id},
                     name               => $chair->{name},
