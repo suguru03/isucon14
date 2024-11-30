@@ -2,6 +2,7 @@ services:
   webapp:
     build:
       context: ../webapp/ruby
+      dockerfile: ../../development/dockerfiles/Dockerfile.ruby
     ports:
       - 8080:8080
     volumes:

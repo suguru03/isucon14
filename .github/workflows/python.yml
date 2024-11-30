@@ -7,11 +7,15 @@ on:
       - bench/**/*
       - webapp/python/**/*
       - .github/workflows/python.yml
+      - development/compose-python.yml
+      - development/dockerfiles/Dockerfile.python
   pull_request:
     paths:
       - bench/**/*
       - webapp/python/**/*
       - .github/workflows/python.yml
+      - development/compose-python.yml
+      - development/dockerfiles/Dockerfile.python
 jobs:
   lint:
     name: Lint
