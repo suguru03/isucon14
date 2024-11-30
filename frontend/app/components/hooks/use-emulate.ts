@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
@@ -72,7 +72,6 @@ const currentCoodinatePost = (coordinate: Coordinate) => {
 };
 
 export const useEmulator = (targetChair?: SimulatorChair) => {
-
   useEffect(() => {
     if (
       !(
