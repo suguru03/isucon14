@@ -1,5 +1,9 @@
 FROM perl:5.40.0-bookworm
 
+RUN apt-get update && apt-get install -y libmariadb-dev libmariadb-dev-compat libssl-dev \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
 RUN useradd --uid=1001 --create-home isucon
 USER isucon
 
