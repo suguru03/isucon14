@@ -41,7 +41,7 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
         return { status => 'failed to decode the request body as json' };
     }
 
-    my $param_json = encode_json($param);
+    my $param_json = encode_json($param, PaymentGateWayPostPaymentRequest);
 
     # 失敗したらとりあえずリトライ
     # FIXME: 社内決済マイクロサービスのインフラに異常が発生していて、同時にたくさんリクエストすると変なことになる可能性あり
