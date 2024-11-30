@@ -120,7 +120,7 @@ sub owner_get_sales ($app, $c) {
     my $owner  = $c->stash->{owner};
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
-    my $res = {
+    my $response_data = {
         total_sales => 0,
     };
 
@@ -138,9 +138,9 @@ sub owner_get_sales ($app, $c) {
         }
 
         my $sales = sum_sales($rides);
-        $res->{total_sales} += $sales;
+        $response_data->{total_sales} += $sales;
 
-        push $res->{chairs}->@*, {
+        push $response_data->{chairs}->@*, {
             id    => $chair->{id},
             name  => $chair->{name},
             sales => $sales,
@@ -158,8 +158,10 @@ sub owner_get_sales ($app, $c) {
         };
     }
 
-    $res->{models} = $models;
-    return $c->render_json($res, OwnerGetSalesResponse);
+    $response_data->{models} = $models;
+    my $res = $c->render_json($response_data, OwnerGetSalesResponse);
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 sub sum_sales ($rides) {
