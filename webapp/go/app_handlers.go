@@ -183,8 +183,15 @@ type getAppRidesResponseItemChair struct {
 func appGetRides(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
 
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
 	rides := []Ride{}
-	if err := db.Select(
+	if err := tx.Select(
 		&rides,
 		`SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC`,
 		user.ID,
@@ -195,7 +202,7 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 
 	items := []getAppRidesResponseItem{}
 	for _, ride := range rides {
-		status, err := getLatestRideStatus(db, ride.ID)
+		status, err := getLatestRideStatus(tx, ride.ID)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
@@ -204,11 +211,17 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		fare, err := calculateDiscountedFare(tx, user.ID, &ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
 		item := getAppRidesResponseItem{
 			ID:                    ride.ID,
 			PickupCoordinate:      Coordinate{Latitude: ride.PickupLatitude, Longitude: ride.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: ride.DestinationLatitude, Longitude: ride.DestinationLongitude},
-			Fare:                  calculateSale(ride),
+			Fare:                  fare,
 			Evaluation:            *ride.Evaluation,
 			RequestedAt:           ride.CreatedAt.UnixMilli(),
 			CompletedAt:           ride.UpdatedAt.UnixMilli(),
@@ -217,7 +230,7 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 		item.Chair = getAppRidesResponseItemChair{}
 
 		chair := &Chair{}
-		if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
+		if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -226,13 +239,18 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 		item.Chair.Model = chair.Model
 
 		owner := &Owner{}
-		if err := db.Get(owner, `SELECT * FROM owners WHERE id = ?`, chair.OwnerID); err != nil {
+		if err := tx.Get(owner, `SELECT * FROM owners WHERE id = ?`, chair.OwnerID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 		item.Chair.Owner = owner.Name
 
 		items = append(items, item)
+	}
+
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, &getAppRidesResponse{
