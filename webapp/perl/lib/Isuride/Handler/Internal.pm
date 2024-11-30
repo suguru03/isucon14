@@ -23,7 +23,7 @@ sub internal_get_matching($app, $c) {
             return $c->halt_no_content(HTTP_NO_CONTENT);
         }
 
-        $empty = $app->dbh->select_row("SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE", $matched->{id});
+        $empty = $app->dbh->select_one("SELECT COUNT(*) = 0 FROM (SELECT COUNT(chair_sent_at) = 6 AS completed FROM ride_statuses WHERE ride_id IN (SELECT id FROM rides WHERE chair_id = ?) GROUP BY ride_id) is_completed WHERE completed = FALSE", $matched->{id});
 
         if ($empty) {
             last;

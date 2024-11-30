@@ -242,9 +242,9 @@ sub app_post_rides ($app, $c) {
     my $params = $c->req->json_parameters;
     my $fare;
 
-    unless (check_params($params, AppPostRideRequest)) {
-        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
-    }
+    # unless (check_params($params, AppPostRideRequest)) {
+    #     return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    # }
 
     if (!defined $params->{pickup_coordinate} || !defined $params->{destination_coordinate}) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(pickup_coordinate, destination_coordinate) are empty');
@@ -285,7 +285,7 @@ sub app_post_rides ($app, $c) {
             ulid(), $ride_id, 'MATCHING'
         );
 
-        my $ride_count = $app->dbh->select_row(q{SELECT COUNT(*) AS count FROM rides WHERE user_id = ?}, $user->{id});
+        my $ride_count = $app->dbh->select_one(q{SELECT COUNT(*) AS count FROM rides WHERE user_id = ?}, $user->{id});
 
         my $coupon;
 
