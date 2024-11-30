@@ -7,12 +7,12 @@ import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { ClickableRating } from "~/components/primitives/rating/clickable-rating";
 import { Text } from "~/components/primitives/text/text";
-import { useClientAppRequestContext } from "~/contexts/user-context";
+import { useUserContext } from "~/contexts/user-context";
 
 import confetti from "canvas-confetti";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { auth, payload = {} } = useClientAppRequestContext();
+  const { auth, payload = {} } = useUserContext();
   const [rating, setRating] = useState(0);
   const { fare } = payload;
 

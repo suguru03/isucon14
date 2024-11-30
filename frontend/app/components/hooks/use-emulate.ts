@@ -5,6 +5,7 @@ import {
 } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import type { SimulatorChair } from "~/types";
+import { setSimulatorCoordinate } from "~/utils/storage";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -49,13 +50,7 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     const status = targetChair.chairNotification.status;
     const currentCoodinatePost = () => {
       if (coordinate) {
-        sessionStorage.setItem(
-          "simulatorCoordinate",
-          JSON.stringify({
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude,
-          } satisfies Coordinate),
-        );
+        setSimulatorCoordinate(coordinate);
         fetchChairPostCoordinate({
           body: coordinate,
         }).catch((e) => {
