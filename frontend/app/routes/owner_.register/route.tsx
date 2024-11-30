@@ -10,7 +10,7 @@ import { isClientApiError } from "~/types";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Regiter | ISURIDE" },
+    { title: "Regiter | Owner | ISURIDE" },
     { name: "description", content: "オーナー登録" },
   ];
 };

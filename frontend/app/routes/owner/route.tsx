@@ -1,15 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
 import { Link, Outlet, useMatches } from "@remix-run/react";
 import { twMerge } from "tailwind-merge";
 import { IsurideIcon } from "~/components/icon/isuride";
 import { OwnerProvider } from "~/contexts/owner-context";
-
-export const meta: MetaFunction = () => {
-  return [
-    { title: "オーナー | ISURIDE" },
-    { name: "description", content: "isucon14" },
-  ];
-};
 
 const tabs = [
   { key: "index", label: "椅子", to: "/owner" },

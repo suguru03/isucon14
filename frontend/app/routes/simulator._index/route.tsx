@@ -1,5 +1,13 @@
+import type { MetaFunction } from "@remix-run/react";
 import { Simulator } from "~/components/modules/simulator/simulator";
 import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Simulator | ISURIDE" },
+    { name: "description", content: "isucon14" },
+  ];
+};
 
 export default function Index() {
   return (

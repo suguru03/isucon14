@@ -10,7 +10,7 @@ import { Text } from "~/components/primitives/text/text";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "ISURIDE" },
+    { title: "Top | ISURIDE" },
     {
       name: "description",
       content: "ISURIDEは椅子でユーザーを運ぶ新感覚のサービスです",

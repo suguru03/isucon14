@@ -7,7 +7,7 @@ import { FormFrame } from "~/components/primitives/frame/form-frame";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Regiter | ISURIDE" },
+    { title: "Regiter Payment | ISURIDE" },
     { name: "description", content: "決済トークン登録" },
   ];
 };
