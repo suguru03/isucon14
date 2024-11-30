@@ -43,7 +43,7 @@ const OwnerContext = createContext<Partial<OwnerContextProps>>({});
 const timestamp = (date: string) => Math.floor(new Date(date).getTime());
 
 export const OwnerProvider = ({ children }: { children: ReactNode }) => {
-  // TODO:
+  // TODO: 消す
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const id = searchParams.get("id") ?? undefined;
@@ -51,12 +51,7 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
   const since = searchParams.get("since") ?? undefined;
   const until = searchParams.get("until") ?? undefined;
 
-  useEffect(() => {
-    if (getCookieValue(document.cookie, "owner_session") === undefined) {
-      navigate("/owner/register");
-    }
-  }, [navigate]);
-
+  // TODO: 消す
   const isDummy = useMemo(() => {
     try {
       const isDummy = sessionStorage.getItem("is-dummy-for-provider");
@@ -80,37 +75,36 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
         models: DUMMY_DATA.models,
       });
     } else {
-      const abortController = new AbortController();
       Promise.all([
-        fetchOwnerGetChairs({}, abortController.signal).then((res) =>
-          setChairs(res),
-        ),
+        fetchOwnerGetChairs({}).then((res) => setChairs(res)),
         since && until
-          ? fetchOwnerGetSales(
-              {
-                queryParams: {
-                  since: timestamp(since),
-                  until: timestamp(until),
-                },
+          ? fetchOwnerGetSales({
+              queryParams: {
+                since: timestamp(since),
+                until: timestamp(until),
               },
-              abortController.signal,
-            ).then((res) => setSales(res))
+            }).then((res) => setSales(res))
           : Promise.resolve(),
       ]).catch((e) => {
-        console.error(`ERROR: ${JSON.stringify(e)}`);
+        console.error(e);
         if (isClientApiError(e)) {
           if (e.stack.status === 401) {
             navigate("/owner/register");
           }
         }
       });
-      return () => {
-        abortController.abort();
-      };
     }
   }, [setChairs, setSales, since, until, isDummy, navigate]);
 
-  const responseClientProvider = useMemo<OwnerContextProps>(() => {
+  useEffect(() => {
+    const isRegistered =
+      typeof getCookieValue(document.cookie, "owner_session") !== "undefined";
+    if (!isRegistered) {
+      navigate("/owner/register");
+    }
+  }, [navigate]);
+
+  const props = useMemo<OwnerContextProps>(() => {
     return {
       chairs: chairs?.chairs ?? [],
       sales,
@@ -119,9 +113,7 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
   }, [chairs, sales, id, name]);
 
   return (
-    <OwnerContext.Provider value={responseClientProvider}>
-      {children}
-    </OwnerContext.Provider>
+    <OwnerContext.Provider value={props}>{children}</OwnerContext.Provider>
   );
 };
 

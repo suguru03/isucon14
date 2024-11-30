@@ -93,6 +93,13 @@ export type ClientApiError = {
   };
 };
 
+export type CampaignData = {
+  invitationCode: string;
+  registedAt: string;
+  used: boolean;
+};
+
+// TODO: 後で場所をutilに移動する
 export function isClientApiError(e: unknown): e is ClientApiError {
   if (typeof e === "object" && e !== null) {
     const typedError = e as {
@@ -103,7 +110,6 @@ export function isClientApiError(e: unknown): e is ClientApiError {
         payload?: unknown;
       };
     };
-
     return (
       typeof typedError.name === "string" &&
       typeof typedError.message === "string" &&

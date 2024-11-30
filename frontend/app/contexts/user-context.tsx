@@ -15,11 +15,17 @@ import {
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { isClientApiError, type ClientAppRide } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
+import {
+  getUserAccessToken,
+  getUserId,
+  setUserAccessToken,
+  setUserId,
+} from "~/utils/storage";
 
 /**
  * SSE用の通信をfetchで取得した時用のparse関数
  */
-function getSSEJsonFromFetch<T>(value: string) {
+function jsonFromSSEResponse<T>(value: string) {
   const data = value.slice("data:".length).trim();
   try {
     return JSON.parse(data) as T;
@@ -31,32 +37,29 @@ function getSSEJsonFromFetch<T>(value: string) {
 export const useClientAppRequest = (accessToken: string, id?: string) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   const [notification, setNotification] = useState<
     AppGetNotificationResponse & { contentType: "event-stream" | "json" }
   >();
+
   useEffect(() => {
-    const abortController = new AbortController();
-    try {
-      void (async () => {
-        const notification = await fetch(`${apiBaseURL}/app/notification`, {
-          signal: abortController.signal,
-        });
+    const run = async () => {
+      try {
+        const notification = await fetch(`${apiBaseURL}/app/notification`);
         if (notification.status === 401) {
           navigate("/client/register");
         }
-        if (
-          notification?.headers
-            .get("Content-type")
-            ?.split(";")[0]
-            .includes("text/event-stream")
-        ) {
+
+        const isSSE = notification?.headers
+          .get("Content-type")
+          ?.split(";")[0]
+          .includes("text/event-stream");
+        if (isSSE) {
           const reader = notification.body?.getReader();
           const decoder = new TextDecoder();
           const readed = (await reader?.read())?.value;
           const decoded = decoder.decode(readed);
           const json =
-            getSSEJsonFromFetch<AppGetNotificationResponse["data"]>(decoded);
+            jsonFromSSEResponse<AppGetNotificationResponse["data"]>(decoded);
           setNotification(
             json
               ? {
@@ -78,14 +81,13 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
               : undefined,
           );
         }
-      })();
-    } catch (e) {
-      console.error(`ERROR: ${e as string}`);
-    }
-    return () => {
-      abortController.abort();
+      } catch (error) {
+        console.error(error);
+      }
     };
-  }, [setNotification, navigate]);
+    void run();
+  }, [navigate]);
+
   const clientAppPayloadWithStatus = useMemo(
     () =>
       notification?.data
@@ -138,10 +140,11 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
 
   useEffect(() => {
     if (isSSE) return;
-    let timeoutId: number;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let abortController: AbortController | undefined;
-    const polling = () => {
-      (async () => {
+
+    const polling = async () => {
+      try {
         const abortController = new AbortController();
         const currentNotification = await fetchAppGetNotification(
           {},
@@ -158,15 +161,14 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             return prev;
           }
         });
-        timeoutId = window.setTimeout(polling, retryAfterMs);
-      })().catch((error) => {
+        timeoutId = setTimeout(() => void polling, retryAfterMs);
+      } catch (error) {
         if (isClientApiError(error)) {
           console.error(error.message);
         }
-      });
+      }
     };
-    timeoutId = window.setTimeout(polling, retryAfterMs);
-
+    timeoutId = setTimeout(() => void polling, retryAfterMs);
     return () => {
       abortController?.abort();
       clearTimeout(timeoutId);
@@ -217,19 +219,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const userIdParameter = searchParams.get("id");
 
   const { accessToken, id } = useMemo(() => {
+    // TODO: これ何やっている? useMemoの中では値をいれないようにする
     if (accessTokenParameter !== null && userIdParameter !== null) {
       requestIdleCallback(() => {
-        sessionStorage.setItem("user_access_token", accessTokenParameter);
-        sessionStorage.setItem("user_id", userIdParameter);
+        setUserAccessToken(accessTokenParameter);
+        setUserId(userIdParameter);
       });
       return {
         accessToken: accessTokenParameter,
         id: userIdParameter,
       };
     }
-    const accessToken =
-      sessionStorage.getItem("user_access_token") ?? undefined;
-    const id = sessionStorage.getItem("user_id") ?? undefined;
+    const accessToken = getUserAccessToken() ?? undefined;
+    const id = getUserId() ?? undefined;
     return {
       accessToken,
       id,
@@ -237,7 +239,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [accessTokenParameter, userIdParameter]);
 
   useEffect(() => {
-    if (getCookieValue(document.cookie, "app_session") === undefined) {
+    const isRegistered =
+      typeof getCookieValue(document.cookie, "app_session") !== "undefined";
+    if (!isRegistered) {
       navigate("/client/register");
     }
   }, [navigate]);
@@ -250,5 +254,4 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useClientAppRequestContext = () =>
-  useContext(ClientAppRequestContext);
+export const useUserContext = () => useContext(ClientAppRequestContext);
