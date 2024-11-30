@@ -52,6 +52,7 @@ class PostRideStatus extends AbstractHttpHandler
             $stmt->execute([$rideId]);
             $ride = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$ride) {
+                $this->db->rollBack();
                 return (new ErrorResponse())->write(
                     $response,
                     StatusCodeInterface::STATUS_NOT_FOUND,
@@ -60,6 +61,7 @@ class PostRideStatus extends AbstractHttpHandler
             }
 
             if ($ride['chair_id'] !== $chair->id) {
+                $this->db->rollBack();
                 return (new ErrorResponse())->write(
                     $response,
                     StatusCodeInterface::STATUS_BAD_REQUEST,
@@ -70,21 +72,18 @@ class PostRideStatus extends AbstractHttpHandler
                 );
             }
             switch ($req->getStatus()) {
-                case 'MATCHING':
-                    $stmt = $this->db->prepare(
-                        'INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)'
-                    );
-                    $stmt->execute([new Ulid(), $ride['id'], 'MATCHING']);
-                    break;
+                // Acknowledge the ride
                 case 'ENROUTE':
                     $stmt = $this->db->prepare(
                         'INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)'
                     );
                     $stmt->execute([new Ulid(), $ride['id'], 'ENROUTE']);
                     break;
+                // After Picking up user
                 case 'CARRYING':
                     $status = $this->getLatestRideStatus($this->db, $ride['id']);
                     if ($status !== 'PICKUP') {
+                        $this->db->rollBack();
                         return (new ErrorResponse())->write(
                             $response,
                             StatusCodeInterface::STATUS_BAD_REQUEST,
@@ -100,6 +99,7 @@ class PostRideStatus extends AbstractHttpHandler
                     $stmt->execute([new Ulid(), $ride['id'], 'CARRYING']);
                     break;
                 default:
+                    $this->db->rollBack();
                     return (new ErrorResponse())->write(
                         $response,
                         StatusCodeInterface::STATUS_BAD_REQUEST,
@@ -112,6 +112,9 @@ class PostRideStatus extends AbstractHttpHandler
             $this->db->commit();
             return $this->writeNoContent($response);
         } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return (new ErrorResponse())->write(
                 $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
