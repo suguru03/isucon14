@@ -631,11 +631,9 @@ sub app_get_nearby_chairs ($app, $c) {
 
     my $coordinate = { latitude => $lat, longitude => $lon };
 
-    my $txn = $app->dbh->txn_scope;
-
     try {
-        my $nearby_chairs = [];
         my $chairs        = $app->dbh->select_all(q{SELECT * FROM chairs });
+        my $nearby_chairs = [];
 
         for my $chair ($chairs->@*) {
             if (!$chair->{is_active}) {
@@ -644,13 +642,14 @@ sub app_get_nearby_chairs ($app, $c) {
 
             my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
 
-            # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
-            my $status = get_latest_ride_status($c, $ride->{id});
+            if (defined $ride) {
+                # 過去にライドが存在し、かつ、それが完了していない場合はスキップj0j
+                my $status = get_latest_ride_status($c, $ride->{id});
 
-            if ($status ne 'COMPLETED') {
-                next;
+                if ($status ne 'COMPLETED') {
+                    next;
+                }
             }
-
             my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
 
             unless (defined $chair_location) {
@@ -670,13 +669,15 @@ sub app_get_nearby_chairs ($app, $c) {
             }
         }
 
-        my $retrieved_at = $app->dbh->select_row(q{SELECT CURRENT_TIMESTAMP(6)});
-        return $c->render_json({
+        my $retrieved_at = $app->dbh->select_one(q{SELECT CURRENT_TIMESTAMP(6)});
+        my $res          = $c->render_json({
                 chairs       => $nearby_chairs,
                 retrieved_at => unix_milli_from_str($retrieved_at),
         }, AppGetNearbyChairsResponse);
-
+        $res->status(HTTP_OK);
+        return $res;
     } catch ($e) {
+        warn $e;
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
 
