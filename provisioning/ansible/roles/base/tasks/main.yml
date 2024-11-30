@@ -31,3 +31,13 @@
     - { limit_type: "-", limit_item: "nproc", value: 655360 }
     - { limit_type: "soft", limit_item: "memlock", value: unlimited }
     - { limit_type: "hard", limit_item: "memlock", value: unlimited }
+
+- name: add local isuride.xiv.isucon.net IP to /etc/hosts
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    state: present
+    block: |
+
+      # ISURIDE IP for matching requests
+      127.0.0.1 isuride.xiv.isucon.net
