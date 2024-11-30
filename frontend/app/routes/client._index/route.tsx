@@ -77,8 +77,7 @@ export default function Index() {
   }, [internalRideStatus]);
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
-
-  const emulateChairs = useGhostChairs(true);
+  const emulateChairs = useGhostChairs();
 
   useEffect(() => {
     setInternalRideStatus(status);

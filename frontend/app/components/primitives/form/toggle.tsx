@@ -1,13 +1,12 @@
-import { ComponentProps, FC } from "react";
+import { FC } from "react";
 import { twMerge } from "tailwind-merge";
 
-type Props = Omit<
-  ComponentProps<"input">,
-  "type" | "name" | "value" | "onChange"
-> & {
+type Props = {
   checked: boolean;
   id: string;
   onUpdate: (v: boolean) => void;
+  disabled?: boolean;
+  className?: string;
 };
 
 export const Toggle: FC<Props> = ({

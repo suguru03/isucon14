@@ -151,6 +151,7 @@ export const SimulatorChairDisplay: FC = () => {
                 <Toggle
                   checked={activate}
                   onUpdate={(v) => toggleActivate(v)}
+                  id="chair-activity"
                 />
               </div>
             </div>
