@@ -400,7 +400,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 	case *ChairNotificationEventMatched:
 		if c.matchingData != nil && c.matchingData.ServerRequestID != data.ServerRequestID {
 			// 椅子が別のリクエストを保持している
-			slog.Debug("code:%d", ErrorCodeChairAlreadyHasRequest, slog.Any("ride", c.Request))
+			slog.Debug(fmt.Sprintf("code:%d", ErrorCodeChairAlreadyHasRequest), slog.Any("ride", c.Request))
 			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("chair_id: %s, current_ride_id: %s, got: %s", c.ServerID, c.matchingData.ServerRequestID, data.ServerRequestID))
 		}
 		c.matchingData = data
