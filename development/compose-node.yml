@@ -1,13 +1,14 @@
 services:
   webapp:
     build:
-      context: ../webapp/rust
-    image: webapp-rust
+      context: ../webapp/nodejs
+      dockerfile: ../../development/dockerfiles/Dockerfile.node
+    image: webapp-nodejs
     ports:
       - 8080:8080
     volumes:
       - ../webapp/sql:/home/isucon/webapp/sql
-    working_dir: /home/isucon/webapp/rust
+    working_dir: /home/isucon/webapp/nodejs
     depends_on:
       db:
         condition: service_healthy

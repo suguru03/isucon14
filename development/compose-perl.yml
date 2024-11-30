@@ -1,13 +1,13 @@
 services:
   webapp:
+    platform: linux/amd64
     build:
-      context: ../webapp/rust
-    image: webapp-rust
+      context: ../webapp/perl
     ports:
       - 8080:8080
     volumes:
       - ../webapp/sql:/home/isucon/webapp/sql
-    working_dir: /home/isucon/webapp/rust
+    working_dir: /home/isucon/webapp/perl
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +20,7 @@ services:
     environment:
       ENV: local-dev
       MYSQL_ROOT_PASSWORD: isucon
-      MYSQL_DATABASE: isuride
+      MYSQL_DATABASE: isucon
     ports:
       - 3306:3306
     volumes:
