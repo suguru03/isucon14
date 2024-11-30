@@ -22,8 +22,7 @@ const (
 	ErrorCodeFailedToDepart
 	// ErrorCodeFailedToAcceptRequest 椅子がリクエストを受理しようとしたが失敗した
 	ErrorCodeFailedToAcceptRequest
-	// ErrorCodeFailedToDenyRequest 椅子がリクエストを拒否しようとしたが失敗した
-	ErrorCodeFailedToDenyRequest
+	_
 	// ErrorCodeFailedToEvaluate ユーザーが送迎の評価をしようとしたが失敗した
 	ErrorCodeFailedToEvaluate
 	// ErrorCodeFailedToCheckRequestHistory ユーザーがリクエスト履歴を確認しようとしたが失敗した
@@ -40,12 +39,10 @@ const (
 	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred
 	// ErrorCodeFailedToActivate 椅子がリクエストの受付を開始しようとしたが失敗した
 	ErrorCodeFailedToActivate
-	// ErrorCodeFailedToDeactivate 椅子がリクエストの受付を停止しようとしたが失敗した
-	ErrorCodeFailedToDeactivate
+	_
 	// ErrorCodeChairAlreadyHasRequest 既にリクエストが割り当てられている椅子に、別のリクエストが割り当てられた
 	ErrorCodeChairAlreadyHasRequest
-	// ErrorCodeFailedToGetRequestDetail リクエスト詳細の取得が失敗した
-	ErrorCodeFailedToGetRequestDetail
+	_
 	// ErrorCodeFailedToRegisterUser ユーザー登録に失敗した
 	ErrorCodeFailedToRegisterUser
 	// ErrorCodeFailedToRegisterOwner オーナー登録に失敗した
@@ -82,12 +79,46 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUncontrollableRequestReceived:                  true,
 }
 
+var ErrorTexts = map[ErrorCode]string{
+	ErrorCodeFailedToSendChairCoordinate:                    "椅子の座標送信に失敗しました",
+	ErrorCodeFailedToDepart:                                 "椅子が出発できませんでした",
+	ErrorCodeFailedToAcceptRequest:                          "椅子がライドを受理できませんでした",
+	ErrorCodeFailedToEvaluate:                               "ユーザーのライド評価に失敗しました",
+	ErrorCodeFailedToCheckRequestHistory:                    "ユーザーがライド履歴の取得に失敗しました",
+	ErrorCodeFailedToCreateRequest:                          "ユーザーが新しくライドを作成できませんでした",
+	ErrorCodeUserNotRequestingButStatusChanged:              "ユーザーが想定していない通知を受け取りました",
+	ErrorCodeChairNotAssignedButStatusChanged:               "椅子が想定していない通知を受け取りました",
+	ErrorCodeUnexpectedUserRequestStatusTransitionOccurred:  "ユーザーに想定していないライドの状態遷移の通知がありました",
+	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: "椅子に想定していないライドの状態遷移の通知がありました",
+	ErrorCodeFailedToActivate:                               "椅子がアクティベートに失敗しました",
+	ErrorCodeChairAlreadyHasRequest:                         "椅子がライドの完了通知を受け取る前に、別の新しいライドの通知を受け取りました",
+	ErrorCodeFailedToRegisterUser:                           "ユーザー登録に失敗しました",
+	ErrorCodeFailedToRegisterOwner:                          "オーナー登録に失敗しました",
+	ErrorCodeFailedToRegisterChair:                          "椅子登録に失敗しました",
+	ErrorCodeFailedToConnectNotificationStream:              "通知APIの接続に失敗しました",
+	ErrorCodeFailedToRegisterPaymentMethods:                 "ユーザーの支払い情報の登録に失敗しました",
+	ErrorCodeFailedToGetOwnerSales:                          "オーナーの売り上げ情報の取得に失敗しました",
+	ErrorCodeIncorrectAmountOfFareCharged:                   "ユーザーに誤った金額が請求されました",
+	ErrorCodeSalesMismatched:                                "取得したオーナーの売り上げ情報が想定しているものと異なります",
+	ErrorCodeFailedToGetOwnerChairs:                         "オーナーの椅子一覧の取得に失敗しました",
+	ErrorCodeIncorrectOwnerChairsData:                       "取得したオーナーの椅子一覧の情報が想定しているものと異なります",
+	ErrorCodeTooOldNearbyChairsResponse:                     "取得した付近の椅子情報が古すぎます",
+	ErrorCodeUncontrollableRequestReceived:                  "アサインされたライドがベンチマーカー外で作られたものであるため処理できません",
+}
+
 type codeError struct {
 	code ErrorCode
 	err  error
 }
 
 func (e *codeError) Error() string {
+	text, ok := ErrorTexts[e.code]
+	if ok {
+		if e.err == nil {
+			return fmt.Sprintf("%s (CODE=%d)", text, e.code)
+		}
+		return fmt.Sprintf("%s (CODE=%d): %s", text, e.code, e.err)
+	}
 	if e.err == nil {
 		return fmt.Sprintf("CODE=%d", e.code)
 	}
