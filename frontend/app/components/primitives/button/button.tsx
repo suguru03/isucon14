@@ -1,7 +1,7 @@
 import { ComponentProps, FC, PropsWithChildren, useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 
-type Variant = "light" | "primary" | "danger" | "skelton";
+type Variant = "light" | "primary" | "skelton";
 type Size = "sm" | "md";
 
 export const Button: FC<
@@ -19,9 +19,7 @@ export const Button: FC<
   const variantClasses = useMemo(() => {
     switch (variant) {
       case "primary":
-        return "text-white bg-sky-600";
-      case "danger":
-        return "text-white bg-rose-600";
+        return "text-white bg-sky-700";
       case "light":
         return "bg-[#F0EFED]";
       default:
