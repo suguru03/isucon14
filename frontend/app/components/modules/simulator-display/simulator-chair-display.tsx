@@ -22,12 +22,12 @@ import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
 
 const LabelStyleList = {
-  MATCHING: ["空車", "text-sky-600"],
-  ENROUTE: ["迎車", "text-amber-600"],
-  PICKUP: ["乗車待ち", "text-amber-600"],
-  CARRYING: ["賃走", "text-red-600"],
-  ARRIVED: ["到着", "text-green-600"],
-  COMPLETED: ["完了", "text-green-600"],
+  MATCHING: ["空車", "text-sky-500"],
+  ENROUTE: ["迎車", "text-amber-500"],
+  PICKUP: ["乗車待ち", "text-amber-500"],
+  CARRYING: ["賃走", "text-red-500"],
+  ARRIVED: ["到着", "text-emerald-500"],
+  COMPLETED: ["完了", "text-emerald-500"],
 } as const;
 
 const StatusList: FC<
