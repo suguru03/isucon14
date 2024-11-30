@@ -178,7 +178,7 @@ export const appGetRides = async (ctx: Context<Environment>) => {
       >("SELECT * FROM chairs WHERE id = ?", [ride.chair_id]);
       const [[owner]] = await ctx.var.dbConn.query<
         Array<Owner & RowDataPacket>
-      >("SELECT * FROM users WHERE id = ?", [chair.owner_id]);
+      >("SELECT * FROM owners WHERE id = ?", [chair.owner_id]);
       item = {
         id: ride.id,
         pickup_coordinate: {
@@ -297,10 +297,12 @@ export const appPostRides = async (ctx: Context<Environment>) => {
         "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE",
         [user.id],
       );
-      await ctx.var.dbConn.query(
-        "UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
-        [rideId, user.id, coupon.code],
-      );
+      if (coupon) {
+        await ctx.var.dbConn.query(
+          "UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
+          [rideId, user.id, coupon.code],
+        );
+      }
     }
     const [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
       "SELECT * FROM rides WHERE id = ?",
@@ -431,7 +433,7 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
     );
     const paymentGatewayRequest = { amount: fare };
 
-    const [[paymentGatewayURL]] = await ctx.var.dbConn.query<
+    const [[{ value: paymentGatewayURL }]] = await ctx.var.dbConn.query<
       Array<string & RowDataPacket>
     >("SELECT value FROM settings WHERE name = 'payment_gateway_url'");
     await requestPaymentGatewayPostPayment(
@@ -754,7 +756,9 @@ async function calculateDiscountedFare(
         "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1",
         [userId],
       );
-      discount = coupon.discount;
+      if (coupon) {
+        discount = coupon.discount;
+      }
     }
   }
   const meteredFare =
