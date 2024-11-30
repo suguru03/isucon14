@@ -83,6 +83,24 @@ func LoadData() *ValidateData {
 		}
 	}
 	{
+		f, err := data.Open("data/user/01JDK5EFNGT8ZHMTQXQ4BNH8NQ/estimated_3_10.json")
+		if err != nil {
+			panic(err)
+		}
+		if err := json.NewDecoder(f).Decode(&result.User01JDK5EFNGT8ZHMTQXQ4BNH8NQ.Estimated_3_10); err != nil {
+			panic(err)
+		}
+	}
+	{
+		f, err := data.Open("data/user/01JDK5EFNGT8ZHMTQXQ4BNH8NQ/estimated_-11_10.json")
+		if err != nil {
+			panic(err)
+		}
+		if err := json.NewDecoder(f).Decode(&result.User01JDK5EFNGT8ZHMTQXQ4BNH8NQ.Estimated_m11_10); err != nil {
+			panic(err)
+		}
+	}
+	{
 		f, err := data.Open("data/user/01JDJ4XN10E2CRZ37RNZ5GAFW6/rides.json")
 		if err != nil {
 			panic(err)
