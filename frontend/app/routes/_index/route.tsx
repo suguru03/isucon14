@@ -1,5 +1,12 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { twMerge } from "tailwind-merge";
+import colors from "tailwindcss/colors";
+import { DesktopIcon } from "~/components/icon/desktop";
+import { IsurideIcon } from "~/components/icon/isuride";
+import { MobileIcon } from "~/components/icon/mobile";
+import { MainFrame } from "~/components/primitives/frame/frame";
+import { Text } from "~/components/primitives/text/text";
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,27 +18,79 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+const Links = [
+  {
+    to: "/simulator",
+    title: "Simulator Aplication",
+    description: "ISUCON競技者用 アプリ動作シュミレーター",
+    Icon: () => <IsurideIcon fill="#fff" width={30} height={30}></IsurideIcon>,
+    style: "bg-sky-600 text-white hover:bg-sky-700",
+  },
+  {
+    to: "/client",
+    title: "Client Application",
+    description: "ISURIDE利用者用 モバイルクラインアント",
+    Icon: () => (
+      <MobileIcon width={40} height={40} fill={colors.neutral[800]} />
+    ),
+    style: "",
+  },
+  {
+    to: "/owner/login",
+    title: "Owner Application",
+    description: "ISURIDEオーナー向け 管理アプリケーション",
+    Icon: () => (
+      <DesktopIcon width={40} height={40} fill={colors.neutral[800]} />
+    ),
+    style: "",
+  },
+] as const;
+
 export default function Index() {
   return (
-    <main className="font-sans p-8">
-      <h1 className="text-3xl font-bold">ISURIDE</h1>
-      <ul className="mt-4 list-disc ps-8">
-        <li>
-          <Link to="/client" className="text-blue-600 hover:underline">
-            Client Application
-          </Link>
-        </li>
-        <li>
-          <Link to="/simulator" className="text-blue-600 hover:underline">
-            Chair Simulator
-          </Link>
-        </li>
-        <li>
-          <Link to="/owner" className="text-blue-600 hover:underline">
-            Owner Application
-          </Link>
-        </li>
-      </ul>
+    <main>
+      <MainFrame className="top-bg">
+        <img
+          src="/top-bg.png"
+          alt=""
+          role="presentation"
+          className="absolute top-0 left-0 w-full opacity-90"
+        />
+        <div className="relative z-10">
+          <h1 className="mt-[35%] flex justify-center w-full mb-24">
+            <img
+              src="/top-logo.svg"
+              alt="ISURIDE"
+              role="presentation"
+              style={{ aspectRatio: 544 / 140 }}
+              className="max-w-80 w-full px-4"
+            />
+          </h1>
+          <ul className="space-y-8">
+            {Links.map(({ to, title, description, Icon, style }) => {
+              return (
+                <li key={to} className="">
+                  <Link
+                    to={to}
+                    className={twMerge(
+                      "flex justify-center items-center flex-row space-x-4",
+                      "px-10 py-4 bg-neutral-100 rounded-full mx-auto w-[300px] h-[100px] space-y-1 shadow-md hover:bg-neutral-200 transition-colors",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900",
+                      style,
+                    )}
+                  >
+                    <Icon />
+                    <p>
+                      <Text bold>{title}</Text>
+                      <Text size="xs">{description}</Text>
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </MainFrame>
     </main>
   );
 }
