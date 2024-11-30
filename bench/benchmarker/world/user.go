@@ -153,8 +153,11 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				score := u.Request.CalculateEvaluation().Score()
+
+				u.Request.Statuses.Lock()
 				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
+					u.Request.Statuses.Unlock()
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
 
@@ -173,6 +176,8 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.Chair.Owner.TotalSales.Add(int64(u.Request.Sales()))
 				u.Request.Chair.Owner.SubScore.Add(int64(u.Request.Score()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
+
+				u.Request.Statuses.Unlock()
 			}
 
 		case RequestStatusCompleted:

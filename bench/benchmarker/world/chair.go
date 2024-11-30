@@ -417,6 +417,8 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			}
 			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("ride_id: %s, got: %v", data.ServerRequestID, RequestStatusCompleted))
 		}
+		c.Request.Statuses.RLock()
+		defer c.Request.Statuses.RUnlock()
 		if request.Statuses.Desired != RequestStatusCompleted {
 			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %s, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
 		}
