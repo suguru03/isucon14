@@ -461,7 +461,7 @@ sub app_post_ride_evaluation ($app, $c) {
             amount => $fare,
         };
 
-        my $payment_gateway_url = $app->dbh->select_row(q{SELECT value FROM settings WHERE name = 'payment_gateway_url'});
+        my $payment_gateway_url = $app->dbh->select_one(q{SELECT value FROM settings WHERE name = 'payment_gateway_url'});
 
         my $error = request_payment_gateway_post_payment($payment_gateway_url, $payment_token->{token}, $payment_gateway_request, sub {
                 return $app->dbh->select_all(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC}, $ride->{user_id});

@@ -63,7 +63,7 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
         get '/api/app/rides' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_rides;
         post '/api/app/rides'                     => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides;
         post '/api/app/rides/estimated-fare'      => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_estimated_fare;
-        post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_rides_evaluation;
+        post '/api/app/rides/:ride_id/evaluation' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_post_ride_evaluation;
         get '/api/app/notification'  => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_notification;
         get '/api/app/nearby-chairs' => [AppAuthMiddleware] => \&Isuride::Handler::App::app_get_nearby_chairs;
     }
