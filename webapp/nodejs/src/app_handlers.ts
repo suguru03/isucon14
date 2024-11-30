@@ -160,26 +160,36 @@ type GetAppRidesResponseItem = {
 
 export const appGetRides = async (ctx: Context<Environment>) => {
   const user = ctx.var.user;
-  const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
-    "SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC",
-    [user.id],
-  );
+  await ctx.var.dbConn.beginTransaction();
   const items: GetAppRidesResponseItem[] = [];
-  for (const ride of rides) {
-    const status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
-    if (status !== "COMPLETED") {
-      continue;
-    }
+  try {
+    const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
+      "SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC",
+      [user.id],
+    );
+    for (const ride of rides) {
+      const status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
+      if (status !== "COMPLETED") {
+        continue;
+      }
 
-    let item: GetAppRidesResponseItem;
-    try {
+      const fare = await calculateDiscountedFare(
+        ctx.var.dbConn,
+        user.id,
+        ride,
+        ride.pickup_latitude,
+        ride.pickup_longitude,
+        ride.destination_latitude,
+        ride.destination_longitude,
+      );
+
       const [[chair]] = await ctx.var.dbConn.query<
         Array<Chair & RowDataPacket>
       >("SELECT * FROM chairs WHERE id = ?", [ride.chair_id]);
       const [[owner]] = await ctx.var.dbConn.query<
         Array<Owner & RowDataPacket>
       >("SELECT * FROM owners WHERE id = ?", [chair.owner_id]);
-      item = {
+      const item = {
         id: ride.id,
         pickup_coordinate: {
           latitude: ride.pickup_latitude,
@@ -189,7 +199,7 @@ export const appGetRides = async (ctx: Context<Environment>) => {
           latitude: ride.destination_latitude,
           longitude: ride.destination_longitude,
         },
-        fare: calculateSale(ride),
+        fare,
         evaluation: ride.evaluation,
         requested_at: ride.created_at.getTime(),
         completed_at: ride.updated_at.getTime(),
@@ -200,10 +210,12 @@ export const appGetRides = async (ctx: Context<Environment>) => {
           owner: owner.name,
         },
       };
-    } catch (e) {
-      return ctx.text(`${e}`, 500);
+      items.push(item);
     }
-    items.push(item);
+    await ctx.var.dbConn.commit();
+  } catch (e) {
+    await ctx.var.dbConn.rollback();
+    return ctx.text(`${e}`, 500);
   }
   return ctx.json(
     {
