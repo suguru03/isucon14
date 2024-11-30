@@ -159,7 +159,16 @@ async fn owner_get_sales(
 }
 
 fn sum_sales(rides: &[Ride]) -> i32 {
-    rides.iter().map(crate::calculate_sale).sum()
+    rides.iter().map(calculate_sale).sum()
+}
+
+fn calculate_sale(ride: &crate::models::Ride) -> i32 {
+    crate::calculate_fare(
+        ride.pickup_latitude,
+        ride.pickup_longitude,
+        ride.destination_latitude,
+        ride.destination_longitude,
+    )
 }
 
 /// MySQL で COUNT()、SUM() 等を使って DECIMAL 型の値になったものを i64 に変換するための構造体。

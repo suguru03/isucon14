@@ -156,6 +156,10 @@ module Isuride
       def sum_sales(rides)
         rides.sum { |ride| calculate_sale(ride) }
       end
+
+      def calculate_sale(ride)
+        calculate_fare(*ride.values_at(:pickup_latitude, :pickup_longitude, :destination_latitude, :destination_longitude))
+      end
     end
   end
 end

@@ -192,30 +192,42 @@ async fn app_get_rides(
     State(AppState { pool, .. }): State<AppState>,
     axum::Extension(user): axum::Extension<User>,
 ) -> Result<axum::Json<GetAppRidesResponse>, Error> {
+    let mut tx = pool.begin().await?;
+
     let rides: Vec<Ride> =
         sqlx::query_as("SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC")
-            .bind(user.id)
-            .fetch_all(&pool)
+            .bind(&user.id)
+            .fetch_all(&mut *tx)
             .await?;
 
     let mut items = Vec::with_capacity(rides.len());
     for ride in rides {
-        let status = crate::get_latest_ride_status(&pool, &ride.id).await?;
+        let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
         if status != "COMPLETED" {
             continue;
         }
 
+        let fare = calculate_discounted_fare(
+            &mut tx,
+            &user.id,
+            Some(&ride),
+            ride.pickup_latitude,
+            ride.pickup_longitude,
+            ride.destination_latitude,
+            ride.destination_longitude,
+        )
+        .await?;
+
         let chair: Chair = sqlx::query_as("SELECT * FROM chairs WHERE id = ?")
             .bind(&ride.chair_id)
-            .fetch_one(&pool)
+            .fetch_one(&mut *tx)
             .await?;
 
         let owner: Owner = sqlx::query_as("SELECT * FROM owners WHERE id = ?")
             .bind(chair.owner_id)
-            .fetch_one(&pool)
+            .fetch_one(&mut *tx)
             .await?;
 
-        let fare = crate::calculate_sale(&ride);
         items.push(GetAppRidesResponseItem {
             id: ride.id,
             pickup_coordinate: Coordinate {
@@ -238,6 +250,8 @@ async fn app_get_rides(
             completed_at: ride.updated_at.timestamp_millis(),
         });
     }
+
+    tx.commit().await?;
 
     Ok(axum::Json(GetAppRidesResponse { rides: items }))
 }

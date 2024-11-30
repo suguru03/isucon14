@@ -103,38 +103,42 @@ module Isuride
 
     # GET /api/app/rides
     get '/rides' do
-      rides = db.xquery('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC', @current_user.id)
+      items = db_transaction do |tx|
+        rides = tx.xquery('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC', @current_user.id)
 
-      items = rides.filter_map do |ride|
-        status = get_latest_ride_status(db, ride.fetch(:id))
-        if status != 'COMPLETED'
-          next
+        rides.filter_map do |ride|
+          status = get_latest_ride_status(tx, ride.fetch(:id))
+          if status != 'COMPLETED'
+            next
+          end
+
+          fare = calculate_discounted_fare(tx, @current_user.id, ride, ride.fetch(:pickup_latitude),  ride.fetch(:pickup_longitude), ride.fetch(:destination_latitude), ride.fetch(:destination_longitude))
+
+          chair = tx.xquery('SELECT * FROM chairs WHERE id = ?', ride.fetch(:chair_id)).first
+          owner = tx.xquery('SELECT * FROM owners WHERE id = ?', chair.fetch(:owner_id)).first
+
+          {
+            id: ride.fetch(:id),
+            pickup_coordinate: {
+              latitude: ride.fetch(:pickup_latitude),
+              longitude: ride.fetch(:pickup_longitude),
+            },
+            destination_coordinate: {
+              latitude: ride.fetch(:destination_latitude),
+              longitude: ride.fetch(:destination_longitude),
+            },
+            fare:,
+            evaluation: ride.fetch(:evaluation),
+            requested_at: time_msec(ride.fetch(:created_at)),
+            completed_at: time_msec(ride.fetch(:updated_at)),
+            chair: {
+              id: chair.fetch(:id),
+              name: chair.fetch(:name),
+              model: chair.fetch(:model),
+              owner: owner.fetch(:name),
+            },
+          }
         end
-
-        chair = db.xquery('SELECT * FROM chairs WHERE id = ?', ride.fetch(:chair_id)).first
-        owner = db.xquery('SELECT * FROM owners WHERE id = ?', chair.fetch(:owner_id)).first
-
-        {
-          id: ride.fetch(:id),
-          pickup_coordinate: {
-            latitude: ride.fetch(:pickup_latitude),
-            longitude: ride.fetch(:pickup_longitude),
-          },
-          destination_coordinate: {
-            latitude: ride.fetch(:destination_latitude),
-            longitude: ride.fetch(:destination_longitude),
-          },
-          fare: calculate_sale(ride),
-          evaluation: ride.fetch(:evaluation),
-          requested_at: time_msec(ride.fetch(:created_at)),
-          completed_at: time_msec(ride.fetch(:updated_at)),
-          chair: {
-            id: chair.fetch(:id),
-            name: chair.fetch(:name),
-            model: chair.fetch(:model),
-            owner: owner.fetch(:name),
-          },
-        }
       end
 
       json(rides: items)
