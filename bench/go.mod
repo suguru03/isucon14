@@ -9,6 +9,7 @@ require (
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
 	github.com/go-sql-driver/mysql v1.8.1
+	github.com/google/go-cmp v0.6.0
 	github.com/guregu/null/v5 v5.0.0
 	github.com/isucon/isucandar v0.0.0-20220322062028-6dd56dc57d72
 	github.com/jmoiron/sqlx v1.4.0
