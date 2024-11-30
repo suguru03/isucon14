@@ -59,24 +59,24 @@ export const links: LinksFunction = () => {
   return [
     {
       rel: "icon",
-      href: "/public/favicon.ico",
+      href: "/favicon.ico",
       type: "image/ico",
     },
     {
       rel: "icon",
-      href: "/public/favicon-32x32.png",
+      href: "/favicon-32x32.png",
       type: "image/png",
       sizes: "32x32",
     },
     {
       rel: "icon",
-      href: "/public/favicon-128x128.png",
+      href: "/favicon-128x128.png",
       type: "image/png",
       sizes: "128x128",
     },
     {
       rel: "apple-touch-icon",
-      href: "/public/apple-touch-icon-180x180.png",
+      href: "/apple-touch-icon-180x180.png",
       sizes: "180x18",
     },
   ];
