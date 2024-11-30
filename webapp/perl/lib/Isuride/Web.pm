@@ -75,7 +75,7 @@ filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
         post '/api/chair/activity'   => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_activity;
         post '/api/chair/coordinate' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_coordinate;
         get '/api/chair/notification' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_get_notification;
-        post '/api/chair/rides/:ride_id/status' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_rides_status;
+        post '/api/chair/rides/:ride_id/status' => [ChairAuthMiddleware] => \&Isuride::Handler::Chair::chair_post_ride_status;
     }
 
     # owner handlers
