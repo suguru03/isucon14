@@ -10,4 +10,4 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY . .
 RUN npm ci
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]

@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:latest
+    image: public.ecr.aws/docker/library/nginx:latest
     container_name: nginx
     volumes:
       - ../webapp/php:/home/isucon/webapp/php
@@ -14,7 +14,7 @@ services:
     mem_limit: 4g
     build:
       context: ../webapp/php
-      dockerfile: ../../development/dockerfiles/Dockerfile.php
+      dockerfile: ../../development/dockerfiles/Dockerfile.ci.php
     init: true
     container_name: webapp
     working_dir: /home/isucon/webapp/php
@@ -44,5 +44,5 @@ services:
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
   matcher:
-    image: curlimages/curl:latest
+    image: mirror.gcr.io/curlimages/curl:latest
     command: /bin/sh -c "while true; do curl -s http://host.docker.internal:8080/api/internal/matching; sleep 0.5; done"

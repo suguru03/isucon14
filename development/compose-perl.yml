@@ -1,8 +1,8 @@
 services:
   webapp:
-    platform: linux/amd64
     build:
       context: ../webapp/perl
+      dockerfile: ../../development/dockerfiles/Dockerfile.perl
     ports:
       - 8080:8080
     volumes:

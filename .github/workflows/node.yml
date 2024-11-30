@@ -7,11 +7,15 @@ on:
       - bench/**/*
       - webapp/nodejs/**/*
       - .github/workflows/node.yml
+      - development/compose-node.yml
+      - development/dockerfiles/Dockerfile.node
   pull_request:
     paths:
       - bench/**/*
       - webapp/nodejs/**/*
       - .github/workflows/node.yml
+      - development/compose-node.yml
+      - development/dockerfiles/Dockerfile.node
 jobs:
   build:
     name: Build
