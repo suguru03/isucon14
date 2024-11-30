@@ -40,8 +40,8 @@ class GetNotification extends AbstractHttpHandler
     ): ResponseInterface {
         $user = $request->getAttribute('user');
         assert($user instanceof User);
+        $this->db->beginTransaction();
         try {
-            $this->db->beginTransaction();
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1');
             $stmt->execute([$user->id]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -67,6 +67,14 @@ class GetNotification extends AbstractHttpHandler
             $yetSentRideStatus = $stmt->fetch(PDO::FETCH_ASSOC);
             if(!$yetSentRideStatus) {
                 $status = $this->getLatestRideStatus($this->db, $ride->id);
+                if ($status === '') {
+                    $this->db->rollBack();
+                    return (new ErrorResponse())->write(
+                        $response,
+                        StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                        new \Exception('ride status not found')
+                    );
+                }
             } else {
                 $status = $yetSentRideStatus['status'];
             }
@@ -145,7 +153,7 @@ class GetNotification extends AbstractHttpHandler
             }
             $this->db->commit();
             return $this->writeJson($response, new AppGetNotification200Response(['data' => $res]));
-        } catch (PDOException  $e) {
+        } catch (PDOException $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }

@@ -33,7 +33,6 @@ class GetNotification extends AbstractHttpHandler
 
         $this->db->beginTransaction();
         try {
-
             $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1');
             $stmt->execute([$chair->id]);
             $ride = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -49,6 +48,14 @@ class GetNotification extends AbstractHttpHandler
             $yetSentRideStatus = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$yetSentRideStatus) {
                 $status = $this->getLatestRideStatus($this->db, $ride['id']);
+                if ($status === '') {
+                    $this->db->rollBack();
+                    return (new ErrorResponse())->write(
+                        $response,
+                        StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                        new \Exception('ride status not found')
+                    );
+                }
             } else {
                 $status = $yetSentRideStatus['status'];
             }
@@ -58,7 +65,14 @@ class GetNotification extends AbstractHttpHandler
             );
             $stmt->execute([$ride['user_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            if (!$user) {
+                $this->db->rollBack();
+                return (new ErrorResponse())->write(
+                    $response,
+                    StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                    new \Exception('user not found')
+                );
+            }
             if (isset($yetSentRideStatus['id'])) {
                 $stmt = $this->db->prepare(
                     'UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?'
@@ -90,6 +104,9 @@ class GetNotification extends AbstractHttpHandler
                 ])
             );
         } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return (new ErrorResponse())->write(
                 $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,

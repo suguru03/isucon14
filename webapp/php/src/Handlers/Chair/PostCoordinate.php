@@ -65,8 +65,15 @@ class PostCoordinate extends AbstractHttpHandler
 
             if ($ride) {
                 $status = $this->getLatestRideStatus($this->db, $ride['id']);
-
-                if ($status !== 'COMPLETED' && $status !== 'CANCELLED') {
+                if ($status === '') {
+                    $this->db->rollBack();
+                    return (new ErrorResponse())->write(
+                        $response,
+                        StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
+                        new \Exception('ride status not found')
+                    );
+                }
+                if ($status !== 'COMPLETED' && $status !== 'CANCELED') {
                     if (
                         $req->getLatitude() === $ride['pickup_latitude'] && $req->getLongitude(
                         ) === $ride['pickup_longitude'] && $status === 'ENROUTE'
@@ -95,6 +102,9 @@ class PostCoordinate extends AbstractHttpHandler
                 new ChairPostCoordinate200Response(['recorded_at' => (int)$unixMilliseconds])
             );
         } catch (RuntimeException | PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return (new ErrorResponse())->write(
                 $response,
                 StatusCodeInterface::STATUS_INTERNAL_SERVER_ERROR,
