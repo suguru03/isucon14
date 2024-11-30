@@ -171,6 +171,8 @@ use constant AppGetRidesResponse => {
 sub app_get_rides ($app, $c) {
     my $user = $c->stash->{user};
 
+    my $txn = $app->dbh->txn_scope;
+
     my $rides = $app->dbh->select_all(
         q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC},
         $user->{id}
@@ -189,6 +191,8 @@ sub app_get_rides ($app, $c) {
             next;
         }
 
+        my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+
         my $item = {
             id                => $ride->{id},
             pickup_coordinate => {
@@ -199,7 +203,7 @@ sub app_get_rides ($app, $c) {
                 latitude  => $ride->{destination_latitude},
                 longitude => $ride->{destination_longitude},
             },
-            fare         => calculate_sale($ride),
+            fare         => $fare,
             evaluation   => $ride->{evaluation},
             requested_at => unix_milli_from_str($ride->{created_at}),
             completed_at => unix_milli_from_str($ride->{updated_at}),
@@ -231,6 +235,8 @@ sub app_get_rides ($app, $c) {
 
         push $items->@*, $item;
     }
+
+    $txn->commit;
 
     return $c->render_json({ rides => $items }, AppGetRidesResponse);
 }
