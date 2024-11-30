@@ -4,7 +4,10 @@ import { Text } from "~/components/primitives/text/text";
 import { useOwnerContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "椅子一覧 | Owner | ISURIDE" },
+    { name: "description", content: "isucon14" },
+  ];
 };
 
 const formatDateTime = (timestamp: number) => {
