@@ -141,7 +141,7 @@ sub chair_post_coordinate ($app, $c) {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ?  ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
         if (defined $ride) {
-            my $status = get_latest_ride_status($app, $ride);
+            my $status = get_latest_ride_status($app, $ride->{id});
 
             if ($status ne 'COMPLETED' && $status ne 'CANCELED') {
                 if ($params->{latitude} == $ride->{pickup_latitude} && $params->{longitude} == $ride->{pickup_longitude} && $status eq 'ENROUTE') {
@@ -187,7 +187,7 @@ sub chair_get_notification ($app, $c) {
         my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
         unless ($ride) {
-            return $c->render_json({ data => undef }, ChairGetNotificationResponse);
+            return $c->render_json({}, ChairGetNotificationResponse);
         }
 
         my $status;
@@ -196,10 +196,14 @@ sub chair_get_notification ($app, $c) {
         if (defined $yet_sent_ride_status) {
             $status = $yet_sent_ride_status->{status};
         } else {
-            $status = get_latest_ride_status($app, $ride);
+            $status = get_latest_ride_status($app, $ride->{id});
         }
 
         my $user = $app->dbh->select_row('SELECT * FROM users WHERE id = ? FOR SHARE', $ride->{user_id});
+
+        unless (defined $user) {
+            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch user');
+        }
 
         if (defined $yet_sent_ride_status) {
             $app->dbh->query('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', $yet_sent_ride_status->{id});
@@ -211,7 +215,7 @@ sub chair_get_notification ($app, $c) {
                     ride_id => $ride->{id},
                     user    => {
                         id   => $user->{id},
-                        name => sprintf("%s %s", $user->{first_name}, $user->{last_name})
+                        name => sprintf("%s %s", $user->{firstname}, $user->{lastname})
                     },
                     pickup_coordinate => {
                         latitude  => $ride->{pickup_latitude},
@@ -248,7 +252,7 @@ sub chair_post_ride_status ($app, $c) {
     my $txn = $app->dbh->txn_scope;
 
     try {
-        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id, $chair->{id});
+        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
 
         unless (defined $ride) {
             return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
@@ -263,7 +267,7 @@ sub chair_post_ride_status ($app, $c) {
                 $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'ENROUTE');
             }
             case ('CARRYING') {
-                my $status = get_latest_ride_status($app, $ride);
+                my $status = get_latest_ride_status($app, $ride->{id});
 
                 if ($status ne 'PICKUP') {
                     return $c->halt_json(HTTP_BAD_REQUEST, 'chair has not arrived yet');
