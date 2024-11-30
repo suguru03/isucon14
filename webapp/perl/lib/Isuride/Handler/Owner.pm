@@ -99,7 +99,6 @@ sub owner_get_sales ($app, $c) {
 
     if ($c->req->query_parameters->{since}) {
         my ($parsed, $err) = parse_int($c->req->query_parameters->{since});
-        p $parsed;
 
         if ($err) {
             return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: since');
