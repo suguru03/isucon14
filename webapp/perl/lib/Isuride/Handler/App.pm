@@ -59,61 +59,67 @@ sub app_post_users ($app, $c) {
 
     my $txn = $app->dbh->txn_scope;
 
-    $app->dbh->query(
-        q{INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)},
-        $user_id, $params->{username}, $params->{firstname}, $params->{lastname}, $params->{date_of_birth}, $access_token, $invitation_code
-    );
-
-    # 初回登録キャンペーンのクーポンを付与
-    $app->dbh->query(
-        q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-        $user_id, 'CP_NEW2024', 3000,
-    );
-
-    # 紹介コードを使った登録
-    if (defined $params->{invitation_code} && $params->{invitation_code} ne '') {
-        # 招待する側の招待数をチェック
-        my $coupons = $app->dbh->select_all(q{SELECT * FROM coupons WHERE code = ? FOR UPDATE}, "INV_" . $params->{invitation_code});
-
-        if (scalar $coupons->@* >= 3) {
-            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
-        }
-
-        # ユーザーチェック
-        my $inviter = $app->dbh->select_row(q{SELECT * FROM users WHERE invitation_code = ?}, $params->{invitation_code});
-
-        unless ($inviter) {
-            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
-        }
-
-        # 招待クーポン付与
+    try {
         $app->dbh->query(
-            q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-            $user_id, "INV_" . $params->{invitation_code}, 1500,
+            q{INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)},
+            $user_id, $params->{username}, $params->{firstname}, $params->{lastname}, $params->{date_of_birth}, $access_token, $invitation_code
         );
 
-        # 招待した人にもRewardを付与
+        # 初回登録キャンペーンのクーポンを付与
         $app->dbh->query(
             q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-            $inviter->{id}, "INV_" . $params->{invitation_code}, 1000,
+            $user_id, 'CP_NEW2024', 3000,
         );
+
+        # 紹介コードを使った登録
+        if (defined $params->{invitation_code} && $params->{invitation_code} ne '') {
+            # 招待する側の招待数をチェック
+            my $coupons = $app->dbh->select_all(q{SELECT * FROM coupons WHERE code = ? FOR UPDATE}, "INV_" . $params->{invitation_code});
+
+            if (scalar $coupons->@* >= 3) {
+                return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
+            }
+
+            # ユーザーチェック
+            my $inviter = $app->dbh->select_row(q{SELECT * FROM users WHERE invitation_code = ?}, $params->{invitation_code});
+
+            unless ($inviter) {
+                return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
+            }
+
+            # 招待クーポン付与
+            $app->dbh->query(
+                q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
+                $user_id, "INV_" . $params->{invitation_code}, 1500,
+            );
+
+            # 招待した人にもRewardを付与
+            $app->dbh->query(
+                q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
+                $inviter->{id}, "INV_" . $params->{invitation_code}, 1000,
+            );
+        }
+
+        $txn->commit;
+
+        $c->res->cookies->{app_session} = {
+            path  => '/',
+            name  => 'app_session',
+            value => $access_token,
+        };
+
+        my $res = $c->render_json({
+                id              => $user_id,
+                invitation_code => $invitation_code,
+        }, AppPostUsersResponse);
+
+        $res->status(HTTP_CREATED);
+        return $res;
+
+    } catch ($e) {
+        $txn->rollback;
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
-
-    $txn->commit;
-
-    $c->res->cookies->{app_session} = {
-        path  => '/',
-        name  => 'app_session',
-        value => $access_token,
-    };
-
-    my $res = $c->render_json({
-            id              => $user_id,
-            invitation_code => $invitation_code,
-    }, AppPostUsersResponse);
-
-    $res->status(HTTP_CREATED);
-    return $res;
 }
 
 use constant AppPaymentMethodsRequest => { token => JSON_TYPE_STRING, };
@@ -263,7 +269,7 @@ sub app_post_rides ($app, $c) {
         my $counting_ride_count = 0;
 
         for my $ride ($rides->@*) {
-            my $status = get_latest_ride_status($c, $ride->{id});
+            my $status = get_latest_ride_status($app, $ride->{id});
 
             if ($status ne 'COMPLETED') {
                 $counting_ride_count++;
@@ -410,7 +416,7 @@ sub app_post_ride_evaluation ($app, $c) {
             return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
         }
 
-        my $status = get_latest_ride_status($c, $ride_id);
+        my $status = get_latest_ride_status($app, $ride_id);
 
         if ($status ne 'ARRIVED') {
             return $c->halt_json(HTTP_BAD_REQUEST, 'not arrived yet"');
@@ -513,7 +519,7 @@ sub app_get_notification ($app, $c) {
         my $status;
 
         unless (defined $yet_sent_ride_status) {
-            $status = get_latest_ride_status($c, $ride->{id});
+            $status = get_latest_ride_status($app, $ride->{id});
         } else {
             $status = $yet_sent_ride_status->{status};
         }
@@ -622,9 +628,9 @@ use constant AppGetNearbyChairsResponse => {
 sub app_get_nearby_chairs ($app, $c) {
     my $lat      = $c->req->query_parameters->{latitude};
     my $lon      = $c->req->query_parameters->{longitude};
-    my $distance = $c->req->query_parameters->{distance};
+    my $distance = $c->req->query_parameters->{distance} // 50;
 
-    if ($lat eq '' || $lon eq '') {
+    if ((!defined $lat || $lat eq '') || (!defined $lon || $lon eq '')) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'latitude or longitude is empty');
     }
 
@@ -643,7 +649,7 @@ sub app_get_nearby_chairs ($app, $c) {
 
             if (defined $ride) {
                 # 過去にライドが存在し、かつ、それが完了していない場合はスキップj0j
-                my $status = get_latest_ride_status($c, $ride->{id});
+                my $status = get_latest_ride_status($app, $ride->{id});
 
                 if ($status ne 'COMPLETED') {
                     next;

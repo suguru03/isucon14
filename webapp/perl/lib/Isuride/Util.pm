@@ -37,8 +37,8 @@ sub secure_random_str ($byte_length) {
     return unpack('H*', $bytes);
 }
 
-sub get_latest_ride_status ($c, $ride_id) {
-    my $status = $c->dbh->select_row(
+sub get_latest_ride_status ($app, $ride_id) {
+    my $status = $app->dbh->select_row(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id
     );
