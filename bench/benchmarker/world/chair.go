@@ -124,7 +124,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				c.RequestHistory = append(c.RequestHistory, c.Request)
 				if !c.Request.User.Region.Contains(c.Location.Current()) {
-					ctx.ContestantLogger().Warn("Userが居るRegionの外部に存在するChairがマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
+					ctx.ContestantLogger().Warn("ユーザーのリージョン外部に存在する椅子がマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
 			}
 
@@ -400,7 +400,8 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 	case *ChairNotificationEventMatched:
 		if c.matchingData != nil && c.matchingData.ServerRequestID != data.ServerRequestID {
 			// 椅子が別のリクエストを保持している
-			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("server chair id: %s, current request: %s (%v), got: %s", c.ServerID, c.matchingData.ServerRequestID, c.Request, data.ServerRequestID))
+			slog.Debug("code:%d", ErrorCodeChairAlreadyHasRequest, slog.Any("ride", c.Request))
+			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("chair_id: %s, current_ride_id: %s, got: %s", c.ServerID, c.matchingData.ServerRequestID, data.ServerRequestID))
 		}
 		c.matchingData = data
 
@@ -414,10 +415,10 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 					return nil
 				}
 			}
-			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("request server id: %v, got: %v", data.ServerRequestID, RequestStatusCompleted))
+			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("ride_id: %s, got: %v", data.ServerRequestID, RequestStatusCompleted))
 		}
 		if request.Statuses.Desired != RequestStatusCompleted {
-			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
+			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %s, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
 		}
 		request.Statuses.Chair = RequestStatusCompleted
 	}

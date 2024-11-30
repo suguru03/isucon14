@@ -89,7 +89,7 @@ func (w *World) Tick(ctx *Context) error {
 		for _, region := range w.Regions {
 			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
 			if increase > 0 {
-				w.contestantLogger.Info("Region内の評判を元にUserが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
+				w.contestantLogger.Info("地域内の評判を元にユーザーが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
 				for range increase {
 					w.waitingTickCount.Add(1)
 					go func() {
@@ -350,7 +350,7 @@ func (w *World) PublishEvent(e Event) {
 		w.CompletedRequestChan <- data.Request
 		go func() {
 			if data.Request.CalculateEvaluation().Score() > 2 && data.Request.User.InvCodeUsedCount < 3 {
-				w.contestantLogger.Info("既存Userからの招待によってUserが増加します", slog.String("region", data.Request.User.Region.Name))
+				w.contestantLogger.Info("既存ユーザーからの招待によってユーザーが増加します", slog.String("region", data.Request.User.Region.Name))
 				_, err := w.CreateUser(nil, &CreateUserArgs{Region: data.Request.User.Region, Inviter: data.Request.User})
 				if err != nil {
 					w.handleTickError(err)
@@ -358,7 +358,7 @@ func (w *World) PublishEvent(e Event) {
 			}
 		}()
 	case *EventUserLeave:
-		w.contestantLogger.Warn("RideRequestの評価が悪かったためUserが離脱しました")
+		w.contestantLogger.Warn("ライドの評価が悪かったためユーザーが離脱しました")
 	case *EventSoftError:
 		w.handleTickError(data.Error)
 	}
