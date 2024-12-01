@@ -16,6 +16,11 @@ on:
       - .github/workflows/python.yml
       - development/compose-python.yml
       - development/dockerfiles/Dockerfile.python
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint

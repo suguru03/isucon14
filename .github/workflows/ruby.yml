@@ -16,6 +16,11 @@ on:
       - .github/workflows/ruby.yml
       - development/compose-ruby.yml
       - development/dockerfiles/Dockerfile.ruby
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build
