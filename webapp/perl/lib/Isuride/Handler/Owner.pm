@@ -48,17 +48,13 @@ sub owner_post_owners ($app, $c) {
     my $access_token         = secure_random_str(32);
     my $chair_register_token = secure_random_str(32);
 
-    try {
-        $app->dbh->query(
-            'INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)',
-            $owner_id,
-            $params->{name},
-            $access_token,
-            $chair_register_token,
-        );
-    } catch ($e) {
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
-    }
+    $app->dbh->query(
+        'INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)',
+        $owner_id,
+        $params->{name},
+        $access_token,
+        $chair_register_token,
+    );
 
     $c->res->cookies->{owner_session} = {
         path  => '/',

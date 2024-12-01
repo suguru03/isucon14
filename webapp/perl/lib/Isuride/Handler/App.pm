@@ -62,67 +62,62 @@ sub app_post_users ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    try {
-        $app->dbh->query(
-            q{INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)},
-            $user_id, $params->{username}, $params->{firstname}, $params->{lastname}, $params->{date_of_birth}, $access_token, $invitation_code
-        );
+    $app->dbh->query(
+        q{INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)},
+        $user_id, $params->{username}, $params->{firstname}, $params->{lastname}, $params->{date_of_birth}, $access_token, $invitation_code
+    );
 
-        # 初回登録キャンペーンのクーポンを付与
-        $app->dbh->query(
-            q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-            $user_id, 'CP_NEW2024', 3000,
-        );
+    # 初回登録キャンペーンのクーポンを付与
+    $app->dbh->query(
+        q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
+        $user_id, 'CP_NEW2024', 3000,
+    );
 
-        # 紹介コードを使った登録
-        if (defined $params->{invitation_code} && $params->{invitation_code} ne '') {
-            # 招待する側の招待数をチェック
-            my $coupons = $app->dbh->select_all(q{SELECT * FROM coupons WHERE code = ? FOR UPDATE}, "INV_" . $params->{invitation_code});
+    # 紹介コードを使った登録
+    if (defined $params->{invitation_code} && $params->{invitation_code} ne '') {
+        # 招待する側の招待数をチェック
+        my $coupons = $app->dbh->select_all(q{SELECT * FROM coupons WHERE code = ? FOR UPDATE}, "INV_" . $params->{invitation_code});
 
-            if (scalar $coupons->@* >= 3) {
-                return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
-            }
-
-            # ユーザーチェック
-            my $inviter = $app->dbh->select_row(q{SELECT * FROM users WHERE invitation_code = ?}, $params->{invitation_code});
-
-            unless ($inviter) {
-                return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
-            }
-
-            # 招待クーポン付与
-            $app->dbh->query(
-                q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-                $user_id, "INV_" . $params->{invitation_code}, 1500,
-            );
-
-            # 招待した人にもRewardを付与
-            $app->dbh->query(
-                q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
-                $inviter->{id}, "INV_" . $params->{invitation_code}, 1000,
-            );
+        if (scalar $coupons->@* >= 3) {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
         }
 
-        $txn->commit;
+        # ユーザーチェック
+        my $inviter = $app->dbh->select_row(q{SELECT * FROM users WHERE invitation_code = ?}, $params->{invitation_code});
 
-        $c->res->cookies->{app_session} = {
-            path  => '/',
-            name  => 'app_session',
-            value => $access_token,
-        };
+        unless ($inviter) {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'この招待コードは使用できません。');
+        }
 
-        my $res = $c->render_json({
-                id              => $user_id,
-                invitation_code => $invitation_code,
-        }, AppPostUsersResponse);
+        # 招待クーポン付与
+        $app->dbh->query(
+            q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
+            $user_id, "INV_" . $params->{invitation_code}, 1500,
+        );
 
-        $res->status(HTTP_CREATED);
-        return $res;
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+        # 招待した人にもRewardを付与
+        $app->dbh->query(
+            q{INSERT INTO coupons (user_id, code, discount) VALUES (?, ?, ?)},
+            $inviter->{id}, "INV_" . $params->{invitation_code}, 1000,
+        );
     }
+
+    $txn->commit;
+
+    $c->res->cookies->{app_session} = {
+        path  => '/',
+        name  => 'app_session',
+        value => $access_token,
+    };
+
+    my $res = $c->render_json({
+            id              => $user_id,
+            invitation_code => $invitation_code,
+    }, AppPostUsersResponse);
+
+    $res->status(HTTP_CREATED);
+    return $res;
+
 }
 
 use constant AppPaymentMethodsRequest => { token => JSON_TYPE_STRING, };
@@ -256,7 +251,6 @@ use constant AppPostRideResponse => {
 
 sub app_post_rides ($app, $c) {
     my $params = $c->req->json_parameters;
-    my $fare;
 
     # unless (check_params($params, AppPostRideRequest)) {
     #     return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
@@ -272,88 +266,82 @@ sub app_post_rides ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    try {
-        my $rides = $app->dbh->select_all(
-            q{SELECT * FROM rides WHERE user_id = ? },
-            $user->{id}
-        );
+    my $rides = $app->dbh->select_all(
+        q{SELECT * FROM rides WHERE user_id = ? },
+        $user->{id}
+    );
 
-        my $counting_ride_count = 0;
+    my $counting_ride_count = 0;
 
-        for my $ride ($rides->@*) {
-            my $status = get_latest_ride_status($app, $ride->{id});
+    for my $ride ($rides->@*) {
+        my $status = get_latest_ride_status($app, $ride->{id});
 
-            if ($status ne 'COMPLETED') {
-                $counting_ride_count++;
-            }
+        if ($status ne 'COMPLETED') {
+            $counting_ride_count++;
         }
+    }
 
-        if ($counting_ride_count > 0) {
-            return $c->halt_json(HTTP_CONFLICT, 'ride already exists');
-        }
+    if ($counting_ride_count > 0) {
+        return $c->halt_json(HTTP_CONFLICT, 'ride already exists');
+    }
 
-        $app->dbh->query(
-            q{INSERT INTO rides (id, user_id, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
+    $app->dbh->query(
+        q{INSERT INTO rides (id, user_id, pickup_latitude, pickup_longitude, destination_latitude, destination_longitude)
 				  VALUES (?, ?, ?, ?, ?, ?)},
-            $ride_id, $user->{id}, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude}
-        );
+        $ride_id, $user->{id}, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude}
+    );
 
-        $app->dbh->query(
-            q{INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)},
-            ulid(), $ride_id, 'MATCHING'
-        );
+    $app->dbh->query(
+        q{INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)},
+        ulid(), $ride_id, 'MATCHING'
+    );
 
-        my $ride_count = $app->dbh->select_one(q{SELECT COUNT(*) AS count FROM rides WHERE user_id = ?}, $user->{id});
+    my $ride_count = $app->dbh->select_one(q{SELECT COUNT(*) AS count FROM rides WHERE user_id = ?}, $user->{id});
 
-        my $coupon;
+    my $coupon;
 
-        if ($ride_count == 1) {
-            # 初回利用で、初回利用クーポンがあれば必ず使う
-            $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL FOR UPDATE}, $user->{id});
+    if ($ride_count == 1) {
+        # 初回利用で、初回利用クーポンがあれば必ず使う
+        $coupon = $app->dbh->select_row(q{SELECT * FROM coupons WHERE user_id = ? AND code = 'CP_NEW2024' AND used_by IS NULL FOR UPDATE}, $user->{id});
 
-            if (!defined $coupon) {
-                # 無ければ他のクーポンを付与された順番に使う
-                $coupon = $app->dbh->select_row(
-                    q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE},
-                    $user->{id},
-                );
-
-                if ($coupon) {
-                    $app->dbh->query(
-                        q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?},
-                        $ride_id, $user->{id}, $coupon->{code},
-                    );
-                }
-            } else {
-                $app->dbh->query(
-                    q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = 'CP_NEW2024'},
-                    $ride_id, $user->{id},
-                );
-            }
-        } else {
-            # 他のクーポンを付与された順番に使う
+        if (!defined $coupon) {
+            # 無ければ他のクーポンを付与された順番に使う
             $coupon = $app->dbh->select_row(
                 q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE},
                 $user->{id},
             );
 
             if ($coupon) {
-                $app->dbh->query(q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?}, $ride_id, $user->{id}, $coupon->{code});
+                $app->dbh->query(
+                    q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?},
+                    $ride_id, $user->{id}, $coupon->{code},
+                );
             }
+        } else {
+            $app->dbh->query(
+                q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = 'CP_NEW2024'},
+                $ride_id, $user->{id},
+            );
         }
-
-        my $ride = $app->dbh->select_row(
-            q{SELECT * FROM rides WHERE id = ?},
-            $ride_id
+    } else {
+        # 他のクーポンを付与された順番に使う
+        $coupon = $app->dbh->select_row(
+            q{SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE},
+            $user->{id},
         );
 
-        my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
-        $txn->commit;
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+        if ($coupon) {
+            $app->dbh->query(q{UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?}, $ride_id, $user->{id}, $coupon->{code});
+        }
     }
+
+    my $ride = $app->dbh->select_row(
+        q{SELECT * FROM rides WHERE id = ?},
+        $ride_id
+    );
+
+    my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
+    $txn->commit;
 
     my $res = $c->render_json({
             ride_id => $ride_id,
@@ -388,14 +376,10 @@ sub app_post_rides_estimated_fare ($app, $c) {
     my $user       = $c->stash->{user};
     my $discounted = 0;
 
-    try {
-        my $txn = $app->dbh->txn_scope;
-        defer { $txn->rollback };
-        $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
-        $txn->commit;
-    } catch ($e) {
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
-    }
+    my $txn = $app->dbh->txn_scope;
+    defer { $txn->rollback };
+    $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
+    $txn->commit;
     return $c->render_json({
             fare     => $discounted,
             discount => calculate_fare($params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude}) - $discounted,
@@ -426,76 +410,71 @@ sub app_post_ride_evaluation ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    try {
-        $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
+    $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
 
-        unless (defined $ride) {
-            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
-        }
-
-        my $status = get_latest_ride_status($app, $ride_id);
-
-        if ($status ne 'ARRIVED') {
-            return $c->halt_json(HTTP_BAD_REQUEST, 'not arrived yet"');
-        }
-
-        my $result = $app->dbh->query(
-            q{UPDATE rides SET evaluation = ? WHERE id = ?},
-            $params->{evaluation}, $ride_id
-        );
-
-        if (!defined $result) {
-            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'sql: no rows in result set');
-        } elsif ($result == 0) {
-            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
-        }
-
-        $app->dbh->query(
-            q{INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)},
-            ulid(), $ride_id, 'COMPLETED'
-        );
-
-        $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
-
-        unless (defined $ride) {
-            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
-        }
-
-        my $payment_token = $app->dbh->select_row(q{SELECT * FROM payment_tokens WHERE user_id = ?}, $ride->{user_id});
-
-        unless (defined $payment_token) {
-            return $c->halt_json(HTTP_BAD_REQUEST, 'payment token not registered');
-        }
-
-        my $fare = calculate_discounted_fare($app, $ride->{user_id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
-
-        my $payment_gateway_request = {
-            amount => $fare,
-        };
-
-        my $payment_gateway_url = $app->dbh->select_one(q{SELECT value FROM settings WHERE name = 'payment_gateway_url'});
-
-        my $error = request_payment_gateway_post_payment($payment_gateway_url, $payment_token->{token}, $payment_gateway_request, sub {
-                return $app->dbh->select_all(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC}, $ride->{user_id});
-        });
-
-        if (defined $error) {
-            if (PaymentGatewayErroredUpstream->check($error)) {
-                return $c->halt_json(HTTP_BAD_GATEWAY, $error->{message});
-            }
-            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $error->{message});
-        }
-
-        $txn->commit;
-
-        return $c->render_json({
-                completed_at => unix_milli_from_str($ride->{updated_at}),
-        }, AppPostRideEvaluationResponse);
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    unless (defined $ride) {
+        return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
     }
+
+    my $status = get_latest_ride_status($app, $ride_id);
+
+    if ($status ne 'ARRIVED') {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'not arrived yet"');
+    }
+
+    my $result = $app->dbh->query(
+        q{UPDATE rides SET evaluation = ? WHERE id = ?},
+        $params->{evaluation}, $ride_id
+    );
+
+    if (!defined $result) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'sql: no rows in result set');
+    } elsif ($result == 0) {
+        return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
+    }
+
+    $app->dbh->query(
+        q{INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)},
+        ulid(), $ride_id, 'COMPLETED'
+    );
+
+    $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
+
+    unless (defined $ride) {
+        return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
+    }
+
+    my $payment_token = $app->dbh->select_row(q{SELECT * FROM payment_tokens WHERE user_id = ?}, $ride->{user_id});
+
+    unless (defined $payment_token) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'payment token not registered');
+    }
+
+    my $fare = calculate_discounted_fare($app, $ride->{user_id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+
+    my $payment_gateway_request = {
+        amount => $fare,
+    };
+
+    my $payment_gateway_url = $app->dbh->select_one(q{SELECT value FROM settings WHERE name = 'payment_gateway_url'});
+
+    my $error = request_payment_gateway_post_payment($payment_gateway_url, $payment_token->{token}, $payment_gateway_request, sub {
+            return $app->dbh->select_all(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at ASC}, $ride->{user_id});
+    });
+
+    if (defined $error) {
+        if (PaymentGateWayErroredUpstream->check($error)) {
+            return $c->halt_json(HTTP_BAD_GATEWAY, $error->{message});
+        }
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $error->{message});
+    }
+
+    $txn->commit;
+
+    return $c->render_json({
+            completed_at => unix_milli_from_str($ride->{updated_at}),
+    }, AppPostRideEvaluationResponse);
+
 }
 
 use constant AppGetNotificationResponseChairStats => {
@@ -530,68 +509,62 @@ sub app_get_notification ($app, $c) {
 
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
-    try {
-        my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
+    my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
-        unless (defined $ride) {
-            return $c->render_json({ data => undef });
-        }
-
-        my $yet_sent_ride_status = $app->dbh->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});
-        my $status;
-
-        unless (defined $yet_sent_ride_status) {
-            $status = get_latest_ride_status($app, $ride->{id});
-        } else {
-            $status = $yet_sent_ride_status->{status};
-        }
-
-        my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
-
-        my $response = {
-            data => {
-                ride_id           => $ride->{id},
-                pickup_coordinate => {
-                    latitude  => $ride->{pickup_latitude},
-                    longitude => $ride->{pickup_longitude},
-                },
-                destination_coordinate => {
-                    latitude  => $ride->{destination_latitude},
-                    longitude => $ride->{destination_longitude},
-                },
-                fare       => $fare,
-                status     => $status,
-                created_at => unix_milli_from_str($ride->{created_at}),
-                update_at  => unix_milli_from_str($ride->{updated_at}),
-            },
-        };
-
-        if ($ride->{chair_id}) {
-            my $chair = $app->dbh->select_row(q{SELECT * FROM chairs WHERE id = ?}, $ride->{chair_id});
-
-            my $stats = get_chair_stats($app, $chair->{id});
-
-            $response->{data}->{chair} = {
-                id    => $chair->{id},
-                name  => $chair->{name},
-                model => $chair->{model},
-                stats => $stats,
-            };
-        }
-
-        if (defined $yet_sent_ride_status && $yet_sent_ride_status->{id} ne '') {
-            $app->dbh->query(q{UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?}, $yet_sent_ride_status->{id});
-        }
-
-        $txn->commit;
-
-        return $c->render_json($response, AppGetNotificationResponse);
-
-    } catch ($e) {
-        warn $e;
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    unless (defined $ride) {
+        return $c->render_json({ data => undef });
     }
+
+    my $yet_sent_ride_status = $app->dbh->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});
+    my $status;
+
+    unless (defined $yet_sent_ride_status) {
+        $status = get_latest_ride_status($app, $ride->{id});
+    } else {
+        $status = $yet_sent_ride_status->{status};
+    }
+
+    my $fare = calculate_discounted_fare($app, $user->{id}, $ride, $ride->{pickup_latitude}, $ride->{pickup_longitude}, $ride->{destination_latitude}, $ride->{destination_longitude});
+
+    my $response = {
+        data => {
+            ride_id           => $ride->{id},
+            pickup_coordinate => {
+                latitude  => $ride->{pickup_latitude},
+                longitude => $ride->{pickup_longitude},
+            },
+            destination_coordinate => {
+                latitude  => $ride->{destination_latitude},
+                longitude => $ride->{destination_longitude},
+            },
+            fare       => $fare,
+            status     => $status,
+            created_at => unix_milli_from_str($ride->{created_at}),
+            update_at  => unix_milli_from_str($ride->{updated_at}),
+        },
+    };
+
+    if ($ride->{chair_id}) {
+        my $chair = $app->dbh->select_row(q{SELECT * FROM chairs WHERE id = ?}, $ride->{chair_id});
+
+        my $stats = get_chair_stats($app, $chair->{id});
+
+        $response->{data}->{chair} = {
+            id    => $chair->{id},
+            name  => $chair->{name},
+            model => $chair->{model},
+            stats => $stats,
+        };
+    }
+
+    if (defined $yet_sent_ride_status && $yet_sent_ride_status->{id} ne '') {
+        $app->dbh->query(q{UPDATE ride_statuses SET app_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?}, $yet_sent_ride_status->{id});
+    }
+
+    $txn->commit;
+
+    return $c->render_json($response, AppGetNotificationResponse);
+
 }
 
 sub get_chair_stats ($app, $chair_id) {
@@ -659,55 +632,49 @@ sub app_get_nearby_chairs ($app, $c) {
 
     my $coordinate = { latitude => $lat, longitude => $lon };
 
-    try {
-        my $chairs        = $app->dbh->select_all(q{SELECT * FROM chairs });
-        my $nearby_chairs = [];
+    my $chairs        = $app->dbh->select_all(q{SELECT * FROM chairs });
+    my $nearby_chairs = [];
 
-        for my $chair ($chairs->@*) {
-            if (!$chair->{is_active}) {
-                next;
-            }
-
-            my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
-
-            if (defined $ride) {
-                # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
-                my $status = get_latest_ride_status($app, $ride->{id});
-
-                if ($status ne 'COMPLETED') {
-                    next;
-                }
-            }
-            # 最新の位置情報を取得
-            my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
-
-            unless (defined $chair_location) {
-                next;
-            }
-
-            if (calculate_distance($coordinate->{latitude}, $coordinate->{longitude}, $chair_location->{latitude}, $chair_location->{longitude}) <= $distance) {
-                push $nearby_chairs->@*, {
-                    id                 => $chair->{id},
-                    name               => $chair->{name},
-                    model              => $chair->{model},
-                    current_coordinate => {
-                        latitude  => $chair_location->{latitude},
-                        longitude => $chair_location->{longitude},
-                    },
-                };
-            }
+    for my $chair ($chairs->@*) {
+        if (!$chair->{is_active}) {
+            next;
         }
 
-        my $retrieved_at = $app->dbh->select_one(q{SELECT CURRENT_TIMESTAMP(6)});
-        return $c->render_json({
-                chairs       => $nearby_chairs,
-                retrieved_at => unix_milli_from_str($retrieved_at),
-        }, AppGetNearbyChairsResponse);
-    } catch ($e) {
-        warn $e;
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+        my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
+
+        if (defined $ride) {
+            # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
+            my $status = get_latest_ride_status($app, $ride->{id});
+
+            if ($status ne 'COMPLETED') {
+                next;
+            }
+        }
+        # 最新の位置情報を取得
+        my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
+
+        unless (defined $chair_location) {
+            next;
+        }
+
+        if (calculate_distance($coordinate->{latitude}, $coordinate->{longitude}, $chair_location->{latitude}, $chair_location->{longitude}) <= $distance) {
+            push $nearby_chairs->@*, {
+                id                 => $chair->{id},
+                name               => $chair->{name},
+                model              => $chair->{model},
+                current_coordinate => {
+                    latitude  => $chair_location->{latitude},
+                    longitude => $chair_location->{longitude},
+                },
+            };
+        }
     }
+
+    my $retrieved_at = $app->dbh->select_one(q{SELECT CURRENT_TIMESTAMP(6)});
+    return $c->render_json({
+            chairs       => $nearby_chairs,
+            retrieved_at => unix_milli_from_str($retrieved_at),
+    }, AppGetNearbyChairsResponse);
 
 }
 

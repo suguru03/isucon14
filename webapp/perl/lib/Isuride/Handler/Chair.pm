@@ -61,14 +61,10 @@ sub chair_post_chairs ($app, $c) {
     my $chair_id     = ulid();
     my $access_token = secure_random_str(32);
 
-    try {
-        $app->dbh->query(
-            "INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-            $chair_id, $owner->{id}, $params->{name}, $params->{model}, 0, $access_token
-        );
-    } catch ($e) {
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
-    }
+    $app->dbh->query(
+        "INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)",
+        $chair_id, $owner->{id}, $params->{name}, $params->{model}, 0, $access_token
+    );
 
     $c->res->cookies->{chair_session} = {
         path  => '/',
@@ -97,15 +93,10 @@ sub chair_post_activity ($app, $c) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
     }
 
-    try {
-        $app->dbh->query(
-            'UPDATE chairs SET is_active = ? WHERE id = ?',
-            $params->{is_active}, $chair->{id}
-        );
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
-    }
+    $app->dbh->query(
+        'UPDATE chairs SET is_active = ? WHERE id = ?',
+        $params->{is_active}, $chair->{id}
+    );
 
     return $c->halt_no_content(HTTP_NO_CONTENT);
 }
@@ -133,37 +124,32 @@ sub chair_post_coordinate ($app, $c) {
 
     my $chair_location_id = ulid();
 
-    try {
-        $app->dbh->query(
-            'INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)',
-            $chair_location_id, $chair->{id}, $params->{latitude}, $params->{longitude},
-        );
+    $app->dbh->query(
+        'INSERT INTO chair_locations (id, chair_id, latitude, longitude) VALUES (?, ?, ?, ?)',
+        $chair_location_id, $chair->{id}, $params->{latitude}, $params->{longitude},
+    );
 
-        my $location = $app->dbh->select_row('SELECT * FROM chair_locations WHERE id = ?', $chair_location_id);
-        die unless $location;
+    my $location = $app->dbh->select_row('SELECT * FROM chair_locations WHERE id = ?', $chair_location_id);
+    die unless $location;
 
-        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ?  ORDER BY updated_at DESC LIMIT 1', $chair->{id});
+    my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ?  ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
-        if (defined $ride) {
-            my $status = get_latest_ride_status($app, $ride->{id});
+    if (defined $ride) {
+        my $status = get_latest_ride_status($app, $ride->{id});
 
-            if ($status ne 'COMPLETED' && $status ne 'CANCELED') {
-                if ($params->{latitude} == $ride->{pickup_latitude} && $params->{longitude} == $ride->{pickup_longitude} && $status eq 'ENROUTE') {
-                    $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride->{id}, 'PICKUP');
-                }
+        if ($status ne 'COMPLETED' && $status ne 'CANCELED') {
+            if ($params->{latitude} == $ride->{pickup_latitude} && $params->{longitude} == $ride->{pickup_longitude} && $status eq 'ENROUTE') {
+                $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride->{id}, 'PICKUP');
+            }
 
-                if ($params->{latitude} == $ride->{destination_latitude} && $params->{longitude} == $ride->{destination_longitude} && $status eq 'CARRYING') {
-                    $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride->{id}, 'ARRIVED');
-                }
+            if ($params->{latitude} == $ride->{destination_latitude} && $params->{longitude} == $ride->{destination_longitude} && $status eq 'CARRYING') {
+                $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride->{id}, 'ARRIVED');
             }
         }
-        $txn->commit;
-        return $c->render_json({ recorded_at => unix_milli_from_str($location->{created_at}) }, ChairPostCoordinateResponse);
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
     }
+    $txn->commit;
+    return $c->render_json({ recorded_at => unix_milli_from_str($location->{created_at}) }, ChairPostCoordinateResponse);
+
 }
 
 use constant SimpleUser => {
@@ -189,56 +175,51 @@ sub chair_get_notification ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    try {
-        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
+    my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
-        unless ($ride) {
-            return $c->render_json({ data => undef });
-        }
-
-        my $status;
-        my $yet_sent_ride_status = $app->dbh->select_row('SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1', $ride->{id});
-
-        if (defined $yet_sent_ride_status) {
-            $status = $yet_sent_ride_status->{status};
-        } else {
-            $status = get_latest_ride_status($app, $ride->{id});
-        }
-
-        my $user = $app->dbh->select_row('SELECT * FROM users WHERE id = ? FOR SHARE', $ride->{user_id});
-
-        unless (defined $user) {
-            return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch user');
-        }
-
-        if (defined $yet_sent_ride_status) {
-            $app->dbh->query('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', $yet_sent_ride_status->{id});
-        }
-
-        $txn->commit;
-        return $c->render_json({
-                data => {
-                    ride_id => $ride->{id},
-                    user    => {
-                        id   => $user->{id},
-                        name => sprintf("%s %s", $user->{firstname}, $user->{lastname})
-                    },
-                    pickup_coordinate => {
-                        latitude  => $ride->{pickup_latitude},
-                        longitude => $ride->{pickup_longitude}
-                    },
-                    destination_coordinate => {
-                        latitude  => $ride->{destination_latitude},
-                        longitude => $ride->{destination_longitude}
-                    },
-                    status => $status,
-                }
-        }, ChairGetNotificationResponse);
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    unless ($ride) {
+        return $c->render_json({ data => undef });
     }
+
+    my $status;
+    my $yet_sent_ride_status = $app->dbh->select_row('SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1', $ride->{id});
+
+    if (defined $yet_sent_ride_status) {
+        $status = $yet_sent_ride_status->{status};
+    } else {
+        $status = get_latest_ride_status($app, $ride->{id});
+    }
+
+    my $user = $app->dbh->select_row('SELECT * FROM users WHERE id = ? FOR SHARE', $ride->{user_id});
+
+    unless (defined $user) {
+        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch user');
+    }
+
+    if (defined $yet_sent_ride_status) {
+        $app->dbh->query('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', $yet_sent_ride_status->{id});
+    }
+
+    $txn->commit;
+    return $c->render_json({
+            data => {
+                ride_id => $ride->{id},
+                user    => {
+                    id   => $user->{id},
+                    name => sprintf("%s %s", $user->{firstname}, $user->{lastname})
+                },
+                pickup_coordinate => {
+                    latitude  => $ride->{pickup_latitude},
+                    longitude => $ride->{pickup_longitude}
+                },
+                destination_coordinate => {
+                    latitude  => $ride->{destination_latitude},
+                    longitude => $ride->{destination_longitude}
+                },
+                status => $status,
+            }
+    }, ChairGetNotificationResponse);
+
 }
 
 use constant PostChairRideIDStatusRequest => {
@@ -258,39 +239,34 @@ sub chair_post_ride_status ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    try {
-        my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
+    my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
 
-        unless (defined $ride) {
-            return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
-        }
-
-        if ($ride->{chair_id} ne $chair->{id}) {
-            return $c->halt_json(HTTP_BAD_REQUEST, 'not assigned to this ride');
-        }
-
-        match($params->{status} : eq) {
-            case ('ENROUTE') {
-                $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'ENROUTE');
-            }
-            case ('CARRYING') {
-                my $status = get_latest_ride_status($app, $ride->{id});
-
-                if ($status ne 'PICKUP') {
-                    return $c->halt_json(HTTP_BAD_REQUEST, 'chair has not arrived yet');
-                }
-                $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'CARRYING');
-            }
-            default {
-                return $c->halt_json(HTTP_BAD_REQUEST, 'invalid status');
-            }
-        }
-
-        $txn->commit;
-        return $c->halt_no_content(HTTP_NO_CONTENT);
-
-    } catch ($e) {
-        return $e->response if $e isa 'Kossy::Exception';
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
+    unless (defined $ride) {
+        return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
     }
+
+    if ($ride->{chair_id} ne $chair->{id}) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'not assigned to this ride');
+    }
+
+    match($params->{status} : eq) {
+        case ('ENROUTE') {
+            $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'ENROUTE');
+        }
+        case ('CARRYING') {
+            my $status = get_latest_ride_status($app, $ride->{id});
+
+            if ($status ne 'PICKUP') {
+                return $c->halt_json(HTTP_BAD_REQUEST, 'chair has not arrived yet');
+            }
+            $app->dbh->query('INSERT INTO ride_statuses (id, ride_id, status) VALUES (?, ?, ?)', ulid(), $ride_id, 'CARRYING');
+        }
+        default {
+            return $c->halt_json(HTTP_BAD_REQUEST, 'invalid status');
+        }
+    }
+
+    $txn->commit;
+    return $c->halt_no_content(HTTP_NO_CONTENT);
+
 }
