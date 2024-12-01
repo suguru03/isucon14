@@ -50,7 +50,6 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 			return err
 		}
 		if actualHash != indexHtmlHash {
-			fmt.Println("foo!", actualHash, indexHtmlHash)
 			return errors.New("/の内容が正しくありません")
 		}
 	}
