@@ -133,7 +133,7 @@ const generateHashesFile = (): Plugin => {
         const files = await new fdir()
           .withRelativePaths()
           .crawl(clientOutputDirectory)
-          .withPromise();console.log('coll', files)
+          .withPromise();
         const hashes = await Promise.all(
           files
             .filter(
