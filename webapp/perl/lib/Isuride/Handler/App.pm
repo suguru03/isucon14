@@ -252,9 +252,9 @@ use constant AppPostRideResponse => {
 sub app_post_rides ($app, $c) {
     my $params = $c->req->json_parameters;
 
-    # unless (check_params($params, AppPostRideRequest)) {
-    #     return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
-    # }
+    unless (check_params($params, AppPostRideRequest)) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    }
 
     if (!defined $params->{pickup_coordinate} || !defined $params->{destination_coordinate}) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(pickup_coordinate, destination_coordinate) are empty');
@@ -353,8 +353,8 @@ sub app_post_rides ($app, $c) {
 }
 
 use constant AppPostRidesEstimatedFareRequest => {
-    pickup_coordinate => json_type_null_or_anyof(Coordinate),
-    pickup_coordinate => json_type_null_or_anyof(Coordinate),
+    pickup_coordinate      => json_type_null_or_anyof(Coordinate),
+    destination_coordinate => json_type_null_or_anyof(Coordinate),
 };
 
 use constant AppPostRidesEstimatedFareResponse => {
