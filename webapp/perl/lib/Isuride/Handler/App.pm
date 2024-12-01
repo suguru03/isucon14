@@ -463,7 +463,7 @@ sub app_post_ride_evaluation ($app, $c) {
     });
 
     if (defined $error) {
-        if (PaymentGateWayErroredUpstream->check($error)) {
+        if (PaymentGatewayErroredUpstream->check($error)) {
             return $c->halt_json(HTTP_BAD_GATEWAY, $error->{message});
         }
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $error->{message});
