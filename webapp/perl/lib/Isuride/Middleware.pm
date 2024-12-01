@@ -2,6 +2,7 @@ package Isuride::Middleware;
 use v5.40;
 use utf8;
 use HTTP::Status qw(:constants);
+use Cpanel::JSON::XS::Type;
 
 sub app_auth_middleware ($app) {
     sub ($self, $c) {
@@ -69,3 +70,23 @@ sub chair_auth_middleware ($app) {
     };
 }
 
+sub error_handling ($app) {
+    sub ($self, $c) {
+        try {
+            $app->($self, $c);
+        } catch ($e) {
+            if ($e isa Kossy::Exception) {
+                if ($e->{response}) {
+                    die $e;
+                }
+
+                my $res = $c->render_json({ message => $e->{message} }, { message => JSON_TYPE_STRING });
+                $res->status($e->{code});
+                return $res;
+            }
+            my $res = $c->render_json({ message => $e }, { message => JSON_TYPE_STRING });
+            $res->status(HTTP_INTERNAL_SERVER_ERROR);
+            return $res;
+        }
+    }
+}
