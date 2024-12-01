@@ -227,7 +227,7 @@ WHERE owner_id = ?
     my $res = {};
 
     for my $chair ($chairs->@*) {
-        my $c = {
+        my $ch = {
             id             => $chair->{id},
             name           => $chair->{name},
             model          => $chair->{model},
@@ -237,10 +237,10 @@ WHERE owner_id = ?
         };
 
         if (defined $chair->{total_distance_updated_at}) {
-            $c->{total_distance_updated_at} = unix_milli_from_str($chair->{total_distance_updated_at});
+            $ch->{total_distance_updated_at} = unix_milli_from_str($chair->{total_distance_updated_at});
         }
 
-        push $res->{chairs}->@*, $c;
+        push $res->{chairs}->@*, $ch;
     }
 
     return $c->render_json($res, OwnerGetChairResponse);
