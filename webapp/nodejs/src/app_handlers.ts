@@ -111,22 +111,21 @@ export const appPostUsers = async (ctx: Context<Environment>) => {
     }
 
     await ctx.var.dbConn.commit();
+    setCookie(ctx, "app_session", accessToken, {
+      path: "/",
+    });
+
+    return ctx.json(
+      {
+        id: userId,
+        invitation_code: invitationCode,
+      },
+      201,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-
-  setCookie(ctx, "app_session", accessToken, {
-    path: "/",
-  });
-
-  return ctx.json(
-    {
-      id: userId,
-      invitation_code: invitationCode,
-    },
-    201,
-  );
 };
 
 export const appPostPaymentMethods = async (ctx: Context<Environment>) => {
@@ -213,16 +212,16 @@ export const appGetRides = async (ctx: Context<Environment>) => {
       items.push(item);
     }
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        rides: items,
+      },
+      200,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      rides: items,
-    },
-    200,
-  );
 };
 
 export const appPostRides = async (ctx: Context<Environment>) => {
@@ -330,17 +329,17 @@ export const appPostRides = async (ctx: Context<Environment>) => {
       reqJson.destination_coordinate.longitude,
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        ride_id: rideId,
+        fare,
+      },
+      202,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      ride_id: rideId,
-      fare,
-    },
-    202,
-  );
 };
 
 export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
@@ -356,9 +355,8 @@ export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
   }
   const user = ctx.var.user;
   await ctx.var.dbConn.beginTransaction();
-  let discounted: number;
   try {
-    discounted = await calculateDiscountedFare(
+    const discounted = await calculateDiscountedFare(
       ctx.var.dbConn,
       user.id,
       null,
@@ -368,23 +366,23 @@ export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
       reqJson.destination_coordinate.longitude,
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        fare: discounted,
+        discount:
+          calculateFare(
+            reqJson.pickup_coordinate.latitude,
+            reqJson.pickup_coordinate.longitude,
+            reqJson.destination_coordinate.latitude,
+            reqJson.destination_coordinate.longitude,
+          ) - discounted,
+      },
+      200,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      fare: discounted,
-      discount:
-        calculateFare(
-          reqJson.pickup_coordinate.latitude,
-          reqJson.pickup_coordinate.longitude,
-          reqJson.destination_coordinate.latitude,
-          reqJson.destination_coordinate.longitude,
-        ) - discounted,
-    },
-    200,
-  );
 };
 
 export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
@@ -461,17 +459,16 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
       },
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        completed_at: new Date().getTime(),
+      },
+      200,
+    );
   } catch (err) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${err}`, 500);
   }
-
-  return ctx.json(
-    {
-      completed_at: new Date().getTime(),
-    },
-    200,
-  );
 };
 
 type AppGetNotificationResponseData = {
@@ -570,11 +567,11 @@ export const appGetNotification = async (ctx: Context<Environment>) => {
     }
 
     await ctx.var.dbConn.commit();
+    return ctx.json(response, 200);
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(response, 200);
 };
 
 type AppGetNotificationResponseChairStats = {
