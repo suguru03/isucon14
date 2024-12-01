@@ -366,9 +366,9 @@ sub app_post_rides_estimated_fare ($app, $c) {
     my $params = $c->req->json_parameters;
     my $fare;
 
-    # unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
-    #     return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
-    # }
+    unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
+        return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
+    }
 
     if (!defined $params->{pickup_coordinate} || !defined $params->{destination_coordinate}) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'required fields(pickup_coordinate, destination_coordinate) are empty');
