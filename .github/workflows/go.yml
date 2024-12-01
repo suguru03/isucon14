@@ -47,9 +47,20 @@ jobs:
           set: |
             webapp.cache-from=type=gha,scope=webapp-go-cache
             webapp.cache-to=type=gha,scope=webapp-go-cache,mode=max
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
       - name: Build bench
         working-directory: ./bench
         run: |
+          task gen-frontend
           task build
       - name: Setup webapp/go
         working-directory: ./development

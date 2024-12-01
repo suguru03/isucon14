@@ -1,10 +1,20 @@
 services:
+  nginx:
+    image: public.ecr.aws/docker/library/nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ../frontend/build/client:/home/isucon/webapp/public
+    ports:
+      - "8080:80"
+    depends_on:
+      - webapp
   webapp:
     build:
       context: ../webapp/ruby
       dockerfile: ../../development/dockerfiles/Dockerfile.ruby
-    ports:
-      - 8080:8080
+    expose:
+      - 8080
     volumes:
       - ../webapp/sql:/home/isucon/webapp/sql
     working_dir: /home/isucon/webapp/ruby
@@ -31,4 +41,4 @@ services:
       start_period: 60s
   matcher:
     image: mirror.gcr.io/curlimages/curl:latest
-    command: /bin/sh -c "while true; do curl -s http://webapp:8080/api/internal/matching; sleep 0.5; done"
+    command: /bin/sh -c "while true; do curl -s http://nginx:8080/api/internal/matching; sleep 0.5; done"

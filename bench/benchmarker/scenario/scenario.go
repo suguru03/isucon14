@@ -35,22 +35,23 @@ import (
 //   - シナリオの結果検証処理を行う
 //   - 料金の整合性をみたいかも
 type Scenario struct {
-	language         string
-	target           string
-	addr             string
-	paymentURL       string
-	contestantLogger *slog.Logger
-	world            *world.World
-	worldCtx         *world.Context
-	paymentServer    *payment.Server
-	step             *isucandar.BenchmarkStep
-	reporter         benchrun.Reporter
-	meter            metric.Meter
-	prepareOnly      bool
-	finalScore       null.Int64
+	language                  string
+	target                    string
+	addr                      string
+	paymentURL                string
+	contestantLogger          *slog.Logger
+	world                     *world.World
+	worldCtx                  *world.Context
+	paymentServer             *payment.Server
+	step                      *isucandar.BenchmarkStep
+	reporter                  benchrun.Reporter
+	meter                     metric.Meter
+	prepareOnly               bool
+	skipStaticFileSanityCheck bool
+	finalScore                null.Int64
 }
 
-func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool) *Scenario {
+func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
 	completedRequestChan := make(chan *world.Request, 1000)
 	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
@@ -140,16 +141,17 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 	}()
 
 	return &Scenario{
-		target:           target,
-		addr:             addr,
-		paymentURL:       paymentURL,
-		contestantLogger: logger,
-		world:            w,
-		worldCtx:         worldCtx,
-		paymentServer:    paymentServer,
-		reporter:         reporter,
-		meter:            meter,
-		prepareOnly:      prepareOnly,
+		target:                    target,
+		addr:                      addr,
+		paymentURL:                paymentURL,
+		contestantLogger:          logger,
+		world:                     w,
+		worldCtx:                  worldCtx,
+		paymentServer:             paymentServer,
+		reporter:                  reporter,
+		meter:                     meter,
+		prepareOnly:               prepareOnly,
+		skipStaticFileSanityCheck: skipStaticFileSanityCheck,
 	}
 }
 

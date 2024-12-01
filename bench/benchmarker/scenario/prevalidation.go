@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
+	"github.com/isucon/isucon14/bench/benchrun"
 )
 
 // 実装の検証を行う
@@ -22,9 +23,62 @@ func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) err
 		ClientIdleConnTimeout: 10 * time.Second,
 	}
 
+	if s.skipStaticFileSanityCheck {
+		s.contestantLogger.Info("静的ファイルのチェックをスキップします")
+	} else {
+		if err := validateFrontendFiles(ctx, clientConfig); err != nil {
+			s.contestantLogger.Error("静的ファイルのチェックに失敗しました", slog.String("error", err.Error()))
+			return err
+		}
+	}
+
 	if err := validateInitialData(ctx, clientConfig); err != nil {
 		s.contestantLogger.Error("初期データのチェックに失敗しました", slog.String("error", err.Error()))
 		return err
+	}
+
+	return nil
+}
+
+func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig) error {
+	frontendHashes := benchrun.FrontendHashesMap
+	indexHtmlHash := frontendHashes["index.html"]
+
+	{
+		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, "/")
+		if err != nil {
+			return err
+		}
+		if actualHash != indexHtmlHash {
+			fmt.Println("foo!", actualHash, indexHtmlHash)
+			return errors.New("/の内容が正しくありません")
+		}
+	}
+
+	for path, expectedHash := range frontendHashes {
+		// check separately
+		if path == "/index.html" {
+			continue
+		}
+
+		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, path)
+		if err != nil {
+			return err
+		}
+		if actualHash != expectedHash {
+			return errors.New(path + "の内容が正しくありません")
+		}
+	}
+
+	// check index.html for other paths
+	{
+		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, "/client")
+		if err != nil {
+			return err
+		}
+		if actualHash != indexHtmlHash {
+			return errors.New("/clientの内容が正しくありません")
+		}
 	}
 
 	return nil

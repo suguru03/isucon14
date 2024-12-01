@@ -1,5 +1,9 @@
 import { vitePlugin as remix } from "@remix-run/dev";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { createHash } from "crypto";
+import { fdir } from "fdir";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { readFile, writeFile } from "fs/promises";
+import path, { join } from "path";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
@@ -113,6 +117,43 @@ const customConsolePlugin: Plugin = {
   },
 };
 
+const generateHashesFile = (): Plugin => {
+  const clientOutputDirectory = path.resolve(__dirname, "./build/client");
+  const benchRoot = path.resolve(__dirname, "../bench");
+  return {
+    name: "generate-hashes-file",
+    apply(_config, { isSsrBuild }) {
+      return !!isSsrBuild;
+    },
+    enforce: "post",
+    writeBundle: {
+      order: "post",
+      sequential: true,
+      handler: async () => {
+        const files = await new fdir()
+          .withRelativePaths()
+          .crawl(clientOutputDirectory)
+          .withPromise();console.log('coll', files)
+        const hashes = await Promise.all(
+          files
+            .filter(
+              (file) => file.replaceAll(/\\/g, "/") !== ".vite/manifest.json",
+            )
+            .map(async (file) => {
+              const hash = createHash("md5");
+              hash.update(await readFile(join(clientOutputDirectory, file)));
+              return [file.replaceAll(/\\/g, "/"), hash.digest("hex")];
+            }),
+        );
+        await writeFile(
+          join(benchRoot, "./benchrun/frontend_hashes.json"),
+          JSON.stringify(Object.fromEntries(hashes)),
+        );
+      },
+    },
+  };
+};
+
 export const config = {
   plugins: [
     remix({
@@ -125,6 +166,7 @@ export const config = {
     }),
     tsconfigPaths(),
     customConsolePlugin,
+    generateHashesFile(),
   ],
   define: {
     [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
