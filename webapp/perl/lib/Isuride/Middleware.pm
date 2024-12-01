@@ -85,7 +85,7 @@ sub error_handling ($app) {
                 return $res;
             }
             my $res = $c->render_json({ message => $e }, { message => JSON_TYPE_STRING });
-            $res->status();
+            $res->status(HTTP_INTERNAL_SERVER_ERROR);
             return $res;
         }
     }
