@@ -5,7 +5,7 @@ import {
 } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import type { SimulatorChair } from "~/types";
-import { setSimulatorCoordinate } from "~/utils/storage";
+import { setSimulatorCurrentCoordinate } from "~/utils/storage";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -35,7 +35,7 @@ const move = (
 
 const currentCoodinatePost = (coordinate: Coordinate) => {
   if (coordinate) {
-    setSimulatorCoordinate(coordinate);
+    setSimulatorCurrentCoordinate(coordinate);
     fetchChairPostCoordinate({
       body: coordinate,
     }).catch((e) => {
