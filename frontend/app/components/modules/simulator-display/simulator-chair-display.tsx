@@ -10,21 +10,24 @@ import { twMerge } from "tailwind-merge";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
 
 import { RideStatus } from "~/apiClient/apiSchemas";
+import { useEmulator } from "~/components/hooks/use-emulate";
 import { ChairIcon } from "~/components/icon/chair";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
+import { Text } from "~/components/primitives/text/text";
+import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
 
 const LabelStyleList = {
-  MATCHING: ["空車", "text-sky-600"],
-  ENROUTE: ["迎車", "text-amber-600"],
-  PICKUP: ["乗車待ち", "text-amber-600"],
-  CARRYING: ["賃走", "text-red-600"],
-  ARRIVED: ["到着", "text-green-600"],
-  COMPLETED: ["完了", "text-green-600"],
+  MATCHING: ["空車", "text-sky-500"],
+  ENROUTE: ["迎車", "text-amber-500"],
+  PICKUP: ["乗車待ち", "text-amber-500"],
+  CARRYING: ["賃走", "text-red-500"],
+  ARRIVED: ["到着", "text-emerald-500"],
+  COMPLETED: ["完了", "text-emerald-500"],
 } as const;
 
 const StatusList: FC<
@@ -72,7 +75,7 @@ const CoordinatePickup: FC<{
         onClick={handleOpenModal}
       />
       {visibleModal && (
-        <div className="fixed min-w-[1200px] min-h-[1000px] inset-0">
+        <div className="fixed inset-0 z-10">
           <Modal
             ref={modalRef}
             center
@@ -102,9 +105,8 @@ const CoordinatePickup: FC<{
   );
 };
 
-export const SimulatorChairInformation: FC<{ chair: SimulatorChair }> = ({
-  chair,
-}) => {
+export const SimulatorChairDisplay: FC = () => {
+  const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
 
   const toggleActivate = useCallback(
@@ -120,42 +122,49 @@ export const SimulatorChairInformation: FC<{ chair: SimulatorChair }> = ({
   );
 
   const rideStatus = useMemo(
-    () => chair.chairNotification?.status ?? "MATCHING",
+    () => chair?.chairNotification?.status ?? "MATCHING",
     [chair],
   );
 
+  useEmulator(chair);
+
   return (
-    <div>
-      <div className="flex">
-        <ChairIcon model={chair.model} className="size-12 mx-3 my-auto" />
-        <div className="right-container m-3 flex-grow">
-          <div className="right-top flex">
-            <div className="right-top-left flex-grow">
-              <div className="chair-name font-bold">
-                <p>{chair.name}</p>
-                <p className="ml-1 text-xs font-normal text-neutral-500">
-                  {chair.model}
-                </p>
+    <div className="bg-white rounded shadow w-[400px] px-4 py-2">
+      {chair ? (
+        <div className="flex">
+          <ChairIcon model={chair.model} className="size-12 mx-3 my-auto" />
+          <div className="right-container m-3 flex-grow">
+            <div className="right-top flex">
+              <div className="right-top-left flex-grow">
+                <div className="chair-name font-bold">
+                  <p>{chair.name}</p>
+                  <p className="ml-1 text-xs font-normal text-neutral-500">
+                    {chair.model}
+                  </p>
+                </div>
+                <StatusList className="my-2" currentStatus={rideStatus} />
               </div>
-              <StatusList className="my-2" currentStatus={rideStatus} />
+              <div className="right-top-right flex items-center">
+                <span className="text-xs font-bold text-neutral-500 mr-3">
+                  配車受付
+                </span>
+                <Toggle
+                  checked={activate}
+                  onUpdate={(v) => toggleActivate(v)}
+                  id="chair-activity"
+                />
+              </div>
             </div>
-            <div className="right-top-right flex items-center">
-              <span className="text-xs font-bold text-neutral-500 mr-3">
-                配車受付
-              </span>
-              <Toggle value={activate} onUpdate={(v) => toggleActivate(v)} />
+            <div className="right-bottom">
+              <CoordinatePickup coordinateState={chair.coordinateState} />
             </div>
-          </div>
-          <div className="right-bottom">
-            <CoordinatePickup coordinateState={chair.coordinateState} />
           </div>
         </div>
-      </div>
-      <p className="text-xs px-2 mt-2">
-        <span className="text-gray-500 me-1">Session ID:</span>
-        {/* TODO: Session IDの表示 */}
-        <span>xxxx</span>
-      </p>
+      ) : (
+        <Text className="m-4" size="sm">
+          椅子のデータがありません
+        </Text>
+      )}
     </div>
   );
 };

@@ -1,38 +1,23 @@
-import { FC, useEffect } from "react";
+import { FC, RefObject, useEffect } from "react";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
-import { useEmulator } from "~/components/hooks/use-emulate";
-import { Text } from "~/components/primitives/text/text";
-import { useSimulatorContext } from "~/contexts/simulator-context";
-import { SimulatorChairInformation } from "../simulator-chair-information/simulator-chair-information";
+import { SimulatorChairDisplay } from "../simulator-display/simulator-chair-display";
+import { SimulatorConfigDisplay } from "../simulator-display/simulator-config-display";
 
-export const Simulator: FC = () => {
-  const { targetChair } = useSimulatorContext();
+export const Simulator: FC<{ simulatorRef: RefObject<HTMLIFrameElement> }> = ({
+  simulatorRef,
+}) => {
   useEffect(() => {
-    const abortController = new AbortController();
     try {
-      void fetchChairPostActivity(
-        { body: { is_active: true } },
-        abortController.signal,
-      );
-    } catch (e) {
-      if (typeof e === "string") {
-        console.error(`CONSOLE ERROR: ${e}`);
-      }
+      void fetchChairPostActivity({ body: { is_active: true } });
+    } catch (error) {
+      console.error(error);
     }
-    return () => abortController.abort();
   }, []);
 
-  useEmulator(targetChair);
-
   return (
-    <div className="bg-white rounded shadow w-[400px] px-4 py-2">
-      {targetChair !== undefined ? (
-        <SimulatorChairInformation chair={targetChair} />
-      ) : (
-        <Text className="m-4" size="sm">
-          椅子のデータがありません
-        </Text>
-      )}
+    <div className="space-y-4">
+      <SimulatorChairDisplay />
+      <SimulatorConfigDisplay simulatorRef={simulatorRef} />
     </div>
   );
 };

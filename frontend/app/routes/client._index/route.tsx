@@ -7,6 +7,7 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+import { useGhostChairs } from "~/components/hooks/use-ghost-chairs";
 import { CampaignBanner } from "~/components/modules/campaign-banner/campaign-banner";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
@@ -40,7 +41,7 @@ export default function Index() {
   const [direction, setDirection] = useState<Direction | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
   const [fare, setFare] = useState<number>();
-  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>();
+  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>([]);
   const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
   const onCenterMove = useCallback(
     (coordinate: Coordinate) => {
@@ -76,6 +77,7 @@ export default function Index() {
   }, [internalRideStatus]);
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
+  const emulateChairs = useGhostChairs();
 
   useEffect(() => {
     setInternalRideStatus(status);
@@ -171,7 +173,7 @@ export default function Index() {
         to={destLocation}
         onMove={onCenterMove}
         initialCoordinate={selectedLocation}
-        chairs={displayedChairs}
+        chairs={[...displayedChairs, ...emulateChairs]}
         className="flex-1"
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
