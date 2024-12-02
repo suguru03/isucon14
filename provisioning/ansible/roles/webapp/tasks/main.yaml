@@ -48,6 +48,9 @@
 - name: Task for isuride-matcher
   include_tasks: matcher.yaml
 
+- name: Task for isuride-payment_mock
+  include_tasks: payment_mock.yaml
+
 - name: Tasks for isuride-go
   include_tasks: go.yaml
 
