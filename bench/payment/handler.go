@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type PostPaymentRequest struct {
@@ -102,7 +103,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// エラーを返した場合でもキューに入る場合がある
-	if rand.IntN(5) == 0 {
+	if rand.IntN(5) < 4 {
 		go s.queue.process(p)
 		// 処理の終了を待たない
 		go func() {
@@ -138,6 +139,7 @@ func NewResponsePayment(p *Payment) ResponsePayment {
 }
 
 func (s *Server) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(300 * time.Millisecond)
 	token, err := getTokenFromAuthorizationHeader(r)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
