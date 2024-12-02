@@ -7,7 +7,7 @@ const randomInt = (min: number, max: number) =>
 
 // 街には椅子が集まりやすい
 const townGhostChairs = TownList.flatMap(({ centerCoordinate, name }) => {
-  return [...Array(8).keys()].map((i) => ({
+  return [...Array(7).keys()].map((i) => ({
     id: name + "-ghost-" + i,
     current_coordinate: {
       latitude: randomInt(
@@ -19,7 +19,7 @@ const townGhostChairs = TownList.flatMap(({ centerCoordinate, name }) => {
         centerCoordinate.longitude + 50,
       ),
     },
-    model: String(i),
+    model: String(i + name),
     name: "ghost",
   }));
 });
