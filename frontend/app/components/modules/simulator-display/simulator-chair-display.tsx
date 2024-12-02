@@ -1,7 +1,10 @@
-import { FC, useCallback, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import colors from "tailwindcss/colors";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
+import { RideStatus } from "~/apiClient/apiSchemas";
 import { useEmulator } from "~/components/hooks/use-emulate";
 import { ChairIcon } from "~/components/icon/chair";
+import { PinIcon } from "~/components/icon/pin";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
@@ -10,6 +13,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
+import { isArrayIncludes } from "~/utils/includes";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
 const CoordinatePickup: FC<{
@@ -77,6 +81,25 @@ const CoordinatePickup: FC<{
 export const SimulatorChairDisplay: FC = () => {
   const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
+  const [progress, setProgress] = useState<{
+    pickup: number;
+    destlocation: number;
+  }>({
+    pickup: 0,
+    destlocation: 0,
+  });
+
+  // TODO: 仮実装
+  useEffect(() => {
+    let _progress = 0;
+    setInterval(() => {
+      _progress = (_progress + 0.1) % 2;
+      setProgress({
+        pickup: Math.max(_progress - 1, 0),
+        destlocation: Math.max(_progress - 1, 0),
+      });
+    }, 1000);
+  }, []);
 
   const toggleActivate = useCallback(
     (activity: boolean) => {
@@ -111,6 +134,57 @@ export const SimulatorChairDisplay: FC = () => {
               </div>
             </div>
             <CoordinatePickup coordinateState={chair.coordinateState} />
+            <div className="flex items-center mt-8">
+              <SimulatorChairRideStatus
+                className="shrink-0"
+                currentStatus={rideStatus}
+              />
+              {/* Progress */}
+              <div className="flex border-b ms-6 pb-1 w-full">
+                {/* PICKUP -> ARRIVED */}
+                <div className="flex w-1/2">
+                  <PinIcon color={colors.red[500]} width={20} height={20} />
+                  {/* road */}
+                  <div className="relative w-full ms-6">
+                    {isArrayIncludes(
+                      [
+                        "CARRYING",
+                        "ARRIVED",
+                        "COMPLETED",
+                      ] as const satisfies RideStatus[],
+                      rideStatus,
+                    ) && (
+                      <ChairIcon
+                        model={chair.model}
+                        className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
+                        style={{ right: `${progress.destlocation * 100}%` }}
+                      />
+                    )}
+                  </div>
+                </div>
+                {/* ENROUTE -> PICKUP */}
+                <div className="flex w-1/2">
+                  <PinIcon color={colors.black} width={20} height={20} />
+                  {/* road */}
+                  <div className="relative w-full ms-6">
+                    {isArrayIncludes(
+                      [
+                        "MATCHING",
+                        "ENROUTE",
+                        "PICKUP",
+                      ] as const satisfies RideStatus[],
+                      rideStatus,
+                    ) && (
+                      <ChairIcon
+                        model={chair.model}
+                        className={`size-6 absolute top-[-2px] ${rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
+                        style={{ right: `${progress.pickup * 100}%` }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <Text className="m-4" size="sm">
