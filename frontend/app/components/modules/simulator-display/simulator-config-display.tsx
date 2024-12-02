@@ -20,7 +20,7 @@ export const SimulatorConfigDisplay: FC<{
         "*",
       );
     };
-    const timer = setTimeout(sendMessage, 500);
+    const timer = setTimeout(sendMessage, 800);
     return () => {
       clearTimeout(timer);
     };

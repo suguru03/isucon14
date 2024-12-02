@@ -145,7 +145,7 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
 
     const polling = async () => {
       try {
-        const abortController = new AbortController();
+        abortController = new AbortController();
         const currentNotification = await fetchAppGetNotification(
           {},
           abortController.signal,
@@ -161,20 +161,21 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             return prev;
           }
         });
-        timeoutId = setTimeout(() => void polling, retryAfterMs);
+        timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
         if (isClientApiError(error)) {
           console.error(error.message);
         }
       }
     };
-    timeoutId = setTimeout(() => void polling, retryAfterMs);
+    timeoutId = setTimeout(() => void polling(), retryAfterMs);
     return () => {
       abortController?.abort();
       clearTimeout(timeoutId);
     };
   }, [accessToken, isSSE, navigate, retryAfterMs]);
 
+  // TODO: 後で消す
   const responseClientAppRequest = useMemo<ClientAppRide | undefined>(() => {
     const debugStatus =
       (searchParams.get("debug_status") as RideStatus) ?? undefined;
