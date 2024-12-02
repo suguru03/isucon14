@@ -3,8 +3,8 @@ services:
     image: public.ecr.aws/docker/library/nginx:latest
     container_name: nginx
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ../frontend/build/client:/home/isucon/webapp/public
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../frontend/build/client:/home/isucon/webapp/public:ro
     ports:
       - "8080:80"
     depends_on:
