@@ -23,3 +23,8 @@ tasks:
     cmds:
       - go run . generate-init-data
       - mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-create-info --no-tablespaces -h 127.0.0.1 -u isucon -pisucon --databases isuride -n --ignore-table=isuride.settings --ignore-table=isuride.chair_models | gzip > ../webapp/sql/3-initial-data.sql.gz
+  gen-frontend:
+    dir: ../frontend
+    cmds:
+      - pnpm i
+      - pnpm run build

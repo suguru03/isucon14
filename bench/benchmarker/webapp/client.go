@@ -36,7 +36,6 @@ func NewClient(config ClientConfig) (*Client, error) {
 	ag, err := agent.NewAgent(
 		agent.WithBaseURL(config.TargetBaseURL),
 		agent.WithTimeout(10*time.Second),
-		agent.WithNoCache(),
 		agent.WithTransport(trs),
 	)
 	if err != nil {

@@ -3,8 +3,9 @@ services:
     image: public.ecr.aws/docker/library/nginx:latest
     container_name: nginx
     volumes:
-      - ../webapp/php:/home/isucon/webapp/php
-      - ./php/nginx/conf.d:/etc/nginx/conf.d
+      - ../webapp/php:/home/isucon/webapp/php:ro
+      - ./php/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../frontend/build/client:/home/isucon/webapp/public:ro
     ports:
       - "8080:80"
     depends_on:
@@ -18,6 +19,8 @@ services:
     init: true
     container_name: webapp
     working_dir: /home/isucon/webapp/php
+    expose:
+      - 9000
     volumes:
       - ../webapp/sql:/home/isucon/webapp/sql
       - ./php/php-fpm.d/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
@@ -43,6 +46,7 @@ services:
       - ../webapp/sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
+      start_period: 60s
   matcher:
     image: mirror.gcr.io/curlimages/curl:latest
-    command: /bin/sh -c "while true; do curl -s http://host.docker.internal:8080/api/internal/matching; sleep 0.5; done"
+    command: /bin/sh -c "while true; do curl -s http://nginx:8080/api/internal/matching; sleep 0.5; done"

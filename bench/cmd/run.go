@@ -28,6 +28,8 @@ var (
 	failOnError bool
 	// メトリクスを出力するかどうか
 	exportMetrics bool
+	// 静的ファイルのチェックをスキップするかどうか
+	skipStaticFileSanityCheck bool
 )
 
 var runCmd = &cobra.Command{
@@ -62,7 +64,7 @@ var runCmd = &cobra.Command{
 
 		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()))
 
-		s := scenario.NewScenario(targetURL, targetAddr, paymentURL, contestantLogger, reporter, otel.Meter("isucon14_benchmarker"), loadTimeoutSeconds == 0)
+		s := scenario.NewScenario(targetURL, targetAddr, paymentURL, contestantLogger, reporter, otel.Meter("isucon14_benchmarker"), loadTimeoutSeconds == 0, skipStaticFileSanityCheck)
 
 		b, err := isucandar.NewBenchmark(
 			isucandar.WithoutPanicRecover(),
@@ -105,5 +107,6 @@ func init() {
 	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds (When this value is 0, load does not run and only prepare is run)")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", false, "fail on error")
 	runCmd.Flags().BoolVar(&exportMetrics, "metrics", false, "whether to output metrics")
+	runCmd.Flags().BoolVarP(&skipStaticFileSanityCheck, "skip-static-sanity-check", "s", false, "skip static file validation")
 	rootCmd.AddCommand(runCmd)
 }
