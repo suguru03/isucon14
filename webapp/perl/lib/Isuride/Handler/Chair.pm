@@ -11,7 +11,6 @@ use Cpanel::JSON::XS::Type qw(
     JSON_TYPE_STRING
     JSON_TYPE_INT
     JSON_TYPE_BOOL
-    JSON_TYPE_FLOAT
     json_type_arrayof
     json_type_null_or_anyof
 );
@@ -19,13 +18,8 @@ use Cpanel::JSON::XS::Type qw(
 use Isuride::Models qw(Coordinate);
 use Isuride::Time qw(unix_milli_from_str);
 use Isuride::Util qw(
-    InitialFare
-    FarePerDistance
     secure_random_str
     get_latest_ride_status
-    calculate_distance
-    calculate_fare
-    calculate_sale
 
     check_params
 );

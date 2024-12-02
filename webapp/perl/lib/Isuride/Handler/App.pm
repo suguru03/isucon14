@@ -25,7 +25,6 @@ use Isuride::Util qw(
     get_latest_ride_status
     calculate_distance
     calculate_fare
-    calculate_sale
 
     check_params
 );
@@ -364,7 +363,6 @@ use constant AppPostRidesEstimatedFareResponse => {
 
 sub app_post_rides_estimated_fare ($app, $c) {
     my $params = $c->req->json_parameters;
-    my $fare;
 
     unless (check_params($params, AppPostRidesEstimatedFareRequest)) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
@@ -378,8 +376,11 @@ sub app_post_rides_estimated_fare ($app, $c) {
 
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
+
     $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
+
     $txn->commit;
+
     return $c->render_json({
             fare     => $discounted,
             discount => calculate_fare($params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude}) - $discounted,
@@ -397,7 +398,6 @@ use constant AppPostRideEvaluationResponse => {
 sub app_post_ride_evaluation ($app, $c) {
     my $params  = $c->req->json_parameters;
     my $ride_id = $c->args->{ride_id};
-    my $ride;
 
     unless (check_params($params, AppPostRideEvaluationRequest)) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
@@ -410,7 +410,7 @@ sub app_post_ride_evaluation ($app, $c) {
     my $txn = $app->dbh->txn_scope;
     defer { $txn->rollback };
 
-    $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
+    my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
 
     unless (defined $ride) {
         return $c->halt_json(HTTP_NOT_FOUND, 'ride not found');
