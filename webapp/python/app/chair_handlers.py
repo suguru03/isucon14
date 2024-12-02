@@ -206,8 +206,6 @@ def chair_get_notification(
 
         if row is None:
             ride_status = get_latest_ride_status(conn, ride.id)
-            if ride_status == "":
-                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
         else:
             yet_sent_ride_status = RideStatus.model_validate(row)
             assert yet_sent_ride_status is not None
