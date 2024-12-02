@@ -22,7 +22,6 @@ import { setCookie } from "hono/cookie";
 import {
   calculateDistance,
   calculateFare,
-  calculateSale,
   FARE_PER_DISTANCE,
   getLatestRideStatus,
   INITIAL_FARE,
