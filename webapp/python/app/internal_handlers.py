@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
 from sqlalchemy import text
 
 from .models import Chair, Ride
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/internal")
 
 # このAPIをインスタンス内から一定間隔で叩かせることで、椅子とライドをマッチングさせる
 @router.get("/matching", status_code=HTTPStatus.NO_CONTENT)
-def internal_get_matching(response: Response) -> Response:
+def internal_get_matching() -> None:
     # MEMO: 一旦最も待たせているリクエストに適当な空いている椅子マッチさせる実装とする。おそらくもっといい方法があるはず…
     with engine.connect() as conn:
         row = conn.execute(
@@ -21,8 +21,7 @@ def internal_get_matching(response: Response) -> Response:
         ).fetchone()
 
     if not row:
-        response.status_code = HTTPStatus.NO_CONTENT
-        return response
+        return
 
     ride = Ride.model_validate(row)
     matched: Chair | None = None
@@ -36,8 +35,7 @@ def internal_get_matching(response: Response) -> Response:
                 )
             ).fetchone()
         if row is None:
-            response.status_code = HTTPStatus.NO_CONTENT
-            return response
+            return
         matched = Chair.model_validate(row)
 
         with engine.connect() as conn:
@@ -53,8 +51,7 @@ def internal_get_matching(response: Response) -> Response:
             break
 
     if not empty:
-        response.status_code = HTTPStatus.NO_CONTENT
-        return response
+        return
 
     with engine.begin() as transaction:
         assert matched
@@ -62,6 +59,3 @@ def internal_get_matching(response: Response) -> Response:
             text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
             {"chair_id": matched.id, "id": ride.id},
         )
-
-    response.status_code = HTTPStatus.NO_CONTENT
-    return response
