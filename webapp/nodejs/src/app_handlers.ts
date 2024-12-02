@@ -609,7 +609,7 @@ async function getChairStats(
       if (status.status === "COMPLETED") {
         isCompleted = true;
       }
-      if (!(arrivedAt && pickupedAt)) {
+      if (!arrivedAt || !pickupedAt) {
         continue;
       }
       if (!isCompleted) {
