@@ -461,7 +461,7 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
     await ctx.var.dbConn.commit();
     return ctx.json(
       {
-        completed_at: ride.completed_at.getTime(),
+        completed_at: ride.updated_at.getTime(),
       },
       200,
     );
@@ -684,6 +684,10 @@ export const appGetNearbyChairs = async (ctx: Context<Environment>) => {
         "SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
         [chair.id],
       );
+
+      if (!chairLocation) {
+        continue;
+      }
 
       if (
         calculateDistance(
