@@ -78,6 +78,66 @@ const CoordinatePickup: FC<{
   );
 };
 
+const SimulatorProgress: FC<{progress: {
+  pickup: number
+  destlocation: number,
+}, chair: {
+  model: string,
+  rideStatus?: RideStatus,
+}}> = ({
+  progress, chair
+}) => {
+  return (
+    <div className="flex items-center mt-8">
+    {/* Progress */}
+    <div className="flex border-b ms-6 pb-1 w-full">
+      {/* PICKUP -> ARRIVED */}
+      <div className="flex w-1/2">
+        <PinIcon color={colors.red[500]} width={20} height={20} />
+        {/* road */}
+        <div className="relative w-full ms-6">
+          {isArrayIncludes(
+            [
+              "CARRYING",
+              "ARRIVED",
+              "COMPLETED",
+            ] as const satisfies RideStatus[],
+            chair.rideStatus,
+          ) && (
+            <ChairIcon
+              model={chair.model}
+              className={`size-6 absolute top-[-2px] ${chair.rideStatus === "CARRYING" ? "animate-shake" : ""}`}
+              style={{ right: `${progress.destlocation * 100}%` }}
+            />
+          )}
+        </div>
+      </div>
+      {/* ENROUTE -> PICKUP */}
+      <div className="flex w-1/2">
+        <PinIcon color={colors.black} width={20} height={20} />
+        {/* road */}
+        <div className="relative w-full ms-6">
+          {isArrayIncludes(
+            [
+              "MATCHING",
+              "ENROUTE",
+              "PICKUP",
+            ] as const satisfies RideStatus[],
+            chair.rideStatus,
+          ) && (
+            <ChairIcon
+              model={chair.model}
+              className={`size-6 absolute top-[-2px] ${chair.rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
+              style={{ right: `${progress.pickup * 100}%` }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+  )
+}
+
 export const SimulatorChairDisplay: FC = () => {
   const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
@@ -134,57 +194,7 @@ export const SimulatorChairDisplay: FC = () => {
               </div>
             </div>
             <CoordinatePickup coordinateState={chair.coordinateState} />
-            <div className="flex items-center mt-8">
-              <SimulatorChairRideStatus
-                className="shrink-0"
-                currentStatus={rideStatus}
-              />
-              {/* Progress */}
-              <div className="flex border-b ms-6 pb-1 w-full">
-                {/* PICKUP -> ARRIVED */}
-                <div className="flex w-1/2">
-                  <PinIcon color={colors.red[500]} width={20} height={20} />
-                  {/* road */}
-                  <div className="relative w-full ms-6">
-                    {isArrayIncludes(
-                      [
-                        "CARRYING",
-                        "ARRIVED",
-                        "COMPLETED",
-                      ] as const satisfies RideStatus[],
-                      rideStatus,
-                    ) && (
-                      <ChairIcon
-                        model={chair.model}
-                        className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                        style={{ right: `${progress.destlocation * 100}%` }}
-                      />
-                    )}
-                  </div>
-                </div>
-                {/* ENROUTE -> PICKUP */}
-                <div className="flex w-1/2">
-                  <PinIcon color={colors.black} width={20} height={20} />
-                  {/* road */}
-                  <div className="relative w-full ms-6">
-                    {isArrayIncludes(
-                      [
-                        "MATCHING",
-                        "ENROUTE",
-                        "PICKUP",
-                      ] as const satisfies RideStatus[],
-                      rideStatus,
-                    ) && (
-                      <ChairIcon
-                        model={chair.model}
-                        className={`size-6 absolute top-[-2px] ${rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
-                        style={{ right: `${progress.pickup * 100}%` }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SimulatorProgress progress={progress} chair={{rideStatus: chair.chairNotification?.status, model: chair.model}}/>
           </div>
         ) : (
           <Text className="m-4" size="sm">
