@@ -1,10 +1,5 @@
 version: "3"
 
-includes:
-  go:
-    taskfile: webapp/go/Taskfile.yml
-    dir: webapp/go
-
 tasks:
   init:
     cmds:
@@ -24,6 +19,24 @@ tasks:
       - webapp/sql/1-schema.sql
     deps:
       - up
-  backend:
+  go:backend:
     - task: go:build
     - task: go:run
+  go:build:
+    cmd: go build -o isuride{{exeExt}} .
+    dir: webapp/go
+    sources:
+      - ./*.go
+      - go.mod
+      - go.sum
+  go:run:
+    cmd: ./isuride{{exeExt}}
+    dir: webapp/go
+  go:run:vm:
+    cmds:
+      - go build -o isuride{{exeExt}} .
+      - sudo systemctl restart isuride-go
+    dir: webapp/go
+  perl:run:
+    cmd: carton exec plackup -s Starlet -p 8080 -Ilib -r app.psgi
+    dir: webapp/perl
