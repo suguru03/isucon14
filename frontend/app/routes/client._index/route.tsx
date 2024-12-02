@@ -66,6 +66,7 @@ export default function Index() {
       locationSelectorModalRef.current.close();
     }
   }, [direction, selectedLocation]);
+
   const isStatusModalOpen = useMemo(() => {
     return (
       internalRideStatus &&
@@ -74,6 +75,7 @@ export default function Index() {
       )
     );
   }, [internalRideStatus]);
+
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   const emulateChairs = useGhostChairs();
@@ -129,6 +131,7 @@ export default function Index() {
 
   useEffect(() => {
     if (!centerCoordinate) return;
+    if (isStatusModalOpen) return;
     let abortController: AbortController | undefined;
     let timeoutId: NodeJS.Timeout | undefined;
 
@@ -161,7 +164,7 @@ export default function Index() {
       clearTimeout(timeoutId);
       abortController?.abort();
     };
-  }, [centerCoordinate]);
+  }, [centerCoordinate, isStatusModalOpen]);
 
   return (
     <>
