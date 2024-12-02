@@ -2,6 +2,8 @@ package Isuride::Handler::Owner;
 use v5.40;
 use utf8;
 use Time::Moment;
+use experimental qw(defer);
+no warnings 'experimental::defer';
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -9,13 +11,12 @@ use Cpanel::JSON::XS::Type qw(
     JSON_TYPE_STRING
     JSON_TYPE_INT
     JSON_TYPE_INT_OR_NULL
-    JSON_TYPE_FLOAT
     JSON_TYPE_BOOL
     json_type_arrayof
     json_type_null_or_anyof
 );
 
-use Isuride::Time qw(unix_milli_from_str unix_milli_from_time_moment);
+use Isuride::Time qw(unix_milli_from_str);
 use Isuride::Util qw(
     secure_random_str
     calculate_sale
@@ -113,7 +114,10 @@ sub owner_get_sales ($app, $c) {
         $until_tm = Time::Moment->from_epoch($parsed / 1000);
     }
 
-    my $owner  = $c->stash->{owner};
+    my $owner = $c->stash->{owner};
+    my $txn   = $app->dbh->txn_scope;
+    defer { $txn->rollback; }
+
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
     my $response_data = {
@@ -197,29 +201,30 @@ use constant OwnerGetChairResponse => {
 
 sub owner_get_chairs ($app, $c) {
     my $owner  = $c->stash->{owner};
-    my $chairs = $app->dbh->select_all(q{
-SELECT id,
-       owner_id,
-       name,
-       access_token,
-       model,
-       is_active,
-       created_at,
-       updated_at,
-       IFNULL(total_distance, 0) AS total_distance,
-       total_distance_updated_at
-FROM chairs
-       LEFT JOIN (SELECT chair_id,
-                          SUM(IFNULL(distance, 0)) AS total_distance,
-                          MAX(created_at)          AS total_distance_updated_at
-                   FROM (SELECT chair_id,
-                                created_at,
-                                ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
-                                ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
-                         FROM chair_locations) tmp
-                   GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
-WHERE owner_id = ?
-    }, $owner->{id});
+    my $chairs = $app->dbh->select_all(<<~EOL
+            SELECT id,
+                   owner_id,
+                   name,
+                   access_token,
+                   model,
+                   is_active,
+                   created_at,
+                   updated_at,
+                   IFNULL(total_distance, 0) AS total_distance,
+                   total_distance_updated_at
+            FROM chairs
+                   LEFT JOIN (SELECT chair_id,
+                                      SUM(IFNULL(distance, 0)) AS total_distance,
+                                      MAX(created_at)          AS total_distance_updated_at
+                               FROM (SELECT chair_id,
+                                            created_at,
+                                            ABS(latitude - LAG(latitude) OVER (PARTITION BY chair_id ORDER BY created_at)) +
+                                            ABS(longitude - LAG(longitude) OVER (PARTITION BY chair_id ORDER BY created_at)) AS distance
+                                     FROM chair_locations) tmp
+                               GROUP BY chair_id) distance_table ON distance_table.chair_id = chairs.id
+            WHERE owner_id = ?
+    EOL
+        , $owner->{id});
 
     unless (defined $chairs) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'failed to fetch chairs');

@@ -238,7 +238,7 @@ const ChairLayer: FC<{
 }> = ({ chairs }) => {
   return (
     <div className="flex w-full h-full absolute top-0 left-0 select-none">
-      {chairs?.map(({ id, model, current_coordinate }) => {
+      {chairs?.map(({ id, model, current_coordinate }, i) => {
         const pos = coordinateToPos(current_coordinate);
         return (
           <ChairIcon
@@ -248,7 +248,10 @@ const ChairLayer: FC<{
             height={ChairSize}
             className="absolute top-0 left-0 transition-transform duration-300 ease-in-out"
             style={{
-              transform: `translate(${-pos.x - PinSize / 2}px, ${-pos.y - PinSize - 8}px)`,
+              transform: [
+                `translate(${-pos.x - PinSize / 2}px, ${-pos.y - PinSize - 8}px)`,
+                i % 2 === 0 ? "scale(-1, 1)" : "",
+              ].join(" "),
             }}
           />
         );

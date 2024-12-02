@@ -16,6 +16,11 @@ on:
       - .github/workflows/rust.yml
       - development/compose-rust.yml
       - development/dockerfiles/Dockerfile.rust
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build

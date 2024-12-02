@@ -117,14 +117,10 @@ sub post_initialize ($self, $c) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, "failed to initialize: $e");
     }
 
-    try {
-        $self->dbh->query(
-            q{UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'},
-            $params->{payment_server}
-        );
-    } catch ($e) {
-        return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, $e);
-    }
+    $self->dbh->query(
+        q{UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'},
+        $params->{payment_server}
+    );
 
     return $c->render_json({ language => 'perl' }, PostInitializeResponse);
 }

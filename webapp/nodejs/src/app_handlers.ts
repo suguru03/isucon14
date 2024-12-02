@@ -111,22 +111,21 @@ export const appPostUsers = async (ctx: Context<Environment>) => {
     }
 
     await ctx.var.dbConn.commit();
+    setCookie(ctx, "app_session", accessToken, {
+      path: "/",
+    });
+
+    return ctx.json(
+      {
+        id: userId,
+        invitation_code: invitationCode,
+      },
+      201,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-
-  setCookie(ctx, "app_session", accessToken, {
-    path: "/",
-  });
-
-  return ctx.json(
-    {
-      id: userId,
-      invitation_code: invitationCode,
-    },
-    201,
-  );
 };
 
 export const appPostPaymentMethods = async (ctx: Context<Environment>) => {
@@ -160,26 +159,36 @@ type GetAppRidesResponseItem = {
 
 export const appGetRides = async (ctx: Context<Environment>) => {
   const user = ctx.var.user;
-  const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
-    "SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC",
-    [user.id],
-  );
+  await ctx.var.dbConn.beginTransaction();
   const items: GetAppRidesResponseItem[] = [];
-  for (const ride of rides) {
-    const status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
-    if (status !== "COMPLETED") {
-      continue;
-    }
+  try {
+    const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
+      "SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC",
+      [user.id],
+    );
+    for (const ride of rides) {
+      const status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
+      if (status !== "COMPLETED") {
+        continue;
+      }
 
-    let item: GetAppRidesResponseItem;
-    try {
+      const fare = await calculateDiscountedFare(
+        ctx.var.dbConn,
+        user.id,
+        ride,
+        ride.pickup_latitude,
+        ride.pickup_longitude,
+        ride.destination_latitude,
+        ride.destination_longitude,
+      );
+
       const [[chair]] = await ctx.var.dbConn.query<
         Array<Chair & RowDataPacket>
       >("SELECT * FROM chairs WHERE id = ?", [ride.chair_id]);
       const [[owner]] = await ctx.var.dbConn.query<
         Array<Owner & RowDataPacket>
       >("SELECT * FROM owners WHERE id = ?", [chair.owner_id]);
-      item = {
+      const item = {
         id: ride.id,
         pickup_coordinate: {
           latitude: ride.pickup_latitude,
@@ -189,7 +198,7 @@ export const appGetRides = async (ctx: Context<Environment>) => {
           latitude: ride.destination_latitude,
           longitude: ride.destination_longitude,
         },
-        fare: calculateSale(ride),
+        fare,
         evaluation: ride.evaluation,
         requested_at: ride.created_at.getTime(),
         completed_at: ride.updated_at.getTime(),
@@ -200,17 +209,19 @@ export const appGetRides = async (ctx: Context<Environment>) => {
           owner: owner.name,
         },
       };
-    } catch (e) {
-      return ctx.text(`${e}`, 500);
+      items.push(item);
     }
-    items.push(item);
+    await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        rides: items,
+      },
+      200,
+    );
+  } catch (e) {
+    await ctx.var.dbConn.rollback();
+    return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      rides: items,
-    },
-    200,
-  );
 };
 
 export const appPostRides = async (ctx: Context<Environment>) => {
@@ -318,17 +329,17 @@ export const appPostRides = async (ctx: Context<Environment>) => {
       reqJson.destination_coordinate.longitude,
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        ride_id: rideId,
+        fare,
+      },
+      202,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      ride_id: rideId,
-      fare,
-    },
-    202,
-  );
 };
 
 export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
@@ -344,9 +355,8 @@ export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
   }
   const user = ctx.var.user;
   await ctx.var.dbConn.beginTransaction();
-  let discounted: number;
   try {
-    discounted = await calculateDiscountedFare(
+    const discounted = await calculateDiscountedFare(
       ctx.var.dbConn,
       user.id,
       null,
@@ -356,23 +366,23 @@ export const appPostRidesEstimatedFare = async (ctx: Context<Environment>) => {
       reqJson.destination_coordinate.longitude,
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        fare: discounted,
+        discount:
+          calculateFare(
+            reqJson.pickup_coordinate.latitude,
+            reqJson.pickup_coordinate.longitude,
+            reqJson.destination_coordinate.latitude,
+            reqJson.destination_coordinate.longitude,
+          ) - discounted,
+      },
+      200,
+    );
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(
-    {
-      fare: discounted,
-      discount:
-        calculateFare(
-          reqJson.pickup_coordinate.latitude,
-          reqJson.pickup_coordinate.longitude,
-          reqJson.destination_coordinate.latitude,
-          reqJson.destination_coordinate.longitude,
-        ) - discounted,
-    },
-    200,
-  );
 };
 
 export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
@@ -449,17 +459,16 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
       },
     );
     await ctx.var.dbConn.commit();
+    return ctx.json(
+      {
+        completed_at: ride.updated_at.getTime(),
+      },
+      200,
+    );
   } catch (err) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${err}`, 500);
   }
-
-  return ctx.json(
-    {
-      completed_at: new Date().getTime(),
-    },
-    200,
-  );
 };
 
 type AppGetNotificationResponseData = {
@@ -558,11 +567,11 @@ export const appGetNotification = async (ctx: Context<Environment>) => {
     }
 
     await ctx.var.dbConn.commit();
+    return ctx.json(response, 200);
   } catch (e) {
     await ctx.var.dbConn.rollback();
     return ctx.text(`${e}`, 500);
   }
-  return ctx.json(response, 200);
 };
 
 type AppGetNotificationResponseChairStats = {
@@ -675,6 +684,10 @@ export const appGetNearbyChairs = async (ctx: Context<Environment>) => {
         "SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
         [chair.id],
       );
+
+      if (!chairLocation) {
+        continue;
+      }
 
       if (
         calculateDistance(

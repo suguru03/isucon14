@@ -54,7 +54,7 @@ export default function Index() {
                 <td className="p-4">
                   <div className="">
                     <span
-                      className={`before:content-['●'] before:mr-2 ${chair.active ? "before:text-green-600" : "before:text-red-600"}`}
+                      className={`before:content-['●'] before:mr-2 ${chair.active ? "before:text-emerald-600" : "before:text-red-600"}`}
                     >
                       {chair.active ? "稼働中" : "停止中"}
                     </span>

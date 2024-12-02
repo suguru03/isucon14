@@ -16,6 +16,11 @@ on:
       - .github/workflows/perl.yml
       - development/compose-perl.yml
       - development/dockerfiles/Dockerfile.perl
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build

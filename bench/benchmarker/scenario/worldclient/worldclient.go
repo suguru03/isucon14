@@ -237,6 +237,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 							ID:   data.User.ID,
 							Name: data.User.Name,
 						},
+						Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
 						Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
 					}
 				case api.RideStatusENROUTE:

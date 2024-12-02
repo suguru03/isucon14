@@ -140,3 +140,15 @@ func (r *ChairLocation) GetPeriodsByCoord(c Coordinate) []GetPeriodsByCoordResul
 	}
 	return result
 }
+
+func (r *ChairLocation) GetCoordByTime(t time.Time) Coordinate {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, entry := range slices.Backward(r.history) {
+		if entry.ServerTime.Valid && !entry.ServerTime.Time.After(t) {
+			return entry.Coord
+		}
+	}
+	return r.Initial
+}

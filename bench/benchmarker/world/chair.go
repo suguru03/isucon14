@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"slices"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/guregu/null/v5"
@@ -49,12 +50,16 @@ type Chair struct {
 	Client ChairClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
+	// ActivatedAt Active化レスポンスが返ってきた日時
+	ActivatedAt time.Time
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
 	// notificationConn 通知ストリームコネクション
 	notificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
+	// forceStopped 強制停止されているかどうか
+	forceStopped bool
 
 	// detour 今回のリクエストで迂回するかどうか
 	detour bool
@@ -87,6 +92,14 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer c.tickDone.Done()
+
+	if c.forceStopped {
+		if c.notificationConn != nil {
+			c.notificationConn.Close()
+			c.notificationConn = nil
+		}
+		return nil
+	}
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(c.notificationQueue) {
@@ -225,6 +238,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.matchingData = nil
+			c.World.EmptyChairs.Add(c)
 		}
 
 	// アサインされたリクエストが存在するが、詳細を未取得
@@ -235,7 +249,14 @@ func (c *Chair) Tick(ctx *Context) error {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合はどうしようもできないのでハングする
 			return nil
 		}
-		// TODO: matchingDataのUserとDestinationのバリデーション
+
+		if !c.matchingData.Destination.Equals(req.DestinationPoint) ||
+			!c.matchingData.Pickup.Equals(req.PickupPoint) ||
+			c.matchingData.User.ID != req.User.ServerID ||
+			c.matchingData.User.Name != req.User.RegisteredData.FirstName+" "+req.User.RegisteredData.LastName {
+			c.forceStopped = true
+			return CodeError(ErrorCodeChairReceivedDataIsWrong)
+		}
 
 		// 椅子がリクエストを正常に認識する
 		c.Request = req
@@ -254,6 +275,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 進行中のリクエストが存在せず、稼働中
 	case c.State == ChairStateActive:
+		c.World.EmptyChairs.Add(c)
 		break
 
 	// 未稼働
@@ -276,6 +298,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToActivate, err)
 		}
+		defer func() { c.ActivatedAt = time.Now() }()
 
 		// 出勤
 		c.Location.PlaceTo(&LocationEntry{
@@ -403,6 +426,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			slog.Debug(fmt.Sprintf("code:%d", ErrorCodeChairAlreadyHasRequest), slog.Any("ride", c.Request))
 			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("chair_id: %s, current_ride_id: %s, got: %s", c.ServerID, c.matchingData.ServerRequestID, data.ServerRequestID))
 		}
+		c.World.EmptyChairs.Delete(c)
 		c.matchingData = data
 
 	case *ChairNotificationEventCompleted:
