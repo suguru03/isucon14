@@ -15,7 +15,7 @@ import {
   fetchChairGetNotification,
 } from "~/apiClient/apiComponents";
 import type { ClientChairRide, SimulatorChair } from "~/types";
-import { getSimulatorCoordinate } from "~/utils/storage";
+import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;
@@ -195,7 +195,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const request = useClientChairNotification(simulateChairData?.id);
 
   const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
-    const coordinate = getSimulatorCoordinate();
+    const coordinate = getSimulatorCurrentCoordinate();
     return coordinate ?? { latitude: 0, longitude: 0 };
   });
 

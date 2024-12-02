@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
 import { RideStatus } from "~/apiClient/apiSchemas";
@@ -15,6 +15,7 @@ import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
 import { isArrayIncludes } from "~/utils/includes";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
+import { getSimulatorStartCoordinate } from "~/utils/storage";
 
 const CoordinatePickup: FC<{
   coordinateState: SimulatorChair["coordinateState"];
@@ -78,88 +79,109 @@ const CoordinatePickup: FC<{
   );
 };
 
-const SimulatorProgress: FC<{progress: {
-  pickup: number
-  destlocation: number,
-}, chair: {
-  model: string,
-  rideStatus?: RideStatus,
-}}> = ({
-  progress, chair
-}) => {
+const SimulatorProgress: FC<{
+  model: string;
+  rideStatus: RideStatus | undefined;
+  current: Coordinate | undefined;
+  pickup?: Coordinate;
+  destlocation?: Coordinate;
+}> = ({ model, rideStatus, pickup, destlocation, current }) => {
+  const startCoordinate = useMemo(() => {
+    return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
+  }, [rideStatus]);
+
+  const pickupProgress: number = useMemo(() => {
+    if (
+      rideStatus === "MATCHING" ||
+      !rideStatus ||
+      !pickup ||
+      !startCoordinate ||
+      !current
+    )
+      return 0;
+    if (
+      rideStatus === "PICKUP" ||
+      rideStatus === "ARRIVED" ||
+      rideStatus === "CARRYING" ||
+      rideStatus === "COMPLETED"
+    )
+      return 100;
+    const distance =
+      Math.abs(pickup?.latitude - startCoordinate.latitude) +
+      Math.abs(pickup?.longitude - startCoordinate.longitude);
+    const progress =
+      Math.abs(pickup?.latitude - current?.latitude) +
+      Math.abs(pickup?.longitude - current.longitude);
+    return Math.floor(((distance - progress) / distance) * 100);
+  }, [rideStatus, pickup, current, startCoordinate]);
+
+  const distanceProgress: number = useMemo(() => {
+    if (
+      rideStatus === "MATCHING" ||
+      rideStatus === "PICKUP" ||
+      rideStatus === "ENROUTE" ||
+      !rideStatus ||
+      !destlocation ||
+      !pickup ||
+      !current
+    )
+      return 0;
+    if (rideStatus === "ARRIVED" || rideStatus === "COMPLETED") return 100;
+    const distance =
+      Math.abs(destlocation?.latitude - pickup.latitude) +
+      Math.abs(destlocation?.longitude - pickup.longitude);
+    const progress =
+      Math.abs(destlocation?.latitude - current.latitude) +
+      Math.abs(destlocation?.longitude - current.longitude);
+    return Math.floor(((distance - progress) / distance) * 100);
+  }, [rideStatus, pickup, destlocation, current]);
+
   return (
     <div className="flex items-center mt-8">
-    {/* Progress */}
-    <div className="flex border-b ms-6 pb-1 w-full">
-      {/* PICKUP -> ARRIVED */}
-      <div className="flex w-1/2">
-        <PinIcon color={colors.red[500]} width={20} height={20} />
-        {/* road */}
-        <div className="relative w-full ms-6">
-          {isArrayIncludes(
-            [
-              "CARRYING",
-              "ARRIVED",
-              "COMPLETED",
-            ] as const satisfies RideStatus[],
-            chair.rideStatus,
-          ) && (
-            <ChairIcon
-              model={chair.model}
-              className={`size-6 absolute top-[-2px] ${chair.rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-              style={{ right: `${progress.destlocation * 100}%` }}
-            />
-          )}
+      <div className="flex border-b ms-6 pb-1 w-full">
+        <div className="flex w-1/2">
+          <PinIcon color={colors.red[500]} width={20} height={20} />
+          <div className="relative w-full ms-6">
+            {isArrayIncludes(
+              [
+                "PICKUP",
+                "CARRYING",
+                "ARRIVED",
+                "COMPLETED",
+              ] as const satisfies RideStatus[],
+              rideStatus,
+            ) && (
+              <ChairIcon
+                model={model}
+                className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
+                style={{ right: `${distanceProgress}%` }}
+              />
+            )}
+          </div>
         </div>
-      </div>
-      {/* ENROUTE -> PICKUP */}
-      <div className="flex w-1/2">
-        <PinIcon color={colors.black} width={20} height={20} />
-        {/* road */}
-        <div className="relative w-full ms-6">
-          {isArrayIncludes(
-            [
-              "MATCHING",
-              "ENROUTE",
-              "PICKUP",
-            ] as const satisfies RideStatus[],
-            chair.rideStatus,
-          ) && (
-            <ChairIcon
-              model={chair.model}
-              className={`size-6 absolute top-[-2px] ${chair.rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
-              style={{ right: `${progress.pickup * 100}%` }}
-            />
-          )}
+        <div className="flex w-1/2">
+          <PinIcon color={colors.black} width={20} height={20} />
+          <div className="relative w-full ms-6">
+            {isArrayIncludes(
+              ["MATCHING", "ENROUTE"] as const satisfies RideStatus[],
+              rideStatus,
+            ) && (
+              <ChairIcon
+                model={model}
+                className={`size-6 absolute top-[-2px] ${rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
+                style={{ right: `${pickupProgress}%` }}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  )
-}
+  );
+};
 
 export const SimulatorChairDisplay: FC = () => {
   const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
-  const [progress, setProgress] = useState<{
-    pickup: number;
-    destlocation: number;
-  }>({
-    pickup: 0,
-    destlocation: 0,
-  });
-
-  // TODO: 仮実装
-  useEffect(() => {
-    let _progress = 0;
-    setInterval(() => {
-      _progress = (_progress + 0.1) % 2;
-      setProgress({
-        pickup: Math.max(_progress - 1, 0),
-        destlocation: Math.max(_progress - 1, 0),
-      });
-    }, 1000);
-  }, []);
 
   const toggleActivate = useCallback(
     (activity: boolean) => {
@@ -180,21 +202,53 @@ export const SimulatorChairDisplay: FC = () => {
 
   useEmulator(chair);
 
+  const ChairDetailInfo = memo(
+    function ChairDetailInfo({
+      chairModel,
+      chairName,
+      rideStatus,
+    }: {
+      chairModel: string;
+      chairName: string;
+      rideStatus: RideStatus;
+    }) {
+      return chairModel && chairName && rideStatus ? (
+        <div className="flex items-center space-x-4">
+          <ChairIcon model={chairModel} className="size-12 shrink-0" />
+          <div className="space-y-0.5 w-full">
+            <Text bold>{chairName}</Text>
+            <Text className="text-xs text-neutral-500">{chairModel}</Text>
+            <SimulatorChairRideStatus currentStatus={rideStatus} />
+          </div>
+        </div>
+      ) : null;
+    },
+    (prev, next) =>
+      prev.chairModel === next.chairModel &&
+      prev.chairName === next.chairName &&
+      prev.rideStatus === next.rideStatus,
+  );
+
   return (
     <>
       <div className="bg-white rounded shadow px-6 py-4 w-full">
         {chair ? (
           <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <ChairIcon model={chair.model} className="size-12 shrink-0" />
-              <div className="space-y-0.5 w-full">
-                <Text bold>{chair.name}</Text>
-                <Text className="text-xs text-neutral-500">{chair.model}</Text>
-                <SimulatorChairRideStatus currentStatus={rideStatus} />
-              </div>
-            </div>
+            <ChairDetailInfo
+              chairModel={chair.model}
+              chairName={chair.name}
+              rideStatus={rideStatus}
+            />
             <CoordinatePickup coordinateState={chair.coordinateState} />
-            <SimulatorProgress progress={progress} chair={{rideStatus: chair.chairNotification?.status, model: chair.model}}/>
+            <SimulatorProgress
+              model={chair.model}
+              rideStatus={rideStatus}
+              current={chair.coordinateState.coordinate}
+              pickup={chair.chairNotification?.payload?.coordinate?.pickup}
+              destlocation={
+                chair.chairNotification?.payload?.coordinate?.destination
+              }
+            />
           </div>
         ) : (
           <Text className="m-4" size="sm">

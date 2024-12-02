@@ -116,12 +116,12 @@ export default function Index() {
     }
     setInternalRideStatus("MATCHING");
     try {
-      void await fetchAppPostRides({
+      void (await fetchAppPostRides({
         body: {
           pickup_coordinate: currentLocation,
           destination_coordinate: destLocation,
         },
-      });
+      }));
     } catch (error) {
       if (isClientApiError(error)) {
         console.error(error);
