@@ -8,7 +8,7 @@ import { calculateSale } from "./common.js";
 import { ulid } from "ulid";
 
 export const ownerPostOwners = async (ctx: Context<Environment>) => {
-  const reqJson = await ctx.req.json();
+  const reqJson = await ctx.req.json<{ name: string }>();
   const { name } = reqJson;
   if (!name) {
     return ctx.text("some of required fields(name) are empty", 400);
