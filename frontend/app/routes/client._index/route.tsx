@@ -34,13 +34,12 @@ type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
-  const { status, payload: payload } = useUserContext();
+  const { status } = useUserContext();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
   const [direction, setDirection] = useState<Direction | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
-  const [fare, setFare] = useState<number>();
   const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>([]);
   const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
   const onCenterMove = useCallback(
@@ -115,13 +114,12 @@ export default function Index() {
     }
     setInternalRideStatus("MATCHING");
     try {
-      const rides = await fetchAppPostRides({
+      void await fetchAppPostRides({
         body: {
           pickup_coordinate: currentLocation,
           destination_coordinate: destLocation,
         },
       });
-      setFare(rides.fare);
     } catch (error) {
       if (isClientApiError(error)) {
         console.error(error);
@@ -258,9 +256,9 @@ export default function Index() {
           {internalRideStatus === "MATCHING" && (
             <Matching
               optimistic={{
-                destLocation: payload?.coordinate?.destination,
-                pickup: payload?.coordinate?.pickup,
-                fare: fare,
+                destLocation,
+                pickup: currentLocation,
+                fare: estimatePrice?.fare,
               }}
             />
           )}
