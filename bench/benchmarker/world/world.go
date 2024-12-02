@@ -328,9 +328,9 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	for chair := range w.EmptyChairs.Iter() {
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			c := chair.Location.GetCoordByTime(baseTime)
-
 			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
-				return fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID)
+				// ソフトエラーとして処理する
+				go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID))})
 			}
 		}
 	}
