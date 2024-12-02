@@ -175,7 +175,7 @@ const generateHashesFile = (): Plugin => {
           JSON.stringify(Object.fromEntries(hashes)),
         );
 
-        let manifestFileName = files.find((file) =>
+        const manifestFileName = files.find((file) =>
           file.startsWith("assets/manifest-"),
         );
         if (!manifestFileName) throw new Error("manifest file not found");
@@ -186,16 +186,16 @@ const generateHashesFile = (): Plugin => {
         if (!manifestFile.includes("window.__remixManifest"))
           throw new Error("different manifest file found");
 
-        const manifestFileContent: {
-          entry: RouteInformation;
-          routes: Record<string, RouteInformation>;
-        } = (0, eval)(
+        const manifestFileContent = (0, eval)(
           "Object.assign(" +
             manifestFile
               .replace(/^window\.__remixManifest=/, "")
               .replace(/;$/, "") +
             ")",
-        );
+        ) as {
+          entry: RouteInformation;
+          routes: Record<string, RouteInformation>;
+        };
         const favicons = files
           .filter(
             (file) => file === "favicon.ico" || file === "favicon-32x32.png",
@@ -212,19 +212,20 @@ const generateHashesFile = (): Plugin => {
         const modulesForEachPath = Object.fromEntries(
           Object.values(manifestFileContent.routes)
             .filter((route) => "path" in route)
-            .map((route) =>
-              unique([
-                "/" + route.path!,
+            .map(
+              (route) =>
                 [
-                  ...getAllFilesFromSingleRoute(manifestFileContent.entry),
-                  ...getAllFilesFromRouteIncludingAncestors(
-                    route,
-                    manifestFileContent.routes,
-                  ),
-                  ...favicons,
-                  ...(route.path === "client" ? assetsForMap : []),
-                ],
-              ]),
+                  "/" + route.path!,
+                  unique([
+                    ...getAllFilesFromSingleRoute(manifestFileContent.entry),
+                    ...getAllFilesFromRouteIncludingAncestors(
+                      route,
+                      manifestFileContent.routes,
+                    ),
+                    ...favicons,
+                    ...(route.path === "client" ? assetsForMap : []),
+                  ]),
+                ] as [string, string[]],
             ),
         );
         await writeFile(
