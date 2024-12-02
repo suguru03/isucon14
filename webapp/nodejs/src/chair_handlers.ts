@@ -6,6 +6,7 @@ import { getLatestRideStatus } from "./common.js";
 import type { Environment } from "./types/hono.js";
 import type {
   ChairLocation,
+  Coordinate,
   Owner,
   Ride,
   RideStatus,
@@ -14,7 +15,11 @@ import type {
 import { secureRandomStr } from "./utils/random.js";
 
 export const chairPostChairs = async (ctx: Context<Environment>) => {
-  const reqJson = await ctx.req.json();
+  const reqJson = await ctx.req.json<{
+    name: string;
+    model: string;
+    chair_register_token: string;
+  }>();
   const { name, model, chair_register_token } = reqJson;
   if (!name || !model || !chair_register_token) {
     return ctx.text(
@@ -43,7 +48,7 @@ export const chairPostChairs = async (ctx: Context<Environment>) => {
 
 export const chairPostActivity = async (ctx: Context<Environment>) => {
   const chair = ctx.var.chair;
-  const reqJson = await ctx.req.json();
+  const reqJson = await ctx.req.json<{ is_active: boolean }>();
   try {
     await ctx.var.dbConn.query("UPDATE chairs SET is_active = ? WHERE id = ?", [
       reqJson.is_active,
@@ -56,7 +61,7 @@ export const chairPostActivity = async (ctx: Context<Environment>) => {
 };
 
 export const chairPostCoordinate = async (ctx: Context<Environment>) => {
-  const reqJson = await ctx.req.json();
+  const reqJson = await ctx.req.json<Coordinate>();
   const chair = ctx.var.chair;
   const chairLocationID = ulid();
   await ctx.var.dbConn.beginTransaction();
@@ -174,7 +179,7 @@ export const chairGetNotification = async (ctx: Context<Environment>) => {
 export const chairPostRideStatus = async (ctx: Context<Environment>) => {
   const rideID = ctx.req.param("ride_id");
   const chair = ctx.var.chair;
-  const reqJson = await ctx.req.json();
+  const reqJson = await ctx.req.json<{ status: string }>();
   await ctx.var.dbConn.beginTransaction();
   try {
     const [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
