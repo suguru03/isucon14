@@ -161,14 +161,14 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
             return prev;
           }
         });
-        timeoutId = setTimeout(() => void polling, retryAfterMs);
+        timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
         if (isClientApiError(error)) {
           console.error(error.message);
         }
       }
     };
-    timeoutId = setTimeout(() => void polling, retryAfterMs);
+    timeoutId = setTimeout(() => void polling(), retryAfterMs);
     return () => {
       abortController?.abort();
       clearTimeout(timeoutId);
