@@ -10,6 +10,8 @@ requires 'Time::Moment';
 requires 'Furl';
 requires 'HTTP::Parser::XS';
 requires 'Syntax::Keyword::Match';
+requires 'IO::Async';
+requires 'Twiggy';
 
 # DB
 requires 'DBD::mysql', '5.010';
