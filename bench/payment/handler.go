@@ -85,6 +85,8 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// キューが詰まっていても確率で成功させる
 	if rand.IntN(5) == 0 {
+		slog.Debug("決済キューが詰まったが、確率で成功させる")
+
 		go s.queue.process(p)
 		<-p.processChan
 		p.locked.Store(false)
@@ -107,6 +109,9 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 			<-p.processChan
 			p.locked.Store(false)
 		}()
+		slog.Debug("決済キューが詰まったが、キューに積んでエラーを返す")
+	} else {
+		slog.Debug("決済キューが詰まって、キューに積まずにエラーを返す")
 	}
 
 	// 不安定なエラーを再現

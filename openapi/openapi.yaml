@@ -369,6 +369,7 @@ paths:
       tags:
         - app
       summary: ユーザーの近くにいる椅子を取得する
+      description: 椅子からサーバーに記録された座標情報は3秒以内に反映されている必要があります。
       operationId: app-get-nearby-chairs
       parameters:
         - name: latitude
