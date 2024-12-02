@@ -65,7 +65,6 @@ app.post(
   appAuthMiddleware,
   appPostRidesEstimatedFare,
 );
-app.get("/api/app/rides/:ride_id", appAuthMiddleware, appGetRides);
 app.post(
   "/api/app/rides/:ride_id/evaluation",
   appAuthMiddleware,
