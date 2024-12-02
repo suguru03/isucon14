@@ -238,7 +238,6 @@ export const appPostRides = async (ctx: Context<Environment>) => {
   const user = ctx.var.user;
   const rideId = ulid();
   await ctx.var.dbConn.beginTransaction();
-  let fare: number;
   try {
     const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
       "SELECT * FROM rides WHERE user_id = ?",
@@ -272,7 +271,6 @@ export const appPostRides = async (ctx: Context<Environment>) => {
     const [[{ "COUNT(*)": rideCount }]] = await ctx.var.dbConn.query<
       Array<CountResult & RowDataPacket>
     >("SELECT COUNT(*) FROM rides WHERE user_id = ?", [user.id]);
-    let coupon: Coupon & RowDataPacket;
     if (rideCount === 1) {
       // 初回利用で、初回利用クーポンがあれば必ず使う
       const [[coupon]] = await ctx.var.dbConn.query<
@@ -319,7 +317,7 @@ export const appPostRides = async (ctx: Context<Environment>) => {
       "SELECT * FROM rides WHERE id = ?",
       [rideId],
     );
-    fare = await calculateDiscountedFare(
+    const fare = await calculateDiscountedFare(
       ctx.var.dbConn,
       user.id,
       ride,
