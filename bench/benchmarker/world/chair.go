@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"slices"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/guregu/null/v5"
@@ -49,6 +50,8 @@ type Chair struct {
 	Client ChairClient
 	// Rand 専用の乱数
 	Rand *rand.Rand
+	// ActivatedAt Active化レスポンスが返ってきた日時
+	ActivatedAt time.Time
 	// tickDone 行動が完了しているかどうか
 	tickDone tickDone
 	// notificationConn 通知ストリームコネクション
@@ -225,6 +228,7 @@ func (c *Chair) Tick(ctx *Context) error {
 			// 進行中のリクエストが無い状態にする
 			c.Request = nil
 			c.matchingData = nil
+			c.World.EmptyChairs.Add(c)
 		}
 
 	// アサインされたリクエストが存在するが、詳細を未取得
@@ -254,6 +258,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 	// 進行中のリクエストが存在せず、稼働中
 	case c.State == ChairStateActive:
+		c.World.EmptyChairs.Add(c)
 		break
 
 	// 未稼働
@@ -276,6 +281,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToActivate, err)
 		}
+		c.ActivatedAt = time.Now()
 
 		// 出勤
 		c.Location.PlaceTo(&LocationEntry{
@@ -403,6 +409,7 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			slog.Debug(fmt.Sprintf("code:%d", ErrorCodeChairAlreadyHasRequest), slog.Any("ride", c.Request))
 			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("chair_id: %s, current_ride_id: %s, got: %s", c.ServerID, c.matchingData.ServerRequestID, data.ServerRequestID))
 		}
+		c.World.EmptyChairs.Delete(c)
 		c.matchingData = data
 
 	case *ChairNotificationEventCompleted:
