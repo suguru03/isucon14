@@ -20,9 +20,12 @@ $ ansible-playbook -i inventory/sacloud benchmark.yml
 
 ## 証明書について
 
-*.t.isucon.dev の証明書はISUCON12予選のレポジトリにあるものを使っています
-https://github.com/isucon/isucon12-qualify
+`dummy.crt` は下記スクリプトで生成可能
 
+```bash
+#!/bin/bash
+openssl req -x509 -newkey ec:<(openssl ecparam -name prime256v1) -keyout server.key -out server.crt -days 365 -nodes -subj "/CN=isucon.net"
+```
 
 ## make_lastest_filesの中身
 
