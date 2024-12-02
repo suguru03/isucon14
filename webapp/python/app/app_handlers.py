@@ -6,6 +6,7 @@ TODO: このdocstringを消す
 """
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -33,7 +34,6 @@ from .utils import (
     INITIAL_FARE,
     calculate_distance,
     calculate_fare,
-    calculate_sale,
     secure_random_str,
     timestamp_millis,
 )
@@ -54,9 +54,7 @@ class AppPostUsersResponse(BaseModel):
     invitation_code: str
 
 
-@router.post(
-    "/users", response_model=AppPostUsersResponse, status_code=HTTPStatus.CREATED
-)
+@router.post("/users", status_code=HTTPStatus.CREATED)
 def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
@@ -147,7 +145,8 @@ class AppPostPaymentMethodsRequest(BaseModel):
 
 @router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
 def app_post_payment_methods(
-    req: AppPostPaymentMethodsRequest, user: User = Depends(app_auth_middleware)
+    req: AppPostPaymentMethodsRequest,
+    user: Annotated[User, Depends(app_auth_middleware)],
 ) -> None:
     if req.token == "":
         raise HTTPException(
@@ -191,7 +190,9 @@ class GetAppRidesResponse(BaseModel):
 
 
 @router.get("/rides")
-def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesResponse:
+def app_get_rides(
+    user: Annotated[User, Depends(app_auth_middleware)],
+) -> GetAppRidesResponse:
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -201,14 +202,22 @@ def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesRespo
         ).fetchall()
         rides = [Ride.model_validate(row) for row in rows]
 
-    items = []
-    for ride in rides:
-        with engine.begin() as conn:
+        items = []
+        for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
-        if status != "COMPLETED":
-            continue
+            if status != "COMPLETED":
+                continue
 
-        with engine.begin() as conn:
+            fare = calculate_discounted_fare(
+                conn,
+                user.id,
+                ride,
+                ride.pickup_latitude,
+                ride.pickup_longitude,
+                ride.destination_latitude,
+                ride.destination_longitude,
+            )
+
             row = conn.execute(
                 text("SELECT * FROM chairs WHERE id = :id"), {"id": ride.chair_id}
             ).fetchone()
@@ -216,7 +225,6 @@ def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesRespo
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             chair = Chair.model_validate(row)
 
-        with engine.begin() as conn:
             row = conn.execute(
                 text("SELECT * FROM owners WHERE id = :id"), {"id": chair.owner_id}
             ).fetchone()
@@ -224,25 +232,25 @@ def app_get_rides(user: User = Depends(app_auth_middleware)) -> GetAppRidesRespo
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             owner = Owner.model_validate(row)
 
-        # TODO: 参照実装みたいにpartialに作るべき？
-        item = GetAppRidesResponseItem(
-            id=ride.id,
-            pickup_coordinate=Coordinate(
-                latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
-            ),
-            destination_coordinate=Coordinate(
-                latitude=ride.destination_latitude,
-                longitude=ride.destination_longitude,
-            ),
-            chair=GetAppRidesResponseItemChair(
-                id=chair.id, owner=owner.name, name=chair.name, model=chair.model
-            ),
-            fare=calculate_sale(ride),
-            evaluation=ride.evaluation,  # type: ignore[arg-type]
-            requested_at=timestamp_millis(ride.created_at),
-            completed_at=timestamp_millis(ride.updated_at),
-        )
-        items.append(item)
+            # TODO: 参照実装みたいにpartialに作るべき？
+            item = GetAppRidesResponseItem(
+                id=ride.id,
+                pickup_coordinate=Coordinate(
+                    latitude=ride.pickup_latitude, longitude=ride.pickup_longitude
+                ),
+                destination_coordinate=Coordinate(
+                    latitude=ride.destination_latitude,
+                    longitude=ride.destination_longitude,
+                ),
+                chair=GetAppRidesResponseItemChair(
+                    id=chair.id, owner=owner.name, name=chair.name, model=chair.model
+                ),
+                fare=fare,
+                evaluation=ride.evaluation,  # type: ignore[arg-type]
+                requested_at=timestamp_millis(ride.created_at),
+                completed_at=timestamp_millis(ride.updated_at),
+            )
+            items.append(item)
 
     return GetAppRidesResponse(rides=items)
 
@@ -274,7 +282,7 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
 
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
-    r: AppPostRidesRequest, user: User = Depends(app_auth_middleware)
+    r: AppPostRidesRequest, user: Annotated[User, Depends(app_auth_middleware)]
 ) -> AppPostRidesResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -403,11 +411,11 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 
 @router.post(
     "/rides/estimated-fare",
-    response_model=AppPostRidesEstimatedFareResponse,
     status_code=HTTPStatus.OK,
 )
 def app_post_rides_estimated_fare(
-    r: AppPostRidesEstimatedFareRequest, user: User = Depends(app_auth_middleware)
+    r: AppPostRidesEstimatedFareRequest,
+    user: Annotated[User, Depends(app_auth_middleware)],
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -448,13 +456,12 @@ class AppPostRideEvaluationResponse(BaseModel):
 
 @router.post(
     "/rides/{ride_id}/evaluation",
-    response_model=AppPostRideEvaluationResponse,
     status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
     req: AppPostRideEvaluationRequest,
     ride_id: str,
-    _: User = Depends(app_auth_middleware),
+    _: Annotated[User, Depends(app_auth_middleware)],
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
@@ -492,7 +499,7 @@ def app_post_ride_evaluation(
             text(
                 "INSERT INTO ride_statuses (id, ride_id, status) VALUES (:id, :ride_id, :status)"
             ),
-            {"id": str(ULID()), "ride_id": ride.id, "status": "COMPLETED"},
+            {"id": str(ULID()), "ride_id": ride_id, "status": "COMPLETED"},
         )
 
         row = conn.execute(
@@ -502,6 +509,7 @@ def app_post_ride_evaluation(
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
+        ride = Ride.model_validate(row)
 
         row = conn.execute(
             text("SELECT * FROM payment_tokens WHERE user_id = :user_id"),
@@ -588,7 +596,7 @@ class AppGetNotificationResponse(BaseModel):
     response_model_exclude_none=True,
 )
 def app_get_notification(
-    response: Response, user: User = Depends(app_auth_middleware)
+    response: Response, user: Annotated[User, Depends(app_auth_middleware)]
 ) -> AppGetNotificationResponse | Response:
     with engine.begin() as conn:
         row = conn.execute(
@@ -767,14 +775,13 @@ class AppGetNearByChairsResponse(BaseModel):
 
 @router.get(
     "/nearby-chairs",
-    response_model=AppGetNearByChairsResponse,
     status_code=HTTPStatus.OK,
 )
 def app_get_nearby_chairs(
+    _: Annotated[User, Depends(app_auth_middleware)],
     latitude: int,
     longitude: int,
     distance: int = 50,
-    _: User = Depends(app_auth_middleware),
 ) -> AppGetNearByChairsResponse:
     coordinate = Coordinate(latitude=latitude, longitude=longitude)
     with engine.begin() as conn:

@@ -6,9 +6,9 @@ publish = false
 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
-axum = { version = "0.7", features = ["macros"] }
+axum = "0.7"
 axum-extra = { version = "0.9", features = ["cookie"] }
-chrono = { version = "0.4", features = ["serde"] }
+chrono = "0.4"
 futures-util = "0.3"
 hex = "0.4"
 listenfd = "1"
@@ -18,7 +18,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "mysql", "macros", "chrono", "rust_decimal"] }
 thiserror = "2"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "process", "time"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "process"] }
 tower-http = { version = "0.6", features = ["trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

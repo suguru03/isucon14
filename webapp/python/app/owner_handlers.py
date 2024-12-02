@@ -7,8 +7,9 @@ TODO: このdocstringを消す
 
 from collections import defaultdict
 from collections.abc import MutableMapping
-from datetime import datetime, timedelta
+from datetime import datetime
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -90,9 +91,9 @@ class OwnerGetSalesResponse(BaseModel):
 
 @router.get("/sales")
 def owner_get_sales(
+    owner: Annotated[Owner, Depends(owner_auth_middleware)],
     since: int | None = None,
     until: int | None = None,
-    owner: Owner = Depends(owner_auth_middleware),
 ) -> OwnerGetSalesResponse:
     if since is None:
         since_dt = datetime_fromtimestamp_millis(0)
@@ -121,8 +122,8 @@ def owner_get_sales(
                 {
                     "chair_id": chair.id,
                     "since": since_dt,
-                    "until": until_dt + timedelta(seconds=30),
-                },  # FIXME: 速度が遅いとお尻の時間に最後のレコードが入らずバグる？ ベンチマーカーの実装を確認してから剥がす
+                    "until": until_dt,
+                },
             ).fetchall()
             rides = [Ride.model_validate(r) for r in rows]
 
@@ -173,11 +174,10 @@ class OwnerGetChairResponse(BaseModel):
 @router.get(
     "/chairs",
     status_code=HTTPStatus.OK,
-    response_model=OwnerGetChairResponse,
     response_model_exclude_none=True,
 )
 def owner_get_chairs(
-    owner: Owner = Depends(owner_auth_middleware),
+    owner: Annotated[Owner, Depends(owner_auth_middleware)],
 ) -> OwnerGetChairResponse:
     with engine.begin() as conn:
         rows = conn.execute(

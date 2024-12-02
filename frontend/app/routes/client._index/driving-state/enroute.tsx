@@ -5,14 +5,17 @@ import { LocationButton } from "~/components/modules/location-button/location-bu
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
-import { useClientAppRequestContext } from "~/contexts/user-context";
+import { useUserContext } from "~/contexts/user-context";
 
 export const Enroute: FC = () => {
-  const { payload = {} } = useClientAppRequestContext();
+  const { payload = {} } = useUserContext();
   const { chair, fare, coordinate } = payload;
   return (
     <div className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
-      <ModalHeader title="椅子が見つかりました" subTitle="配車しています...">
+      <ModalHeader
+        title="椅子が見つかりました"
+        subTitle="あなたのもとに向かっています"
+      >
         <ChairIcon
           model={chair?.model ?? ""}
           width={100}

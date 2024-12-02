@@ -27,4 +27,4 @@ services:
       - 12345:12345
   matcher:
     image: curlimages/curl:latest
-    command: /bin/sh -c "while true; do curl -s http://host.docker.internal:8080/internal/matching; sleep 0.5; done"
+    command: /bin/sh -c "while true; do curl -s http://host.docker.internal:8080/api/internal/matching; sleep 0.5; done"

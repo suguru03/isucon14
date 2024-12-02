@@ -53,9 +53,8 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
         <div
           className={twMerge(
             "fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-3xl shadow-lg transition-transform duration-300 ease-in-out z-50 md:max-w-screen-md mx-auto",
-            center
-              ? "top-1/2 -translate-y-1/2 max-h-[50vh] rounded-3xl transition duration-300 ease-out"
-              : "",
+            center &&
+              "top-1/2 -translate-y-1/2 max-h-[50vh] rounded-3xl transition duration-300 ease-out",
             className,
           )}
           ref={sheetRef}
@@ -66,7 +65,7 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
           }}
           {...props}
         >
-          <div className={twMerge(["px-8 py-6 h-full", "p-10"])}>
+          <div className={twMerge(["px-6 py-10 md:px-10 h-full"])}>
             {children}
           </div>
         </div>

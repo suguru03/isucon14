@@ -87,9 +87,9 @@ jobs:
           cd provisioning/packer
           make
 
-      - name: Cleanup old AMIs
-        run: |
-          PREFIX="isucon14_contestant-"
-          aws ec2 describe-images --owners self --filters "Name=name,Values=${PREFIX}*" --query 'Images[*].[ImageId,CreationDate]' --output json | \
-          jq -r 'sort_by(.[1]) | reverse | .[3:] | .[][0]' | \
-          xargs -I {} aws ec2 deregister-image --image-id {}
+      # - name: Cleanup old AMIs
+      #   run: |
+      #     PREFIX="isucon14_contestant-"
+      #     aws ec2 describe-images --owners self --filters "Name=name,Values=${PREFIX}*" --query 'Images[*].[ImageId,CreationDate]' --output json | \
+      #     jq -r 'sort_by(.[1]) | reverse | .[3:] | .[][0]' | \
+      #     xargs -I {} aws ec2 deregister-image --image-id {}

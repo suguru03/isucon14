@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
+	"github.com/samber/lo"
 )
 
 type UserState int
@@ -153,8 +154,11 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated {
 				score := u.Request.CalculateEvaluation().Score()
+
+				u.Request.Statuses.Lock()
 				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
+					u.Request.Statuses.Unlock()
 					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
 				}
 
@@ -173,6 +177,8 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.Chair.Owner.TotalSales.Add(int64(u.Request.Sales()))
 				u.Request.Chair.Owner.SubScore.Add(int64(u.Request.Score()))
 				u.World.PublishEvent(&EventRequestCompleted{Request: u.Request})
+
+				u.Request.Statuses.Unlock()
 			}
 
 		case RequestStatusCompleted:
@@ -200,7 +206,7 @@ func (u *User) Tick(ctx *Context) error {
 		// 過去のリクエストを確認する
 		err := u.CheckRequestHistory(ctx)
 		if err != nil {
-			return err
+			return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
 		}
 
 		// リクエストを作成する
@@ -227,11 +233,36 @@ func (u *User) Deactivate() {
 }
 
 func (u *User) CheckRequestHistory(ctx *Context) error {
-	_, err := u.Client.GetRequests(ctx)
+	res, err := u.Client.GetRequests(ctx)
 	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+		return err
 	}
-	// TODO: ここでvalidationも行う？
+	if len(res.Requests) != len(u.RequestHistory) {
+		return fmt.Errorf("ライドの数が想定数と一致していません: expected=%d, got=%d", len(u.RequestHistory), len(res.Requests))
+	}
+
+	historyMap := lo.KeyBy(u.RequestHistory, func(r *Request) string { return r.ServerID })
+	for _, req := range res.Requests {
+		expected, ok := historyMap[req.ID]
+		if !ok {
+			return fmt.Errorf("想定されないライドが含まれています: id=%s", req.ID)
+		}
+		if !req.DestinationCoordinate.Equals(expected.DestinationPoint) || !req.PickupCoordinate.Equals(expected.PickupPoint) {
+			return fmt.Errorf("ライドの座標情報が正しくありません: id=%s", req.ID)
+		}
+		if req.Fare != expected.Fare() {
+			return fmt.Errorf("ライドの運賃が正しくありません: id=%s", req.ID)
+		}
+		if req.Evaluation != expected.CalculateEvaluation().Score() {
+			return fmt.Errorf("ライドの評価が正しくありません: id=%s", req.ID)
+		}
+		if req.Chair.ID != expected.Chair.ServerID || req.Chair.Name != expected.Chair.RegisteredData.Name || req.Chair.Model != expected.Chair.Model.Name || req.Chair.Owner != expected.Chair.Owner.RegisteredData.Name {
+			return fmt.Errorf("ライドの椅子の情報が正しくありません: id=%s", req.ID)
+		}
+		if !req.CompletedAt.Equal(expected.ServerCompletedAt) {
+			return fmt.Errorf("ライドの完了日時が正しくありません: id=%s", req.ID)
+		}
+	}
 
 	return nil
 }
@@ -244,8 +275,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 	u.InvitingLock.Lock()
 	defer u.InvitingLock.Unlock()
 
-	pickup := RandomCoordinateOnRegionWithRand(u.Region, u.Rand)
-	dest := RandomCoordinateAwayFromHereWithRand(pickup, u.Rand.IntN(100)+5, u.Rand)
+	pickup, dest := RandomTwoCoordinateWithRand(u.Region, u.Rand.IntN(100)+5, u.Rand)
 
 	req := &Request{
 		User:             u,
@@ -323,7 +353,7 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 				}
 			}
 		}
-		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user server id: %s, got: %v", u.ServerID, status))
+		return WrapCodeError(ErrorCodeUserNotRequestingButStatusChanged, fmt.Errorf("user_id: %s, got: %v", u.ServerID, status))
 	}
 	request.Statuses.RLock()
 	defer request.Statuses.RUnlock()
@@ -343,9 +373,9 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string)
 					return nil
 				}
 			}
-			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		} else {
-			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("request server id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
+			return WrapCodeError(ErrorCodeUnexpectedUserRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %v, expect: %v, got: %v (current: %v)", request.ServerID, request.Statuses.Desired, status, request.Statuses.User))
 		}
 	}
 	request.Statuses.User = status

@@ -1,0 +1,8 @@
+rules:
+  - expected: サーバー
+    patterns:
+      - /サーバ(?!ー)/g
+      - インスタンス
+  - expected: ユーザー
+    patterns:
+      - /ユーザ(?!ー)/g

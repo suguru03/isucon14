@@ -56,7 +56,8 @@
   become: true
   become_user: isucon
   shell:
-    cmd: MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.3.6 /home/isucon/local/ruby
+    # Add rustc path to enable YJIT
+    cmd: PATH=/home/isucon/.cargo/bin:$PATH MAKE_OPTS=-j$(nproc) /opt/xbuild/ruby-install 3.3.6 /home/isucon/local/ruby
 
 - name: Install PHP
   become: true
@@ -70,8 +71,9 @@
     --enable-sysvsem --enable-sysvshm --enable-sysvmsg --enable-mbregex \
     --enable-mbstring --enable-pcntl --enable-sockets --with-curl --enable-zip
 
-- name: Install Python
+- name: Install uv for Python
   become: true
   become_user: isucon
   shell:
-    cmd: /opt/xbuild/python-install 3.13.0 /home/isucon/local/python
+    cmd: curl -LsSf https://astral.sh/uv/install.sh | sh
+    creates: /home/isucon/.local/bin/uv

@@ -29,8 +29,17 @@
     group: "root"
     mode: "0644"
   with_items:
-    - etc/nginx/sites-enabled/isuride.conf
+    - etc/nginx/sites-available/isuride.conf
     - etc/nginx/sites-available/isuride-php.conf
+
+- name: "roles/nginx/tasks: Enable nginx configs"
+  become: true
+  file:
+    src: "/etc/nginx/sites-available/{{ item }}"
+    dest: "/etc/nginx/sites-enabled/{{ item }}"
+    state: link
+  with_items:
+    - isuride.conf
 
 - name: "roles/nginx/tasks: Deploy tls certificates"
   become: true

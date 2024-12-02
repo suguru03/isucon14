@@ -1,5 +1,5 @@
 import { Form } from "@remix-run/react";
-import { MouseEventHandler, useCallback, useState } from "react";
+import { MouseEventHandler, useCallback, useEffect, useState } from "react";
 import colors from "tailwindcss/colors";
 import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
 import { PinIcon } from "~/components/icon/pin";
@@ -7,10 +7,12 @@ import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { ClickableRating } from "~/components/primitives/rating/clickable-rating";
 import { Text } from "~/components/primitives/text/text";
-import { useClientAppRequestContext } from "~/contexts/user-context";
+import { useUserContext } from "~/contexts/user-context";
+
+import confetti from "canvas-confetti";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { auth, payload = {} } = useClientAppRequestContext();
+  const { auth, payload = {} } = useUserContext();
   const [rating, setRating] = useState(0);
   const { fare } = payload;
 
@@ -36,6 +38,20 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
     },
     [auth, payload, rating, onEvaluated],
   );
+
+  useEffect(() => {
+    void confetti({
+      origin: { y: 0.7 },
+      spread: 60,
+      colors: [
+        colors.yellow[500],
+        colors.cyan[300],
+        colors.green[500],
+        colors.indigo[500],
+        colors.red[500],
+      ],
+    });
+  }, []);
 
   return (
     <Form className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">

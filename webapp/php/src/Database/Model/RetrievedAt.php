@@ -16,6 +16,7 @@ readonly class RetrievedAt
 
     /**
      * @throws \DateMalformedStringException
+     * @throws \Exception
      */
     public function unixMilliseconds(): int
     {

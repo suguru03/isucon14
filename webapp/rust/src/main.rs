@@ -39,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
         .merge(isuride::app_handlers::app_routes(app_state.clone()))
         .merge(isuride::owner_handlers::owner_routes(app_state.clone()))
         .merge(isuride::chair_handlers::chair_routes(app_state.clone()))
+        .merge(isuride::internal_handlers::internal_routes())
         .with_state(app_state)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 

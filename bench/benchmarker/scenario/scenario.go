@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -34,6 +35,7 @@ import (
 //   - シナリオの結果検証処理を行う
 //   - 料金の整合性をみたいかも
 type Scenario struct {
+	language         string
 	target           string
 	addr             string
 	paymentURL       string
@@ -162,41 +164,26 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		return err
 	}
 
-	//
-	//if err := s.prevalidation(ctx, client); err != nil {
-	//	return err
-	//}
-	//
-
-	if !s.prepareOnly {
-		// バリデーション後にデータを初期化する
-		if err := s.initializeData(ctx, client); err != nil {
-			return err
-		}
+	if err := s.initializeData(ctx, client); err != nil {
+		s.contestantLogger.Error("initializeに失敗しました", slog.String("error", err.Error()))
+		return err
 	}
 
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				if err := sendResult(s, false, false); err != nil {
-					// TODO: エラーをadmin側に出力する
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-			}
-		}
-	}()
+	if err := s.prevalidation(ctx, client); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (s *Scenario) initializeData(ctx context.Context, client *webapp.Client) error {
-	_, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
+	resp, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
 	if err != nil {
 		return err
 	}
+
+	// 言語情報を追加
+	s.language = resp.Language
 
 	const (
 		initialOwnersNum         = 5
@@ -239,6 +226,26 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 		return nil
 	}
 
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+	sendResultWait := sync.WaitGroup{}
+	defer sendResultWait.Wait()
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				sendResultWait.Add(1)
+				if err := sendResult(s, false, false); err != nil {
+					slog.Error(err.Error())
+				}
+				sendResultWait.Done()
+			}
+		}
+	}()
+
 	s.world.RestTicker()
 LOOP:
 	for {
@@ -255,7 +262,7 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				s.contestantLogger.Info("仮想世界の時間が60分経過しました", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
+				slog.Debug("仮想世界の時間が60分経過", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
 			}
 		}
 	}
@@ -307,6 +314,9 @@ func sendResult(s *Scenario, finished bool, passed bool) error {
 		// Reason以外はsupervisorが設定する
 		Execution: &resources.BenchmarkResult_Execution{
 			Reason: "実行終了",
+		},
+		SurveyResponse: &resources.SurveyResponse{
+			Language: s.language,
 		},
 	}); err != nil {
 		return err

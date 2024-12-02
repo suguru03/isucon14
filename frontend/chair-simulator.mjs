@@ -16,6 +16,7 @@ const main = async () => {
     latitude: 300,
     longitude: 300,
   };
+
   // activity on
   await fetch("http://localhost:8080/api/chair/activity", {
     method: "POST",

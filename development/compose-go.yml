@@ -2,6 +2,7 @@ services:
   webapp:
     build:
       context: ../webapp/go
+      dockerfile: ../../development/dockerfiles/Dockerfile.go
     image: webapp-go
     ports:
       - 8080:8080
@@ -30,6 +31,6 @@ services:
       test: mysqladmin ping -h 127.0.0.1 -uisucon -pisucon
       start_period: 60s
   matcher:
-    image: curlimages/curl:latest
+    image: mirror.gcr.io/curlimages/curl:latest
     command: /bin/sh -c "while true; do curl -s http://webapp:8080/api/internal/matching; sleep 0.5; done"
 

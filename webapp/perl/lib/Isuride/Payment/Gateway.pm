@@ -1,4 +1,4 @@
-package Isuride::Payment::GateWay;
+package Isuride::Payment::Gateway;
 use v5.40;
 use utf8;
 
@@ -7,41 +7,41 @@ use Carp qw(croak);
 
 our @EXPORT_OK = qw(
     request_payment_gateway_post_payment
-    PaymentGateWayErroredUpstream
+    PaymentGatewayErroredUpstream
 );
 
 use Isuride::Util qw(check_params);
 
 use HTTP::Status qw(:constants);
 use Time::HiRes qw(sleep);
-use Cpanel::JSON::XS;
+use Cpanel::JSON::XS qw(encode_json decode_json);
 use Cpanel::JSON::XS::Type;
 use Furl::HTTP;
 use Types::Common -types;
 use Type::Tiny;
 
-use constant PaymentGateWayUnexpectedStatusCodeKind => Str & sub { $_ eq 'unexpected status code' };
+use constant PaymentGatewayUnexpectedStatusCodeKind => Str & sub { $_ eq 'unexpected status code' };
 
 use constant erroredUpstream                   => 'errored upstream';
-use constant PaymentGateWayErroredUpstreamKind => Str & sub { $_ eq erroredUpstream };
+use constant PaymentGatewayErroredUpstreamKind => Str & sub { $_ eq erroredUpstream };
 
-use constant PaymentGateWayErroredUpstream => Dict [ kind => PaymentGateWayErroredUpstreamKind, message => Str ];
+use constant PaymentGatewayErroredUpstream => Dict [ kind => PaymentGatewayErroredUpstreamKind, message => Str ];
 
-use constant PaymentGateWayPostPaymentRequest => {
+use constant PaymentGatewayPostPaymentRequest => {
     amount => JSON_TYPE_INT,
 };
 
-use constant PaymentGateWayPostPaymentResponseOne => {
+use constant PaymentGatewayPostPaymentResponseOne => {
     amount => JSON_TYPE_INT,
     status => JSON_TYPE_STRING,
 };
 
 sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, $retrieve_rides_order_by_created_at_asc) {
-    unless (check_params($param, PaymentGateWayPostPaymentRequest)) {
+    unless (check_params($param, PaymentGatewayPostPaymentRequest)) {
         return { status => 'failed to decode the request body as json' };
     }
 
-    my $param_json = Cpanel::JSON::XS->new()->ascii(0)->utf8->encode_json($param);
+    my $param_json = encode_json($param, PaymentGatewayPostPaymentRequest);
 
     # 失敗したらとりあえずリトライ
     # FIXME: 社内決済マイクロサービスのインフラに異常が発生していて、同時にたくさんリクエストすると変なことになる可能性あり
@@ -51,39 +51,42 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
     while (1) {
         try {
 
-            my (undef, $status_code, undef, $body) = Furl::HTTP->new(
+            my $furl = Furl::HTTP->new(
                 headers => [
                     'Content-Type'  => 'application/json',
                     'Authorization' => 'Bearer ' . $token,
                 ],
-            )->request(
-                method => 'POST',
-                url    => $payment_gateway_url . "/payments"
+            );
+            my (undef, $status_code, undef, undef, undef) = $furl->request(
+                method  => 'POST',
+                url     => $payment_gateway_url . "/payments",
+                content => $param_json,
             );
 
             if ($status_code != HTTP_NO_CONTENT) {
                 # エラーが返ってきても成功している場合があるので、社内決済マイクロサービスに問い合わせ
-                my (undef, $get_res_status_code, undef, $get_res_body) = Furl::HTTP->new(
+                $furl = Furl::HTTP->new(
                     headers => [
                         'Authorization' => 'Bearer ' . $token,
                     ],
-                )->request(
+                );
+                my (undef, $get_res_status_code, undef, undef, $get_res_body) = $furl->request(
                     method => 'GET',
                     url    => $payment_gateway_url . "/payments"
                 );
 
                 # GET /payments は障害と関係なく200が返るので、200以外は回復不能なエラーとする
                 if ($get_res_status_code != HTTP_OK) {
-                    die '[GET /payments] unexpected status code (' . $get_res_status_code . ')';
+                    die { message => '[GET /payments] unexpected status code (' . $get_res_status_code . ')' };
                 }
 
-                my $payments = Cpanel::JSON::XS->new()->ascii(0)->utf8->decode_json($get_res_body);
+                my $payments = decode_json($get_res_body);
 
-                unless (check_params($payments, json_type_arrayof(PaymentGateWayPostPaymentResponseOne))) {
-                    die { status => 'failed to decode the request body as json' };
+                unless (check_params($payments, json_type_arrayof(PaymentGatewayPostPaymentResponseOne))) {
+                    die { message => 'failed to decode the request body as json' };
                 }
 
-                my ($rides, $err) = $retrieve_rides_order_by_created_at_asc->();
+                my $rides = $retrieve_rides_order_by_created_at_asc->();
 
                 if (scalar $rides->@* != scalar $payments->@*) {
                     die { kind => erroredUpstream, message => "unexpected number of payments: " . scalar $rides->@* . " != " . scalar $payments->@* . '. ' . erroredUpstream };
@@ -97,6 +100,9 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
                 sleep 0.1;
                 next;
             } else {
+                unless (ref $e eq 'HASH' && $e->{message}) {
+                    return { message => $e };
+                }
                 return $e;
             }
         }

@@ -7,14 +7,15 @@ import {
   fetchAppPostRidesEstimatedFare,
 } from "~/apiClient/apiComponents";
 import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
-import { CopyIcon } from "~/components/icon/copy";
+import { useGhostChairs } from "~/components/hooks/use-ghost-chairs";
+import { CampaignBanner } from "~/components/modules/campaign-banner/campaign-banner";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
-import { useClientAppRequestContext } from "~/contexts/user-context";
+import { useUserContext } from "~/contexts/user-context";
 import { NearByChair, isClientApiError } from "~/types";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
@@ -24,42 +25,35 @@ import { Pickup } from "./driving-state/pickup";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Top | ISURIDE" },
+    { title: "ISURIDE" },
     { name: "description", content: "目的地まで椅子で快適に移動しましょう" },
   ];
 };
 
 type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
-type CampaignData = {
-  invitationCode: string;
-  registedAt: string; // Dateの文字列形式
-  used: boolean;
-};
 
 export default function Index() {
-  const { status, payload: payload } = useClientAppRequestContext();
+  const { status, payload: payload } = useUserContext();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
-
-  useEffect(() => {
-    setInternalRideStatus(status);
-  }, [status]);
-
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
-
   const [direction, setDirection] = useState<Direction | null>(null);
-
   const [selectedLocation, setSelectedLocation] = useState<Coordinate>();
-
   const [fare, setFare] = useState<number>();
-
-  const onMove = useCallback((coordinate: Coordinate) => {
+  const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>([]);
+  const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
+  const onCenterMove = useCallback(
+    (coordinate: Coordinate) => {
+      setCenterCoodirnate(coordinate);
+    },
+    [setCenterCoodirnate],
+  );
+  const onSelectMove = useCallback((coordinate: Coordinate) => {
     setSelectedLocation(coordinate);
   }, []);
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
-
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
@@ -73,7 +67,6 @@ export default function Index() {
       locationSelectorModalRef.current.close();
     }
   }, [direction, selectedLocation]);
-
   const isStatusModalOpen = useMemo(() => {
     return (
       internalRideStatus &&
@@ -82,10 +75,14 @@ export default function Index() {
       )
     );
   }, [internalRideStatus]);
-
   const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-
   const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
+  const emulateChairs = useGhostChairs();
+
+  useEffect(() => {
+    setInternalRideStatus(status);
+  }, [status]);
+
   useEffect(() => {
     if (!currentLocation || !destLocation) {
       return;
@@ -132,113 +129,51 @@ export default function Index() {
     }
   }, [currentLocation, destLocation]);
 
-  // TODO: NearByChairのつなぎこみは後ほど行う
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [nearByChairs, setNearByChairs] = useState<NearByChair[]>();
   useEffect(() => {
-    if (!currentLocation) {
-      return;
-    }
-    const abortController = new AbortController();
-    void (async () => {
+    if (!centerCoordinate) return;
+    let abortController: AbortController | undefined;
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    const updateNearByChairs = async (coordinate: Coordinate) => {
+      const { latitude, longitude } = coordinate;
       try {
-        const { chairs } = await fetchAppGetNearbyChairs(
-          {
-            queryParams: {
-              latitude: currentLocation?.latitude,
-              longitude: currentLocation?.longitude,
-            },
+        abortController?.abort();
+        abortController = new AbortController();
+        const { chairs } = await fetchAppGetNearbyChairs({
+          queryParams: {
+            latitude,
+            longitude,
+            distance: 150,
           },
-          abortController.signal,
-        );
-        setNearByChairs(chairs);
+        });
+        setDisplayedChairs(chairs);
       } catch (error) {
         console.error(error);
       }
-    })();
-    return () => abortController.abort();
-  }, [setNearByChairs, currentLocation]);
+    };
 
-  const [campaign, setCampaign] = useState<CampaignData | null>(null);
-  useEffect(() => {
-    const storedData = localStorage.getItem("campaign");
-    if (storedData) {
-      const data: CampaignData = JSON.parse(storedData) as CampaignData;
-      const registeredDate = new Date(data.registedAt);
-      const currentDate = new Date();
+    const polling = () => {
+      void updateNearByChairs(centerCoordinate);
+      timeoutId = setTimeout(polling, 10_000);
+    };
 
-      if (
-        !data.used &&
-        currentDate.getTime() - registeredDate.getTime() < 60 * 60 * 1000
-      ) {
-        setCampaign(data);
-      }
-    }
-  }, []);
+    timeoutId = setTimeout(polling, 300);
 
-  const handleCloseBanner = () => {
-    if (campaign) {
-      const updatedCampaign = { ...campaign, used: true };
-      localStorage.setItem("campaign", JSON.stringify(updatedCampaign));
-      setCampaign(null);
-    }
-  };
-
-  const handleCopyCode = async () => {
-    if (campaign) {
-      if (navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(campaign.invitationCode);
-          alert("招待コードがコピーされました！");
-        } catch (error) {
-          alert(
-            `コピーに失敗しました。\n招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
-          );
-        }
-      } else {
-        alert(
-          `招待コード： ${campaign.invitationCode}\nコピーしてお使いください`,
-        );
-      }
-    }
-  };
+    return () => {
+      clearTimeout(timeoutId);
+      abortController?.abort();
+    };
+  }, [centerCoordinate]);
 
   return (
     <>
-      {campaign && (
-        <div className="bg-blue-100 p-4 rounded-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg w-full max-w-xl flex items-center justify-between">
-          <span className="flex items-center">
-            &#8505; 友達キャンペーン 招待すると1000円OFF
-          </span>
-          <div className="flex items-center">
-            <button
-              onClick={() => {
-                try {
-                  void handleCopyCode();
-                } catch (error) {
-                  console.error(error);
-                }
-              }}
-              className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-            >
-              <CopyIcon />
-              招待コードをコピー
-            </button>
-            <button
-              onClick={handleCloseBanner}
-              aria-label="閉じる"
-              className="ml-4"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
+      <CampaignBanner />
       <Map
         from={currentLocation}
         to={destLocation}
+        onMove={onCenterMove}
         initialCoordinate={selectedLocation}
-        chairs={nearByChairs}
+        chairs={[...displayedChairs, ...emulateChairs]}
         className="flex-1"
       />
       <div className="w-full px-8 py-8 flex flex-col items-center justify-center">
@@ -290,7 +225,7 @@ export default function Index() {
           <div className="flex flex-col items-center mt-4 h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
-                onMove={onMove}
+                onMove={onSelectMove}
                 from={currentLocation}
                 to={destLocation}
                 selectorPinColor={

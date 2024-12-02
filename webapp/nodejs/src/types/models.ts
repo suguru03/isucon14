@@ -75,3 +75,8 @@ export type Coupon = {
   created_at: Date;
   used_by: string | null;
 };
+
+export type Coordinate = {
+  latitude: number;
+  longitude: number;
+};

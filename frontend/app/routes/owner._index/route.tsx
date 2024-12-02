@@ -1,10 +1,13 @@
 import type { MetaFunction } from "@remix-run/node";
 import { ChairIcon } from "~/components/icon/chair";
 import { Text } from "~/components/primitives/text/text";
-import { useClientProviderContext } from "~/contexts/owner-context";
+import { useOwnerContext } from "~/contexts/owner-context";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "ISUCON14" }, { name: "description", content: "isucon14" }];
+  return [
+    { title: "椅子一覧 | Owner | ISURIDE" },
+    { name: "description", content: "isucon14" },
+  ];
 };
 
 const formatDateTime = (timestamp: number) => {
@@ -13,10 +16,10 @@ const formatDateTime = (timestamp: number) => {
 };
 
 export default function Index() {
-  const { chairs } = useClientProviderContext();
+  const { chairs } = useOwnerContext();
 
   return (
-    <div className="min-w-[1050px]">
+    <div className="min-w-[1050px] w-full">
       {chairs?.length ? (
         <table className="text-sm w-full">
           <thead className="bg-gray-50 border-b">
@@ -51,7 +54,7 @@ export default function Index() {
                 <td className="p-4">
                   <div className="">
                     <span
-                      className={`before:content-['●'] before:mr-2 ${chair.active ? "before:text-green-600" : "before:text-red-600"}`}
+                      className={`before:content-['●'] before:mr-2 ${chair.active ? "before:text-emerald-600" : "before:text-red-600"}`}
                     >
                       {chair.active ? "稼働中" : "停止中"}
                     </span>

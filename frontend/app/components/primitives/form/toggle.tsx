@@ -1,41 +1,48 @@
-import { ComponentProps } from "react";
+import { FC } from "react";
 import { twMerge } from "tailwind-merge";
 
-type Props = Omit<
-  ComponentProps<"input">,
-  "type" | "name" | "value" | "onChange"
-> & {
-  value: boolean;
+type Props = {
+  checked: boolean;
+  id: string;
   onUpdate: (v: boolean) => void;
+  disabled?: boolean;
+  className?: string;
 };
 
-export function Toggle(props: Props) {
-  const { value, onUpdate, className, ...rest } = props;
+export const Toggle: FC<Props> = ({
+  onUpdate,
+  className,
+  checked,
+  id,
+  disabled,
+}) => {
   return (
-    <label
-      className={twMerge(
-        // Base
-        "w-[70px] h-[38px] p-[3px]",
-        "bg-slate-200 rounded-full",
-        "block relative",
-        // Switch
-        "after:w-[32px] after:h-[32px]",
-        "after:rounded-full",
-        "after:absolute after:top-[3px]",
-        "after:transition-transform",
-        value
-          ? "after:bg-green-500 after:translate-x-full"
-          : "after:bg-slate-50 after:left-[3px]",
-        className,
-      )}
-    >
+    <div className={twMerge("relative inline-block w-14 h-7", className)}>
       <input
-        className="hidden"
-        {...rest}
+        checked={checked}
+        onChange={() => onUpdate(!checked)}
+        id={id}
         type="checkbox"
-        value={`${value}`}
-        onChange={() => onUpdate(!value)}
+        className={twMerge(
+          "peer appearance-none w-14 h-7",
+          "bg-slate-100 rounded-full checked:bg-emerald-500",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900",
+          "transition-colors duration-300",
+          !disabled && "cursor-pointer",
+        )}
+        disabled={disabled}
       />
-    </label>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label
+        htmlFor={id}
+        className={twMerge(
+          "absolute top-0 left-0 w-7 h-7 pointer-events-none",
+          "bg-white rounded-full border border-slate-300 shadow-sm",
+          "transition-transform duration-300",
+          "peer-checked:translate-x-7 peer-checked:border-emerald-500",
+          !disabled && "cursor-pointer",
+        )}
+      ></label>
+    </div>
   );
-}
+};

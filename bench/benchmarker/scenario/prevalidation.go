@@ -4,27 +4,167 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 )
 
-// 実装の検証を行う (一旦は正常系のみをテストする)
+// 実装の検証を行う
 func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) error {
-	_, err := client.PostInitialize(ctx, &api.PostInitializeReq{PaymentServer: s.paymentURL})
-	if err != nil {
-		return err
-	}
-
 	clientConfig := webapp.ClientConfig{
 		TargetBaseURL:         s.target,
 		TargetAddr:            s.addr,
 		ClientIdleConnTimeout: 10 * time.Second,
 	}
 
-	if err := validateSuccessFlow(ctx, clientConfig); err != nil {
+	if err := validateInitialData(ctx, clientConfig); err != nil {
+		s.contestantLogger.Error("初期データのチェックに失敗しました", slog.String("error", err.Error()))
 		return err
+	}
+
+	return nil
+}
+
+func validateInitialData(ctx context.Context, clientConfig webapp.ClientConfig) error {
+	validationData := LoadData()
+
+	cmpOptions := []cmp.Option{
+		cmpopts.SortSlices(func(i, j api.OwnerGetChairsOKChairsItem) bool {
+			return i.ID < j.ID
+		}),
+		cmpopts.SortSlices(func(i, j api.OwnerGetSalesOKChairsItem) bool {
+			return i.ID < j.ID
+		}),
+		cmpopts.SortSlices(func(i, j api.OwnerGetSalesOKModelsItem) bool {
+			return i.Model < j.Model
+		}),
+		cmpopts.SortSlices(func(i, j api.AppGetRidesOKRidesItem) bool { return i.ID < j.ID }),
+	}
+
+	{
+		ownerClient, err := webapp.NewClient(clientConfig)
+		if err != nil {
+			return err
+		}
+		ownerClient.SetCookie(&http.Cookie{Name: "owner_session", Value: "0811617de5c97aea5ddb433f085c3d1e"})
+
+		chairs, err := ownerClient.OwnerGetChairs(ctx)
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(chairs, &validationData.Owner01JDFEDF00B09BNMV8MP0RB34G.Chairs, cmpOptions...) {
+			return errors.New("GET /api/owner/chairs のレスポンスが正しくありません")
+		}
+
+		sales, err := ownerClient.OwnerGetSales(ctx, &api.OwnerGetSalesParams{})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(sales, &validationData.Owner01JDFEDF00B09BNMV8MP0RB34G.Sales, cmpOptions...) {
+			return errors.New("GET /api/owner/sales のレスポンスが正しくありません")
+		}
+
+		sales2, err := ownerClient.OwnerGetSales(ctx, &api.OwnerGetSalesParams{Since: api.NewOptInt64(1732579200000), Until: api.NewOptInt64(1732622400000)})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(sales2, &validationData.Owner01JDFEDF00B09BNMV8MP0RB34G.Sales1732579200000to1732622400000, cmpOptions...) {
+			return errors.New("GET /api/owner/sales のレスポンスが正しくありません")
+		}
+	}
+	{
+		userClient, err := webapp.NewClient(clientConfig)
+		if err != nil {
+			return err
+		}
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "21e9562de048ee9b34da840296509fa9"})
+
+		rides, err := userClient.AppGetRequests(ctx)
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(rides, &validationData.User01JDM0N9W89PK57C7XEVGD5C80.Rides, cmpOptions...) {
+			return errors.New("GET /api/app/rides のレスポンスが正しくありません")
+		}
+	}
+	{
+		userClient, err := webapp.NewClient(clientConfig)
+		if err != nil {
+			return err
+		}
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "c9e15fd57545f43105ace9088f1c467e"})
+
+		rides, err := userClient.AppGetRequests(ctx)
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(rides, &validationData.User01JDK5EFNGT8ZHMTQXQ4BNH8NQ.Rides, cmpOptions...) {
+			return errors.New("GET /api/app/rides のレスポンスが正しくありません")
+		}
+
+		estimated1, err := userClient.AppPostRidesEstimatedFare(ctx, &api.AppPostRidesEstimatedFareReq{
+			PickupCoordinate:      api.Coordinate{Latitude: 0 + 10, Longitude: 0 + 10},
+			DestinationCoordinate: api.Coordinate{Latitude: 3 + 10, Longitude: 10 + 10},
+		})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(estimated1, &validationData.User01JDK5EFNGT8ZHMTQXQ4BNH8NQ.Estimated_3_10, cmpOptions...) {
+			return errors.New("POST /api/app/rides/estimated-fare のレスポンスが正しくありません")
+		}
+
+		estimated2, err := userClient.AppPostRidesEstimatedFare(ctx, &api.AppPostRidesEstimatedFareReq{
+			PickupCoordinate:      api.Coordinate{Latitude: 0 - 10, Longitude: 0 - 10},
+			DestinationCoordinate: api.Coordinate{Latitude: -11 - 10, Longitude: 10 - 10},
+		})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(estimated2, &validationData.User01JDK5EFNGT8ZHMTQXQ4BNH8NQ.Estimated_m11_10, cmpOptions...) {
+			return errors.New("POST /api/app/rides/estimated-fare のレスポンスが正しくありません")
+		}
+	}
+	{
+		userClient, err := webapp.NewClient(clientConfig)
+		if err != nil {
+			return err
+		}
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "a8b21d78f143c3facdece4dffba964cc"})
+
+		rides, err := userClient.AppGetRequests(ctx)
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(rides, &validationData.User01JDJ4XN10E2CRZ37RNZ5GAFW6.Rides, cmpOptions...) {
+			return errors.New("GET /api/app/rides のレスポンスが正しくありません")
+		}
+
+		estimated1, err := userClient.AppPostRidesEstimatedFare(ctx, &api.AppPostRidesEstimatedFareReq{
+			PickupCoordinate:      api.Coordinate{Latitude: 0 + 10, Longitude: 0 + 10},
+			DestinationCoordinate: api.Coordinate{Latitude: 3 + 10, Longitude: 10 + 10},
+		})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(estimated1, &validationData.User01JDJ4XN10E2CRZ37RNZ5GAFW6.Estimated_3_10, cmpOptions...) {
+			return errors.New("POST /api/app/rides/estimated-fare のレスポンスが正しくありません")
+		}
+
+		estimated2, err := userClient.AppPostRidesEstimatedFare(ctx, &api.AppPostRidesEstimatedFareReq{
+			PickupCoordinate:      api.Coordinate{Latitude: 0 - 10, Longitude: 0 - 10},
+			DestinationCoordinate: api.Coordinate{Latitude: -11 - 10, Longitude: 10 - 10},
+		})
+		if err != nil {
+			return err
+		}
+		if !cmp.Equal(estimated2, &validationData.User01JDJ4XN10E2CRZ37RNZ5GAFW6.Estimated_m11_10, cmpOptions...) {
+			return errors.New("POST /api/app/rides/estimated-fare のレスポンスが正しくありません")
+		}
 	}
 
 	return nil

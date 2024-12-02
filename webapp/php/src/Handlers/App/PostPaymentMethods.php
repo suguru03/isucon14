@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IsuRide\Handlers\App;
 
 use Fig\Http\Message\StatusCodeInterface;
+use IsuRide\Database\Model\User;
 use IsuRide\Handlers\AbstractHttpHandler;
 use IsuRide\Model\AppPostPaymentMethodsRequest;
 use IsuRide\Response\ErrorResponse;
@@ -54,11 +55,10 @@ class PostPaymentMethods extends AbstractHttpHandler
             );
         }
         $user = $request->getAttribute('user');
+        assert($user instanceof User);
         try {
             $stmt = $this->db->prepare('INSERT INTO payment_tokens (user_id, token) VALUES (?, ?)');
-            $stmt->bindValue(1, $user->id, PDO::PARAM_STR);
-            $stmt->bindValue(2, $token, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$user->id, $token]);
             return $this->writeNoContent($response);
         } catch (\PDOException $e) {
             return (new ErrorResponse())->write(

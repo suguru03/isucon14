@@ -17,22 +17,24 @@ use Time::Moment;
 #     time_zone => 'UTC',
 # );
 
-use constant FORMAT_TIME => qr/\A(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{3})\z/;
+use constant FORMAT_TIME => qr/\A(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{1,9})/;
 
 sub unix_milli_from_str ($str) {
     if ($str =~ FORMAT_TIME) {
-        my ($year, $month, $day, $hour, $minute, $second, $millisecond) = ($1, $2, $3, $4, $5, $6, $7);
-        my $tm = Time::Moment->new(
+        my ($year, $month, $day, $hour, $minute, $second, $fraction) = ($1, $2, $3, $4, $5, $6, $7);
+        my $nanosecond = $fraction * (10**(9 - length($fraction)));
+        my $tm         = Time::Moment->new(
             year       => $year,
             month      => $month,
             day        => $day,
             hour       => $hour,
             minute     => $minute,
             second     => $second,
-            nanosecond => $millisecond * 1_000_000,
+            nanosecond => $nanosecond,
         );
         my $milliepoch = $tm->epoch * 1000 + $tm->millisecond;
         return $milliepoch;
     }
     die "Invalid time format: $str";
 }
+

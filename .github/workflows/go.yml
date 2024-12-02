@@ -7,11 +7,20 @@ on:
       - bench/**/*
       - webapp/go/**/*
       - .github/workflows/go.yml
+      - development/compose-go.yml
+      - development/dockerfiles/Dockerfile.go
   pull_request:
     paths:
       - bench/**/*
       - webapp/go/**/*
       - .github/workflows/go.yml
+      - development/compose-go.yml
+      - development/dockerfiles/Dockerfile.go
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build

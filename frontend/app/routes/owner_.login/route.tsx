@@ -8,7 +8,7 @@ import { getOwners } from "~/utils/get-initial-data";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Regiter | ISURIDE" },
+    { title: "Login | Owner | ISURIDE" },
     { name: "description", content: "オーナーログイン" },
   ];
 };

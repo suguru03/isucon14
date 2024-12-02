@@ -183,8 +183,15 @@ type getAppRidesResponseItemChair struct {
 func appGetRides(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
 
+	tx, err := db.Beginx()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
 	rides := []Ride{}
-	if err := db.Select(
+	if err := tx.Select(
 		&rides,
 		`SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC`,
 		user.ID,
@@ -195,7 +202,7 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 
 	items := []getAppRidesResponseItem{}
 	for _, ride := range rides {
-		status, err := getLatestRideStatus(db, ride.ID)
+		status, err := getLatestRideStatus(tx, ride.ID)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
@@ -204,11 +211,17 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		fare, err := calculateDiscountedFare(tx, user.ID, &ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
 		item := getAppRidesResponseItem{
 			ID:                    ride.ID,
 			PickupCoordinate:      Coordinate{Latitude: ride.PickupLatitude, Longitude: ride.PickupLongitude},
 			DestinationCoordinate: Coordinate{Latitude: ride.DestinationLatitude, Longitude: ride.DestinationLongitude},
-			Fare:                  calculateSale(ride),
+			Fare:                  fare,
 			Evaluation:            *ride.Evaluation,
 			RequestedAt:           ride.CreatedAt.UnixMilli(),
 			CompletedAt:           ride.UpdatedAt.UnixMilli(),
@@ -217,7 +230,7 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 		item.Chair = getAppRidesResponseItemChair{}
 
 		chair := &Chair{}
-		if err := db.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
+		if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -226,13 +239,18 @@ func appGetRides(w http.ResponseWriter, r *http.Request) {
 		item.Chair.Model = chair.Model
 
 		owner := &Owner{}
-		if err := db.Get(owner, `SELECT * FROM owners WHERE id = ?`, chair.OwnerID); err != nil {
+		if err := tx.Get(owner, `SELECT * FROM owners WHERE id = ?`, chair.OwnerID); err != nil {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 		item.Chair.Owner = owner.Name
 
 		items = append(items, item)
+	}
+
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, &getAppRidesResponse{
@@ -770,118 +788,6 @@ func getChairStats(tx *sqlx.Tx, chairID string) (appGetNotificationResponseChair
 	}
 
 	return stats, nil
-}
-
-func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(*User)
-
-	// Server Sent Events
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-
-	var lastRide *Ride
-	var lastRideStatus string
-	f := func() (respond bool, err error) {
-		tx, err := db.Beginx()
-		if err != nil {
-			return false, err
-		}
-		defer tx.Rollback()
-
-		ride := &Ride{}
-		err = tx.Get(ride, `SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`, user.ID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return false, nil
-			}
-			return false, err
-
-		}
-		status, err := getLatestRideStatus(tx, ride.ID)
-		if err != nil {
-			return false, err
-
-		}
-		if lastRide != nil && ride.ID == lastRide.ID && status == lastRideStatus {
-			return false, nil
-		}
-
-		fare, err := calculateDiscountedFare(tx, user.ID, ride, ride.PickupLatitude, ride.PickupLongitude, ride.DestinationLatitude, ride.DestinationLongitude)
-		if err != nil {
-			return false, err
-		}
-
-		chair := &Chair{}
-		stats := appGetNotificationResponseChairStats{}
-		if ride.ChairID.Valid {
-			if err := tx.Get(chair, `SELECT * FROM chairs WHERE id = ?`, ride.ChairID); err != nil {
-				return false, err
-			}
-			stats, err = getChairStats(tx, chair.ID)
-			if err != nil {
-				return false, err
-			}
-		}
-
-		if err := writeSSE(w, &appGetNotificationResponseData{
-			RideID: ride.ID,
-			PickupCoordinate: Coordinate{
-				Latitude:  ride.PickupLatitude,
-				Longitude: ride.PickupLongitude,
-			},
-			DestinationCoordinate: Coordinate{
-				Latitude:  ride.DestinationLatitude,
-				Longitude: ride.DestinationLongitude,
-			},
-			Fare:   fare,
-			Status: status,
-			Chair: &appGetNotificationResponseChair{
-				ID:    chair.ID,
-				Name:  chair.Name,
-				Model: chair.Model,
-				Stats: stats,
-			},
-			CreatedAt: ride.CreatedAt.UnixMilli(),
-			UpdateAt:  ride.UpdatedAt.UnixMilli(),
-		}); err != nil {
-			return false, err
-		}
-		lastRide = ride
-		lastRideStatus = status
-
-		return true, nil
-	}
-
-	// 初回送信を必ず行う
-	respond, err := f()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	if !respond {
-		if err := writeSSE(w, nil); err != nil {
-			writeError(w, http.StatusInternalServerError, err)
-			return
-		}
-	}
-
-	for {
-		select {
-		case <-r.Context().Done():
-			w.WriteHeader(http.StatusOK)
-			return
-
-		default:
-			respond, err := f()
-			if err != nil {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-			if !respond {
-				time.Sleep(100 * time.Millisecond)
-			}
-		}
-	}
 }
 
 type appGetNearbyChairsResponse struct {

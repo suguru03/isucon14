@@ -91,8 +91,7 @@ class GetSales extends AbstractHttpHandler
         try {
             $this->db->beginTransaction();
             $stmt = $this->db->prepare('SELECT * FROM chairs WHERE owner_id = ?');
-            $stmt->bindValue(1, $owner->id, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([$owner->id]);
             $chairs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $res = new OwnerGetSales200Response();
             $res->setTotalSales(0);
@@ -116,10 +115,7 @@ class GetSales extends AbstractHttpHandler
                     JOIN ride_statuses ON rides.id = ride_statuses.ride_id
                 WHERE chair_id = ? AND status = \'COMPLETED\' AND updated_at BETWEEN ? AND ?  + INTERVAL 999 MICROSECOND'
                 );
-                $stmt->bindValue(1, $chair->id, PDO::PARAM_STR);
-                $stmt->bindValue(2, $since->format('Y-m-d H:i:s.v'), PDO::PARAM_STR);
-                $stmt->bindValue(3, $until->format('Y-m-d H:i:s.v'), PDO::PARAM_STR);
-                $stmt->execute();
+                $stmt->execute([$chair->id, $since->format('Y-m-d H:i:s.v'), $until->format('Y-m-d H:i:s.v')]);
                 $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $sumChairSales = $this->sumSales($rides);
                 $res->setTotalSales($res->getTotalSales() + $sumChairSales);

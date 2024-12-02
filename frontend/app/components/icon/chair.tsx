@@ -21,6 +21,12 @@ const ChairTypes = [
     windowColor: colors.neutral[400],
     wheelColor: colors.neutral[600],
   },
+  {
+    type: "sky",
+    bodyColor: colors.sky[300],
+    windowColor: colors.sky[500],
+    wheelColor: "#00a0e9",
+  },
 ] as const;
 
 const Chair: FC<
