@@ -1,13 +1,11 @@
 package benchrun
 
 import (
-	"context"
 	"crypto/md5"
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"io"
-	"net/http"
 )
 
 //go:embed frontend_hashes.json
@@ -22,27 +20,10 @@ func init() {
 	}
 }
 
-func RequestStaticFileHash(ctx context.Context, client http.Client, baseURL string, path string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/"+path, nil)
-	if err != nil {
-		return "", err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer closeBody(resp)
-
+func GetHashFromStream(r io.Reader) (string, error) {
 	h := md5.New()
-	if _, err := io.Copy(h, resp.Body); err != nil {
+	if _, err := io.Copy(h, r); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-func closeBody(resp *http.Response) {
-	if resp.Body != nil {
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}
 }

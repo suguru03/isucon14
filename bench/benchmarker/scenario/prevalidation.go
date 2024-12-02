@@ -41,11 +41,16 @@ func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) err
 }
 
 func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig) error {
+	client, err := webapp.NewClient(clientConfig)
+	if err != nil {
+		return err
+	}
+
 	frontendHashes := benchrun.FrontendHashesMap
 	indexHtmlHash := frontendHashes["index.html"]
 
 	{
-		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, "/")
+		actualHash, err := client.StaticGetFileHash(ctx, "/")
 		if err != nil {
 			return err
 		}
@@ -60,7 +65,7 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 			continue
 		}
 
-		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, path)
+		actualHash, err := client.StaticGetFileHash(ctx, path)
 		if err != nil {
 			return err
 		}
@@ -71,7 +76,7 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 
 	// check index.html for other paths
 	{
-		actualHash, err := benchrun.RequestStaticFileHash(ctx, *http.DefaultClient, clientConfig.TargetBaseURL, "/client")
+		actualHash, err := client.StaticGetFileHash(ctx, "/client")
 		if err != nil {
 			return err
 		}
