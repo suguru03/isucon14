@@ -685,6 +685,10 @@ export const appGetNearbyChairs = async (ctx: Context<Environment>) => {
         [chair.id],
       );
 
+      if (!chairLocation) {
+        continue;
+      }
+
       if (
         calculateDistance(
           coordinate.latitude,
