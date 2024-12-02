@@ -129,12 +129,9 @@ export const chairGetNotification = async (ctx: Context<Environment>) => {
       "SELECT * FROM ride_statuses WHERE ride_id = ? AND chair_sent_at IS NULL ORDER BY created_at ASC LIMIT 1",
       [ride.id],
     );
-    let status = "";
-    if (!yetSentRideStatus) {
-      status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
-    } else {
-      status = yetSentRideStatus.status;
-    }
+    const status = yetSentRideStatus
+      ? yetSentRideStatus.status
+      : await getLatestRideStatus(ctx.var.dbConn, ride.id);
 
     const [[user]] = await ctx.var.dbConn.query<Array<User & RowDataPacket>>(
       "SELECT * FROM users WHERE id = ? FOR SHARE",
