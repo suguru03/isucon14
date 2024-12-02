@@ -160,23 +160,6 @@ func writeJSON(w http.ResponseWriter, statusCode int, v interface{}) {
 	w.Write(buf)
 }
 
-func writeSSE(w http.ResponseWriter, data interface{}) error {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	_, err = w.Write([]byte("data: " + string(buf) + "\n\n"))
-	if err != nil {
-		return err
-	}
-
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
-	}
-
-	return nil
-}
-
 func writeError(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(statusCode)

@@ -2,11 +2,29 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 )
+
+func writeSSE(w http.ResponseWriter, data interface{}) error {
+	buf, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte("data: " + string(buf) + "\n\n"))
+	if err != nil {
+		return err
+	}
+
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	return nil
+}
 
 func appGetNotificationSSE(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*User)
