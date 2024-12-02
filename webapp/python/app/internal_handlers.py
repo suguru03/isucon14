@@ -20,24 +20,27 @@ def internal_get_matching(response: Response) -> Response:
             )
         ).fetchone()
 
-        if not row:
-            response.status_code = HTTPStatus.NO_CONTENT
-            return response
+    if not row:
+        response.status_code = HTTPStatus.NO_CONTENT
+        return response
 
-        ride = Ride.model_validate(row)
-        matched: Chair | None = None
-        empty = False
+    ride = Ride.model_validate(row)
+    matched: Chair | None = None
+    empty = False
 
-        for _ in range(0, 10):
+    for _ in range(0, 10):
+        with engine.connect() as conn:
             row = conn.execute(
                 text(
                     "SELECT * FROM chairs INNER JOIN (SELECT id FROM chairs WHERE is_active = TRUE ORDER BY RAND() LIMIT 1) AS tmp ON chairs.id = tmp.id LIMIT 1"
                 )
             ).fetchone()
-            if row is None:
-                response.status_code = HTTPStatus.NO_CONTENT
-                return response
-            matched = Chair.model_validate(row)
+        if row is None:
+            response.status_code = HTTPStatus.NO_CONTENT
+            return response
+        matched = Chair.model_validate(row)
+
+        with engine.connect() as conn:
             empty = bool(
                 conn.execute(
                     text(
@@ -46,12 +49,12 @@ def internal_get_matching(response: Response) -> Response:
                     {"chair_id": matched.id},
                 ).scalar()
             )
-            if empty:
-                break
+        if empty:
+            break
 
-        if not empty:
-            response.status_code = HTTPStatus.NO_CONTENT
-            return response
+    if not empty:
+        response.status_code = HTTPStatus.NO_CONTENT
+        return response
 
     with engine.begin() as transaction:
         assert matched
