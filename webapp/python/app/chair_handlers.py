@@ -186,11 +186,10 @@ class ChairGetNotificationResponse(BaseModel):
     data: ChairGetNotificationResponseData | None = None
 
 
-@router.get("/notification")
+@router.get("/notification", response_model_exclude_none=True)
 def chair_get_notification(
-    response: Response,
     chair: Annotated[Chair, Depends(chair_auth_middleware)],
-) -> ChairGetNotificationResponse | Response:
+) -> ChairGetNotificationResponse:
     with engine.begin() as conn:
         ride_status = ""
         row = conn.execute(
@@ -201,8 +200,7 @@ def chair_get_notification(
         ).fetchone()
 
         if row is None:
-            response.status_code = HTTPStatus.OK
-            return response
+            return ChairGetNotificationResponse(data=None)
 
         ride = Ride.model_validate(row)
         yet_sent_ride_status: RideStatus | None = None
