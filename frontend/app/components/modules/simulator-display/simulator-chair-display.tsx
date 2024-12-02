@@ -13,6 +13,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
+import { isArrayIncludes } from "~/utils/includes";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
 const CoordinatePickup: FC<{
@@ -145,9 +146,14 @@ export const SimulatorChairDisplay: FC = () => {
                   <PinIcon color={colors.red[500]} width={20} height={20} />
                   {/* road */}
                   <div className="relative w-full ms-6">
-                    {(
-                      ["CARRYING", "ARRIVED", "COMPLETED"] as RideStatus[]
-                    ).includes(rideStatus) && (
+                    {isArrayIncludes(
+                      [
+                        "CARRYING",
+                        "ARRIVED",
+                        "COMPLETED",
+                      ] as const satisfies RideStatus[],
+                      rideStatus,
+                    ) && (
                       <ChairIcon
                         model={chair.model}
                         className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
@@ -161,9 +167,14 @@ export const SimulatorChairDisplay: FC = () => {
                   <PinIcon color={colors.black} width={20} height={20} />
                   {/* road */}
                   <div className="relative w-full ms-6">
-                    {(
-                      ["MATCHING", "ENROUTE", "PICKUP"] as RideStatus[]
-                    ).includes(rideStatus) && (
+                    {isArrayIncludes(
+                      [
+                        "MATCHING",
+                        "ENROUTE",
+                        "PICKUP",
+                      ] as const satisfies RideStatus[],
+                      rideStatus,
+                    ) && (
                       <ChairIcon
                         model={chair.model}
                         className={`size-6 absolute top-[-2px] ${rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
