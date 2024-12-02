@@ -15,7 +15,7 @@ export const Simulator: FC<{ simulatorRef: RefObject<HTMLIFrameElement> }> = ({
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-[320px] lg:w-[400px]">
       <SimulatorChairDisplay />
       <SimulatorConfigDisplay simulatorRef={simulatorRef} />
     </div>

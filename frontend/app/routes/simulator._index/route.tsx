@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const ref = useRef<HTMLIFrameElement>(null);
   return (
-    <div className="h-screen flex justify-center items-center space-x-16">
+    <div className="h-screen flex justify-center items-center space-x-8 lg:space-x-16">
       <SmartPhone>
         <iframe
           title="ユーザー画面"
