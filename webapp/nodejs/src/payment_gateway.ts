@@ -1,3 +1,4 @@
+import { ErroredUpstream } from "./common.js";
 import type { Ride } from "./types/models.js";
 import { setTimeout } from "node:timers/promises";
 
@@ -10,7 +11,7 @@ export const requestPaymentGatewayPostPayment = async (
   token: string,
   param: PaymentGatewayPostPaymentRequest,
   retrieveRidesOrderByCreatedAtAsc: () => Promise<Ride[]>,
-): Promise<Error | undefined> => {
+): Promise<ErroredUpstream | Error | undefined> => {
   // 失敗したらとりあえずリトライ
   // FIXME: 社内決済マイクロサービスのインフラに異常が発生していて、同時にたくさんリクエストすると変なことになる可能性あり
   let retry = 0;
@@ -44,7 +45,7 @@ export const requestPaymentGatewayPostPayment = async (
 
         const rides = await retrieveRidesOrderByCreatedAtAsc();
         if (rides.length !== payments.length) {
-          return new Error(
+          return new ErroredUpstream(
             `unexpected number of payments: ${rides.length} != ${payments.length}`,
           );
         }

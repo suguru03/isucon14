@@ -22,6 +22,7 @@ import { setCookie } from "hono/cookie";
 import {
   calculateDistance,
   calculateFare,
+  ErroredUpstream,
   FARE_PER_DISTANCE,
   getLatestRideStatus,
   INITIAL_FARE,
@@ -443,7 +444,7 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
     const [[{ value: paymentGatewayURL }]] = await ctx.var.dbConn.query<
       Array<string & RowDataPacket>
     >("SELECT value FROM settings WHERE name = 'payment_gateway_url'");
-    await requestPaymentGatewayPostPayment(
+    const err = await requestPaymentGatewayPostPayment(
       paymentGatewayURL,
       paymentToken.token,
       paymentGatewayRequest,
@@ -455,6 +456,9 @@ export const appPostRideEvaluatation = async (ctx: Context<Environment>) => {
         return rides;
       },
     );
+    if (err instanceof ErroredUpstream) {
+      return ctx.text(`${err}`, 502);
+    }
     await ctx.var.dbConn.commit();
     return ctx.json(
       {
