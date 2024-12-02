@@ -19,7 +19,7 @@ const townGhostChairs = TownList.flatMap(({ centerCoordinate, name }) => {
         centerCoordinate.longitude + 50,
       ),
     },
-    model: String(i + name),
+    model: String(i),
     name: "ghost",
   }));
 });
