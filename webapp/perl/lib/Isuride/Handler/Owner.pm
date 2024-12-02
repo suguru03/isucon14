@@ -2,6 +2,8 @@ package Isuride::Handler::Owner;
 use v5.40;
 use utf8;
 use Time::Moment;
+use experimental qw(defer);
+no warnings 'experimental::defer';
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -112,7 +114,10 @@ sub owner_get_sales ($app, $c) {
         $until_tm = Time::Moment->from_epoch($parsed / 1000);
     }
 
-    my $owner  = $c->stash->{owner};
+    my $owner = $c->stash->{owner};
+    my $txn   = $app->dbh->txn_scope;
+    defer { $txn->rollback }
+
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
     my $response_data = {
