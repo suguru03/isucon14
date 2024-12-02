@@ -11,6 +11,7 @@ func (*unimplementedNotificationEvent) isNotificationEvent() {}
 type ChairNotificationEventMatched struct {
 	ServerRequestID string
 	User            ChairNotificationEventUserPayload
+	Pickup          Coordinate
 	Destination     Coordinate
 
 	unimplementedNotificationEvent

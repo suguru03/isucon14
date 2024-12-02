@@ -45,6 +45,8 @@ type World struct {
 	CompletedRequestChan chan *Request
 	// ErrorCounter エラーカウンター
 	ErrorCounter *ErrorCounter
+	// EmptyChairs 空車椅子マップ
+	EmptyChairs *concurrent.SimpleSet[*Chair]
 
 	tickTimeout      time.Duration
 	timeoutTicker    *time.Ticker
@@ -75,6 +77,7 @@ func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, cli
 		RootRand:             random.NewLockedRand(rand.NewPCG(0, 0)),
 		CompletedRequestChan: completedRequestChan,
 		ErrorCounter:         NewErrorCounter(),
+		EmptyChairs:          concurrent.NewSimpleSet[*Chair](),
 		tickTimeout:          tickTimeout,
 		timeoutTicker:        time.NewTicker(tickTimeout),
 		criticalErrorCh:      make(chan error),
@@ -287,6 +290,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 }
 
 func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate, distance int, response *GetNearbyChairsResponse) error {
+	checked := map[string]bool{}
 	for _, chair := range response.Chairs {
 		c := w.ChairDB.GetByServerID(chair.ID)
 		if c == nil {
@@ -319,8 +323,17 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			// ソフトエラーとして処理する
 			go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))})
 		}
+		checked[chair.ID] = true
 	}
-	// TODO レスポンスに含まれないが、範囲内にある椅子の扱い
+	for chair := range w.EmptyChairs.Iter() {
+		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
+			c := chair.Location.GetCoordByTime(baseTime)
+			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
+				// ソフトエラーとして処理する
+				go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID))})
+			}
+		}
+	}
 	return nil
 }
 
