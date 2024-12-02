@@ -58,6 +58,8 @@ type Chair struct {
 	notificationConn NotificationStream
 	// notificationQueue 通知キュー。毎Tickで最初に処理される
 	notificationQueue chan NotificationEvent
+	// forceStopped 強制停止されているかどうか
+	forceStopped bool
 
 	// detour 今回のリクエストで迂回するかどうか
 	detour bool
@@ -90,6 +92,14 @@ func (c *Chair) Tick(ctx *Context) error {
 		return nil
 	}
 	defer c.tickDone.Done()
+
+	if c.forceStopped {
+		if c.notificationConn != nil {
+			c.notificationConn.Close()
+			c.notificationConn = nil
+		}
+		return nil
+	}
 
 	// 通知キューを順番に処理する
 	for event := range concurrent.TryIter(c.notificationQueue) {
@@ -239,7 +249,14 @@ func (c *Chair) Tick(ctx *Context) error {
 			// ベンチマーク外で作成されたリクエストがアサインされた場合はどうしようもできないのでハングする
 			return nil
 		}
-		// TODO: matchingDataのUserとDestinationのバリデーション
+
+		if !c.matchingData.Destination.Equals(req.DestinationPoint) ||
+			!c.matchingData.Pickup.Equals(req.PickupPoint) ||
+			c.matchingData.User.ID != req.User.ServerID ||
+			c.matchingData.User.Name != req.User.RegisteredData.FirstName+" "+req.User.RegisteredData.LastName {
+			c.forceStopped = true
+			return CodeError(ErrorCodeChairReceivedDataIsWrong)
+		}
 
 		// 椅子がリクエストを正常に認識する
 		c.Request = req
@@ -281,7 +298,7 @@ func (c *Chair) Tick(ctx *Context) error {
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToActivate, err)
 		}
-		c.ActivatedAt = time.Now()
+		defer func() { c.ActivatedAt = time.Now() }()
 
 		// 出勤
 		c.Location.PlaceTo(&LocationEntry{
