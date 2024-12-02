@@ -116,7 +116,7 @@ sub owner_get_sales ($app, $c) {
 
     my $owner = $c->stash->{owner};
     my $txn   = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 

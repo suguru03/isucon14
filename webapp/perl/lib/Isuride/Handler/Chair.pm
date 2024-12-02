@@ -114,7 +114,7 @@ sub chair_post_coordinate ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $chair_location_id = ulid();
 
@@ -167,7 +167,7 @@ sub chair_get_notification ($app, $c) {
     my $chair = $c->stash->{chair};
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
@@ -231,7 +231,7 @@ sub chair_post_ride_status ($app, $c) {
     }
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $ride = $app->dbh->select_row('SELECT * FROM rides WHERE id = ? FOR UPDATE', $ride_id);
 

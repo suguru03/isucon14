@@ -59,7 +59,7 @@ sub app_post_users ($app, $c) {
     my $invitation_code = secure_random_str(15);
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     $app->dbh->query(
         q{INSERT INTO users (id, username, firstname, lastname, date_of_birth, access_token, invitation_code) VALUES (?, ?, ?, ?, ?, ?, ?)},
@@ -168,7 +168,7 @@ sub app_get_rides ($app, $c) {
     my $user = $c->stash->{user};
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $rides = $app->dbh->select_all(
         q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC},
@@ -263,7 +263,7 @@ sub app_post_rides ($app, $c) {
     my $ride_id = ulid();
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $rides = $app->dbh->select_all(
         q{SELECT * FROM rides WHERE user_id = ? },
@@ -375,7 +375,7 @@ sub app_post_rides_estimated_fare ($app, $c) {
     my $discounted = 0;
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     $discounted = calculate_discounted_fare($app, $user->{id}, undef, $params->{pickup_coordinate}->{latitude}, $params->{pickup_coordinate}->{longitude}, $params->{destination_coordinate}->{latitude}, $params->{destination_coordinate}->{longitude});
 
@@ -408,7 +408,7 @@ sub app_post_ride_evaluation ($app, $c) {
     }
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
 
     my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE id = ?}, $ride_id);
 
@@ -508,7 +508,7 @@ sub app_get_notification ($app, $c) {
     my $user = $c->stash->{user};
 
     my $txn = $app->dbh->txn_scope;
-    defer { $txn->rollback }
+    defer { $txn->rollback; }
     my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
     unless (defined $ride) {
