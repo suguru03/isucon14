@@ -508,7 +508,7 @@ sub app_get_notification ($c) {
     my $ride = $c->dbh->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
     unless (defined $ride) {
-        return $c->render_json(HTTP_OK, { data => undef });
+        return $c->render_json(HTTP_OK, { data => undef }, AppGetNotificationResponse);
     }
 
     my $yet_sent_ride_status = $c->dbh->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});

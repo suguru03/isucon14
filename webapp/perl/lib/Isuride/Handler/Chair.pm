@@ -170,7 +170,7 @@ sub chair_get_notification ($c) {
     my $ride = $c->dbh->select_row('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC LIMIT 1', $chair->{id});
 
     unless ($ride) {
-        return $c->render_json(HTTP_OK, { data => undef });
+        return $c->render_json(HTTP_OK, { data => undef }, ChairGetNotificationResponse);
     }
 
     my $status;
