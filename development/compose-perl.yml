@@ -13,6 +13,8 @@ services:
         condition: service_healthy
     environment:
       ISUCON_DB_HOST: db
+      MOJO_MODE: deployment
+      PLACK_ENV: deployment
     extra_hosts:
       - "host.docker.internal:host-gateway"
   db:

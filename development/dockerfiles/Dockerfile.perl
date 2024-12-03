@@ -62,9 +62,10 @@ WORKDIR /home/isucon/webapp/perl
 
 COPY cpanfile ./
 RUN cpm install --show-build-log-on-failure --without-test
+RUN cpm install --show-build-log-on-failure --without-test Data::Printer
 
 COPY --chown=isucon:isucon ./lib /home/isucon/webapp/perl/lib
-COPY --chown=isucon:isucon ./cpanfile ./app.psgi /home/isucon/webapp/perl/
+COPY --chown=isucon:isucon ./cpanfile ./app.psgi ./app.pl /home/isucon/webapp/perl/
 ENV PERL5LIB=/home/isucon/webapp/perl/local/lib/perl5
 ENV PATH=/home/isucon/webapp/perl/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
@@ -73,4 +74,4 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 EXPOSE 8080
-CMD ["./local/bin/plackup", "-s", "Starlet", "-p", "8080", "-Ilib", "-r", "app.psgi"]
+CMD ["./local/bin/plackup", "-s", "Twiggy", "-p", "8080", "-Ilib",  "app.pl"]
