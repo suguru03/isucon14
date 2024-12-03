@@ -280,8 +280,8 @@ export const appPostRides = async (ctx: Context<Environment>) => {
         [user.id],
       );
 
-      // 無ければ他のクーポンを付与された順番に使う
       if (!coupon) {
+        // 無ければ他のクーポンを付与された順番に使う
         const [[coupon]] = await ctx.var.dbConn.query<
           Array<Coupon & RowDataPacket>
         >(
