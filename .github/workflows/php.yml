@@ -7,15 +7,15 @@ on:
       - bench/**/*
       - webapp/php/**/*
       - .github/workflows/php.yml
-      - development/compose-php.ci.yml
-      - development/dockerfiles/Dockerfile.ci.php
+      - development/compose-php.yml
+      - development/dockerfiles/Dockerfile.php
   pull_request:
     paths:
       - bench/**/*
       - webapp/php/**/*
       - .github/workflows/php.yml
-      - development/compose-php.ci.yml
-      - development/dockerfiles/Dockerfile.ci.php
+      - development/compose-php.yml
+      - development/dockerfiles/Dockerfile.php
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -48,7 +48,7 @@ jobs:
           push: false
           load: true
           workdir: ./development
-          files: compose-php.ci.yml
+          files: compose-php.yml
           set: |
             webapp.cache-from=type=gha,scope=webapp-php-cache
             webapp.cache-to=type=gha,scope=webapp-php-cache,mode=max
@@ -70,7 +70,7 @@ jobs:
       - name: Setup webapp/php
         working-directory: ./development
         run: |
-          sudo docker compose -f compose-php.ci.yml up -d --wait
+          sudo docker compose -f compose-php.yml up -d --wait
       - name: Run bench
         working-directory: ./bench
         run: |
@@ -79,4 +79,4 @@ jobs:
         working-directory: ./development
         if: ${{ always() }}
         run: |
-          sudo docker compose -f compose-php.ci.yml down -v
+          sudo docker compose -f compose-php.yml down -v
