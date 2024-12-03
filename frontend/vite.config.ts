@@ -20,9 +20,9 @@ const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
 type APIResponse = Record<string, string>;
 
-const intialOwnerData = existsSync("./initial-owner-data.json")
+const intialOwnerData = existsSync("./initial-data.json")
   ? (JSON.parse(
-      readFileSync("./initial-owner-data.json").toString(),
+      readFileSync("./initial-data.json").toString(),
     ) as unknown)
   : undefined;
 
