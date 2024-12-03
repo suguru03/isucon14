@@ -288,10 +288,13 @@ export const appPostRides = async (ctx: Context<Environment>) => {
           "SELECT * FROM coupons WHERE user_id = ? AND used_by IS NULL ORDER BY created_at LIMIT 1 FOR UPDATE",
           [user.id],
         );
-        await ctx.var.dbConn.query(
-          "UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
-          [rideId, user.id, coupon.code],
-        );
+
+        if (coupon) {
+          await ctx.var.dbConn.query(
+            "UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = ?",
+            [rideId, user.id, coupon.code],
+          );
+        }
       } else {
         await ctx.var.dbConn.query(
           "UPDATE coupons SET used_by = ? WHERE user_id = ? AND code = 'CP_NEW2024'",
