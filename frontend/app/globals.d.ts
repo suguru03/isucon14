@@ -10,12 +10,12 @@ declare const __INITIAL_OWNER_DATA__:
         name: string;
         token: string;
       }[];
-      targetSimulatorChair: {
+      simulatorChairs: {
         id: string;
         owner_id: string;
         name: string;
         model: string;
         token: string;
-      };
+      }[];
     }
   | undefined;

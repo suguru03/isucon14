@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
 import { getSimulateChair } from "~/utils/get-initial-data";
+import { redirect, useNavigate } from "@remix-run/react";
 
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
@@ -183,9 +184,33 @@ export const useClientChairNotification = (id?: string) => {
   return responseClientAppRequest;
 };
 
-const simulateChairData = getSimulateChair();
-
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
+  const [subdomain, setSubDomain] = useState<string>();
+  useEffect(() => {
+    setSubDomain(location.hostname.split(".").shift())
+  },[setSubDomain])
+
+  useEffect(() => {
+   if (subdomain && !subdomain.startsWith("simulator")) {
+    return navigate("/")
+   }
+  },[subdomain])
+
+  const simulateChairData = useMemo(() => {
+    if (subdomain && !subdomain.startsWith("simulator")) return undefined;
+    switch(subdomain) {
+      case "simulator001":
+        return getSimulateChair(0)
+      case "simulator002":
+        return getSimulateChair(1)
+      case "simulator003":
+        return getSimulateChair(2)
+      default:
+        return getSimulateChair()
+    }
+  },[subdomain])
+
   useEffect(() => {
     if (simulateChairData?.token) {
       document.cookie = `chair_session=${simulateChairData.token}; path=/`;

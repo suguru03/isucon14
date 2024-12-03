@@ -26,11 +26,27 @@
       "token": "3585ccc78c507660a4802973d269849e"
     }
   ],
-  "targetSimulatorChair": {
-    "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
-    "owner_id": "01JDFEDF008NTA922W12FS7800",
-    "name": "QC-L13-8361",
-    "model": "クエストチェア Lite",
-    "token": "3013d5ec84e1b230f913a17d71ef27c8"
-  }
+  "simulatorChairs": [
+    {
+      "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "QC-L13-8361",
+      "model": "クエストチェア Lite",
+      "token": "3013d5ec84e1b230f913a17d71ef27c8"
+    },
+    {
+      "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "QC-L13-8361",
+      "model": "クエストチェア Lite",
+      "token": "3013d5ec84e1b230f913a17d71ef27c8"
+    },
+    {
+      "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "QC-L13-8361",
+      "model": "クエストチェア Lite",
+      "token": "3013d5ec84e1b230f913a17d71ef27c8"
+    }
+  ]
 }
