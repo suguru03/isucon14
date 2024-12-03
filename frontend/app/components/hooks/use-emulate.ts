@@ -36,9 +36,9 @@ const move = (
   }
 };
 
-const currentCoodinatePost = (coordinate: Coordinate, id: string) => {
+const currentCoodinatePost = (coordinate: Coordinate) => {
   if (coordinate) {
-    setSimulatorCurrentCoordinate(coordinate, id);
+    setSimulatorCurrentCoordinate(coordinate);
     fetchChairPostCoordinate({
       body: coordinate,
     }).catch((e) => {
@@ -48,7 +48,7 @@ const currentCoodinatePost = (coordinate: Coordinate, id: string) => {
 };
 const postEnroute = (chair: SimulatorChair, coordinate: Coordinate) => {
   if (chair.chairNotification?.payload?.ride_id) {
-    setSimulatorStartCoordinate(coordinate, chair.id);
+    setSimulatorStartCoordinate(coordinate);
     fetchChairPostRideStatus({
       body: { status: "ENROUTE" },
       pathParams: {
@@ -84,7 +84,7 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     const status = targetChair.chairNotification.status;
 
     const timeoutId = setTimeout(() => {
-      currentCoodinatePost(coordinate, targetChair.id);
+      currentCoodinatePost(coordinate);
       try {
         switch (status) {
           case "MATCHING":

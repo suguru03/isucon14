@@ -81,7 +81,6 @@ const CoordinatePickup: FC<{
 };
 
 const SimulatorProgress: FC<{
-  id: string;
   model: string;
   rideStatus: RideStatus | undefined;
   current: Coordinate | undefined;
@@ -245,7 +244,6 @@ export const SimulatorChairDisplay: FC = () => {
             />
             <CoordinatePickup coordinateState={chair.coordinateState} />
             <SimulatorProgress
-              id={chair.id}
               model={chair.model}
               rideStatus={rideStatus}
               current={chair.coordinateState.coordinate}
