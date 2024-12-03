@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from . import app_handlers, chair_handlers, owner_handlers
+from . import app_handlers, chair_handlers, internal_handlers, owner_handlers
 from .sql import engine
 
 # TODO: このコメントを消す
@@ -16,6 +16,7 @@ from .sql import engine
 app = FastAPI()
 app.include_router(app_handlers.router)
 app.include_router(chair_handlers.router)
+app.include_router(internal_handlers.router)
 app.include_router(owner_handlers.router)
 
 
