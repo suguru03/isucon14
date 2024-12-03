@@ -168,7 +168,7 @@ const SimulatorProgress: FC<{
             ) && (
               <ChairIcon
                 model={model}
-                className={`size-6 absolute top-[-2px] ${rideStatus === "ENROUTE" ? "animate-shake" : ""}`}
+                className={twMerge("size-6 absolute top-[-2px]", rideStatus === "ENROUTE" && "animate-shake")}
                 style={{ right: `${pickupProgress}%` }}
               />
             )}
