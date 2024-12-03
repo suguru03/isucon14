@@ -11,7 +11,7 @@
   become: true
   become_user: isucon
   shell:
-    cmd: /usr/bin/sh -x /home/isucon/local/rustup-init.sh -y --no-modify-path --profile default --default-toolchain 1.82.0 -c rustfmt
+    cmd: /usr/bin/sh -x /home/isucon/local/rustup-init.sh -y --no-modify-path --profile default --default-toolchain 1.83.0 -c rustfmt
     chdir: /home/isucon
 
 - name: mkdir opt/xbuild/var
