@@ -1,10 +1,3 @@
-"""
-以下の移植
-https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
-
-TODO: このdocstringを消す
-"""
-
 from http import HTTPStatus
 from typing import Annotated
 
@@ -26,6 +19,7 @@ from .models import (
 )
 from .payment_gateway import (
     PaymentGatewayPostPaymentRequest,
+    UpstreamError,
     request_payment_gateway_post_payment,
 )
 from .sql import engine
@@ -232,7 +226,6 @@ def app_get_rides(
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             owner = Owner.model_validate(row)
 
-            # TODO: 参照実装みたいにpartialに作るべき？
             item = GetAppRidesResponseItem(
                 id=ride.id,
                 pickup_coordinate=Coordinate(
@@ -548,13 +541,15 @@ def app_post_ride_evaluation(
             ).fetchall()
             return [Ride.model_validate(r) for r in rows]
 
-        request_payment_gateway_post_payment(
-            payment_gateway_url,
-            payment_token.token,
-            payment_gateway_request,
-            retrieve_rides_order_by_created_at_asc,
-        )
-        # TODO: BadGatewayのケースを実装する
+        try:
+            request_payment_gateway_post_payment(
+                payment_gateway_url,
+                payment_token.token,
+                payment_gateway_request,
+                retrieve_rides_order_by_created_at_asc,
+            )
+        except UpstreamError as e:
+            raise HTTPException(status_code=HTTPStatus.BAD_GATEWAY, detail=str(e))
 
         response = AppPostRideEvaluationResponse(
             completed_at=timestamp_millis(ride.updated_at)
