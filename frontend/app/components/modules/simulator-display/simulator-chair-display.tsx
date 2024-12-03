@@ -1,4 +1,5 @@
 import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
 import { fetchChairPostActivity } from "~/apiClient/apiComponents";
 import { RideStatus } from "~/apiClient/apiSchemas";
@@ -14,9 +15,8 @@ import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
 import { isArrayIncludes } from "~/utils/includes";
-import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
-import { twMerge } from "tailwind-merge";
+import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
 const CoordinatePickup: FC<{
   coordinateState: SimulatorChair["coordinateState"];
@@ -81,6 +81,7 @@ const CoordinatePickup: FC<{
 };
 
 const SimulatorProgress: FC<{
+  id: string;
   model: string;
   rideStatus: RideStatus | undefined;
   current: Coordinate | undefined;
@@ -244,6 +245,7 @@ export const SimulatorChairDisplay: FC = () => {
             />
             <CoordinatePickup coordinateState={chair.coordinateState} />
             <SimulatorProgress
+              id={chair.id}
               model={chair.model}
               rideStatus={rideStatus}
               current={chair.coordinateState.coordinate}

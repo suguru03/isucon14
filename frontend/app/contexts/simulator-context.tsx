@@ -195,7 +195,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const request = useClientChairNotification(simulateChairData?.id);
 
   const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
-    const coordinate = getSimulatorCurrentCoordinate();
+    const coordinate = getSimulatorCurrentCoordinate(simulateChairData?.id);
     return coordinate ?? { latitude: 0, longitude: 0 };
   });
 
