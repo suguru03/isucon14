@@ -50,8 +50,8 @@
     group: "root"
     mode: "0644"
   with_items:
-    - etc/nginx/tls/_.t.isucon.dev.crt
-    - etc/nginx/tls/_.t.isucon.dev.key
+    - etc/nginx/tls/dummy.crt
+    - etc/nginx/tls/dummy.key
     - etc/nginx/tls/_.xiv.isucon.net.crt
     - etc/nginx/tls/_.xiv.isucon.net.key
 
