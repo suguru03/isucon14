@@ -1,8 +1,9 @@
 use v5.40;
 use utf8;
 use FindBin;
+use lib "$FindBin::Bin/lib";
+
 use Mojolicious::Lite;
-use Plack::Builder;
 use Cpanel::JSON::XS;
 use Cpanel::JSON::XS::Type;
 
@@ -145,7 +146,4 @@ sub post_initialize ($c) {
     return $c->render_json(HTTP_OK, { language => 'perl' }, PostInitializeResponse);
 }
 
-builder {
-    enable 'ReverseProxy';
-    app->start;
-};
+app->start;
