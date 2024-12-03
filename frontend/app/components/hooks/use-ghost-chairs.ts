@@ -1,24 +1,47 @@
 import { useEffect, useState } from "react";
 import { NearByChair } from "~/types";
+import { TownList } from "../modules/map/map-data";
 
 const randomInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-const emulateChairs = [...Array(100).keys()].map((i) => {
+// 街には椅子が集まりやすい
+const townGhostChairs = TownList.flatMap(({ centerCoordinate, name }) => {
+  return [...Array(7).keys()].map((i) => ({
+    id: name + "-ghost-" + i,
+    current_coordinate: {
+      latitude: randomInt(
+        centerCoordinate.latitude - 50,
+        centerCoordinate.latitude + 50,
+      ),
+      longitude: randomInt(
+        centerCoordinate.longitude - 50,
+        centerCoordinate.longitude + 50,
+      ),
+    },
+    model: String(i),
+    name: "ghost",
+  }));
+});
+
+const ghostChairs = [...Array(70).keys()].map((i) => {
   return {
-    id: "simulate" + i,
+    id: "ghost" + i,
     current_coordinate: {
       latitude: randomInt(-500, 500),
       longitude: randomInt(-500, 500),
     },
     model: String(i),
-    name: "hoge",
+    name: "ghost",
   };
 }) satisfies NearByChair[];
 
 export const useGhostChairs = (): NearByChair[] => {
   const [enabled, setEnabled] = useState<boolean>(false);
-  const [chairs, setChairs] = useState<NearByChair[]>(emulateChairs);
+  const [chairs, setChairs] = useState<NearByChair[]>([
+    ...townGhostChairs,
+    ...ghostChairs,
+  ]);
 
   useEffect(() => {
     const onMessage = ({
