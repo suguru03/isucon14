@@ -13,14 +13,6 @@ dependencies = [
     "uvicorn-worker>=0.2.0",
 ]
 
-# TODDO: 本番前に削除
-[dependency-groups]
-dev = [
-    "fastapi[standard]>=0.115.5",
-    "icecream>=2.1.3",
-    "nox>=2024.10.9",
-]
-
 [tool.ruff.lint]
 extend-select = [
     "UP", # pyupgrade
