@@ -1,10 +1,3 @@
-"""
-以下の移植
-https://github.com/isucon/isucon14/blob/main/webapp/go/chair_handlers.go
-
-TODO: このdocstringを消す
-"""
-
 from http import HTTPStatus
 from typing import Annotated
 
