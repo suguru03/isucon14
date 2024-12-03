@@ -16,6 +16,7 @@ import { Coordinate, SimulatorChair } from "~/types";
 import { isArrayIncludes } from "~/utils/includes";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
+import { twMerge } from "tailwind-merge";
 
 const CoordinatePickup: FC<{
   coordinateState: SimulatorChair["coordinateState"];
@@ -168,7 +169,10 @@ const SimulatorProgress: FC<{
             ) && (
               <ChairIcon
                 model={model}
-                className={twMerge("size-6 absolute top-[-2px]", rideStatus === "ENROUTE" && "animate-shake")}
+                className={twMerge(
+                  "size-6 absolute top-[-2px]",
+                  rideStatus === "ENROUTE" && "animate-shake",
+                )}
                 style={{ right: `${pickupProgress}%` }}
               />
             )}
@@ -178,7 +182,6 @@ const SimulatorProgress: FC<{
     </div>
   );
 };
-
 export const SimulatorChairDisplay: FC = () => {
   const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
