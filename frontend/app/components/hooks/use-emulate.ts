@@ -5,7 +5,10 @@ import {
 } from "~/apiClient/apiComponents";
 import { Coordinate } from "~/apiClient/apiSchemas";
 import type { SimulatorChair } from "~/types";
-import { setSimulatorCoordinate } from "~/utils/storage";
+import {
+  setSimulatorCurrentCoordinate,
+  setSimulatorStartCoordinate,
+} from "~/utils/storage";
 
 const move = (
   currentCoordinate: Coordinate,
@@ -35,7 +38,7 @@ const move = (
 
 const currentCoodinatePost = (coordinate: Coordinate) => {
   if (coordinate) {
-    setSimulatorCoordinate(coordinate);
+    setSimulatorCurrentCoordinate(coordinate);
     fetchChairPostCoordinate({
       body: coordinate,
     }).catch((e) => {
@@ -43,8 +46,9 @@ const currentCoodinatePost = (coordinate: Coordinate) => {
     });
   }
 };
-const postEnroute = (chair: SimulatorChair) => {
+const postEnroute = (chair: SimulatorChair, coordinate: Coordinate) => {
   if (chair.chairNotification?.payload?.ride_id) {
+    setSimulatorStartCoordinate(coordinate);
     fetchChairPostRideStatus({
       body: { status: "ENROUTE" },
       pathParams: {
@@ -85,7 +89,7 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
       try {
         switch (status) {
           case "MATCHING":
-            postEnroute(targetChair);
+            postEnroute(targetChair, coordinate);
             break;
           case "PICKUP":
             postCarring(targetChair);

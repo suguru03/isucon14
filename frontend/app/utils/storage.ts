@@ -41,12 +41,20 @@ export const getCampaignData = (): CampaignData | null => {
   return getStorage("campaign", localStorage);
 };
 
-export const setSimulatorCoordinate = (coordinate: Coordinate) => {
-  return setStorage("simulator.coordinate", coordinate, sessionStorage);
+export const setSimulatorCurrentCoordinate = (coordinate: Coordinate) => {
+  return setStorage("simulator.currentCoordinate", coordinate, sessionStorage);
 };
 
-export const getSimulatorCoordinate = (): Coordinate | null => {
-  return getStorage("simulator.coordinate", sessionStorage);
+export const getSimulatorCurrentCoordinate = (): Coordinate | null => {
+  return getStorage("simulator.currentCoordinate", sessionStorage);
+};
+
+export const setSimulatorStartCoordinate = (coordinate: Coordinate) => {
+  return setStorage("simulator.startCoordinate", coordinate, sessionStorage);
+};
+
+export const getSimulatorStartCoordinate = (): Coordinate | null => {
+  return getStorage("simulator.startCoordinate", sessionStorage);
 };
 
 export const setUserId = (id: string) => {
