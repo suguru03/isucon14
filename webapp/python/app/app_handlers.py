@@ -266,8 +266,10 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
         {"ride_id": ride_id},
     ).scalar()
 
-    if not status:
-        return ""
+    if status is None:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="no rows in result set"
+        )
 
     assert isinstance(status, str)
     return status
@@ -290,7 +292,7 @@ def app_post_rides(
         ).fetchall()
         rides = [Ride.model_validate(row) for row in rows]
 
-        continuing_ride_count: int = 0
+        continuing_ride_count = 0
         for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
             if status != "COMPLETED":
@@ -659,7 +661,7 @@ def app_get_notification(
 
             stats = get_chair_stats(conn, ride.chair_id)
 
-            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore
+            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore[union-attr]
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
@@ -716,8 +718,8 @@ def get_chair_stats(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
     ).fetchall()
-    total_ride_count: int = len(rides)  # noqa
-    total_evaluation: float = 0.0  # noqa
+    total_ride_count = len(rides)
+    total_evaluation = 0.0
 
     for ride in rides:
         rows = conn.execute(
@@ -851,7 +853,7 @@ def calculate_discounted_fare(
     dest_latitude: int,
     dest_longitude: int,
 ) -> int:
-    discount: int = 0
+    discount = 0
 
     if ride:
         dest_latitude = ride.destination_latitude
@@ -886,9 +888,9 @@ def calculate_discounted_fare(
         if coupon:
             discount = coupon.discount
 
-    metered_fare: int = FARE_PER_DISTANCE * calculate_distance(
+    metered_fare = FARE_PER_DISTANCE * calculate_distance(
         dest_latitude, dest_longitude, pickup_latitude, pickup_longitude
     )
 
-    discounted_metered_fare: int = max(metered_fare - discount, 0)
+    discounted_metered_fare = max(metered_fare - discount, 0)
     return INITIAL_FARE + discounted_metered_fare
