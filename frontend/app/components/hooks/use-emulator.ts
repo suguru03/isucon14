@@ -4,7 +4,7 @@ import {
   fetchChairPostRideStatus,
 } from "~/api/api-components";
 import { Coordinate } from "~/api/api-schemas";
-import type { SimulatorChair } from "~/types";
+import { useSimulatorContext } from "~/contexts/simulator-context";
 import {
   setSimulatorCurrentCoordinate,
   setSimulatorStartCoordinate,
@@ -37,74 +37,56 @@ const move = (
 };
 
 const currentCoodinatePost = (coordinate: Coordinate) => {
-  if (coordinate) {
-    setSimulatorCurrentCoordinate(coordinate);
-    fetchChairPostCoordinate({
-      body: coordinate,
-    }).catch((e) => {
-      console.error(`CONSOLE ERROR: ${e}`);
-    });
-  }
+  setSimulatorCurrentCoordinate(coordinate);
+  void fetchChairPostCoordinate({
+    body: coordinate,
+  }).catch((e) => console.error(e));
 };
 
-const postEnroute = (chair: SimulatorChair, coordinate: Coordinate) => {
-  if (chair.chairNotification?.payload?.ride_id) {
-    setSimulatorStartCoordinate(coordinate);
-    fetchChairPostRideStatus({
-      body: { status: "ENROUTE" },
-      pathParams: {
-        rideId: chair.chairNotification?.payload?.ride_id,
-      },
-    }).catch((e) => console.error(e));
-  }
+const postEnroute = (rideId: string, coordinate: Coordinate) => {
+  setSimulatorStartCoordinate(coordinate);
+  void fetchChairPostRideStatus({
+    body: { status: "ENROUTE" },
+    pathParams: {
+      rideId,
+    },
+  }).catch((e) => console.error(e));
 };
 
-const postCarring = (chair: SimulatorChair) => {
-  if (chair.chairNotification?.payload?.ride_id) {
-    fetchChairPostRideStatus({
-      body: { status: "CARRYING" },
-      pathParams: {
-        rideId: chair.chairNotification?.payload?.ride_id,
-      },
-    }).catch((e) => console.error(e));
-  }
+const postCarring = (rideId: string) => {
+  void fetchChairPostRideStatus({
+    body: { status: "CARRYING" },
+    pathParams: {
+      rideId,
+    },
+  }).catch((e) => console.error(e));
 };
 
-export const useEmulator = (targetChair?: SimulatorChair) => {
+export const useEmulator = () => {
+  const { chair, data, setCoordinate } = useSimulatorContext();
+
   useEffect(() => {
-    if (
-      !(
-        targetChair?.coordinateState?.coordinate &&
-        targetChair?.chairNotification?.payload?.coordinate
-      )
-    ) {
+    if (!(chair && data)) {
       return;
     }
 
-    const { coordinate, setter } = targetChair.coordinateState;
-    const { pickup, destination } =
-      targetChair.chairNotification.payload.coordinate;
-    const status = targetChair.chairNotification.status;
-
     const timeoutId = setTimeout(() => {
-      currentCoodinatePost(coordinate);
+      currentCoodinatePost(chair.coordinate);
       try {
-        switch (status) {
+        switch (data.status) {
           case "MATCHING":
-            postEnroute(targetChair, coordinate);
+            postEnroute(data.ride_id, chair.coordinate);
             break;
           case "PICKUP":
-            postCarring(targetChair);
+            postCarring(data.ride_id);
             break;
           case "ENROUTE":
-            if (pickup) {
-              setter(move(coordinate, pickup));
-            }
+            setCoordinate?.(move(chair.coordinate, data.pickup_coordinate));
             break;
           case "CARRYING":
-            if (destination) {
-              setter(move(coordinate, destination));
-            }
+            setCoordinate?.(
+              move(chair.coordinate, data.destination_coordinate),
+            );
             break;
         }
       } catch (e) {
@@ -115,5 +97,5 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [targetChair]);
+  }, [chair, data, setCoordinate]);
 };
