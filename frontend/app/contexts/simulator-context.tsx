@@ -8,7 +8,7 @@ import {
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
 import { getSimulateChair } from "~/utils/get-initial-data";
-import { redirect, useNavigate } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
@@ -195,7 +195,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
    if (subdomain && !subdomain.startsWith("simulator")) {
     return navigate("/")
    }
-  },[subdomain])
+  },[subdomain, navigate])
 
   const simulateChairData = useMemo(() => {
     if (subdomain && !subdomain.startsWith("simulator")) return undefined;
@@ -215,7 +215,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
     if (simulateChairData?.token) {
       document.cookie = `chair_session=${simulateChairData.token}; path=/`;
     }
-  }, []);
+  }, [simulateChairData]);
 
   const request = useClientChairNotification(simulateChairData?.id);
 
