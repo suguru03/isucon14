@@ -14,21 +14,26 @@ type paymentQueue struct {
 	verifier         Verifier
 	processTime      time.Duration
 	acceptedPayments *concurrent.SimpleMap[string, *concurrent.SimpleSlice[*Payment]]
+	errChan          chan error
 }
 
-func newPaymentQueue(queueSize int, verifier Verifier, processTime time.Duration) *paymentQueue {
+func newPaymentQueue(queueSize int, verifier Verifier, processTime time.Duration, errChan chan error) *paymentQueue {
 	return &paymentQueue{
 		ctx:              context.Background(),
 		semaphore:        semaphore.NewWeighted(int64(queueSize)),
 		verifier:         verifier,
 		processTime:      processTime,
 		acceptedPayments: concurrent.NewSimpleMap[string, *concurrent.SimpleSlice[*Payment]](),
+		errChan:          errChan,
 	}
 }
 
 func (q *paymentQueue) execute(p *Payment) {
 	time.Sleep(q.processTime)
 	p.Status = q.verifier.Verify(p)
+	if p.Status.Err != nil {
+		q.errChan <- p.Status.Err
+	}
 	close(p.processChan)
 }
 

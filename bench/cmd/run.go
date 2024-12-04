@@ -65,7 +65,7 @@ var runCmd = &cobra.Command{
 		}
 		defer exporter.Shutdown(context.Background())
 
-		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()))
+		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()), slog.String("paymentURL", paymentURL))
 
 		if postValidationMode {
 			contestantLogger.Info("post validationを実行します")

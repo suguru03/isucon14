@@ -44,6 +44,7 @@ type Scenario struct {
 	world                     *world.World
 	worldCtx                  *world.Context
 	paymentServer             *payment.Server
+	paymentErrChan            chan error
 	step                      *isucandar.BenchmarkStep
 	reporter                  benchrun.Reporter
 	meter                     metric.Meter
@@ -68,7 +69,8 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 
 	worldCtx := world.NewContext(w)
 
-	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 2)
+	paymentErrChan := make(chan error, 1000)
+	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 2, paymentErrChan)
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
 	}()
@@ -143,6 +145,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		world:                     w,
 		worldCtx:                  worldCtx,
 		paymentServer:             paymentServer,
+		paymentErrChan:            paymentErrChan,
 		reporter:                  reporter,
 		meter:                     meter,
 		prepareOnly:               prepareOnly,
@@ -278,6 +281,14 @@ LOOP:
 				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
 				s.failed = true
 				return err
+			}
+
+			// paymentErrChan にエラーがあればエラーを返す
+			select {
+			case err := <-s.paymentErrChan:
+				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
+				return err
+			default:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {

@@ -18,11 +18,11 @@ type Server struct {
 	closed    bool
 }
 
-func NewServer(verifier Verifier, processTime time.Duration, queueSize int) *Server {
+func NewServer(verifier Verifier, processTime time.Duration, queueSize int, errChan chan error) *Server {
 	s := &Server{
 		mux:       http.NewServeMux(),
 		knownKeys: concurrent.NewSimpleMap[string, *Payment](),
-		queue:     newPaymentQueue(queueSize, verifier, processTime),
+		queue:     newPaymentQueue(queueSize, verifier, processTime, errChan),
 	}
 	s.mux.HandleFunc("GET /payments", s.GetPaymentsHandler)
 	s.mux.HandleFunc("POST /payments", s.PostPaymentsHandler)
