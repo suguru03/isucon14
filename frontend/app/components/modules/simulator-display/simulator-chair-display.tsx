@@ -101,7 +101,7 @@ const ChairProgress: FC<{
     return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
   }, [rideStatus]);
 
-  const pickupProgress: number = useMemo(() => {
+  const progressToPickup: number = useMemo(() => {
     if (!rideStatus || !pickupLoc || !startLoc || !currentLoc) {
       return 0;
     }
@@ -118,7 +118,7 @@ const ChairProgress: FC<{
     }
   }, [rideStatus, pickupLoc, startLoc, currentLoc]);
 
-  const distanceProgress: number = useMemo(() => {
+  const progressToDestination: number = useMemo(() => {
     if (!rideStatus || !destLoc || !pickupLoc || !currentLoc) {
       return 0;
     }
@@ -148,7 +148,7 @@ const ChairProgress: FC<{
                 <ChairIcon
                   model={model}
                   className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                  style={{ right: `${distanceProgress}%` }}
+                  style={{ right: `${progressToDestination}%` }}
                 />
               )}
           </div>
@@ -163,7 +163,7 @@ const ChairProgress: FC<{
                   "size-6 absolute top-[-2px]",
                   rideStatus === "ENROUTE" && "animate-shake",
                 )}
-                style={{ right: `${pickupProgress}%` }}
+                style={{ right: `${progressToPickup}%` }}
               />
             )}
           </div>
