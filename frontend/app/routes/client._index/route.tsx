@@ -89,26 +89,19 @@ export default function Index() {
     if (!currentLocation || !destLocation) {
       return;
     }
-    const abortController = new AbortController();
-    fetchAppPostRidesEstimatedFare(
-      {
-        body: {
-          pickup_coordinate: currentLocation,
-          destination_coordinate: destLocation,
-        },
+    fetchAppPostRidesEstimatedFare({
+      body: {
+        pickup_coordinate: currentLocation,
+        destination_coordinate: destLocation,
       },
-      abortController.signal,
-    )
+    })
       .then((res) =>
         setEstimatePrice({ fare: res.fare, discount: res.discount }),
       )
-      .catch((err) => {
-        console.error(err);
+      .catch((error) => {
+        console.error(error);
         setEstimatePrice(undefined);
       });
-    return () => {
-      abortController.abort();
-    };
   }, [currentLocation, destLocation]);
 
   const handleRideRequest = useCallback(async () => {
@@ -150,6 +143,9 @@ export default function Index() {
         });
         setDisplayedChairs(chairs);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };

@@ -22,18 +22,14 @@ export default function Index() {
   const [rides, setRides] = useState<Ride[]>([]);
 
   useEffect(() => {
-    const abortController = new AbortController();
     void (async () => {
       try {
-        const res = await fetchAppGetRides({}, abortController.signal);
+        const res = await fetchAppGetRides({});
         setRides(res.rides);
       } catch (error) {
         console.error(error);
       }
     })();
-    return () => {
-      abortController.abort();
-    };
   }, []);
 
   return (

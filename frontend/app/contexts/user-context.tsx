@@ -163,6 +163,9 @@ export const useClientAppRequest = (accessToken: string, id?: string) => {
         });
         timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         if (isClientApiError(error)) {
           console.error(error.message);
         }
