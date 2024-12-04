@@ -134,7 +134,7 @@ func (c *checker) checkSecurityGroup(sg *types.SecurityGroup) {
 			hasIngressInternal = true
 			continue
 		}
-		c.addFailure("%s に不明なルールが見つかりました", id)
+		// 不明なルールも許可
 	}
 	if !hasIngressSSH {
 		c.addFailure("%s に SSH を許可するルールがありません", id)
