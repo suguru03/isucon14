@@ -12,7 +12,24 @@ type InitialOwner = {
   token: string;
 };
 
-const initialData = __INITIAL_DATA__;
+type initialDataType =
+  | {
+      owners: {
+        id: string;
+        name: string;
+        token: string;
+      }[];
+      simulatorChairs: {
+        id: string;
+        owner_id: string;
+        name: string;
+        model: string;
+        token: string;
+      }[];
+    }
+  | undefined;
+
+const initialData = __INITIAL_DATA__ as initialDataType;
 
 export const getOwners = (): InitialOwner[] => {
   return (
