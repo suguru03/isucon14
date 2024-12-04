@@ -282,6 +282,7 @@ export default function Index() {
                 statusModalRef.current?.close();
                 setCurrentLocation(destLocation);
                 setDestLocation(undefined);
+                setEstimatePrice(undefined);
               }}
             />
           )}
