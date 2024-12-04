@@ -11,7 +11,6 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
-import { isArrayIncludes } from "~/utils/includes";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
@@ -142,30 +141,22 @@ const ChairProgress: FC<{
         <div className="flex w-1/2">
           <PinIcon color={colors.red[500]} width={20} />
           <div className="relative w-full ms-6">
-            {isArrayIncludes(
-              [
-                "PICKUP",
-                "CARRYING",
-                "ARRIVED",
-                "COMPLETED",
-              ] as const satisfies RideStatus[],
-              rideStatus,
-            ) && (
-              <ChairIcon
-                model={model}
-                className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                style={{ right: `${distanceProgress}%` }}
-              />
-            )}
+            {rideStatus &&
+              ["PICKUP", "CARRYING", "ARRIVED", "COMPLETED"].includes(
+                rideStatus,
+              ) && (
+                <ChairIcon
+                  model={model}
+                  className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
+                  style={{ right: `${distanceProgress}%` }}
+                />
+              )}
           </div>
         </div>
         <div className="flex w-1/2">
           <PinIcon color={colors.black} width={20} />
           <div className="relative w-full ms-6">
-            {isArrayIncludes(
-              ["MATCHING", "ENROUTE"] as const satisfies RideStatus[],
-              rideStatus,
-            ) && (
+            {rideStatus && ["MATCHING", "ENROUTE"].includes(rideStatus) && (
               <ChairIcon
                 model={model}
                 className={twMerge(

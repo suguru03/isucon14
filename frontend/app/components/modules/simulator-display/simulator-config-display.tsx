@@ -3,6 +3,11 @@ import { fetchChairPostActivity } from "~/api/api-components";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
+import {
+  Message,
+  MessageTypes,
+  sendSimulatorConfig,
+} from "~/utils/post-message";
 
 type SimulatorConfigType = {
   ghostChairEnabled: boolean;
@@ -11,6 +16,7 @@ type SimulatorConfigType = {
 export const SimulatorConfigDisplay: FC<{
   simulatorRef: RefObject<HTMLIFrameElement>;
 }> = ({ simulatorRef }) => {
+  const [ready, setReady] = useState<boolean>(false);
   const { targetChair: chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
 
@@ -31,17 +37,24 @@ export const SimulatorConfigDisplay: FC<{
   });
 
   useEffect(() => {
-    const sendMessage = () => {
-      simulatorRef.current?.contentWindow?.postMessage(
-        { type: "isuride.simulator.config", payload: config },
-        "*",
-      );
+    if (!ready) return;
+    if (simulatorRef.current?.contentWindow) {
+      sendSimulatorConfig(simulatorRef.current.contentWindow, config);
+    }
+  }, [config, ready, simulatorRef]);
+
+  useEffect(() => {
+    const onMessage = ({ data }: MessageEvent<Message["ClientReady"]>) => {
+      const isSameOrigin = origin == location.origin;
+      if (isSameOrigin && data.type === MessageTypes.ClientReady) {
+        setReady(Boolean(data?.payload?.ready));
+      }
     };
-    const timer = setTimeout(sendMessage, 800);
+    window.addEventListener("message", onMessage);
     return () => {
-      clearTimeout(timer);
+      window.removeEventListener("message", onMessage);
     };
-  }, [config, simulatorRef]);
+  }, []);
 
   return (
     <>

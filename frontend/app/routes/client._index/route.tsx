@@ -17,6 +17,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useUserContext } from "~/contexts/user-context";
 import { NearByChair, isClientApiError } from "~/types";
+import { sendClientReady } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -165,6 +166,13 @@ export default function Index() {
       abortController?.abort();
     };
   }, [centerCoordinate, isStatusModalOpen]);
+
+  useEffect(() => {
+    sendClientReady(window.parent, { ready: true });
+    return () => {
+      sendClientReady(window.parent, { ready: false });
+    };
+  }, []);
 
   return (
     <>
