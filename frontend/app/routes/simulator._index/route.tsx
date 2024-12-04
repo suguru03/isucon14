@@ -5,7 +5,6 @@ import { useEmulator } from "~/components/hooks/use-emulator";
 import { SimulatorChairDisplay } from "~/components/modules/simulator-display/simulator-chair-display";
 import { SimulatorConfigDisplay } from "~/components/modules/simulator-display/simulator-config-display";
 import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
-import { useSimulatorContext } from "~/contexts/simulator-context";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,10 +14,9 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { targetChair: chair } = useSimulatorContext();
   const ref = useRef<HTMLIFrameElement>(null);
 
-  useEmulator(chair);
+  useEmulator();
 
   useEffect(() => {
     try {
