@@ -142,9 +142,7 @@ const ChairProgress: FC<{
           <PinIcon color={colors.red[500]} width={20} />
           <div className="relative w-full ms-6">
             {rideStatus &&
-              ["PICKUP", "CARRYING", "ARRIVED"].includes(
-                rideStatus,
-              ) && (
+              ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
                 <ChairIcon
                   model={model}
                   className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
@@ -156,16 +154,17 @@ const ChairProgress: FC<{
         <div className="flex w-1/2">
           <PinIcon color={colors.black} width={20} />
           <div className="relative w-full ms-6">
-            {rideStatus && ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
-              <ChairIcon
-                model={model}
-                className={twMerge(
-                  "size-6 absolute top-[-2px]",
-                  rideStatus === "ENROUTE" && "animate-shake",
-                )}
-                style={{ right: `${progressToPickup}%` }}
-              />
-            )}
+            {rideStatus &&
+              ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
+                <ChairIcon
+                  model={model}
+                  className={twMerge(
+                    "size-6 absolute top-[-2px]",
+                    rideStatus === "ENROUTE" && "animate-shake",
+                  )}
+                  style={{ right: `${progressToPickup}%` }}
+                />
+              )}
           </div>
         </div>
       </div>
