@@ -661,7 +661,7 @@ def app_get_notification(
 
             stats = get_chair_stats(conn, ride.chair_id)
 
-            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore
+            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore[union-attr]
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
