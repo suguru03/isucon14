@@ -65,6 +65,9 @@ export const useClientChairNotification = (id?: string) => {
           setNotification(json ? { ...json, contentType: "json" } : undefined);
         }
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -159,6 +162,9 @@ export const useClientChairNotification = (id?: string) => {
         });
         timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -195,7 +201,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const request = useClientChairNotification(simulateChairData?.id);
+  const chairNotification = useClientChairNotification(simulateChairData?.id);
 
   const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
     const coordinate = getSimulatorCurrentCoordinate();
@@ -208,7 +214,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
         targetChair: simulateChairData
           ? {
               ...simulateChairData,
-              chairNotification: request,
+              chairNotification,
               coordinateState: {
                 setter: setCurrentCoordinate,
                 coordinate: currentCoodinate,
