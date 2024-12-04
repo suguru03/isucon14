@@ -1,22 +1,18 @@
 import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
-import { fetchChairPostActivity } from "~/api/api-components";
 import { RideStatus } from "~/api/api-schemas";
-import { useEmulator } from "~/components/hooks/use-emulate";
 import { ChairIcon } from "~/components/icon/chair";
 import { PinIcon } from "~/components/icon/pin";
 import { LocationButton } from "~/components/modules/location-button/location-button";
 import { Map } from "~/components/modules/map/map";
 import { Button } from "~/components/primitives/button/button";
-import { Toggle } from "~/components/primitives/form/toggle";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import { Coordinate, SimulatorChair } from "~/types";
-import { isArrayIncludes } from "~/utils/includes";
-import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
-import { twMerge } from "tailwind-merge";
+import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
 const CoordinatePickup: FC<{
   coordinateState: SimulatorChair["coordinateState"];
@@ -80,93 +76,87 @@ const CoordinatePickup: FC<{
   );
 };
 
-const SimulatorProgress: FC<{
+const progress = (
+  start: Coordinate,
+  current: Coordinate,
+  end: Coordinate,
+): number => {
+  const distance =
+    Math.abs(end.latitude - start.latitude) +
+    Math.abs(end.longitude - start.longitude);
+  const progress =
+    Math.abs(end.latitude - current.latitude) +
+    Math.abs(end.longitude - current.longitude);
+  return Math.floor(((distance - progress) / distance) * 100);
+};
+
+const ChairProgress: FC<{
   model: string;
   rideStatus: RideStatus | undefined;
-  current: Coordinate | undefined;
-  pickup?: Coordinate;
-  destlocation?: Coordinate;
-}> = ({ model, rideStatus, pickup, destlocation, current }) => {
-  const startCoordinate = useMemo(() => {
+  currentLoc: Coordinate | undefined;
+  pickupLoc?: Coordinate;
+  destLoc?: Coordinate;
+}> = ({ model, rideStatus, pickupLoc, destLoc, currentLoc }) => {
+  const startLoc = useMemo(() => {
     return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
   }, [rideStatus]);
 
   const pickupProgress: number = useMemo(() => {
-    if (
-      rideStatus === "MATCHING" ||
-      !rideStatus ||
-      !pickup ||
-      !startCoordinate ||
-      !current
-    )
+    if (!rideStatus || !pickupLoc || !startLoc || !currentLoc) {
       return 0;
-    if (
-      rideStatus === "PICKUP" ||
-      rideStatus === "ARRIVED" ||
-      rideStatus === "CARRYING" ||
-      rideStatus === "COMPLETED"
-    )
-      return 100;
-    const distance =
-      Math.abs(pickup?.latitude - startCoordinate.latitude) +
-      Math.abs(pickup?.longitude - startCoordinate.longitude);
-    const progress =
-      Math.abs(pickup?.latitude - current?.latitude) +
-      Math.abs(pickup?.longitude - current.longitude);
-    return Math.floor(((distance - progress) / distance) * 100);
-  }, [rideStatus, pickup, current, startCoordinate]);
+    }
+    switch (rideStatus) {
+      case "MATCHING":
+        return 0;
+      case "PICKUP":
+      case "ARRIVED":
+      case "CARRYING":
+      case "COMPLETED":
+        return 100;
+      default:
+        return progress(startLoc, currentLoc, pickupLoc);
+    }
+  }, [rideStatus, pickupLoc, startLoc, currentLoc]);
 
   const distanceProgress: number = useMemo(() => {
-    if (
-      rideStatus === "MATCHING" ||
-      rideStatus === "PICKUP" ||
-      rideStatus === "ENROUTE" ||
-      !rideStatus ||
-      !destlocation ||
-      !pickup ||
-      !current
-    )
+    if (!rideStatus || !destLoc || !pickupLoc || !currentLoc) {
       return 0;
-    if (rideStatus === "ARRIVED" || rideStatus === "COMPLETED") return 100;
-    const distance =
-      Math.abs(destlocation?.latitude - pickup.latitude) +
-      Math.abs(destlocation?.longitude - pickup.longitude);
-    const progress =
-      Math.abs(destlocation?.latitude - current.latitude) +
-      Math.abs(destlocation?.longitude - current.longitude);
-    return Math.floor(((distance - progress) / distance) * 100);
-  }, [rideStatus, pickup, destlocation, current]);
+    }
+    switch (rideStatus) {
+      case "MATCHING":
+      case "PICKUP":
+      case "ENROUTE":
+        return 0;
+      case "ARRIVED":
+      case "COMPLETED":
+        return 100;
+      default:
+        return progress(destLoc, currentLoc, pickupLoc);
+    }
+  }, [rideStatus, destLoc, pickupLoc, currentLoc]);
 
   return (
-    <div className="flex items-center mt-8">
-      <div className="flex border-b ms-6 pb-1 w-full">
+    <div className="flex items-center">
+      <div className="flex border-b pb-1 w-full">
         <div className="flex w-1/2">
-          <PinIcon color={colors.red[500]} width={20} height={20} />
+          <PinIcon color={colors.red[500]} width={20} />
           <div className="relative w-full ms-6">
-            {isArrayIncludes(
-              [
-                "PICKUP",
-                "CARRYING",
-                "ARRIVED",
-                "COMPLETED",
-              ] as const satisfies RideStatus[],
-              rideStatus,
-            ) && (
-              <ChairIcon
-                model={model}
-                className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                style={{ right: `${distanceProgress}%` }}
-              />
-            )}
+            {rideStatus &&
+              ["PICKUP", "CARRYING", "ARRIVED", "COMPLETED"].includes(
+                rideStatus,
+              ) && (
+                <ChairIcon
+                  model={model}
+                  className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
+                  style={{ right: `${distanceProgress}%` }}
+                />
+              )}
           </div>
         </div>
         <div className="flex w-1/2">
-          <PinIcon color={colors.black} width={20} height={20} />
+          <PinIcon color={colors.black} width={20} />
           <div className="relative w-full ms-6">
-            {isArrayIncludes(
-              ["MATCHING", "ENROUTE"] as const satisfies RideStatus[],
-              rideStatus,
-            ) && (
+            {rideStatus && ["MATCHING", "ENROUTE"].includes(rideStatus) && (
               <ChairIcon
                 model={model}
                 className={twMerge(
@@ -182,28 +172,13 @@ const SimulatorProgress: FC<{
     </div>
   );
 };
+
 export const SimulatorChairDisplay: FC = () => {
   const { targetChair: chair } = useSimulatorContext();
-  const [activate, setActivate] = useState<boolean>(true);
-
-  const toggleActivate = useCallback(
-    (activity: boolean) => {
-      try {
-        void fetchChairPostActivity({ body: { is_active: activity } });
-        setActivate(activity);
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [setActivate],
-  );
-
   const rideStatus = useMemo(
     () => chair?.chairNotification?.status ?? "MATCHING",
     [chair],
   );
-
-  useEmulator(chair);
 
   const ChairDetailInfo = memo(
     function ChairDetailInfo({
@@ -233,46 +208,28 @@ export const SimulatorChairDisplay: FC = () => {
   );
 
   return (
-    <>
-      <div className="bg-white rounded shadow px-6 py-4 w-full">
-        {chair ? (
-          <div className="space-y-4">
-            <ChairDetailInfo
-              chairModel={chair.model}
-              chairName={chair.name}
-              rideStatus={rideStatus}
-            />
-            <CoordinatePickup coordinateState={chair.coordinateState} />
-            <SimulatorProgress
-              model={chair.model}
-              rideStatus={rideStatus}
-              current={chair.coordinateState.coordinate}
-              pickup={chair.chairNotification?.payload?.coordinate?.pickup}
-              destlocation={
-                chair.chairNotification?.payload?.coordinate?.destination
-              }
-            />
-          </div>
-        ) : (
-          <Text className="m-4" size="sm">
-            椅子のデータがありません
-          </Text>
-        )}
-      </div>
-      {chair && (
-        <div className="bg-white rounded shadow px-6 py-4 w-full">
-          <div className="flex justify-between items-center">
-            <Text size="sm" className="text-neutral-500" bold>
-              配車を受け付ける
-            </Text>
-            <Toggle
-              checked={activate}
-              onUpdate={(v) => toggleActivate(v)}
-              id="chair-activity"
-            />
-          </div>
+    <div className="bg-white rounded shadow px-6 py-4 w-full">
+      {chair ? (
+        <div className="space-y-4">
+          <ChairDetailInfo
+            chairModel={chair.model}
+            chairName={chair.name}
+            rideStatus={rideStatus}
+          />
+          <CoordinatePickup coordinateState={chair.coordinateState} />
+          <ChairProgress
+            model={chair.model}
+            rideStatus={rideStatus}
+            currentLoc={chair.coordinateState.coordinate}
+            pickupLoc={chair.chairNotification?.payload?.coordinate?.pickup}
+            destLoc={chair.chairNotification?.payload?.coordinate?.destination}
+          />
         </div>
+      ) : (
+        <Text className="m-4" size="sm">
+          椅子のデータがありません
+        </Text>
       )}
-    </>
+    </div>
   );
 };
