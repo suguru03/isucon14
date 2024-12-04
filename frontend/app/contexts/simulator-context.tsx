@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
-import { getSimulateChair } from "~/utils/get-initial-data";
+import { getSimulateChair, getSimulateChairFromToken } from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
@@ -16,7 +16,7 @@ import {
 } from "~/apiClient/apiComponents";
 import type { ClientChairRide, SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
-import { useSubDomain } from "~/components/hooks/use-subdomain";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;
@@ -184,23 +184,23 @@ export const useClientChairNotification = (id?: string) => {
   return responseClientAppRequest;
 };
 
+
+
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const subDomain = useSubDomain();
+  const [token, setToken] = useState<string>()
 
   const simulateChairData = useMemo(() => {
-    switch (subDomain) {
-      case "fe001":
-        return getSimulateChair(0);
-      case "fe002":
-        return getSimulateChair(1);
-      case "fe003":
-        return getSimulateChair(2);
-      default:
-        return getSimulateChair();
-    }
-  }, [subDomain]);
+    return token ? getSimulateChairFromToken(token) : getSimulateChair()
+  }, [token]);
 
   useEffect(() => {
+
+    const token = getCookieValue(document.cookie, "chair_session")
+    if (token) {
+      setToken(token)
+      return;
+    }
+    // TODO: tokenがなければUI上で選択させるようにする
     if (simulateChairData?.token) {
       document.cookie = `chair_session=${simulateChairData.token}; path=/`;
     }
@@ -224,6 +224,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
                 setter: setCurrentCoordinate,
                 coordinate: currentCoodinate,
               },
+              setToken,
             }
           : undefined,
       }}

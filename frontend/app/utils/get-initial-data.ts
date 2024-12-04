@@ -27,3 +27,7 @@ export const getSimulateChair = (index?: number): InitialChair | undefined => {
     ? initialOwnerData?.simulatorChairs[index]
     : initialOwnerData?.simulatorChairs[0];
 };
+
+export const getSimulateChairFromToken = (token: string): InitialChair | undefined => {
+  return initialOwnerData?.simulatorChairs.find(c => c.token === token);
+};
