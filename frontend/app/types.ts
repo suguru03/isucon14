@@ -32,6 +32,14 @@ export type CampaignData = {
   used: boolean;
 };
 
+export type SimulatorChair = {
+  id: string;
+  name: string;
+  model: string;
+  token: string;
+  coordinate: Coordinate;
+};
+
 // TODO: 後でリファクタ
 export type ClientApiError = {
   message: string;

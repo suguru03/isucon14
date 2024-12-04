@@ -13,16 +13,11 @@ import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
 } from "~/api/api-components";
+import { SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 
 type SimulatorContextProps = {
-  chair?: {
-    id: string;
-    name: string;
-    model: string;
-    token: string;
-    coordinate: Coordinate;
-  };
+  chair?: SimulatorChair;
   data?: ChairGetNotificationResponse["data"];
   setCoordinate?: (coordinate: Coordinate) => void;
 };
