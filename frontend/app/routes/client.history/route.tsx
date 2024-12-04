@@ -1,9 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import {
-  AppGetRidesResponse,
-  fetchAppGetRides,
-} from "~/apiClient/apiComponents";
+import { AppGetRidesResponse, fetchAppGetRides } from "~/api/api-components";
 import { ChairIcon } from "~/components/icon/chair";
 import { DateText } from "~/components/modules/date-text/date-text";
 import { Price } from "~/components/modules/price/price";

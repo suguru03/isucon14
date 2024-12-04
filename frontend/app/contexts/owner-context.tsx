@@ -12,7 +12,7 @@ import {
   OwnerGetSalesResponse,
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
-} from "~/apiClient/apiComponents";
+} from "~/api/api-components";
 import { isClientApiError } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 

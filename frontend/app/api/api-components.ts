@@ -4,10 +4,10 @@
  * @version 1.0
  */
 import * as reactQuery from "@tanstack/react-query";
-import { useApiContext, ApiContext } from "./apiContext";
-import type * as Fetcher from "./apiFetcher";
-import { apiFetch } from "./apiFetcher";
-import type * as Schemas from "./apiSchemas";
+import { useApiContext, ApiContext } from "./api-context";
+import type * as Fetcher from "./api-fetcher";
+import { apiFetch } from "./api-fetcher";
+import type * as Schemas from "./api-schemas";
 
 export type PostInitializeError = Fetcher.ErrorWrapper<undefined>;
 

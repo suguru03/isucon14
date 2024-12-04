@@ -6,14 +6,14 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Coordinate } from "~/apiClient/apiSchemas";
+import type { Coordinate } from "~/api/api-schemas";
 import { getSimulateChair } from "~/utils/get-initial-data";
 
-import { apiBaseURL } from "~/apiClient/APIBaseURL";
+import { apiBaseURL } from "~/api/api-base-url";
 import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
-} from "~/apiClient/apiComponents";
+} from "~/api/api-components";
 import type { ClientChairRide, SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 

@@ -1,6 +1,6 @@
 import { ComponentProps, FC } from "react";
 import { twMerge } from "tailwind-merge";
-import { RideStatus } from "~/apiClient/apiSchemas";
+import { RideStatus } from "~/api/api-schemas";
 import { Text } from "~/components/primitives/text/text";
 
 const StatusList = {

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   OwnerGetSalesResponse as OwnerSalesType,
   fetchOwnerGetSales,
-} from "~/apiClient/apiComponents";
+} from "~/api/api-components";
 import { ChairIcon } from "~/components/icon/chair";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";

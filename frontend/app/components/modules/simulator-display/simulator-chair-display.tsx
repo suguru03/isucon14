@@ -1,7 +1,7 @@
 import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
 import colors from "tailwindcss/colors";
-import { fetchChairPostActivity } from "~/apiClient/apiComponents";
-import { RideStatus } from "~/apiClient/apiSchemas";
+import { fetchChairPostActivity } from "~/api/api-components";
+import { RideStatus } from "~/api/api-schemas";
 import { useEmulator } from "~/components/hooks/use-emulate";
 import { ChairIcon } from "~/components/icon/chair";
 import { PinIcon } from "~/components/icon/pin";
