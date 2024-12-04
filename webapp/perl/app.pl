@@ -7,7 +7,7 @@ use Mojolicious::Lite;
 use Cpanel::JSON::XS;
 use Cpanel::JSON::XS::Type;
 
-use DBIx::Sunny;
+use Mojo::mysql;
 use HTTP::Status qw(:constants);
 use Isuride::Middleware;
 use Isuride::Handler::App;
@@ -23,21 +23,19 @@ sub connect_db() {
     my $password = $ENV{ISUCON_DB_PASSWORD} || 'isucon';
     my $dbname   = $ENV{ISUCON_DB_NAME}     || 'isuride';
 
-    my $dsn = "dbi:mysql:database=$dbname;host=$host;port=$port";
-    my $dbh = DBIx::Sunny->connect(
-        $dsn, $user,
-        $password,
-        {
-            mysql_enable_utf8mb4 => 1,
-            mysql_auto_reconnect => 1,
-        }
-    );
-    return $dbh;
+    my $dsn = "mysql://$user:$password\@$host:$port/$dbname";
+    my $mysql = Mojo::mysql->new($dsn)->options({ mysql_enable_utf8mb4 => 1 });
+
+    return $mysql;
 }
 
-helper dbh => sub($c) {
-    state $db = connect_db();
+helper mysql => sub($c) {
+    state $mysql = connect_db();
 };
+
+helper dbh => sub ($c) {
+    $c->mysql->db;
+}
 
 my $json_serializer = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
 
