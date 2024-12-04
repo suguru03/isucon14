@@ -329,10 +329,10 @@ func (u *User) CreateRequest(ctx *Context) error {
 	now := time.Now()
 	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, checkDistance)
 	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+		return WrapCodeError(ErrorCodeWrongNearbyChairs, err)
 	}
 	if err := u.World.checkNearbyChairsResponse(now, pickup, checkDistance, nearby); err != nil {
-		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+		return WrapCodeError(ErrorCodeWrongNearbyChairs, err)
 	}
 	if len(nearby.Chairs) == 0 {
 		// 近くに椅子が無いので配車をやめる

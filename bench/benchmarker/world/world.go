@@ -332,7 +332,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		}
 		entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
 		if len(entries) == 0 {
-			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
+			return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
 		}
 		for _, req := range c.RequestHistory.BackwardIter() {
 			if req.BenchMatchedAt.After(baseTime) {
