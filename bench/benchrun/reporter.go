@@ -77,7 +77,14 @@ func (rep *FDReporter) Write(buf []byte) error {
 }
 
 func (rep *FDReporter) Flush() error {
-	return rep.io.Flush()
+	// write(2) は PIPE_BUF (linux なら 4096) 以上の書き込みはatomicにならないので書き込みが終わるまで繰り返す
+	if err := rep.io.Flush(); err != nil {
+		if errors.Is(err, io.ErrShortWrite) {
+			return rep.Flush()
+		}
+		return err
+	}
+	return nil
 }
 
 func NewFDReporter(fd int) (*FDReporter, error) {
