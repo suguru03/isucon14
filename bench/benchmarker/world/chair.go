@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -45,7 +46,8 @@ type Chair struct {
 	// Request 進行中のリクエスト
 	Request *Request
 	// RequestHistory 引き受けたリクエストの履歴
-	RequestHistory []*Request
+	RequestHistory     []*Request
+	RequestHistoryLock sync.Mutex
 	// Client webappへのクライアント
 	Client ChairClient
 	// Rand 専用の乱数
@@ -135,7 +137,9 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				c.Request.Statuses.Unlock()
 
+				c.RequestHistoryLock.Lock()
 				c.RequestHistory = append(c.RequestHistory, c.Request)
+				c.RequestHistoryLock.Unlock()
 				if !c.Request.User.Region.Contains(c.Location.Current()) {
 					ctx.ContestantLogger().Warn("ユーザーのリージョン外部に存在する椅子がマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
@@ -433,6 +437,8 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 		request := c.Request
 		if request == nil {
 			// 履歴を見て、過去扱っていたRequestに向けてのCOMPLETED通知であれば無視する
+			c.RequestHistoryLock.Lock()
+			defer c.RequestHistoryLock.Unlock()
 			for _, r := range slices.Backward(c.RequestHistory) {
 				if r.ServerID == data.ServerRequestID && r.Statuses.Desired == RequestStatusCompleted {
 					r.Statuses.Chair = RequestStatusCompleted

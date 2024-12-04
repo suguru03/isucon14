@@ -312,6 +312,12 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		if len(entries) == 0 {
 			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
 		}
+		c.RequestHistoryLock.Lock()
+		r, exist := lo.Last(c.RequestHistory)
+		c.RequestHistoryLock.Unlock()
+		if exist && !r.ServerCompletedAt.Before(baseTime) {
+			return fmt.Errorf("ID:%sの椅子は既にライド中です", chair.ID)
+		}
 		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
 			if !entry.Until.Valid {
 				// untilが無い場合は今もその位置にいることになるので、最新
