@@ -267,7 +267,7 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
     ).scalar()
 
     if status is None:
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="no rows in result set")
 
     assert isinstance(status, str)
     return status
