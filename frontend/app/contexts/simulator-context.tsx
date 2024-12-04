@@ -8,7 +8,6 @@ import {
 } from "react";
 import type { Coordinate } from "~/apiClient/apiSchemas";
 import { getSimulateChair } from "~/utils/get-initial-data";
-import { useNavigate } from "@remix-run/react";
 
 import { apiBaseURL } from "~/apiClient/APIBaseURL";
 import {
@@ -186,17 +185,9 @@ export const useClientChairNotification = (id?: string) => {
 };
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const navigate = useNavigate();
   const subDomain = useSubDomain();
 
-  useEffect(() => {
-    if (subDomain && !subDomain.startsWith("fe")) {
-      return navigate("/");
-    }
-  }, [subDomain, navigate]);
-
   const simulateChairData = useMemo(() => {
-    if (subDomain && !subDomain.startsWith("fe")) return undefined;
     switch (subDomain) {
       case "fe001":
         return getSimulateChair(0);
