@@ -21,9 +21,7 @@ const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 type APIResponse = Record<string, string>;
 
 const intialOwnerData = existsSync("./initial-data.json")
-  ? (JSON.parse(
-      readFileSync("./initial-data.json").toString(),
-    ) as unknown)
+  ? (JSON.parse(readFileSync("./initial-data.json").toString()) as unknown)
   : undefined;
 
 const getLoggedInURLForClient = async () => {

@@ -23,5 +23,7 @@ export const getOwners = (): InitialOwner[] => {
 };
 
 export const getSimulateChair = (index?: number): InitialChair | undefined => {
-  return index ? initialOwnerData?.simulatorChairs[index] : initialOwnerData?.simulatorChairs[0];
+  return index
+    ? initialOwnerData?.simulatorChairs[index]
+    : initialOwnerData?.simulatorChairs[0];
 };

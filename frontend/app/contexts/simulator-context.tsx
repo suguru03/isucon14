@@ -17,6 +17,7 @@ import {
 } from "~/apiClient/apiComponents";
 import type { ClientChairRide, SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
+import { useSubDomain } from "~/components/hooks/use-subdomain";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;
@@ -186,30 +187,27 @@ export const useClientChairNotification = (id?: string) => {
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
-  const [subdomain, setSubDomain] = useState<string>();
-  useEffect(() => {
-    setSubDomain(location.hostname.split(".").shift())
-  },[setSubDomain])
+  const subDomain = useSubDomain();
 
   useEffect(() => {
-   if (subdomain && !subdomain.startsWith("simulator")) {
-    return navigate("/")
-   }
-  },[subdomain, navigate])
+    if (subDomain && !subDomain.startsWith("simulator")) {
+      return navigate("/");
+    }
+  }, [subDomain, navigate]);
 
   const simulateChairData = useMemo(() => {
-    if (subdomain && !subdomain.startsWith("simulator")) return undefined;
-    switch(subdomain) {
+    if (subDomain && !subDomain.startsWith("simulator")) return undefined;
+    switch (subDomain) {
       case "simulator001":
-        return getSimulateChair(0)
+        return getSimulateChair(0);
       case "simulator002":
-        return getSimulateChair(1)
+        return getSimulateChair(1);
       case "simulator003":
-        return getSimulateChair(2)
+        return getSimulateChair(2);
       default:
-        return getSimulateChair()
+        return getSimulateChair();
     }
-  },[subdomain])
+  }, [subDomain]);
 
   useEffect(() => {
     if (simulateChairData?.token) {
