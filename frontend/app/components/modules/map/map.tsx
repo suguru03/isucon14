@@ -282,13 +282,12 @@ const TownLayer = memo(function TownLayer() {
             >
               <div
                 role="presentation"
-                className="absolute rounded-full bg-neutral-100 bg-opacity-40 border-4 border-neutral-200"
+                className="absolute rounded-full bg-neutral-300 bg-opacity-40"
                 style={{
                   width: image.width + 20,
                   height: image.width + 20,
                   top: -10,
                   left: -10,
-                  borderColor: color,
                 }}
               ></div>
               <img

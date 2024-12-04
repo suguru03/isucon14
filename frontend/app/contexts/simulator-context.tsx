@@ -97,10 +97,11 @@ export const useClientChairNotification = (id?: string) => {
   useEffect(() => {
     if (!isSSE) return;
     const eventSource = new EventSource(`${apiBaseURL}/chair/notification`);
-    const onMessage = (event: { data: unknown } | undefined) => {
-      if (typeof event?.data === "string") {
+    const onMessage = ({ data }: MessageEvent<{ data?: unknown }>) => {
+      if (typeof data !== "string") return;
+      try {
         const eventData = JSON.parse(
-          event?.data,
+          data,
         ) as ChairGetNotificationResponse["data"];
         setNotification((preRequest) => {
           if (
@@ -116,6 +117,8 @@ export const useClientChairNotification = (id?: string) => {
             return preRequest;
           }
         });
+      } catch (error) {
+        console.error(error);
       }
       return () => {
         eventSource.close();

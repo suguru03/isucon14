@@ -11,7 +11,7 @@ type Town = {
   name: string;
   image: Image;
   centerCoordinate: Coordinate;
-  color: string;
+  color: `#${string}`;
 };
 
 const CityObjectImages = [
