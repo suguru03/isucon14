@@ -39,28 +39,21 @@ export const useNotification = ():
         const notification = await fetch(`${apiBaseURL}/app/notification`);
         if (notification.status === 401) {
           navigate("/client/register");
+          return;
         }
-
-        const sse = notification?.headers
+        const isEventStream = notification?.headers
           .get("Content-type")
           ?.split(";")[0]
           .includes("text/event-stream");
-        setIsSse(!!sse);
-
-        if (sse) {
+        setIsSse(!!isEventStream);
+        if (isEventStream) {
           const reader = notification.body?.getReader();
           const decoder = new TextDecoder();
           const readed = (await reader?.read())?.value;
           const decoded = decoder.decode(readed);
           const json =
             jsonFromSSEResponse<AppGetNotificationResponse["data"]>(decoded);
-          setNotification(
-            json
-              ? {
-                  data: json,
-                }
-              : undefined,
-          );
+          setNotification(json ? { data: json } : undefined);
           return;
         }
         const json = (await notification.json()) as
