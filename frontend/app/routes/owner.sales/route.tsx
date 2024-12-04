@@ -1,9 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useEffect, useMemo, useState } from "react";
-import {
-  OwnerGetSalesResponse as OwnerSalesType,
-  fetchOwnerGetSales,
-} from "~/api/api-components";
+import { useMemo, useState } from "react";
 import { ChairIcon } from "~/components/icon/chair";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";
@@ -18,55 +14,16 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-const timestamp = (date: string) => Math.floor(new Date(date).getTime() / 1000);
-
 const viewTypes = [
   { key: "chair", label: "椅子別" },
   { key: "model", label: "モデル別" },
 ] as const;
 
-const currentDateString = (() => {
-  const now = new Date();
-  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-})();
-
 export default function Index() {
   const [viewType, setViewType] =
     useState<(typeof viewTypes)[number]["key"]>("chair");
 
-  const { chairs } = useOwnerContext();
-  const [salesDate, setSalesDate] = useState<{
-    since?: string;
-    until?: string;
-  }>({ since: currentDateString, until: currentDateString });
-  const [sales, setSales] = useState<OwnerSalesType>();
-
-  useEffect(() => {
-    const since = salesDate?.since;
-    const until = salesDate?.until;
-    if (!since || !until) return;
-    let abortController: AbortController | undefined;
-    void (async () => {
-      try {
-        abortController = new AbortController();
-        setSales(
-          await fetchOwnerGetSales(
-            {
-              queryParams: {
-                until: timestamp(until),
-                since: timestamp(since),
-              },
-            },
-            abortController.signal,
-          ),
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-
-    return () => abortController?.abort();
-  }, [salesDate, setSales]);
+  const { chairs, since, until, sales, setSince, setUntil } = useOwnerContext();
 
   const chairModelMap = useMemo(
     () => new Map(chairs?.map((c) => [c.id, c.model])),
@@ -92,12 +49,6 @@ export default function Index() {
         }));
   }, [sales, chairs, viewType, chairModelMap]);
 
-  const updateDate = (key: "since" | "until", value: string) => {
-    setSalesDate((prev) => {
-      return { ...prev, [key]: value };
-    });
-  };
-
   return (
     <div className="min-w-[800px] w-full">
       <div className="flex items-center justify-between">
@@ -105,19 +56,17 @@ export default function Index() {
           <DateInput
             id="sales-since"
             name="since"
-            size="sm"
-            className="w-48 ms-[2px]"
-            defaultValue={salesDate.since}
-            onChange={(e) => updateDate("since", e.target.value)}
+            className="w-48"
+            defaultValue={since}
+            onChange={(e) => setSince?.(e.target.value)}
           />
           →
           <DateInput
             id="sales-until"
             name="until"
-            size="sm"
             className="w-48"
-            defaultValue={salesDate.until}
-            onChange={(e) => updateDate("until", e.target.value)}
+            defaultValue={until}
+            onChange={(e) => setUntil?.(e.target.value)}
           />
         </div>
         {sales ? null : null}
