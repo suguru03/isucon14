@@ -1,4 +1,4 @@
-import { ApiContext } from "./apiContext";
+import { ApiContext } from "./api-context";
 
 const baseUrl = __API_BASE_URL__;
 

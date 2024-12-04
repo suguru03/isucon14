@@ -7,7 +7,9 @@ from pydantic import BaseModel
 
 from .models import Ride
 
-ERRORED_UPSTREAM = "errored upstream"
+
+class UpstreamError(Exception):
+    pass
 
 
 class PaymentGatewayPostPaymentRequest(BaseModel):
@@ -65,8 +67,8 @@ def request_payment_gateway_post_payment(
                 rides = retrieve_rides_order_by_created_at_asc()
 
                 if len(rides) != len(payments):
-                    raise RuntimeError(
-                        f"unexpected number of payments: {len(rides)}  != {len(payments)}. {ERRORED_UPSTREAM}",
+                    raise UpstreamError(
+                        f"unexpected number of payments: {len(rides)}  != {len(payments)}. errored upstream",
                     )
         except Exception:
             if retry < 5:

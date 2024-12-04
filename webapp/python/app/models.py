@@ -1,10 +1,3 @@
-"""
-以下の移植
-https://github.com/isucon/isucon14/blob/main/webapp/go/models.go
-
-TODO: このdocstringを消す
-"""
-
 from datetime import datetime
 
 import pydantic

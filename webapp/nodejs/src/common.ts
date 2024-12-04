@@ -52,3 +52,10 @@ export const getLatestRideStatus = async (
   );
   return status;
 };
+
+export class ErroredUpstream extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ErroredUpstream";
+  }
+}

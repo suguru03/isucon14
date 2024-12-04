@@ -1,6 +1,6 @@
 import type { ComponentProps, FC } from "react";
 import { twMerge } from "tailwind-merge";
-import { Coordinate } from "~/apiClient/apiSchemas";
+import { Coordinate } from "~/api/api-schemas";
 import { PinIcon } from "~/components/icon/pin";
 import { Button } from "~/components/primitives/button/button";
 

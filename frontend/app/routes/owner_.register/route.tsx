@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useNavigate } from "@remix-run/react";
 import { useState } from "react";
-import { fetchOwnerPostOwners } from "~/apiClient/apiComponents";
+import { fetchOwnerPostOwners } from "~/api/api-components";
 import { Button } from "~/components/primitives/button/button";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";

@@ -5,8 +5,8 @@ import {
   fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
-} from "~/apiClient/apiComponents";
-import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+} from "~/api/api-components";
+import { Coordinate, RideStatus } from "~/api/api-schemas";
 import { useGhostChairs } from "~/components/hooks/use-ghost-chairs";
 import { CampaignBanner } from "~/components/modules/campaign-banner/campaign-banner";
 import { LocationButton } from "~/components/modules/location-button/location-button";

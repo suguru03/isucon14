@@ -1,10 +1,3 @@
-"""
-以下の移植
-https://github.com/isucon/isucon14/blob/main/webapp/go/owner_handlers.go
-
-TODO: このdocstringを消す
-"""
-
 from collections import defaultdict
 from collections.abc import MutableMapping
 from datetime import datetime

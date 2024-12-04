@@ -1,7 +1,7 @@
 import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
-import { RideStatus } from "~/apiClient/apiSchemas";
+import { RideStatus } from "~/api/api-schemas";
 import { ChairIcon } from "~/components/icon/chair";
 import { PinIcon } from "~/components/icon/pin";
 import { LocationButton } from "~/components/modules/location-button/location-button";

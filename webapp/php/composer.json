@@ -38,7 +38,7 @@
   },
   "scripts": {
     "generate": [
-      "openapi-generator generate -i ../../openapi/openapi.yaml -g php -o ./ --config config.yaml"
+      "openapi-generator generate -i ../openapi.yaml -g php -o ./ --config config.yaml"
     ]
   }
 }

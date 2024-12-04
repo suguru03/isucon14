@@ -1,7 +1,7 @@
 import { Form } from "@remix-run/react";
 import { MouseEventHandler, useCallback, useEffect, useState } from "react";
 import colors from "tailwindcss/colors";
-import { fetchAppPostRideEvaluation } from "~/apiClient/apiComponents";
+import { fetchAppPostRideEvaluation } from "~/api/api-components";
 import { PinIcon } from "~/components/icon/pin";
 import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";

@@ -7,12 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiBaseURL } from "~/apiClient/APIBaseURL";
+import { apiBaseURL } from "~/api/api-base-url";
 import {
   AppGetNotificationResponse,
   fetchAppGetNotification,
-} from "~/apiClient/apiComponents";
-import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+} from "~/api/api-components";
+import type { Coordinate, RideStatus } from "~/api/api-schemas";
 import { isClientApiError, type ClientAppRide } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 import {
