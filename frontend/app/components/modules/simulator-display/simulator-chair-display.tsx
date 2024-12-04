@@ -14,7 +14,7 @@ import type { Coordinate } from "~/types";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
-const CoordinatePickup: FC<> = () => {
+const CoordinatePickup: FC = () => {
   const { chair, setCoordinate } = useSimulatorContext();
   const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
   const [mapLocation, setMapLocation] = useState<Coordinate>();
