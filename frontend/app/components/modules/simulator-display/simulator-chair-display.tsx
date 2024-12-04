@@ -107,11 +107,11 @@ const ChairProgress: FC<{
     }
     switch (rideStatus) {
       case "MATCHING":
+      case "COMPLETED":
         return 0;
       case "PICKUP":
       case "ARRIVED":
       case "CARRYING":
-      case "COMPLETED":
         return 100;
       default:
         return progress(startLoc, currentLoc, pickupLoc);
@@ -124,11 +124,11 @@ const ChairProgress: FC<{
     }
     switch (rideStatus) {
       case "MATCHING":
+      case "COMPLETED":
       case "PICKUP":
       case "ENROUTE":
         return 0;
       case "ARRIVED":
-      case "COMPLETED":
         return 100;
       default:
         return progress(destLoc, currentLoc, pickupLoc);
@@ -142,7 +142,7 @@ const ChairProgress: FC<{
           <PinIcon color={colors.red[500]} width={20} />
           <div className="relative w-full ms-6">
             {rideStatus &&
-              ["PICKUP", "CARRYING", "ARRIVED", "COMPLETED"].includes(
+              ["PICKUP", "CARRYING", "ARRIVED"].includes(
                 rideStatus,
               ) && (
                 <ChairIcon
@@ -156,7 +156,7 @@ const ChairProgress: FC<{
         <div className="flex w-1/2">
           <PinIcon color={colors.black} width={20} />
           <div className="relative w-full ms-6">
-            {rideStatus && ["MATCHING", "ENROUTE"].includes(rideStatus) && (
+            {rideStatus && ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
               <ChairIcon
                 model={model}
                 className={twMerge(
