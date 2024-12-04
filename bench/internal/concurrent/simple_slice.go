@@ -41,6 +41,18 @@ func (s *SimpleSlice[V]) Iter() iter.Seq2[int, V] {
 	}
 }
 
+func (s *SimpleSlice[V]) BackwardIter() iter.Seq2[int, V] {
+	return func(yield func(int, V) bool) {
+		s.lock.RLock()
+		defer s.lock.RUnlock()
+		for i, v := range slices.Backward(s.s) {
+			if !yield(i, v) {
+				break
+			}
+		}
+	}
+}
+
 func (s *SimpleSlice[V]) Values() iter.Seq[V] {
 	return func(yield func(V) bool) {
 		s.lock.RLock()

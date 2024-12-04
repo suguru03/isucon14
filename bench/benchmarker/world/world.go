@@ -282,6 +282,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		RegisteredData:    registeredData,
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(args.Owner.Rand),
+		RequestHistory:    concurrent.NewSimpleSlice[*Request](),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	result := w.ChairDB.Create(c)
@@ -312,6 +313,17 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		if len(entries) == 0 {
 			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
 		}
+		for _, req := range c.RequestHistory.BackwardIter() {
+			if req.BenchMatchedAt.After(baseTime) {
+				// nearbychairsのリクエストを送った後にマッチされていて、レスポンスを生成とマッチのどちらが先か分からないので許容する
+				break
+			}
+			if !req.Evaluated.Load() {
+				return fmt.Errorf("ID:%sの椅子は既にライド中です", chair.ID)
+			}
+			break
+		}
+
 		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
 			if !entry.Until.Valid {
 				// untilが無い場合は今もその位置にいることになるので、最新
