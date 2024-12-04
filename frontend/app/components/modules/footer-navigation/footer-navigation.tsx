@@ -20,11 +20,6 @@ const MenuList = [
     link: "/client/history",
     label: "HISTORY",
   },
-  {
-    icon: HistoryIcon,
-    link: "/client/user",
-    label: "USER",
-  },
 ] as const satisfies NavigationMenu[];
 
 export const FooterNavigation: FC = () => {
