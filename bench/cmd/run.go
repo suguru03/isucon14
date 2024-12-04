@@ -11,6 +11,7 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/metrics"
 	"github.com/isucon/isucon14/bench/benchmarker/scenario"
 	"github.com/isucon/isucon14/bench/benchrun"
+	"github.com/isucon/isucon14/bench/benchrun/gen/isuxportal/resources"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel"
 )
@@ -24,6 +25,8 @@ var (
 	paymentURL string
 	// 負荷走行秒数 (0のときは負荷走行を実行せずprepareのみ実行する)
 	loadTimeoutSeconds int64
+	// 再起動後のデータ保持チェックモードかどうか
+	postValidationMode bool
 	// エラーが発生した際に非0のexit codeを返すかどうか
 	failOnError bool
 	// メトリクスを出力するかどうか
@@ -63,6 +66,27 @@ var runCmd = &cobra.Command{
 		defer exporter.Shutdown(context.Background())
 
 		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()))
+
+		if postValidationMode {
+			contestantLogger.Info("post validationを実行します")
+			passed := false
+			if err := scenario.PostValidation(cmd.Context(), targetURL, targetAddr); err != nil {
+				contestantLogger.Error(err.Error())
+			} else {
+				passed = true
+			}
+			if err := reporter.Report(&resources.BenchmarkResult{
+				Finished:       true,
+				Passed:         passed,
+				Score:          0,
+				ScoreBreakdown: &resources.BenchmarkResult_ScoreBreakdown{Raw: 0, Deduction: 0},
+				Execution:      &resources.BenchmarkResult_Execution{Reason: "実行終了"},
+			}); err != nil {
+				slog.Error(err.Error())
+			}
+			contestantLogger.Info("post validationが終了しました")
+			return nil
+		}
 
 		s := scenario.NewScenario(targetURL, targetAddr, paymentURL, contestantLogger, reporter, otel.Meter("isucon14_benchmarker"), loadTimeoutSeconds == 0, skipStaticFileSanityCheck)
 
@@ -106,6 +130,7 @@ func init() {
 	runCmd.Flags().StringVar(&paymentURL, "payment-url", "http://localhost:12345", "payment server URL")
 	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds (When this value is 0, load does not run and only prepare is run)")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", false, "fail on error")
+	runCmd.Flags().BoolVar(&postValidationMode, "only-post-validation", false, "post validation mode")
 	runCmd.Flags().BoolVar(&exportMetrics, "metrics", false, "whether to output metrics")
 	runCmd.Flags().BoolVarP(&skipStaticFileSanityCheck, "skip-static-sanity-check", "s", false, "skip static file validation")
 	rootCmd.AddCommand(runCmd)
