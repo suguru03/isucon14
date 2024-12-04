@@ -20,7 +20,7 @@ def app_auth_middleware(app_session: Annotated[str | None, Cookie()] = None) -> 
             {"access_token": app_session},
         ).fetchone()
 
-        if not row:
+        if row is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )
@@ -44,7 +44,7 @@ def owner_auth_middleware(
             {"access_token": owner_session},
         ).fetchone()
 
-        if not row:
+        if row is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )
@@ -67,7 +67,7 @@ def chair_auth_middleware(
             {"access_token": chair_session},
         ).fetchone()
 
-        if not row:
+        if row is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED, detail="invalid access token"
             )

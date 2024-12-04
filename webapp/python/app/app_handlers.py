@@ -99,7 +99,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 {"invitation_code": r.invitation_code},
             ).fetchone()
 
-            if not inviter:
+            if inviter is None:
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
                     detail="この招待コードは使用できません。",
@@ -467,7 +467,7 @@ def app_post_ride_evaluation(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
 
-        if not row:
+        if row is None:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
@@ -600,7 +600,7 @@ def app_get_notification(
             ),
             {"user_id": user.id},
         ).fetchone()
-        if not row:
+        if row is None:
             response.status_code = HTTPStatus.OK
             return response
 
@@ -613,7 +613,7 @@ def app_get_notification(
             {"ride_id": ride.id},
         ).fetchone()
         yet_sent_ride_status: RideStatus | None = None
-        if not row:
+        if row is None:
             status = get_latest_ride_status(conn, ride.id)
         else:
             yet_sent_ride_status = RideStatus.model_validate(row)
@@ -874,7 +874,7 @@ def calculate_discounted_fare(
             {"user_id": user_id},
         ).fetchone()
 
-        if not coupon:
+        if coupon is None:
             # 無いなら他のクーポンを付与された順番に使う
             coupon = conn.execute(
                 text(
