@@ -13,6 +13,7 @@ requires 'Syntax::Keyword::Match';
 requires 'IO::Async';
 requires 'Twiggy';
 requires 'Mojolicious';
+requires 'Mojo::mysql';
 
 # DB
 requires 'DBD::mysql', '5.010';

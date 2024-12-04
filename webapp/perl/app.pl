@@ -8,6 +8,8 @@ use Cpanel::JSON::XS;
 use Cpanel::JSON::XS::Type;
 
 use Mojo::mysql;
+use Mojo::mysql::Database;
+
 use HTTP::Status qw(:constants);
 use Isuride::Middleware;
 use Isuride::Handler::App;
@@ -23,19 +25,30 @@ sub connect_db() {
     my $password = $ENV{ISUCON_DB_PASSWORD} || 'isucon';
     my $dbname   = $ENV{ISUCON_DB_NAME}     || 'isuride';
 
-    my $dsn = "mysql://$user:$password\@$host:$port/$dbname";
+    my $dsn   = "mysql://$user:$password\@$host:$port/$dbname";
     my $mysql = Mojo::mysql->new($dsn)->options({ mysql_enable_utf8mb4 => 1 });
 
     return $mysql;
 }
 
+# similar DBIx::Sunny
+{
+    *Mojo::mysql::Database::select_one = sub($self, @args) {
+        $self->query(@args)->array->[0];
+    };
+
+    *Mojo::mysql::Database::select_row = sub($self, @args) {
+        $self->query(@args)->hash;
+    };
+
+    *Mojo::mysql::Database::select_all = sub($self, @args) {
+        $self->query(@args)->hashes;
+    };
+}
+
 helper mysql => sub($c) {
     state $mysql = connect_db();
 };
-
-helper dbh => sub ($c) {
-    $c->mysql->db;
-}
 
 my $json_serializer = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
 
@@ -136,7 +149,7 @@ sub post_initialize ($c) {
         return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, "failed to initialize: $e");
     }
 
-    $c->dbh->query(
+    $c->mysql->db->query(
         q{UPDATE settings SET value = ? WHERE name = 'payment_gateway_url'},
         $params->{payment_server}
     );

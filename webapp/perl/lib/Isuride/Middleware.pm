@@ -11,7 +11,7 @@ sub app_auth_middleware ($c) {
         return $c->halt_json(HTTP_UNAUTHORIZED, 'app_session cookie is required');
     }
 
-    my $user = $c->dbh->select_row(
+    my $user = $c->mysql->db->select_row(
         'SELECT * FROM users WHERE access_token = ?',
         $access_token
     );
@@ -31,7 +31,7 @@ sub owner_auth_middleware ($c) {
         return $c->halt_json(HTTP_UNAUTHORIZED, 'owner_session cookie is required');
     }
 
-    my $owner = $c->dbh->select_row(
+    my $owner = $c->mysql->db->select_row(
         'SELECT * FROM owners WHERE access_token = ?',
         $access_token
     );
@@ -50,7 +50,7 @@ sub chair_auth_middleware ($c) {
         return $c->halt_json(HTTP_UNAUTHORIZED, 'chair_session cookie is required');
     }
 
-    my $chair = $c->dbh->select_row(
+    my $chair = $c->mysql->db->select_row(
         'SELECT * FROM chairs WHERE access_token = ?',
         $access_token
     );

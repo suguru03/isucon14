@@ -37,6 +37,7 @@ use constant OwnerPostOwnersResponse => {
 
 sub owner_post_owners ($c) {
     my $params = $c->req->json;
+    my $db     = $c->mysql->db;
 
     unless (check_params($params, OwnerPostOwnersRequest)) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
@@ -50,7 +51,7 @@ sub owner_post_owners ($c) {
     my $access_token         = secure_random_str(32);
     my $chair_register_token = secure_random_str(32);
 
-    $c->dbh->query(
+    $db->query(
         'INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)',
         $owner_id,
         $params->{name},
@@ -115,10 +116,10 @@ sub owner_get_sales ($c) {
     }
 
     my $owner = $c->stash('owner');
-    my $txn   = $c->dbh->txn_scope;
-    defer { $txn->rollback; }
+    my $db    = $c->mysql->db;
+    my $txn   = $db->begin;
 
-    my $chairs = $c->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
+    my $chairs = $db->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
     my $response_data = {
         total_sales => 0,
@@ -128,7 +129,7 @@ sub owner_get_sales ($c) {
     my $model_sales_by_model = {};
 
     for my $chair ($chairs->@*) {
-        my $rides = $c->dbh->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
+        my $rides = $db->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
             $chair->{id},
             $since_tm,
             $until_tm,
@@ -201,7 +202,8 @@ use constant OwnerGetChairResponse => {
 
 sub owner_get_chairs ($c) {
     my $owner  = $c->stash('owner');
-    my $chairs = $c->dbh->select_all(<<~EOL
+    my $db     = $c->mysql->db;
+    my $chairs = $db->select_all(<<~EOL
             SELECT id,
                    owner_id,
                    name,

@@ -38,7 +38,7 @@ sub secure_random_str ($byte_length) {
 }
 
 sub get_latest_ride_status ($c, $ride_id) {
-    my $status = $c->dbh->select_one(
+    my $status = $c->mysql->db->select_one(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id
     );
