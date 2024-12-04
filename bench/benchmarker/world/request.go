@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/guregu/null/v5"
@@ -81,9 +82,11 @@ type Request struct {
 	CompletedAt int64
 	// ServerCompletedAt サーバー側で記録されている完了時間
 	ServerCompletedAt time.Time
+	// BenchMatchedAt ベンチがAcceptのリクエストを送って成功した時間
+	BenchMatchedAt time.Time
 
 	// Evaluated リクエストの評価が完了しているかどうか
-	Evaluated bool
+	Evaluated atomic.Bool
 
 	Statuses RequestStatuses
 }

@@ -152,7 +152,7 @@ func (u *User) Tick(ctx *Context) error {
 
 		case RequestStatusArrived:
 			// 送迎の評価及び支払いがまだの場合は行う
-			if !u.Request.Evaluated {
+			if !u.Request.Evaluated.Load() {
 				score := u.Request.CalculateEvaluation().Score()
 
 				u.Request.Statuses.Lock()
@@ -166,7 +166,7 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.CompletedAt = ctx.CurrentTime()
 				u.Request.ServerCompletedAt = res.CompletedAt
 				u.Request.Statuses.Desired = RequestStatusCompleted
-				u.Request.Evaluated = true
+				u.Request.Evaluated.Store(true)
 				if requests := len(u.RequestHistory); requests == 1 {
 					u.Region.TotalEvaluation.Add(int32(score))
 				} else {
