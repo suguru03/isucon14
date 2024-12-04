@@ -45,20 +45,6 @@ export const SimulatorConfigDisplay: FC<{
 
   return (
     <>
-      <div className="bg-white rounded shadow px-6 py-4 w-full">
-        <div className="flex justify-between items-center">
-          <Text size="sm" className="text-neutral-500" bold>
-            疑似チェアを表示する
-          </Text>
-          <Toggle
-            id="ghost-chair"
-            checked={config.ghostChairEnabled}
-            onUpdate={(v) => {
-              setConfig((c) => ({ ...c, ghostChairEnabled: v }));
-            }}
-          />
-        </div>
-      </div>
       {chair && (
         <div className="bg-white rounded shadow px-6 py-4 w-full">
           <div className="flex justify-between items-center">
@@ -73,6 +59,20 @@ export const SimulatorConfigDisplay: FC<{
           </div>
         </div>
       )}
+      <div className="bg-white rounded shadow px-6 py-4 w-full">
+        <div className="flex justify-between items-center">
+          <Text size="sm" className="text-neutral-500" bold>
+            疑似チェアを表示する
+          </Text>
+          <Toggle
+            id="ghost-chair"
+            checked={config.ghostChairEnabled}
+            onUpdate={(v) => {
+              setConfig((c) => ({ ...c, ghostChairEnabled: v }));
+            }}
+          />
+        </div>
+      </div>
     </>
   );
 };
