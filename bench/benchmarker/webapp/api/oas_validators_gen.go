@@ -194,8 +194,6 @@ func (s *ChairPostRideStatusReq) Validate() error {
 
 func (s ChairPostRideStatusReqStatus) Validate() error {
 	switch s {
-	case "MATCHING":
-		return nil
 	case "ENROUTE":
 		return nil
 	case "CARRYING":

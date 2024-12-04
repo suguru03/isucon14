@@ -849,6 +849,15 @@ func decodeChairPostRideStatusResponse(resp *http.Response) (res ChairPostRideSt
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
 
+func decodeInternalGetMatchingResponse(resp *http.Response) (res *InternalGetMatchingNoContent, _ error) {
+	switch resp.StatusCode {
+	case 204:
+		// Code 204.
+		return &InternalGetMatchingNoContent{}, nil
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
+
 func decodeOwnerGetChairsResponse(resp *http.Response) (res *OwnerGetChairsOK, _ error) {
 	switch resp.StatusCode {
 	case 200:

@@ -2764,8 +2764,6 @@ func (s *ChairPostRideStatusReqStatus) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch ChairPostRideStatusReqStatus(v) {
-	case ChairPostRideStatusReqStatusMATCHING:
-		*s = ChairPostRideStatusReqStatusMATCHING
 	case ChairPostRideStatusReqStatusENROUTE:
 		*s = ChairPostRideStatusReqStatusENROUTE
 	case ChairPostRideStatusReqStatusCARRYING:

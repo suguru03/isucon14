@@ -610,6 +610,9 @@ export type AppGetNearbyChairsVariables = {
   queryParams: AppGetNearbyChairsQueryParams;
 } & ApiContext["fetcherOptions"];
 
+/**
+ * 椅子からサーバーに記録された座標情報は3秒以内に反映されている必要があります。
+ */
 export const fetchAppGetNearbyChairs = (
   variables: AppGetNearbyChairsVariables,
   signal?: AbortSignal,
@@ -623,6 +626,9 @@ export const fetchAppGetNearbyChairs = (
     {}
   >({ url: "/app/nearby-chairs", method: "get", ...variables, signal });
 
+/**
+ * 椅子からサーバーに記録された座標情報は3秒以内に反映されている必要があります。
+ */
 export const useAppGetNearbyChairs = <TData = AppGetNearbyChairsResponse,>(
   variables: AppGetNearbyChairsVariables,
   options?: Omit<
@@ -1182,6 +1188,42 @@ export const useChairPostRideStatus = (
   });
 };
 
+export type InternalGetMatchingError = Fetcher.ErrorWrapper<undefined>;
+
+export type InternalGetMatchingVariables = ApiContext["fetcherOptions"];
+
+export const fetchInternalGetMatching = (
+  variables: InternalGetMatchingVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<undefined, InternalGetMatchingError, undefined, {}, {}, {}>({
+    url: "/internal/matching",
+    method: "get",
+    ...variables,
+    signal,
+  });
+
+export const useInternalGetMatching = <TData = undefined,>(
+  variables: InternalGetMatchingVariables,
+  options?: Omit<
+    reactQuery.UseQueryOptions<undefined, InternalGetMatchingError, TData>,
+    "queryKey" | "queryFn" | "initialData"
+  >,
+) => {
+  const { fetcherOptions, queryOptions, queryKeyFn } = useApiContext(options);
+  return reactQuery.useQuery<undefined, InternalGetMatchingError, TData>({
+    queryKey: queryKeyFn({
+      path: "/internal/matching",
+      operationId: "internalGetMatching",
+      variables,
+    }),
+    queryFn: ({ signal }) =>
+      fetchInternalGetMatching({ ...fetcherOptions, ...variables }, signal),
+    ...options,
+    ...queryOptions,
+  });
+};
+
 export type QueryOperation =
   | {
       path: "/app/rides";
@@ -1212,4 +1254,9 @@ export type QueryOperation =
       path: "/chair/notification";
       operationId: "chairGetNotification";
       variables: ChairGetNotificationVariables;
+    }
+  | {
+      path: "/internal/matching";
+      operationId: "internalGetMatching";
+      variables: InternalGetMatchingVariables;
     };

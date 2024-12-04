@@ -15,7 +15,7 @@ const outputDir = "./app/apiClient";
 export default defineConfig({
   isucon: {
     from: {
-      relativePath: "../openapi/openapi.yaml",
+      relativePath: "../webapp/openapi.yaml",
       source: "file",
     },
     outputDir,
