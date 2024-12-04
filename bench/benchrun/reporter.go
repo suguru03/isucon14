@@ -67,7 +67,7 @@ func (rep *FDReporter) Report(result *resources.BenchmarkResult) error {
 
 func (rep *FDReporter) Write(buf []byte) error {
 	// write(2) は PIPE_BUF (linux なら 4096) 以上の書き込みはatomicにならないので書き込みが終わるまで繰り返す
-	if n, err := rep.io.Write(nil); err != nil {
+	if n, err := rep.io.Write(buf); err != nil {
 		if errors.Is(err, io.ErrShortWrite) {
 			return rep.Write(buf[n:])
 		}
