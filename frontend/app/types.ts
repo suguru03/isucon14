@@ -18,27 +18,6 @@ export type ClientAppChair = {
 };
 
 // TODO: この型はデバッグ用の型なので削除する
-export type ClientAppRide = {
-  status?: RideStatus;
-  payload?: Partial<{
-    ride_id: RideId;
-    coordinate: Partial<{
-      pickup: Coordinate;
-      destination: Coordinate;
-    }>;
-    chair?: ClientAppChair;
-    fare?: number;
-  }>;
-  auth?: {
-    accessToken: AccessToken;
-  };
-  user?: {
-    id?: string;
-    name?: string;
-  };
-};
-
-// TODO: この型はデバッグ用の型なので削除する
 export type ClientChairRide = {
   status?: RideStatus;
   payload?: Partial<{

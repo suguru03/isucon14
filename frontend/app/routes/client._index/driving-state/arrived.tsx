@@ -7,14 +7,13 @@ import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { ClickableRating } from "~/components/primitives/rating/clickable-rating";
 import { Text } from "~/components/primitives/text/text";
-import { useUserContext } from "~/contexts/user-context";
+import { useClientContext } from "~/contexts/client-context";
 
 import confetti from "canvas-confetti";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { auth, payload = {} } = useUserContext();
+  const { accessToken, data } = useClientContext();
   const [rating, setRating] = useState(0);
-  const { fare } = payload;
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -22,10 +21,10 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
       try {
         void fetchAppPostRideEvaluation({
           headers: {
-            Authorization: `Bearer ${auth?.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           pathParams: {
-            rideId: payload?.ride_id ?? "",
+            rideId: data?.ride_id ?? "",
           },
           body: {
             evaluation: rating,
@@ -36,7 +35,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
       }
       onEvaluated();
     },
-    [auth, payload, rating, onEvaluated],
+    [onEvaluated, accessToken, data?.ride_id, rating],
   );
 
   useEffect(() => {
@@ -69,7 +68,9 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
           setRating={setRating}
           className="mb-10"
         />
-        {fare && <Price pre="運賃" value={fare} className="mb-6"></Price>}
+        {data?.fare && (
+          <Price pre="運賃" value={data.fare} className="mb-6"></Price>
+        )}
         <Button
           variant="primary"
           type="submit"

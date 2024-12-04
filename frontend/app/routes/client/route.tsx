@@ -1,9 +1,7 @@
 import { Outlet } from "@remix-run/react";
-import { HistoryIcon } from "~/components/icon/history";
-import { IsurideIcon } from "~/components/icon/isuride";
 import { FooterNavigation } from "~/components/modules/footer-navigation/footer-navigation";
 import { MainFrame } from "~/components/primitives/frame/frame";
-import { UserProvider } from "../../contexts/user-context";
+import { UserProvider } from "../../contexts/client-context";
 
 export default function ClientLayout() {
   return (
@@ -11,20 +9,7 @@ export default function ClientLayout() {
       <UserProvider>
         <Outlet />
       </UserProvider>
-      <FooterNavigation
-        menus={[
-          {
-            icon: IsurideIcon,
-            link: "/client",
-            label: "RIDE",
-          },
-          {
-            icon: HistoryIcon,
-            link: "/client/history",
-            label: "LOG",
-          },
-        ]}
-      />
+      <FooterNavigation />
     </MainFrame>
   );
 }

@@ -4,7 +4,7 @@ import { LocationButton } from "~/components/modules/location-button/location-bu
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
-import { useUserContext } from "~/contexts/user-context";
+import { useClientContext } from "~/contexts/client-context";
 import { Coordinate } from "~/types";
 
 export const Matching: FC<{
@@ -14,11 +14,10 @@ export const Matching: FC<{
     fare?: number;
   };
 }> = ({ optimistic }) => {
-  const { payload } = useUserContext();
-  const fare = optimistic.fare ?? payload?.fare;
-  const destLocation =
-    optimistic.destLocation ?? payload?.coordinate?.destination;
-  const pickup = optimistic.pickup ?? payload?.coordinate?.pickup;
+  const { data } = useClientContext();
+  const fare = optimistic.fare ?? data?.fare;
+  const destLocation = optimistic.destLocation ?? data?.destination_coordinate;
+  const pickup = optimistic.pickup ?? data?.pickup_coordinate;
   return (
     <div className="w-full h-full px-8 flex flex-col items-center justify-center">
       <ModalHeader title="マッチング中" subTitle="椅子をさがしています">
