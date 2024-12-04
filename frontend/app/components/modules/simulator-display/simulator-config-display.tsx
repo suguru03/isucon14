@@ -1,5 +1,5 @@
 import { FC, RefObject, useCallback, useEffect, useState } from "react";
-import { fetchChairPostActivity } from "~/apiClient/apiComponents";
+import { fetchChairPostActivity } from "~/api/api-components";
 import { Toggle } from "~/components/primitives/form/toggle";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
