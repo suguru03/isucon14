@@ -3,7 +3,7 @@
  */
 declare const __API_BASE_URL__: string;
 
-declare const __INITIAL_OWNER_DATA__:
+declare const __INITIAL_DATA__:
   | {
       owners: {
         id: string;

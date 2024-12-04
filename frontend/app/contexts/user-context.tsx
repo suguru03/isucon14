@@ -14,7 +14,7 @@ import {
 } from "~/apiClient/apiComponents";
 import type { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
 import { isClientApiError, type ClientAppRide } from "~/types";
-import { getCookieValue } from "~/utils/get-cookie-value";
+import { getCookieValue } from "~/utils/cookie-value";
 import {
   getUserAccessToken,
   getUserId,

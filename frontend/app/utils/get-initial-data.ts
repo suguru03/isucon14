@@ -12,11 +12,11 @@ type InitialOwner = {
   token: string;
 };
 
-const initialOwnerData = __INITIAL_OWNER_DATA__;
+const initialData = __INITIAL_DATA__;
 
 export const getOwners = (): InitialOwner[] => {
   return (
-    initialOwnerData?.owners?.map((owner) => ({
+    initialData?.owners?.map((owner) => ({
       ...owner,
     })) ?? []
   );
@@ -24,10 +24,10 @@ export const getOwners = (): InitialOwner[] => {
 
 export const getSimulateChair = (index?: number): InitialChair | undefined => {
   return index
-    ? initialOwnerData?.simulatorChairs[index]
-    : initialOwnerData?.simulatorChairs[0];
+    ? initialData?.simulatorChairs[index]
+    : initialData?.simulatorChairs[0];
 };
 
 export const getSimulateChairFromToken = (token: string): InitialChair | undefined => {
-  return initialOwnerData?.simulatorChairs.find(c => c.token === token);
+  return initialData?.simulatorChairs.find(c => c.token === token);
 };

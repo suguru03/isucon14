@@ -168,7 +168,7 @@ export const config = {
   ],
   define: {
     [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
-    __INITIAL_OWNER_DATA__: intialOwnerData,
+    __INITIAL_DATA__: intialOwnerData,
   },
   server: {
     proxy: {

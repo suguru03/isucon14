@@ -194,7 +194,6 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   }, [token]);
 
   useEffect(() => {
-
     const token = getCookieValue(document.cookie, "chair_session")
     if (token) {
       setToken(token)
