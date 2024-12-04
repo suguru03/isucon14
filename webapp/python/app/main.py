@@ -9,10 +9,6 @@ from sqlalchemy import text
 from . import app_handlers, chair_handlers, internal_handlers, owner_handlers
 from .sql import engine
 
-# TODO: このコメントを消す
-# SQLのログを出したいときは以下の設定を使う
-# logging.basicConfig(level=logging.INFO)
-# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 app = FastAPI()
 app.include_router(app_handlers.router)
 app.include_router(chair_handlers.router)
@@ -42,8 +38,14 @@ def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONRespons
 
 @app.post("/api/initialize")
 def post_initialize(req: PostInitializeRequest) -> PostInitializeResponse:
-    # TODO: エラーレスポンスに init.sh の出力を返すようにする
-    subprocess.run("../sql/init.sh", check=True)
+    result = subprocess.run(
+        "../sql/init.sh", stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+    if result.returncode != 0:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"failed to initialize: {result.stdout.decode()}",
+        )
 
     with engine.begin() as conn:
         conn.execute(

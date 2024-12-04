@@ -57,7 +57,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		TargetBaseURL:         target,
 		TargetAddr:            addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-	})
+	}, skipStaticFileSanityCheck)
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan, worldClient, logger)
 
 	worldCtx := world.NewContext(w)
@@ -283,7 +283,7 @@ func (s *Scenario) Score(final bool) int64 {
 	score := lo.SumBy(s.world.OwnerDB.ToSlice(), func(p *world.Owner) int64 { return p.SubScore.Load() }) / 100
 	if final {
 		score += lo.SumBy(s.world.RequestDB.ToSlice(), func(r *world.Request) int64 {
-			if r.Evaluated {
+			if r.Evaluated.Load() {
 				return 0
 			}
 			return int64(r.PartialScore())
@@ -295,7 +295,7 @@ func (s *Scenario) Score(final bool) int64 {
 
 func (s *Scenario) TotalDiscount() int64 {
 	return lo.SumBy(s.world.RequestDB.ToSlice(), func(r *world.Request) int64 {
-		if r.Evaluated {
+		if r.Evaluated.Load() {
 			return int64(r.ActualDiscount())
 		} else {
 			return 0

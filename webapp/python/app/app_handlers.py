@@ -1,10 +1,3 @@
-"""
-以下の移植
-https://github.com/isucon/isucon14/blob/main/webapp/go/app_handlers.go
-
-TODO: このdocstringを消す
-"""
-
 from http import HTTPStatus
 from typing import Annotated
 
@@ -26,6 +19,7 @@ from .models import (
 )
 from .payment_gateway import (
     PaymentGatewayPostPaymentRequest,
+    UpstreamError,
     request_payment_gateway_post_payment,
 )
 from .sql import engine
@@ -105,7 +99,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 {"invitation_code": r.invitation_code},
             ).fetchone()
 
-            if not inviter:
+            if inviter is None:
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
                     detail="この招待コードは使用できません。",
@@ -232,7 +226,6 @@ def app_get_rides(
                 raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
             owner = Owner.model_validate(row)
 
-            # TODO: 参照実装みたいにpartialに作るべき？
             item = GetAppRidesResponseItem(
                 id=ride.id,
                 pickup_coordinate=Coordinate(
@@ -273,8 +266,10 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
         {"ride_id": ride_id},
     ).scalar()
 
-    if not status:
-        return ""
+    if status is None:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="no rows in result set"
+        )
 
     assert isinstance(status, str)
     return status
@@ -297,7 +292,7 @@ def app_post_rides(
         ).fetchall()
         rides = [Ride.model_validate(row) for row in rows]
 
-        continuing_ride_count: int = 0
+        continuing_ride_count = 0
         for ride in rides:
             status = get_latest_ride_status(conn, ride.id)
             if status != "COMPLETED":
@@ -474,7 +469,7 @@ def app_post_ride_evaluation(
             text("SELECT * FROM rides WHERE id = :ride_id"), {"ride_id": ride_id}
         ).fetchone()
 
-        if not row:
+        if row is None:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="ride not found"
             )
@@ -548,13 +543,15 @@ def app_post_ride_evaluation(
             ).fetchall()
             return [Ride.model_validate(r) for r in rows]
 
-        request_payment_gateway_post_payment(
-            payment_gateway_url,
-            payment_token.token,
-            payment_gateway_request,
-            retrieve_rides_order_by_created_at_asc,
-        )
-        # TODO: BadGatewayのケースを実装する
+        try:
+            request_payment_gateway_post_payment(
+                payment_gateway_url,
+                payment_token.token,
+                payment_gateway_request,
+                retrieve_rides_order_by_created_at_asc,
+            )
+        except UpstreamError as e:
+            raise HTTPException(status_code=HTTPStatus.BAD_GATEWAY, detail=str(e))
 
         response = AppPostRideEvaluationResponse(
             completed_at=timestamp_millis(ride.updated_at)
@@ -605,7 +602,7 @@ def app_get_notification(
             ),
             {"user_id": user.id},
         ).fetchone()
-        if not row:
+        if row is None:
             response.status_code = HTTPStatus.OK
             return response
 
@@ -618,7 +615,7 @@ def app_get_notification(
             {"ride_id": ride.id},
         ).fetchone()
         yet_sent_ride_status: RideStatus | None = None
-        if not row:
+        if row is None:
             status = get_latest_ride_status(conn, ride.id)
         else:
             yet_sent_ride_status = RideStatus.model_validate(row)
@@ -664,7 +661,7 @@ def app_get_notification(
 
             stats = get_chair_stats(conn, ride.chair_id)
 
-            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore
+            notification_response.data.chair = AppGetNotificationResponseChair(  # type: ignore[union-attr]
                 id=chair.id, name=chair.name, model=chair.model, stats=stats
             )
 
@@ -721,8 +718,8 @@ def get_chair_stats(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
     ).fetchall()
-    total_ride_count: int = len(rides)  # noqa
-    total_evaluation: float = 0.0  # noqa
+    total_ride_count = len(rides)
+    total_evaluation = 0.0
 
     for ride in rides:
         rows = conn.execute(
@@ -856,7 +853,7 @@ def calculate_discounted_fare(
     dest_latitude: int,
     dest_longitude: int,
 ) -> int:
-    discount: int = 0
+    discount = 0
 
     if ride:
         dest_latitude = ride.destination_latitude
@@ -879,7 +876,7 @@ def calculate_discounted_fare(
             {"user_id": user_id},
         ).fetchone()
 
-        if not coupon:
+        if coupon is None:
             # 無いなら他のクーポンを付与された順番に使う
             coupon = conn.execute(
                 text(
@@ -891,9 +888,9 @@ def calculate_discounted_fare(
         if coupon:
             discount = coupon.discount
 
-    metered_fare: int = FARE_PER_DISTANCE * calculate_distance(
+    metered_fare = FARE_PER_DISTANCE * calculate_distance(
         dest_latitude, dest_longitude, pickup_latitude, pickup_longitude
     )
 
-    discounted_metered_fare: int = max(metered_fare - discount, 0)
+    discounted_metered_fare = max(metered_fare - discount, 0)
     return INITIAL_FARE + discounted_metered_fare

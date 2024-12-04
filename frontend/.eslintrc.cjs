@@ -13,7 +13,7 @@ module.exports = {
     commonjs: true,
     es6: true,
   },
-  ignorePatterns: ["!**/.server", "!**/.client", "app/apiClient/"],
+  ignorePatterns: ["!**/.server", "!**/.client", "app/api/"],
   extends: ["eslint:recommended"],
   overrides: [
     // React

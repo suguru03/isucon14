@@ -6,17 +6,14 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Coordinate } from "~/apiClient/apiSchemas";
-import {
-  getSimulateChair,
-  getSimulateChairFromToken,
-} from "~/utils/get-initial-data";
+import type { Coordinate } from "~/api/api-schemas";
+import { getSimulateChair, getSimulateChairFromToken, } from "~/utils/get-initial-data";
 
-import { apiBaseURL } from "~/apiClient/APIBaseURL";
+import { apiBaseURL } from "~/api/api-base-url";
 import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
-} from "~/apiClient/apiComponents";
+} from "~/api/api-components";
 import type { ClientChairRide, SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 import { getCookieValue } from "~/utils/get-cookie-value";
@@ -101,10 +98,11 @@ export const useClientChairNotification = (id?: string) => {
   useEffect(() => {
     if (!isSSE) return;
     const eventSource = new EventSource(`${apiBaseURL}/chair/notification`);
-    const onMessage = (event: { data: unknown } | undefined) => {
-      if (typeof event?.data === "string") {
+    const onMessage = ({ data }: MessageEvent<{ data?: unknown }>) => {
+      if (typeof data !== "string") return;
+      try {
         const eventData = JSON.parse(
-          event?.data,
+          data,
         ) as ChairGetNotificationResponse["data"];
         setNotification((preRequest) => {
           if (
@@ -120,6 +118,8 @@ export const useClientChairNotification = (id?: string) => {
             return preRequest;
           }
         });
+      } catch (error) {
+        console.error(error);
       }
       return () => {
         eventSource.close();

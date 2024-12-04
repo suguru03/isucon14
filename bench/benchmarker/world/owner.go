@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/samber/lo"
 )
@@ -72,6 +73,11 @@ func (p *Owner) Tick(ctx *Context) error {
 	defer p.tickDone.Done()
 
 	if ctx.CurrentTime()%LengthOfHour == LengthOfHour/2 {
+		err := p.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_CHAIRS)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
+		}
+
 		res, err := p.Client.GetOwnerChairs(ctx, &GetOwnerChairsRequest{})
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
@@ -82,6 +88,11 @@ func (p *Owner) Tick(ctx *Context) error {
 	} else if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
 		last := lo.MaxBy(p.CompletedRequest.ToSlice(), func(a *Request, b *Request) bool { return a.ServerCompletedAt.After(b.ServerCompletedAt) })
 		if last != nil {
+			err := p.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_SALES)
+			if err != nil {
+				return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
+			}
+
 			res, err := p.Client.GetOwnerSales(ctx, &GetOwnerSalesRequest{
 				Until: last.ServerCompletedAt,
 			})

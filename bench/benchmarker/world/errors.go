@@ -69,6 +69,8 @@ const (
 	ErrorCodeUncontrollableRequestReceived
 	// ErrorCodeChairReceivedDataIsWrong 椅子が通知から受け取ったデータが想定と異なります
 	ErrorCodeChairReceivedDataIsWrong
+	// ErrorCodeWrongNearbyChairs 取得した付近の椅子情報に不備があります
+	ErrorCodeWrongNearbyChairs
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -107,6 +109,7 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeTooOldNearbyChairsResponse:                     "取得した付近の椅子情報が古すぎます",
 	ErrorCodeUncontrollableRequestReceived:                  "アサインされたライドがベンチマーカー外で作られたものであるため処理できません",
 	ErrorCodeChairReceivedDataIsWrong:                       "椅子が受け取った通知の内容が想定と異なります",
+	ErrorCodeWrongNearbyChairs:                              "取得した付近の椅子情報に不備があります",
 }
 
 type codeError struct {

@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
-} from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
+} from "~/api/api-components";
+import { Coordinate } from "~/api/api-schemas";
 import type { SimulatorChair } from "~/types";
 import {
   setSimulatorCurrentCoordinate,
@@ -46,6 +46,7 @@ const currentCoodinatePost = (coordinate: Coordinate) => {
     });
   }
 };
+
 const postEnroute = (chair: SimulatorChair, coordinate: Coordinate) => {
   if (chair.chairNotification?.payload?.ride_id) {
     setSimulatorStartCoordinate(coordinate);
@@ -68,6 +69,7 @@ const postCarring = (chair: SimulatorChair) => {
     }).catch((e) => console.error(e));
   }
 };
+
 export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (

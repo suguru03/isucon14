@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NearByChair } from "~/types";
+import { Message, MessageTypes } from "~/utils/post-message";
 import { TownList } from "../modules/map/map-data";
 
 const randomInt = (min: number, max: number) =>
@@ -47,12 +48,9 @@ export const useGhostChairs = (): NearByChair[] => {
     const onMessage = ({
       origin,
       data,
-    }: MessageEvent<{
-      type: "isuride.simulator.config";
-      payload?: { ghostChairEnabled?: boolean };
-    }>) => {
+    }: MessageEvent<Message["SimulatorConfing"]>) => {
       const isSameOrigin = origin == location.origin;
-      if (isSameOrigin && data.type === "isuride.simulator.config") {
+      if (isSameOrigin && MessageTypes.SimulatorConfing === data.type) {
         setEnabled(data?.payload?.ghostChairEnabled ?? false);
       }
     };

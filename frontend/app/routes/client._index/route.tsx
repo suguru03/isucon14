@@ -5,8 +5,8 @@ import {
   fetchAppGetNearbyChairs,
   fetchAppPostRides,
   fetchAppPostRidesEstimatedFare,
-} from "~/apiClient/apiComponents";
-import { Coordinate, RideStatus } from "~/apiClient/apiSchemas";
+} from "~/api/api-components";
+import { Coordinate, RideStatus } from "~/api/api-schemas";
 import { useGhostChairs } from "~/components/hooks/use-ghost-chairs";
 import { CampaignBanner } from "~/components/modules/campaign-banner/campaign-banner";
 import { LocationButton } from "~/components/modules/location-button/location-button";
@@ -17,6 +17,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useUserContext } from "~/contexts/user-context";
 import { NearByChair, isClientApiError } from "~/types";
+import { sendClientReady } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -166,6 +167,13 @@ export default function Index() {
     };
   }, [centerCoordinate, isStatusModalOpen]);
 
+  useEffect(() => {
+    sendClientReady(window.parent, { ready: true });
+    return () => {
+      sendClientReady(window.parent, { ready: false });
+    };
+  }, []);
+
   return (
     <>
       <CampaignBanner />
@@ -272,6 +280,8 @@ export default function Index() {
             <Arrived
               onEvaluated={() => {
                 statusModalRef.current?.close();
+                setCurrentLocation(destLocation);
+                setDestLocation(undefined);
               }}
             />
           )}

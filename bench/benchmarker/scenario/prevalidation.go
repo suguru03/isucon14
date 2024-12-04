@@ -50,7 +50,7 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 	indexHtmlHash := frontendHashes["index.html"]
 
 	{
-		actualHash, err := client.StaticGetFileHash(ctx, "/")
+		actualHash, err := client.StaticGetFileHash(ctx, "/client")
 		if err != nil {
 			return err
 		}
@@ -76,12 +76,12 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 
 	// check index.html for other paths
 	{
-		actualHash, err := client.StaticGetFileHash(ctx, "/client")
+		actualHash, err := client.StaticGetFileHash(ctx, "/owner")
 		if err != nil {
 			return err
 		}
 		if actualHash != indexHtmlHash {
-			return errors.New("/clientの内容が正しくありません")
+			return errors.New("/ownerの内容が正しくありません")
 		}
 	}
 

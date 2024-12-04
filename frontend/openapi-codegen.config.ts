@@ -9,13 +9,14 @@ import {
   alternativeAPIURLString,
   alternativeURLExpression,
 } from "./api-url.mjs";
+import { ConfigBase } from "@openapi-codegen/typescript/lib/generators/types";
 
-const outputDir = "./app/apiClient";
+const outputDir = "./app/api";
 
 export default defineConfig({
   isucon: {
     from: {
-      relativePath: "../openapi/openapi.yaml",
+      relativePath: "../webapp/openapi.yaml",
       source: "file",
     },
     outputDir,
@@ -36,7 +37,6 @@ export default defineConfig({
         throw Error("he servers.url must have only one entry.");
       }
 
-      const filenamePrefix = "API";
       const contextServers = context.openAPIDocument.servers;
       context.openAPIDocument.servers = contextServers?.map((serverObject) => {
         return {
@@ -44,18 +44,21 @@ export default defineConfig({
           url: alternativeAPIURLString,
         };
       });
-      const { schemasFiles } = await generateSchemaTypes(context, {
-        filenamePrefix,
-      });
+
+      const configBase: ConfigBase = {
+        filenamePrefix: "api",
+        filenameCase: "kebab",
+      };
+      const { schemasFiles } = await generateSchemaTypes(context, configBase);
       await generateReactQueryComponents(context, {
-        filenamePrefix,
+        ...configBase,
         schemasFiles,
       });
 
       /**
        * fetch.responseのstatusを内包させる
        */
-      await rewriteFile("./app/apiClient/apiFetcher.ts", (content) => {
+      await rewriteFile("./app/api/api-fetcher.ts", (content) => {
         return content
           .replace(
             "return await response.json();",
@@ -84,7 +87,7 @@ export default defineConfig({
        * SSE通信などでは、自動生成のfetcherを利用しないため
        */
       await writeFile(
-        `${outputDir}/${filenamePrefix}BaseURL.ts`,
+        `${outputDir}/${configBase.filenamePrefix}-base-url.ts`,
         `export const apiBaseURL = ${alternativeURLExpression};\n`,
       );
     },

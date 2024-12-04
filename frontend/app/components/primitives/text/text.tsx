@@ -1,17 +1,20 @@
-import { FC, PropsWithChildren } from "react";
+import { ComponentPropsWithoutRef, FC, PropsWithChildren } from "react";
 import { twMerge } from "tailwind-merge";
 
 type Size = "2xl" | "xl" | "lg" | "sm" | "xs";
 
-type Variant = "danger";
+type Variant = "danger" | "normal";
+
+type Tag = "p" | "span" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
 type TextProps = PropsWithChildren<{
-  tagName?: "p" | "div" | "span";
+  tagName?: Tag;
   bold?: boolean;
   size?: Size;
   variant?: Variant;
   className?: string;
-}>;
+}> &
+  ComponentPropsWithoutRef<Tag>;
 
 const getSizeClass = (size?: Size) => {
   switch (size) {
@@ -52,7 +55,7 @@ export const Text: FC<TextProps> = ({
   return (
     <Tag
       className={twMerge([
-        bold ? "font-bold" : "",
+        bold && "font-bold",
         getSizeClass(size),
         getVariantClass(variant),
         className,

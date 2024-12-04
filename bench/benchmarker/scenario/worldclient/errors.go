@@ -42,6 +42,10 @@ const (
 	ErrorCodeFailedToPostRidesEstimatedFare
 	// ErrorCodeFailedToGetNearbyChairs 近くの椅子情報の取得に失敗したエラー
 	ErrorCodeFailedToGetNearbyChairs
+	// ErrorCodeFailedToGetStaticFile 静的ファイルの取得に失敗したエラー
+	ErrorCodeFailedToGetStaticFile
+	// ErrorCodeInvalidContent 静的ファイルの内容が一致しないエラー
+	ErrorCodeInvalidContent
 )
 
 type codeError struct {

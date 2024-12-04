@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 from .models import Ride
 
-INITIAL_FARE: int = 500
-FARE_PER_DISTANCE: int = 100
+INITIAL_FARE = 500
+FARE_PER_DISTANCE = 100
 
 EPOCH = datetime(1970, 1, 1)
 

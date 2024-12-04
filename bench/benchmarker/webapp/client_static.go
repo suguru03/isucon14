@@ -20,8 +20,8 @@ func (c *Client) StaticGetFileHash(ctx context.Context, path string) (string, er
 	}
 	defer closeBody(resp)
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("GET %sへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:%d, actual:%d)", path, http.StatusOK, resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		return "", fmt.Errorf("GET %sへのリクエストに対して、期待されたHTTPステータスコードが確認できませんでした (expected:200～399, actual:%d)", path, resp.StatusCode)
 	}
 
 	hash, err := benchrun.GetHashFromStream(resp.Body)

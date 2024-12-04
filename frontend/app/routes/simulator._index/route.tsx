@@ -1,9 +1,11 @@
 import type { MetaFunction } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import { fetchChairPostActivity } from "~/apiClient/apiComponents";
+import { fetchChairPostActivity } from "~/api/api-components";
+import { useEmulator } from "~/components/hooks/use-emulator";
 import { SimulatorChairDisplay } from "~/components/modules/simulator-display/simulator-chair-display";
 import { SimulatorConfigDisplay } from "~/components/modules/simulator-display/simulator-config-display";
 import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
+import { useSimulatorContext } from "~/contexts/simulator-context";
 
 export const meta: MetaFunction = () => {
   return [
@@ -13,7 +15,10 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const { targetChair: chair } = useSimulatorContext();
   const ref = useRef<HTMLIFrameElement>(null);
+
+  useEmulator(chair);
 
   useEffect(() => {
     try {
@@ -24,10 +29,10 @@ export default function Index() {
   }, []);
 
   return (
-    <div className="h-screen flex justify-center items-center space-x-8 lg:space-x-16">
+    <main className="h-screen flex justify-center items-center space-x-8 lg:space-x-16">
       <SmartPhone>
         <iframe
-          title="ユーザー画面"
+          title="ISURIDE Client App"
           src="/client"
           className="w-full h-full"
           ref={ref}
@@ -38,6 +43,6 @@ export default function Index() {
         <SimulatorChairDisplay />
         <SimulatorConfigDisplay simulatorRef={ref} />
       </div>
-    </div>
+    </main>
   );
 }

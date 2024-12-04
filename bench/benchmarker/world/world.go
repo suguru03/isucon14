@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 	"github.com/samber/lo"
@@ -179,7 +180,17 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		defer args.Inviter.InvitingLock.Unlock()
 	}
 
-	res, err := w.Client.RegisterUser(ctx, req)
+	res, err := w.Client.RegisterUser(ctx, req, func(client UserClient) error {
+		err := client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_1)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterUser, err)
+		}
+		err = client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_2)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterUser, err)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
@@ -227,6 +238,16 @@ func (w *World) CreateOwner(ctx *Context, args *CreateOwnerArgs) (*Owner, error)
 
 	res, err := w.Client.RegisterOwner(ctx, &RegisterOwnerRequest{
 		Name: registeredData.Name,
+	}, func(client OwnerClient) error {
+		err := client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_REGISTER_1)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
+		}
+		err = client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_REGISTER_2)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
@@ -282,6 +303,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 		RegisteredData:    registeredData,
 		Client:            res.Client,
 		Rand:              random.CreateChildRand(args.Owner.Rand),
+		RequestHistory:    concurrent.NewSimpleSlice[*Request](),
 		notificationQueue: make(chan NotificationEvent, 500),
 	}
 	result := w.ChairDB.Create(c)
@@ -310,8 +332,19 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		}
 		entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
 		if len(entries) == 0 {
-			return fmt.Errorf("ID:%sの椅子はレスポンスの座標に過去存在したことがありません", chair.ID)
+			return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
 		}
+		for _, req := range c.RequestHistory.BackwardIter() {
+			if req.BenchMatchedAt.After(baseTime) {
+				// nearbychairsのリクエストを送った後にマッチされていて、レスポンスを生成とマッチのどちらが先か分からないので許容する
+				break
+			}
+			if !req.Evaluated.Load() {
+				return fmt.Errorf("ID:%sの椅子は既にライド中です", chair.ID)
+			}
+			break
+		}
+
 		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
 			if !entry.Until.Valid {
 				// untilが無い場合は今もその位置にいることになるので、最新

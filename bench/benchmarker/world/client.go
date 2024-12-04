@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/guregu/null/v5"
+	"github.com/isucon/isucon14/bench/benchrun"
 )
 
 type WorldClient interface {
 	// RegisterUser サーバーにユーザーを登録する
-	RegisterUser(ctx *Context, data *RegisterUserRequest) (*RegisterUserResponse, error)
+	RegisterUser(ctx *Context, data *RegisterUserRequest, beforeRequest func(client UserClient) error) (*RegisterUserResponse, error)
 	// RegisterOwner サーバーにオーナーを登録する
-	RegisterOwner(ctx *Context, data *RegisterOwnerRequest) (*RegisterOwnerResponse, error)
+	RegisterOwner(ctx *Context, data *RegisterOwnerRequest, beforeRequest func(client OwnerClient) error) (*RegisterOwnerResponse, error)
 	// RegisterChair サーバーにユーザーを登録する
 	RegisterChair(ctx *Context, owner *Owner, data *RegisterChairRequest) (*RegisterChairResponse, error)
 }
@@ -30,6 +31,8 @@ type UserClient interface {
 	RegisterPaymentMethods(ctx *Context, user *User) error
 	// ConnectUserNotificationStream ユーザー用の通知ストリームに接続する
 	ConnectUserNotificationStream(ctx *Context, user *User, receiver NotificationReceiverFunc) (NotificationStream, error)
+	// BrowserAccess ブラウザでアクセスしたときのリクエストを送信する
+	BrowserAccess(ctx *Context, scenario benchrun.FrontendPathScenario) error
 }
 
 type OwnerClient interface {
@@ -37,6 +40,8 @@ type OwnerClient interface {
 	GetOwnerSales(ctx *Context, args *GetOwnerSalesRequest) (*GetOwnerSalesResponse, error)
 	// GetOwnerChairs サーバーからオーナーの椅子一覧を取得する
 	GetOwnerChairs(ctx *Context, args *GetOwnerChairsRequest) (*GetOwnerChairsResponse, error)
+	// BrowserAccess ブラウザでアクセスしたときのリクエストを送信する
+	BrowserAccess(ctx *Context, scenario benchrun.FrontendPathScenario) error
 }
 
 type ChairClient interface {

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/samber/lo"
 )
@@ -104,8 +105,13 @@ func (u *User) Tick(ctx *Context) error {
 	switch {
 	// 支払いトークンが未登録
 	case u.State == UserStatePaymentMethodsNotRegister:
+		err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_3)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
+		}
+
 		// トークン登録を試みる
-		err := u.Client.RegisterPaymentMethods(ctx, u)
+		err = u.Client.RegisterPaymentMethods(ctx, u)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
 		}
@@ -152,8 +158,13 @@ func (u *User) Tick(ctx *Context) error {
 
 		case RequestStatusArrived:
 			// 送迎の評価及び支払いがまだの場合は行う
-			if !u.Request.Evaluated {
+			if !u.Request.Evaluated.Load() {
 				score := u.Request.CalculateEvaluation().Score()
+
+				err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_EVALUATION)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
 
 				u.Request.Statuses.Lock()
 				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
@@ -166,7 +177,7 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.CompletedAt = ctx.CurrentTime()
 				u.Request.ServerCompletedAt = res.CompletedAt
 				u.Request.Statuses.Desired = RequestStatusCompleted
-				u.Request.Evaluated = true
+				u.Request.Evaluated.Store(true)
 				if requests := len(u.RequestHistory); requests == 1 {
 					u.Region.TotalEvaluation.Add(int32(score))
 				} else {
@@ -233,6 +244,15 @@ func (u *User) Deactivate() {
 }
 
 func (u *User) CheckRequestHistory(ctx *Context) error {
+	err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_1)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+	err = u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_2)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+
 	res, err := u.Client.GetRequests(ctx)
 	if err != nil {
 		return err
@@ -309,10 +329,10 @@ func (u *User) CreateRequest(ctx *Context) error {
 	now := time.Now()
 	nearby, err := u.Client.GetNearbyChairs(ctx, pickup, checkDistance)
 	if err != nil {
-		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+		return WrapCodeError(ErrorCodeWrongNearbyChairs, err)
 	}
 	if err := u.World.checkNearbyChairsResponse(now, pickup, checkDistance, nearby); err != nil {
-		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
+		return WrapCodeError(ErrorCodeWrongNearbyChairs, err)
 	}
 	if len(nearby.Chairs) == 0 {
 		// 近くに椅子が無いので配車をやめる
