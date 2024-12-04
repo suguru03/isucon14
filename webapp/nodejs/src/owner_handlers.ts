@@ -40,36 +40,42 @@ export const ownerGetSales = async (ctx: Context<Environment>) => {
   }
 
   const owner = ctx.var.owner;
-  const [chairs] = await ctx.var.dbConn.query<Array<Chair & RowDataPacket>>(
-    "SELECT * FROM chairs WHERE owner_id = ?",
-    [owner.id],
-  );
-
-  let totalSales = 0;
-  const chairSales = [];
-  const modelSalesByModel: { [key: string]: number } = {};
-  for (const chair of chairs) {
-    const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
-      "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
-      [chair.id, since, until],
+  await ctx.var.dbConn.beginTransaction();
+  try {
+    const [chairs] = await ctx.var.dbConn.query<Array<Chair & RowDataPacket>>(
+      "SELECT * FROM chairs WHERE owner_id = ?",
+      [owner.id],
     );
-    const sales = sumSales(rides);
-    totalSales += sales;
-    chairSales.push({ id: chair.id, name: chair.name, sales });
-    modelSalesByModel[chair.model] =
-      (modelSalesByModel[chair.model] ?? 0) + sales;
+
+    let totalSales = 0;
+    const chairSales = [];
+    const modelSalesByModel: { [key: string]: number } = {};
+    for (const chair of chairs) {
+      const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
+        "SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
+        [chair.id, since, until],
+      );
+      const sales = sumSales(rides);
+      totalSales += sales;
+      chairSales.push({ id: chair.id, name: chair.name, sales });
+      modelSalesByModel[chair.model] =
+        (modelSalesByModel[chair.model] ?? 0) + sales;
+    }
+
+    const models = Object.entries(modelSalesByModel).map(([model, sales]) => ({
+      model,
+      sales,
+    }));
+
+    return ctx.json({
+      total_sales: totalSales,
+      chairs: chairSales,
+      models,
+    });
+  } catch (e) {
+    await ctx.var.dbConn.rollback();
+    return ctx.text(`${e}`, 500);
   }
-
-  const models = Object.entries(modelSalesByModel).map(([model, sales]) => ({
-    model,
-    sales,
-  }));
-
-  return ctx.json({
-    total_sales: totalSales,
-    chairs: chairSales,
-    models,
-  });
 };
 
 type ChairWithDetail = {
