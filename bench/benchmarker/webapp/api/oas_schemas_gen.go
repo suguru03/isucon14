@@ -788,8 +788,7 @@ func (*ChairPostRideStatusNoContent) chairPostRideStatusRes() {}
 
 type ChairPostRideStatusReq struct {
 	// ライドの状態
-	// MATCHING: マッチングを拒否し、再度マッチング状態に戻す
-	// ENROUTE: マッチングを承認し、乗車位置に向かう
+	// ENROUTE: マッチしたライドを確認し、乗車位置に向かう
 	// CARRYING: ユーザーが乗車し、椅子が目的地に向かう.
 	Status ChairPostRideStatusReqStatus `json:"status"`
 }
@@ -805,13 +804,11 @@ func (s *ChairPostRideStatusReq) SetStatus(val ChairPostRideStatusReqStatus) {
 }
 
 // ライドの状態
-// MATCHING: マッチングを拒否し、再度マッチング状態に戻す
-// ENROUTE: マッチングを承認し、乗車位置に向かう
+// ENROUTE: マッチしたライドを確認し、乗車位置に向かう
 // CARRYING: ユーザーが乗車し、椅子が目的地に向かう.
 type ChairPostRideStatusReqStatus string
 
 const (
-	ChairPostRideStatusReqStatusMATCHING ChairPostRideStatusReqStatus = "MATCHING"
 	ChairPostRideStatusReqStatusENROUTE  ChairPostRideStatusReqStatus = "ENROUTE"
 	ChairPostRideStatusReqStatusCARRYING ChairPostRideStatusReqStatus = "CARRYING"
 )
@@ -819,7 +816,6 @@ const (
 // AllValues returns all ChairPostRideStatusReqStatus values.
 func (ChairPostRideStatusReqStatus) AllValues() []ChairPostRideStatusReqStatus {
 	return []ChairPostRideStatusReqStatus{
-		ChairPostRideStatusReqStatusMATCHING,
 		ChairPostRideStatusReqStatusENROUTE,
 		ChairPostRideStatusReqStatusCARRYING,
 	}
@@ -828,8 +824,6 @@ func (ChairPostRideStatusReqStatus) AllValues() []ChairPostRideStatusReqStatus {
 // MarshalText implements encoding.TextMarshaler.
 func (s ChairPostRideStatusReqStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case ChairPostRideStatusReqStatusMATCHING:
-		return []byte(s), nil
 	case ChairPostRideStatusReqStatusENROUTE:
 		return []byte(s), nil
 	case ChairPostRideStatusReqStatusCARRYING:
@@ -842,9 +836,6 @@ func (s ChairPostRideStatusReqStatus) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *ChairPostRideStatusReqStatus) UnmarshalText(data []byte) error {
 	switch ChairPostRideStatusReqStatus(data) {
-	case ChairPostRideStatusReqStatusMATCHING:
-		*s = ChairPostRideStatusReqStatusMATCHING
-		return nil
 	case ChairPostRideStatusReqStatusENROUTE:
 		*s = ChairPostRideStatusReqStatusENROUTE
 		return nil
@@ -905,6 +896,9 @@ func (*Error) appPostRidesEstimatedFareRes() {}
 func (*Error) appPostUsersRes()              {}
 func (*Error) chairPostRideStatusRes()       {}
 func (*Error) ownerPostOwnersRes()           {}
+
+// InternalGetMatchingNoContent is response for InternalGetMatching operation.
+type InternalGetMatchingNoContent struct{}
 
 // NewOptAppPostPaymentMethodsReq returns new OptAppPostPaymentMethodsReq with value set to v.
 func NewOptAppPostPaymentMethodsReq(v AppPostPaymentMethodsReq) OptAppPostPaymentMethodsReq {

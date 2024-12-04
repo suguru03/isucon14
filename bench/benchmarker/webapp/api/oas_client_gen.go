@@ -18,7 +18,7 @@ import (
 type Invoker interface {
 	// AppGetNearbyChairs invokes app-get-nearby-chairs operation.
 	//
-	// ユーザーの近くにいる椅子を取得する.
+	// 椅子からサーバーに記録された座標情報は3秒以内に反映されている必要があります。.
 	//
 	// GET /app/nearby-chairs
 	AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error)
@@ -94,6 +94,12 @@ type Invoker interface {
 	//
 	// POST /chair/rides/{ride_id}/status
 	ChairPostRideStatus(ctx context.Context, request OptChairPostRideStatusReq, params ChairPostRideStatusParams) (ChairPostRideStatusRes, error)
+	// InternalGetMatching invokes internal-get-matching operation.
+	//
+	// ライドのマッチングを行う.
+	//
+	// GET /internal/matching
+	InternalGetMatching(ctx context.Context) error
 	// OwnerGetChairs invokes owner-get-chairs operation.
 	//
 	// 椅子のオーナーが管理している椅子の一覧を取得する.
@@ -166,7 +172,7 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 
 // AppGetNearbyChairs invokes app-get-nearby-chairs operation.
 //
-// ユーザーの近くにいる椅子を取得する.
+// 椅子からサーバーに記録された座標情報は3秒以内に反映されている必要があります。.
 //
 // GET /app/nearby-chairs
 func (c *Client) AppGetNearbyChairs(ctx context.Context, params AppGetNearbyChairsParams) (*AppGetNearbyChairsOK, error) {
@@ -738,6 +744,42 @@ func (c *Client) sendChairPostRideStatus(ctx context.Context, request OptChairPo
 	defer resp.Body.Close()
 
 	result, err := decodeChairPostRideStatusResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// InternalGetMatching invokes internal-get-matching operation.
+//
+// ライドのマッチングを行う.
+//
+// GET /internal/matching
+func (c *Client) InternalGetMatching(ctx context.Context) error {
+	_, err := c.sendInternalGetMatching(ctx)
+	return err
+}
+
+func (c *Client) sendInternalGetMatching(ctx context.Context) (res *InternalGetMatchingNoContent, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/internal/matching"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeInternalGetMatchingResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
