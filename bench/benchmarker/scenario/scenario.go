@@ -57,7 +57,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		TargetBaseURL:         target,
 		TargetAddr:            addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-	})
+	}, skipStaticFileSanityCheck)
 	w := world.NewWorld(30*time.Millisecond, completedRequestChan, worldClient, logger)
 
 	worldCtx := world.NewContext(w)

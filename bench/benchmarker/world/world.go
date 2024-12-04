@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/internal/random"
 	"github.com/samber/lo"
@@ -179,7 +180,17 @@ func (w *World) CreateUser(ctx *Context, args *CreateUserArgs) (*User, error) {
 		defer args.Inviter.InvitingLock.Unlock()
 	}
 
-	res, err := w.Client.RegisterUser(ctx, req)
+	res, err := w.Client.RegisterUser(ctx, req, func(client UserClient) error {
+		err := client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_1)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterUser, err)
+		}
+		err = client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_2)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterUser, err)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterUser, err)
 	}
@@ -227,6 +238,16 @@ func (w *World) CreateOwner(ctx *Context, args *CreateOwnerArgs) (*Owner, error)
 
 	res, err := w.Client.RegisterOwner(ctx, &RegisterOwnerRequest{
 		Name: registeredData.Name,
+	}, func(client OwnerClient) error {
+		err := client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_REGISTER_1)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
+		}
+		err = client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_OWNER_REGISTER_2)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterOwner, err)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToRegisterOwner, err)

@@ -12,17 +12,20 @@ import (
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
 	"github.com/isucon/isucon14/bench/benchmarker/world"
+	"github.com/isucon/isucon14/bench/benchrun"
 )
 
 type userClient struct {
-	ctx    context.Context
-	client *webapp.Client
+	ctx                       context.Context
+	client                    *webapp.Client
+	skipStaticFileSanityCheck bool
 }
 
 type ownerClient struct {
-	ctx                context.Context
-	client             *webapp.Client
-	webappClientConfig webapp.ClientConfig
+	ctx                       context.Context
+	client                    *webapp.Client
+	webappClientConfig        webapp.ClientConfig
+	skipStaticFileSanityCheck bool
 }
 
 type chairClient struct {
@@ -31,21 +34,33 @@ type chairClient struct {
 }
 
 type WorldClient struct {
-	ctx                context.Context
-	webappClientConfig webapp.ClientConfig
+	ctx                       context.Context
+	webappClientConfig        webapp.ClientConfig
+	skipStaticFileSanityCheck bool
 }
 
-func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig) *WorldClient {
+func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig, skipStaticFileSanityCheck bool) *WorldClient {
 	return &WorldClient{
-		ctx:                ctx,
-		webappClientConfig: webappClientConfig,
+		ctx:                       ctx,
+		webappClientConfig:        webappClientConfig,
+		skipStaticFileSanityCheck: skipStaticFileSanityCheck,
 	}
 }
 
-func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserRequest) (*world.RegisterUserResponse, error) {
+func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserRequest, beforeRequest func(client world.UserClient) error) (*world.RegisterUserResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
+	}
+	userClient := &userClient{
+		ctx:                       c.ctx,
+		client:                    client,
+		skipStaticFileSanityCheck: c.skipStaticFileSanityCheck,
+	}
+
+	err = beforeRequest(userClient)
+	if err != nil {
+		return nil, err
 	}
 
 	response, err := client.AppPostRegister(c.ctx, &api.AppPostUsersReq{
@@ -62,17 +77,25 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 	return &world.RegisterUserResponse{
 		ServerUserID:   response.ID,
 		InvitationCode: response.InvitationCode,
-		Client: &userClient{
-			ctx:    c.ctx,
-			client: client,
-		},
+		Client:         userClient,
 	}, nil
 }
 
-func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwnerRequest) (*world.RegisterOwnerResponse, error) {
+func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwnerRequest, beforeRequest func(client world.OwnerClient) error) (*world.RegisterOwnerResponse, error) {
 	client, err := webapp.NewClient(c.webappClientConfig)
 	if err != nil {
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
+	}
+	ownerClient := &ownerClient{
+		ctx:                       c.ctx,
+		client:                    client,
+		webappClientConfig:        c.webappClientConfig,
+		skipStaticFileSanityCheck: c.skipStaticFileSanityCheck,
+	}
+
+	err = beforeRequest(ownerClient)
+	if err != nil {
+		return nil, err
 	}
 
 	response, err := client.OwnerPostRegister(c.ctx, &api.OwnerPostOwnersReq{
@@ -85,11 +108,7 @@ func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwne
 	return &world.RegisterOwnerResponse{
 		ServerOwnerID:        response.ID,
 		ChairRegisteredToken: response.ChairRegisterToken,
-		Client: &ownerClient{
-			ctx:                c.ctx,
-			client:             client,
-			webappClientConfig: c.webappClientConfig,
-		},
+		Client:               ownerClient,
 	}, nil
 }
 
@@ -167,6 +186,13 @@ func (c *ownerClient) GetOwnerChairs(ctx *world.Context, args *world.GetOwnerCha
 			TotalDistanceUpdatedAt: null.NewTime(time.UnixMilli(v.TotalDistanceUpdatedAt.Value), v.TotalDistanceUpdatedAt.Set),
 		}
 	})}, nil
+}
+
+func (c *ownerClient) BrowserAccess(ctx *world.Context, scenario benchrun.FrontendPathScenario) error {
+	if c.skipStaticFileSanityCheck {
+		return nil
+	}
+	return browserAccess(c.ctx, c.client, scenario)
 }
 
 func (c *chairClient) SendChairCoordinate(ctx *world.Context, chair *world.Chair) (*world.SendChairCoordinateResponse, error) {
@@ -265,6 +291,10 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 	return &notificationConnectionImpl{
 		close: cancel,
 	}, nil
+}
+
+func (c *userClient) getInternalClient() *webapp.Client {
+	return c.client
 }
 
 func (c *userClient) SendEvaluation(ctx *world.Context, req *world.Request, score int) (*world.SendEvaluationResponse, error) {
@@ -445,4 +475,40 @@ type notificationConnectionImpl struct {
 
 func (c *notificationConnectionImpl) Close() {
 	c.close()
+}
+
+func (c *userClient) BrowserAccess(ctx *world.Context, scenario benchrun.FrontendPathScenario) error {
+	if c.skipStaticFileSanityCheck {
+		return nil
+	}
+	return browserAccess(c.ctx, c.client, scenario)
+}
+
+func browserAccess(ctx context.Context, client *webapp.Client, scenario benchrun.FrontendPathScenario) error {
+	paths := benchrun.FRONTEND_PATH_SCENARIOS[scenario]
+	path := paths[len(paths)-1]
+
+	// ハードナビゲーション
+	if len(paths) == 1 {
+		hash, err := client.StaticGetFileHash(ctx, path)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToGetStaticFile, err)
+		}
+		if hash != benchrun.FrontendHashesMap["index.html"] {
+			return WrapCodeError(ErrorCodeInvalidContent, errors.New("invalid content for "+path))
+		}
+	}
+
+	filePaths := benchrun.FrontendPathScenarioFiles[scenario]
+	for _, filePath := range filePaths {
+		hash, err := client.StaticGetFileHash(ctx, filePath)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToGetStaticFile, err)
+		}
+		if hash != benchrun.FrontendHashesMap[filePath[1:]] {
+			return WrapCodeError(ErrorCodeInvalidContent, errors.New("invalid content for "+filePath))
+		}
+	}
+
+	return nil
 }

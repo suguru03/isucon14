@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/samber/lo"
 )
@@ -104,8 +105,13 @@ func (u *User) Tick(ctx *Context) error {
 	switch {
 	// 支払いトークンが未登録
 	case u.State == UserStatePaymentMethodsNotRegister:
+		err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_REGISTER_3)
+		if err != nil {
+			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
+		}
+
 		// トークン登録を試みる
-		err := u.Client.RegisterPaymentMethods(ctx, u)
+		err = u.Client.RegisterPaymentMethods(ctx, u)
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToRegisterPaymentMethods, err)
 		}
@@ -154,6 +160,11 @@ func (u *User) Tick(ctx *Context) error {
 			// 送迎の評価及び支払いがまだの場合は行う
 			if !u.Request.Evaluated.Load() {
 				score := u.Request.CalculateEvaluation().Score()
+
+				err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_EVALUATION)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
 
 				u.Request.Statuses.Lock()
 				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
@@ -233,6 +244,15 @@ func (u *User) Deactivate() {
 }
 
 func (u *User) CheckRequestHistory(ctx *Context) error {
+	err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_1)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+	err = u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_2)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+
 	res, err := u.Client.GetRequests(ctx)
 	if err != nil {
 		return err
