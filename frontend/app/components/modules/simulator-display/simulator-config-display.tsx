@@ -17,7 +17,7 @@ export const SimulatorConfigDisplay: FC<{
   simulatorRef: RefObject<HTMLIFrameElement>;
 }> = ({ simulatorRef }) => {
   const [ready, setReady] = useState<boolean>(false);
-  const { targetChair: chair } = useSimulatorContext();
+  const { chair } = useSimulatorContext();
   const [activate, setActivate] = useState<boolean>(true);
 
   const toggleActivate = useCallback(
