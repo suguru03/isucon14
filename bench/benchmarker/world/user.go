@@ -161,6 +161,11 @@ func (u *User) Tick(ctx *Context) error {
 			if !u.Request.Evaluated.Load() {
 				score := u.Request.CalculateEvaluation().Score()
 
+				err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_EVALUATION)
+				if err != nil {
+					return WrapCodeError(ErrorCodeFailedToEvaluate, err)
+				}
+
 				u.Request.Statuses.Lock()
 				res, err := u.Client.SendEvaluation(ctx, u.Request, score)
 				if err != nil {
@@ -239,7 +244,11 @@ func (u *User) Deactivate() {
 }
 
 func (u *User) CheckRequestHistory(ctx *Context) error {
-	err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY)
+	err := u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_1)
+	if err != nil {
+		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
+	}
+	err = u.Client.BrowserAccess(ctx, benchrun.FRONTEND_PATH_SCENARIO_CLIENT_CHECK_HISTORY_2)
 	if err != nil {
 		return WrapCodeError(ErrorCodeFailedToCheckRequestHistory, err)
 	}
