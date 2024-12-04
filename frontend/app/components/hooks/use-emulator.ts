@@ -46,6 +46,7 @@ const currentCoodinatePost = (coordinate: Coordinate) => {
     });
   }
 };
+
 const postEnroute = (chair: SimulatorChair, coordinate: Coordinate) => {
   if (chair.chairNotification?.payload?.ride_id) {
     setSimulatorStartCoordinate(coordinate);
@@ -68,6 +69,7 @@ const postCarring = (chair: SimulatorChair) => {
     }).catch((e) => console.error(e));
   }
 };
+
 export const useEmulator = (targetChair?: SimulatorChair) => {
   useEffect(() => {
     if (
