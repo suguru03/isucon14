@@ -718,8 +718,8 @@ def get_chair_stats(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
     ).fetchall()
-    total_ride_count = len(rides)  # noqa
-    total_evaluation = 0.0  # noqa
+    total_ride_count = len(rides)
+    total_evaluation = 0.0
 
     for ride in rides:
         rows = conn.execute(
