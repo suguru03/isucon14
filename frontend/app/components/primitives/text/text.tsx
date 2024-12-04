@@ -11,6 +11,7 @@ type TextProps = PropsWithChildren<{
   size?: Size;
   variant?: Variant;
   className?: string;
+  style?: React.CSSProperties;
 }>;
 
 const getSizeClass = (size?: Size) => {

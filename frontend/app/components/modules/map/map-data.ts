@@ -57,12 +57,12 @@ export const TownList = [
     name: "チェアタウン",
     centerCoordinate: { latitude: 0, longitude: 0 },
     image: { src: "/images/town.svg", width: 500, height: 500 },
-    color: "emerald",
+    color: "#FF3600",
   },
   {
     name: "コシカケシティ",
     centerCoordinate: { latitude: 300, longitude: 300 },
     image: { src: "/images/town.svg", width: 500, height: 500 },
-    color: "amber",
+    color: "#0089A2",
   },
 ] satisfies Town[];
