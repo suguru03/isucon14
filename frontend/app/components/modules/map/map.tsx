@@ -263,7 +263,7 @@ const ChairLayer: FC<{
 const TownLayer = memo(function TownLayer() {
   return (
     <div className="flex w-full h-full absolute top-0 left-0 select-none">
-      {TownList.map(({ centerCoordinate, name, image }) => {
+      {TownList.map(({ centerCoordinate, name, image, color }) => {
         const pos = coordinateToPos(centerCoordinate);
         return (
           <div
@@ -282,7 +282,7 @@ const TownLayer = memo(function TownLayer() {
             >
               <div
                 role="presentation"
-                className="absolute rounded-full bg-neutral-100 bg-opacity-40 border-2 border-neutral-200"
+                className={`absolute rounded-full bg-neutral-300 bg-opacity-40 border-4 border-${color}-500`}
                 style={{
                   width: image.width + 20,
                   height: image.width + 20,
@@ -300,7 +300,7 @@ const TownLayer = memo(function TownLayer() {
               <div className="absolute bottom-[-54px] w-full text-center">
                 <Text
                   tagName="span"
-                  className="px-3 py-1 bg-neutral-400 text-white rounded-md"
+                  className={`px-3 py-1 bg-${color}-600 text-white rounded-md`}
                   size="sm"
                 >
                   {name}
