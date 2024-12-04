@@ -6,7 +6,7 @@ import {
   redirect,
   useActionData,
 } from "@remix-run/react";
-import { fetchAppPostUsers } from "~/apiClient/apiComponents";
+import { fetchAppPostUsers } from "~/api/api-components";
 import { Button } from "~/components/primitives/button/button";
 import { DateInput } from "~/components/primitives/form/date";
 import { TextInput } from "~/components/primitives/form/text";

@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
-} from "~/apiClient/apiComponents";
-import { Coordinate } from "~/apiClient/apiSchemas";
+} from "~/api/api-components";
+import { Coordinate } from "~/api/api-schemas";
 import type { SimulatorChair } from "~/types";
 import {
   setSimulatorCurrentCoordinate,

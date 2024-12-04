@@ -10,7 +10,7 @@ import {
   AppPostUsersRequestBody,
   ChairPostChairsRequestBody,
   OwnerPostOwnersRequestBody,
-} from "~/apiClient/apiComponents";
+} from "~/api/api-components";
 import { alternativeURLExpression } from "./api-url.mjs";
 
 const DEFAULT_HOSTNAME = "localhost";

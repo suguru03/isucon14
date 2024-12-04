@@ -1,9 +1,9 @@
-import { RideId } from "./apiClient/apiParameters";
+import { RideId } from "./api/api-parameters";
 import {
   Coordinate as ApiCoodinate,
   RideStatus,
   User,
-} from "./apiClient/apiSchemas";
+} from "./api/api-schemas";
 
 export type AccessToken = string;
 

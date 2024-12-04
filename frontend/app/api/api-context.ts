@@ -1,5 +1,5 @@
 import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
-import { QueryOperation } from "./apiComponents";
+import { QueryOperation } from "./api-components";
 
 export type ApiContext = {
   fetcherOptions: {

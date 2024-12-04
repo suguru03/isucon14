@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/react";
 import { useEffect, useRef } from "react";
-import { fetchChairPostActivity } from "~/apiClient/apiComponents";
+import { fetchChairPostActivity } from "~/api/api-components";
 import { SimulatorChairDisplay } from "~/components/modules/simulator-display/simulator-chair-display";
 import { SimulatorConfigDisplay } from "~/components/modules/simulator-display/simulator-config-display";
 import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
