@@ -272,6 +272,8 @@ export default function Index() {
             <Arrived
               onEvaluated={() => {
                 statusModalRef.current?.close();
+                setCurrentLocation(destLocation);
+                setDestLocation(undefined);
               }}
             />
           )}
