@@ -190,19 +190,19 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const subDomain = useSubDomain();
 
   useEffect(() => {
-    if (subDomain && !subDomain.startsWith("simulator")) {
+    if (subDomain && !subDomain.startsWith("fe")) {
       return navigate("/");
     }
   }, [subDomain, navigate]);
 
   const simulateChairData = useMemo(() => {
-    if (subDomain && !subDomain.startsWith("simulator")) return undefined;
+    if (subDomain && !subDomain.startsWith("fe")) return undefined;
     switch (subDomain) {
-      case "simulator001":
+      case "fe001":
         return getSimulateChair(0);
-      case "simulator002":
+      case "fe002":
         return getSimulateChair(1);
-      case "simulator003":
+      case "fe003":
         return getSimulateChair(2);
       default:
         return getSimulateChair();
