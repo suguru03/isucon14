@@ -16,14 +16,16 @@ import (
 )
 
 type userClient struct {
-	ctx    context.Context
-	client *webapp.Client
+	ctx                       context.Context
+	client                    *webapp.Client
+	skipStaticFileSanityCheck bool
 }
 
 type ownerClient struct {
-	ctx                context.Context
-	client             *webapp.Client
-	webappClientConfig webapp.ClientConfig
+	ctx                       context.Context
+	client                    *webapp.Client
+	webappClientConfig        webapp.ClientConfig
+	skipStaticFileSanityCheck bool
 }
 
 type chairClient struct {
@@ -32,14 +34,16 @@ type chairClient struct {
 }
 
 type WorldClient struct {
-	ctx                context.Context
-	webappClientConfig webapp.ClientConfig
+	ctx                       context.Context
+	webappClientConfig        webapp.ClientConfig
+	skipStaticFileSanityCheck bool
 }
 
-func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig) *WorldClient {
+func NewWorldClient(ctx context.Context, webappClientConfig webapp.ClientConfig, skipStaticFileSanityCheck bool) *WorldClient {
 	return &WorldClient{
-		ctx:                ctx,
-		webappClientConfig: webappClientConfig,
+		ctx:                       ctx,
+		webappClientConfig:        webappClientConfig,
+		skipStaticFileSanityCheck: skipStaticFileSanityCheck,
 	}
 }
 
@@ -49,8 +53,9 @@ func (c *WorldClient) RegisterUser(ctx *world.Context, data *world.RegisterUserR
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 	userClient := &userClient{
-		ctx:    c.ctx,
-		client: client,
+		ctx:                       c.ctx,
+		client:                    client,
+		skipStaticFileSanityCheck: c.skipStaticFileSanityCheck,
 	}
 
 	err = beforeRequest(userClient)
@@ -82,10 +87,11 @@ func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwne
 		return nil, WrapCodeError(ErrorCodeFailedToCreateWebappClient, err)
 	}
 	ownerClient := &ownerClient{
-		ctx:                c.ctx,
-		client:             client,
-		webappClientConfig: c.webappClientConfig,
-	};
+		ctx:                       c.ctx,
+		client:                    client,
+		webappClientConfig:        c.webappClientConfig,
+		skipStaticFileSanityCheck: c.skipStaticFileSanityCheck,
+	}
 
 	err = beforeRequest(ownerClient)
 	if err != nil {
@@ -102,7 +108,7 @@ func (c *WorldClient) RegisterOwner(ctx *world.Context, data *world.RegisterOwne
 	return &world.RegisterOwnerResponse{
 		ServerOwnerID:        response.ID,
 		ChairRegisteredToken: response.ChairRegisterToken,
-		Client: ownerClient,
+		Client:               ownerClient,
 	}, nil
 }
 
@@ -183,6 +189,9 @@ func (c *ownerClient) GetOwnerChairs(ctx *world.Context, args *world.GetOwnerCha
 }
 
 func (c *ownerClient) BrowserAccess(ctx *world.Context, scenario benchrun.FrontendPathScenario) error {
+	if c.skipStaticFileSanityCheck {
+		return nil
+	}
 	return browserAccess(c.ctx, c.client, scenario)
 }
 
@@ -469,6 +478,9 @@ func (c *notificationConnectionImpl) Close() {
 }
 
 func (c *userClient) BrowserAccess(ctx *world.Context, scenario benchrun.FrontendPathScenario) error {
+	if c.skipStaticFileSanityCheck {
+		return nil
+	}
 	return browserAccess(c.ctx, c.client, scenario)
 }
 
