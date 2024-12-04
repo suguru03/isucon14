@@ -42,19 +42,19 @@ export const getCampaignData = (): CampaignData | null => {
 };
 
 export const setSimulatorCurrentCoordinate = (coordinate: Coordinate) => {
-  return setStorage(`simulator.currentCoordinate`, coordinate, sessionStorage);
+  return setStorage("simulator.currentCoordinate", coordinate, sessionStorage);
 };
 
 export const getSimulatorCurrentCoordinate = (): Coordinate | null => {
-  return getStorage(`simulator.currentCoordinate`, sessionStorage);
+  return getStorage("simulator.currentCoordinate", sessionStorage);
 };
 
 export const setSimulatorStartCoordinate = (coordinate: Coordinate) => {
-  return setStorage(`simulator.startCoordinate`, coordinate, sessionStorage);
+  return setStorage("simulator.startCoordinate", coordinate, sessionStorage);
 };
 
 export const getSimulatorStartCoordinate = (): Coordinate | null => {
-  return getStorage(`simulator.startCoordinate`, sessionStorage);
+  return getStorage("simulator.startCoordinate", sessionStorage);
 };
 
 export const setUserId = (id: string) => {
