@@ -131,7 +131,7 @@ const ChairProgress: FC<{
       case "ARRIVED":
         return 100;
       default:
-        return progress(destLoc, currentLoc, pickupLoc);
+        return progress(pickupLoc, currentLoc, destLoc);
     }
   }, [rideStatus, destLoc, pickupLoc, currentLoc]);
 
