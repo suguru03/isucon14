@@ -857,17 +857,14 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		ride := &Ride{}
-		if err := tx.Get(
-			ride,
-			`SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1`,
-			chair.ID,
-		); err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				writeError(w, http.StatusInternalServerError, err)
-				return
-			}
-		} else {
+		rides := []*Ride{}
+		if err := tx.Select(&rides, `SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC`, chair.ID); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		skip := false
+		for _, ride := range rides {
 			// 過去にライドが存在し、かつ、それが完了していない場合はスキップ
 			status, err := getLatestRideStatus(tx, ride.ID)
 			if err != nil {
@@ -875,8 +872,12 @@ func appGetNearbyChairs(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if status != "COMPLETED" {
-				continue
+				skip = true
+				break
 			}
+		}
+		if skip {
+			continue
 		}
 
 		// 最新の位置情報を取得
