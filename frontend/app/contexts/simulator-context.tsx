@@ -7,7 +7,10 @@ import {
   useState,
 } from "react";
 import type { Coordinate } from "~/api/api-schemas";
-import { getSimulateChair, getSimulateChairFromToken, } from "~/utils/get-initial-data";
+import {
+  getSimulateChair,
+  getSimulateChairFromToken,
+} from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
 import {
