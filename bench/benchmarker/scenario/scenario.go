@@ -265,11 +265,14 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				if leavedUserNum := s.world.LeavedUserCount.Load(); leavedUserNum > 0 {
-					s.contestantLogger.Warn(fmt.Sprintf("ライドの低評価によってこれまでに%d人のユーザーが離脱しました", leavedUserNum))
+				if num := s.world.NotInvitedUserCount.Load(); num > 0 {
+					s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人が新規登録しました", num))
 				}
-				if invitedUserNum := s.world.InvitedUserCount.Load(); invitedUserNum > 0 {
-					s.contestantLogger.Info(fmt.Sprintf("これまでに既存ユーザーの招待によって%d人が登録しました", invitedUserNum))
+				if num := s.world.InvitedUserCount.Load(); num > 0 {
+					s.contestantLogger.Info(fmt.Sprintf("これまでに既存ユーザーの招待経由で%d人が新規登録しました", num))
+				}
+				if num := s.world.LeavedUserCount.Load(); num > 0 {
+					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}
 				slog.Debug("仮想世界の時間が60分経過", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
 			}

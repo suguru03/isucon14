@@ -67,6 +67,8 @@ type World struct {
 	LeavedUserCount atomic.Int32
 	// InvitedUserCount 招待されたユーザーの数
 	InvitedUserCount atomic.Int32
+	// NotInvitedUserCount 招待されずに登録したユーザーの数
+	NotInvitedUserCount atomic.Int32
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, client WorldClient, contestantLogger *slog.Logger) *World {
@@ -99,7 +101,6 @@ func (w *World) Tick(ctx *Context) error {
 		for _, region := range w.Regions {
 			increase := int(math.Round(w.userIncrease * (float64(region.UserSatisfactionScore()) / 5)))
 			if increase > 0 {
-				w.contestantLogger.Info("地域内の評判を元にユーザーが増加します", slog.String("region", region.Name), slog.Int("increase", increase))
 				for range increase {
 					w.waitingTickCount.Add(1)
 					go func() {
@@ -107,7 +108,9 @@ func (w *World) Tick(ctx *Context) error {
 						_, err := w.CreateUser(ctx, &CreateUserArgs{Region: region})
 						if err != nil {
 							w.handleTickError(err)
+							return
 						}
+						w.NotInvitedUserCount.Add(1)
 					}()
 				}
 			}
