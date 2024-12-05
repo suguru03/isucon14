@@ -45,27 +45,20 @@ export default function Index() {
     const since = salesDate?.since;
     const until = salesDate?.until;
     if (!since || !until) return;
-    let abortController: AbortController | undefined;
     void (async () => {
       try {
-        abortController = new AbortController();
         setSales(
-          await fetchOwnerGetSales(
-            {
-              queryParams: {
-                until: timestamp(until),
-                since: timestamp(since),
-              },
+          await fetchOwnerGetSales({
+            queryParams: {
+              until: timestamp(until),
+              since: timestamp(since),
             },
-            abortController.signal,
-          ),
+          }),
         );
       } catch (error) {
         console.error(error);
       }
     })();
-
-    return () => abortController?.abort();
   }, [salesDate, setSales]);
 
   const chairModelMap = useMemo(

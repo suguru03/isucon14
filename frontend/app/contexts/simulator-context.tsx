@@ -7,7 +7,10 @@ import {
   useState,
 } from "react";
 import type { Coordinate } from "~/api/api-schemas";
-import { getSimulateChair } from "~/utils/get-initial-data";
+import {
+  getSimulateChair,
+  getSimulateChairFromToken,
+} from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
 import {
@@ -16,6 +19,7 @@ import {
 } from "~/api/api-components";
 import type { ClientChairRide, SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 type ClientSimulatorContextProps = {
   targetChair?: SimulatorChair;
@@ -65,6 +69,9 @@ export const useClientChairNotification = (id?: string) => {
           setNotification(json ? { ...json, contentType: "json" } : undefined);
         }
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -159,6 +166,9 @@ export const useClientChairNotification = (id?: string) => {
         });
         timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -186,16 +196,26 @@ export const useClientChairNotification = (id?: string) => {
   return responseClientAppRequest;
 };
 
-const simulateChairData = getSimulateChair();
-
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
+  const [token, setToken] = useState<string>();
+
+  const simulateChairData = useMemo(() => {
+    return token ? getSimulateChairFromToken(token) : getSimulateChair();
+  }, [token]);
+
   useEffect(() => {
+    const token = getCookieValue(document.cookie, "chair_session");
+    if (token) {
+      setToken(token);
+      return;
+    }
+    // TODO: tokenがなければUI上で選択させるようにする
     if (simulateChairData?.token) {
       document.cookie = `chair_session=${simulateChairData.token}; path=/`;
     }
-  }, []);
+  }, [simulateChairData]);
 
-  const request = useClientChairNotification(simulateChairData?.id);
+  const chairNotification = useClientChairNotification(simulateChairData?.id);
 
   const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
     const coordinate = getSimulatorCurrentCoordinate();
@@ -208,11 +228,12 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
         targetChair: simulateChairData
           ? {
               ...simulateChairData,
-              chairNotification: request,
+              chairNotification,
               coordinateState: {
                 setter: setCurrentCoordinate,
                 coordinate: currentCoodinate,
               },
+              setToken,
             }
           : undefined,
       }}

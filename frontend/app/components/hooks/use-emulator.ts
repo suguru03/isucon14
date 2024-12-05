@@ -80,7 +80,6 @@ export const useEmulator = (targetChair?: SimulatorChair) => {
     ) {
       return;
     }
-
     const { coordinate, setter } = targetChair.coordinateState;
     const { pickup, destination } =
       targetChair.chairNotification.payload.coordinate;
