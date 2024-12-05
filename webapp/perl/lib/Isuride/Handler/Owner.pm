@@ -4,7 +4,6 @@ use utf8;
 use Time::Moment;
 use experimental qw(defer);
 no warnings 'experimental::defer';
-use Mojo::Cookie::Response;
 
 use HTTP::Status qw(:constants);
 use Data::ULID::XS qw(ulid);
@@ -35,9 +34,8 @@ use constant OwnerPostOwnersResponse => {
     chair_register_token => JSON_TYPE_STRING,
 };
 
-sub owner_post_owners ($c) {
-    my $params = $c->req->json;
-    my $db     = $c->mysql->db;
+sub owner_post_owners ($app, $c) {
+    my $params = $c->req->json_parameters;
 
     unless (check_params($params, OwnerPostOwnersRequest)) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
@@ -51,7 +49,7 @@ sub owner_post_owners ($c) {
     my $access_token         = secure_random_str(32);
     my $chair_register_token = secure_random_str(32);
 
-    $db->query(
+    $app->dbh->query(
         'INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)',
         $owner_id,
         $params->{name},
@@ -59,20 +57,21 @@ sub owner_post_owners ($c) {
         $chair_register_token,
     );
 
-    my $cookie = Mojo::Cookie::Response->new;
-    $cookie->name('owner_session');
-    $cookie->value($access_token);
-    $cookie->path('/');
-    $c->res->cookies($cookie);
+    $c->res->cookies->{owner_session} = {
+        path  => '/',
+        name  => 'owner_session',
+        value => $access_token,
+    };
 
-    return $c->render_json(
-        HTTP_CREATED,
+    my $res = $c->render_json(
         {
             id                   => $owner_id,
             chair_register_token => $chair_register_token,
         },
         OwnerPostOwnersResponse,
     );
+    $res->status(HTTP_CREATED);
+    return $res;
 }
 
 use constant ChairSales => {
@@ -92,11 +91,11 @@ use constant OwnerGetSalesResponse => {
     models      => json_type_arrayof(modelSales),
 };
 
-sub owner_get_sales ($c) {
+sub owner_get_sales ($app, $c) {
     my $since_tm = Time::Moment->from_epoch(0);
 
-    if ($c->req->query_params->param('since')) {
-        my ($parsed, $err) = parse_int($c->req->query_params->param('since'));
+    if ($c->req->query_parameters->{since}) {
+        my ($parsed, $err) = parse_int($c->req->query_parameters->{since});
 
         if ($err) {
             return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: since');
@@ -106,8 +105,8 @@ sub owner_get_sales ($c) {
 
     my $until_tm = Time::Moment->new(year => 9999, month => 12, day => 31, hour => 23, minute => 59, second => 59, nanosecond => 0);
 
-    if ($c->req->query_params->param('until')) {
-        my ($parsed, $err) = parse_int($c->req->query_params->param('until'));
+    if ($c->req->query_parameters->{until}) {
+        my ($parsed, $err) = parse_int($c->req->query_parameters->{until});
 
         if ($err) {
             return $c->halt_json(HTTP_BAD_REQUEST, 'invalid query parameter: until');
@@ -115,11 +114,11 @@ sub owner_get_sales ($c) {
         $until_tm = Time::Moment->from_epoch($parsed / 1000);
     }
 
-    my $owner = $c->stash('owner');
-    my $db    = $c->mysql->db;
-    my $txn   = $db->begin;
+    my $owner = $c->stash->{owner};
+    my $txn   = $app->dbh->txn_scope;
+    defer { $txn->rollback; }
 
-    my $chairs = $db->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
+    my $chairs = $app->dbh->select_all('SELECT * FROM chairs WHERE owner_id = ?', $owner->{id});
 
     my $response_data = {
         total_sales => 0,
@@ -129,7 +128,7 @@ sub owner_get_sales ($c) {
     my $model_sales_by_model = {};
 
     for my $chair ($chairs->@*) {
-        my $rides = $db->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
+        my $rides = $app->dbh->select_all("SELECT rides.* FROM rides JOIN ride_statuses ON rides.id = ride_statuses.ride_id WHERE chair_id = ? AND status = 'COMPLETED' AND updated_at BETWEEN ? AND ? + INTERVAL 999 MICROSECOND",
             $chair->{id},
             $since_tm,
             $until_tm,
@@ -161,7 +160,7 @@ sub owner_get_sales ($c) {
     }
 
     $response_data->{models} = $models;
-    return $c->render_json(HTTP_OK, $response_data, OwnerGetSalesResponse);
+    return $c->render_json($response_data, OwnerGetSalesResponse);
 }
 
 sub sum_sales ($rides) {
@@ -200,10 +199,9 @@ use constant OwnerGetChairResponse => {
     chairs => json_type_arrayof(OwnerGetChairResponseChair),
 };
 
-sub owner_get_chairs ($c) {
-    my $owner  = $c->stash('owner');
-    my $db     = $c->mysql->db;
-    my $chairs = $db->select_all(<<~EOL
+sub owner_get_chairs ($app, $c) {
+    my $owner  = $c->stash->{owner};
+    my $chairs = $app->dbh->select_all(<<~EOL
             SELECT id,
                    owner_id,
                    name,
@@ -250,5 +248,5 @@ sub owner_get_chairs ($c) {
         push $res->{chairs}->@*, $ch;
     }
 
-    return $c->render_json(HTTP_OK, $res, OwnerGetChairResponse);
+    return $c->render_json($res, OwnerGetChairResponse);
 }

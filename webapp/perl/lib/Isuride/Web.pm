@@ -107,7 +107,7 @@ use constant PostInitializeResponse => {
 };
 
 sub post_initialize ($self, $c) {
-    my $params = $c->req->json;
+    my $params = $c->req->json_parameters;
 
     unless (check_params($params, PostInitializeRequest)) {
         return $c->halt_json(HTTP_BAD_REQUEST, 'failed to decode the request body as json');
