@@ -3,6 +3,12 @@ use utf8;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
+#  IsurideのMojolicious::Liteによる実装
+#  Mojo::Isuride名前空間のpackageを利用する
+#
+#  Kossy による実装はapp.psgi を起動すること
+#
+
 use Mojolicious::Lite;
 use Cpanel::JSON::XS;
 use Cpanel::JSON::XS::Type;
