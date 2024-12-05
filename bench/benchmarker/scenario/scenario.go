@@ -50,6 +50,10 @@ type Scenario struct {
 	prepareOnly               bool
 	skipStaticFileSanityCheck bool
 	finalScore                null.Int64
+	evaluationMap             [4]int
+	evalScoreMap              [5]int
+	completedRequests         int
+	evaluationMapLock         sync.RWMutex
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
@@ -130,18 +134,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 	dispatchingLatency := lo.Must1(meter.Int64Histogram("world.request.dispatching_latency", metric.WithDescription("Histogram of dispatching latency"), metric.WithUnit("1")))
 	carryingLatency := lo.Must1(meter.Int64Histogram("world.request.carrying_latency", metric.WithDescription("Histogram of carrying latency"), metric.WithUnit("1")))
 
-	go func() {
-		for req := range completedRequestChan {
-			eval := req.CalculateEvaluation()
-			intervals := req.Intervals()
-			requestsRecorder.Add(context.Background(), 1, metric.WithAttributes(attribute.Int("score", eval.Score()), attribute.Bool("matching", eval.Matching), attribute.Bool("dispatch", eval.Dispatch), attribute.Bool("pickup", eval.Pickup), attribute.Bool("drive", eval.Drive)))
-			matchingLatency.Record(context.Background(), intervals[0])
-			dispatchingLatency.Record(context.Background(), intervals[1])
-			carryingLatency.Record(context.Background(), intervals[2])
-		}
-	}()
-
-	return &Scenario{
+	s := &Scenario{
 		target:                    target,
 		addr:                      addr,
 		paymentURL:                paymentURL,
@@ -154,6 +147,27 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		prepareOnly:               prepareOnly,
 		skipStaticFileSanityCheck: skipStaticFileSanityCheck,
 	}
+	go func() {
+		for req := range completedRequestChan {
+			eval := req.CalculateEvaluation()
+			intervals := req.Intervals()
+			requestsRecorder.Add(context.Background(), 1, metric.WithAttributes(attribute.Int("score", eval.Score()), attribute.Bool("matching", eval.Matching), attribute.Bool("dispatch", eval.Dispatch), attribute.Bool("pickup", eval.Pickup), attribute.Bool("drive", eval.Drive)))
+			matchingLatency.Record(context.Background(), intervals[0])
+			dispatchingLatency.Record(context.Background(), intervals[1])
+			carryingLatency.Record(context.Background(), intervals[2])
+			s.evaluationMapLock.Lock()
+			s.completedRequests++
+			s.evalScoreMap[eval.Score()]++
+			for i, ok := range eval.Map() {
+				if ok {
+					s.evaluationMap[i]++
+				}
+			}
+			s.evaluationMapLock.Unlock()
+		}
+	}()
+
+	return s
 }
 
 // Prepare はシナリオの初期化処理を行う
@@ -275,6 +289,9 @@ LOOP:
 					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}
 				slog.Debug("時間経過", slog.Int64("tick", s.world.Time))
+				s.evaluationMapLock.RLock()
+				slog.Debug("eval", slog.Int("reqs", s.completedRequests), slog.Any("score", s.evalScoreMap), slog.Any("criteria", s.evaluationMap))
+				s.evaluationMapLock.RUnlock()
 			}
 		}
 	}
