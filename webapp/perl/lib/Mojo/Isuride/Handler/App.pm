@@ -644,7 +644,7 @@ sub app_get_nearby_chairs ($c) {
         for my $ride ($rides->@*) {
             if (defined $ride) {
                 # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
-                my $status = get_latest_ride_status($app, $ride->{id});
+                my $status = get_latest_ride_status($c, $ride->{id});
 
                 if ($status ne 'COMPLETED') {
                     $skip = true;

@@ -73,4 +73,5 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 EXPOSE 8080
-CMD ["./local/bin/plackup", "-s", "Starlet", "-p", "8080", "-Ilib", "-r", "app.psgi"]
+ENTRYPOINT [ "./local/bin/hypnotoad", "-f", "app.pl" ]
+
