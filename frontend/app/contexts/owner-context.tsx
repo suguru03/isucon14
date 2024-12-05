@@ -13,14 +13,14 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/api/api-components";
-import { isClientApiError } from "~/types";
+import { OwnerChairs, OwnerSales, isClientApiError } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
 type DateString = `${number}-${number}-${number}`; // YYYY-MM-DD
 
 type OwnerContextProps = Partial<{
-  chairs?: OwnerGetChairsResponse["chairs"];
-  sales?: OwnerGetSalesResponse;
+  chairs?: OwnerChairs;
+  sales?: OwnerSales;
   provider?: {
     id: string;
     name: string;
