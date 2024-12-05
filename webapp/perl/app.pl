@@ -77,7 +77,7 @@ sub handler (@funcs) {
         try {
             $_->($c) for @funcs;
         } catch ($e) {
-            if ($e isa Mojo::Expection) {
+            if ($e isa Mojo::Exception) {
                 $c->render_json(500, $e->to_string, JSON_TYPE_STRING);
             }
             $c->render_json(500, $e, JSON_TYPE_STRING);
