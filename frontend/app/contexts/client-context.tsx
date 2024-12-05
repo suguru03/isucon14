@@ -13,7 +13,7 @@ import {
 } from "~/api/api-components";
 import { isClientApiError } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
-import { getUserAccessToken, getUserId } from "~/utils/storage";
+import { getUserId } from "~/utils/storage";
 
 function jsonFromSSEResponse<T>(value: string) {
   const data = value.slice("data:".length).trim();
@@ -140,13 +140,11 @@ export const useNotification = ():
 type ClientContextProps = {
   data?: AppGetNotificationResponse["data"];
   userId?: string | null;
-  accessToken?: string | null;
 };
 
 const ClientContext = createContext<ClientContextProps>({});
 
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
-  const [accessToken] = useState(() => getUserAccessToken());
   const [userId] = useState(() => getUserId());
   const navigate = useNavigate();
   const data = useNotification();
@@ -160,7 +158,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
   }, [navigate]);
 
   return (
-    <ClientContext.Provider value={{ data, userId, accessToken }}>
+    <ClientContext.Provider value={{ data, userId }}>
       {children}
     </ClientContext.Provider>
   );
