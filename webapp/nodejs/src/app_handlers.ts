@@ -669,16 +669,21 @@ export const appGetNearbyChairs = async (ctx: Context<Environment>) => {
     }> = [];
     for (const chair of chairs) {
       if (!chair.is_active) continue;
-      const [[ride]] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
-        "SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
+      const [rides] = await ctx.var.dbConn.query<Array<Ride & RowDataPacket>>(
+        "SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC",
         [chair.id],
       );
-      if (ride) {
+      let skip = false;
+      for (const ride of rides) {
         // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
         const status = await getLatestRideStatus(ctx.var.dbConn, ride.id);
         if (status !== "COMPLETED") {
-          continue;
+          skip = true;
+          break;
         }
+      }
+      if (skip) {
+        continue;
       }
 
       // 最新の位置情報を取得
