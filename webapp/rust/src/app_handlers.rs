@@ -752,19 +752,24 @@ async fn app_get_nearby_chairs(
             continue;
         }
 
-        let ride: Option<Ride> = sqlx::query_as(
-            "SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1",
-        )
-        .bind(&chair.id)
-        .fetch_optional(&mut *tx)
-        .await?;
-        if let Some(ride) = ride {
+        let rides: Vec<Ride> =
+            sqlx::query_as("SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC")
+                .bind(&chair.id)
+                .fetch_all(&mut *tx)
+                .await?;
+
+        let mut skip = false;
+        for ride in rides {
             // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
             let status = crate::get_latest_ride_status(&mut *tx, &ride.id).await?;
             if status != "COMPLETED" {
-                continue;
+                skip = true;
+                break;
             }
-        };
+        }
+        if skip {
+            continue;
+        }
 
         // 最新の位置情報を取得
         let Some(chair_location): Option<ChairLocation> = sqlx::query_as(
