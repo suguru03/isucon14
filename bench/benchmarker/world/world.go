@@ -360,6 +360,18 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	}
 	for chair := range w.EmptyChairs.Iter() {
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
+			ok := false
+			for _, req := range chair.RequestHistory.BackwardIter() {
+				// baseTimeよりも3秒前以降に完了状態に遷移している場合は、含まれていなくても許容する
+				if req.ServerCompletedAt.After(baseTime.Add(-3 * time.Second)) {
+					ok = true
+				}
+				break
+			}
+			if ok {
+				continue
+			}
+
 			c := chair.Location.GetCoordByTime(baseTime)
 			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
 				// ソフトエラーとして処理する
