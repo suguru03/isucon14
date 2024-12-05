@@ -235,10 +235,8 @@ func (c *Chair) Tick(ctx *Context) error {
 			break
 
 		case RequestStatusCompleted:
-			// 進行中のリクエストが無い状態にする
-			c.Request = nil
-			c.matchingData = nil
-			c.World.EmptyChairs.Add(c)
+			slog.Warn("unexpected state")
+			break
 		}
 
 	// アサインされたリクエストが存在するが、詳細を未取得
@@ -441,12 +439,18 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 			}
 			return WrapCodeError(ErrorCodeChairNotAssignedButStatusChanged, fmt.Errorf("ride_id: %s, got: %v", data.ServerRequestID, RequestStatusCompleted))
 		}
+
 		c.Request.Statuses.RLock()
 		defer c.Request.Statuses.RUnlock()
 		if request.Statuses.Desired != RequestStatusCompleted {
 			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %s, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
 		}
 		request.Statuses.Chair = RequestStatusCompleted
+
+		// 進行中のリクエストが無い状態にする
+		c.Request = nil
+		c.matchingData = nil
+		c.World.EmptyChairs.Add(c)
 	}
 	return nil
 }
