@@ -75,7 +75,7 @@ sub parse_int ($str) {
 
 # XXX: 以下はPerlでの型チェック支援用のユーティリティ
 # 開発環境では、パラメータの型チェックを行う
-use constant ASSERT => ($ENV{PLACK_ENV} || '') ne 'deployment';
+use constant ASSERT => ($ENV{MOJO_MODE} || '') ne 'production';
 
 # Cpanel::JSON::XS::Typeの型定義からType::Tinyの型定義を生成する
 # 例: { a => JSON_TYPE_STRING, b => JSON_TYPE_INT } -> Dict[a => Str, b => Int]
