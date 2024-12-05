@@ -10,7 +10,7 @@ const StatusList = {
   PICKUP: ["乗車待ち", colors.amber["500"]],
   CARRYING: ["賃走", colors.red["500"]],
   ARRIVED: ["到着", colors.emerald["500"]],
-  COMPLETED: ["空車", colors.sky["500"]], // MATCHING と同じにする
+  COMPLETED: ["空車", colors.sky["500"]],
 } as const satisfies Record<RideStatus, [string, string]>;
 
 export const SimulatorChairRideStatus: FC<
