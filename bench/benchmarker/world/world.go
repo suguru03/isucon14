@@ -420,7 +420,7 @@ func (w *World) PublishEvent(e Event) {
 	case *EventRequestCompleted:
 		w.CompletedRequestChan <- data.Request
 		go func() {
-			if data.Request.CalculateEvaluation().Score() > 2 && data.Request.User.InvCodeUsedCount < 3 {
+			if data.Request.CalculateEvaluation().Score() >= 4 && data.Request.User.InvCodeUsedCount < 3 {
 				_, err := w.CreateUser(nil, &CreateUserArgs{Region: data.Request.User.Region, Inviter: data.Request.User})
 				if err != nil {
 					w.handleTickError(err)
