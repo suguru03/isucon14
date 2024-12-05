@@ -99,34 +99,34 @@ sub chair_handler ($func) { handler(ChairAuth, $func) }
 
         post '/api/app/payment-methods' => app_handler(\&Mojo::Isuride::Handler::App::app_post_payment_methods);
         get '/api/app/rides' => app_handler(\&Mojo::Isuride::Handler::App::app_get_rides);
-        post '/api/app/rides'                     => app_handler(&Mojo::Isuride::Handler::App::app_post_rides);
-        post '/api/app/rides/estimated-fare'      => app_handler(&Mojo::Isuride::Handler::App::app_post_rides_estimated_fare);
-        post '/api/app/rides/:ride_id/evaluation' => app_handler(&Mojo::Isuride::Handler::App::app_post_ride_evaluation);
-        get '/api/app/notification'  => app_handler(&Mojo::Isuride::Handler::App::app_get_notification);
-        get '/api/app/nearby-chairs' => app_handler(&Mojo::Isuride::Handler::App::app_get_nearby_chairs);
+        post '/api/app/rides'                     => app_handler(\&Mojo::Isuride::Handler::App::app_post_rides);
+        post '/api/app/rides/estimated-fare'      => app_handler(\&Mojo::Isuride::Handler::App::app_post_rides_estimated_fare);
+        post '/api/app/rides/:ride_id/evaluation' => app_handler(\&Mojo::Isuride::Handler::App::app_post_ride_evaluation);
+        get '/api/app/notification'  => app_handler(\&Mojo::Isuride::Handler::App::app_get_notification);
+        get '/api/app/nearby-chairs' => app_handler(\&Mojo::Isuride::Handler::App::app_get_nearby_chairs);
     }
 
     # chair handlers
     {
-        post '/api/chair/chairs' => handler(&Mojo::Isuride::Handler::Chair::chair_post_chairs);
+        post '/api/chair/chairs' => handler(\&Mojo::Isuride::Handler::Chair::chair_post_chairs);
 
-        post '/api/chair/activity'   => chair_handler(&Mojo::Isuride::Handler::Chair::chair_post_activity);
-        post '/api/chair/coordinate' => chair_handler(&Mojo::Isuride::Handler::Chair::chair_post_coordinate);
-        get '/api/chair/notification' => chair_handler(&Mojo::Isuride::Handler::Chair::chair_get_notification);
-        post '/api/chair/rides/:ride_id/status' => chair_handler(&Mojo::Isuride::Handler::Chair::chair_post_ride_status);
+        post '/api/chair/activity'   => chair_handler(\&Mojo::Isuride::Handler::Chair::chair_post_activity);
+        post '/api/chair/coordinate' => chair_handler(\&Mojo::Isuride::Handler::Chair::chair_post_coordinate);
+        get '/api/chair/notification' => chair_handler(\&Mojo::Isuride::Handler::Chair::chair_get_notification);
+        post '/api/chair/rides/:ride_id/status' => chair_handler(\&Mojo::Isuride::Handler::Chair::chair_post_ride_status);
     }
 
     # owner handlers
     {
-        post '/api/owner/owners' => handler(&Mojo::Isuride::Handler::Owner::owner_post_owners);
+        post '/api/owner/owners' => handler(\&Mojo::Isuride::Handler::Owner::owner_post_owners);
 
-        get '/api/owner/sales'  => owner_handler(&Mojo::Isuride::Handler::Owner::owner_get_sales);
-        get '/api/owner/chairs' => owner_handler(&Mojo::Isuride::Handler::Owner::owner_get_chairs);
+        get '/api/owner/sales'  => owner_handler(\&Mojo::Isuride::Handler::Owner::owner_get_sales);
+        get '/api/owner/chairs' => owner_handler(\&Mojo::Isuride::Handler::Owner::owner_get_chairs);
     }
 
     # internal handlers
     {
-        get '/api/internal/matching' => handler(&Mojo::Isuride::Handler::Internal::internal_get_matching);
+        get '/api/internal/matching' => handler(\&Mojo::Isuride::Handler::Internal::internal_get_matching);
     }
 }
 
