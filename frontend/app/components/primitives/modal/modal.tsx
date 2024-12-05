@@ -65,9 +65,7 @@ export const Modal = forwardRef<{ close: () => void }, ModalProps>(
           }}
           {...props}
         >
-          <div className={twMerge(["px-6 py-10 md:px-10 h-full"])}>
-            {children}
-          </div>
+          <div className={"px-6 py-3 md:px-10 md:py-6 h-full"}>{children}</div>
         </div>
       </>
     );

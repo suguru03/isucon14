@@ -17,7 +17,7 @@ import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientContext } from "~/contexts/client-context";
 import { NearByChair, isClientApiError } from "~/types";
-import { sendClientReady } from "~/utils/post-message";
+import { sendClientReady, sendClientRunning } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -63,9 +63,7 @@ export default function Index() {
     } else if (direction === "to") {
       setDestLocation(selectedLocation);
     }
-    if (locationSelectorModalRef.current) {
-      locationSelectorModalRef.current.close();
-    }
+    locationSelectorModalRef.current?.close();
   }, [direction, selectedLocation]);
 
   const isStatusModalOpen = useMemo(() => {
@@ -110,12 +108,13 @@ export default function Index() {
     }
     setInternalRideStatus("MATCHING");
     try {
-      void (await fetchAppPostRides({
+      const { ride_id } = await fetchAppPostRides({
         body: {
           pickup_coordinate: currentLocation,
           destination_coordinate: destLocation,
         },
-      }));
+      });
+      sendClientRunning(window.parent, { rideId: ride_id });
     } catch (error) {
       if (isClientApiError(error)) {
         console.error(error);
@@ -129,8 +128,7 @@ export default function Index() {
     let abortController: AbortController | undefined;
     let timeoutId: NodeJS.Timeout | undefined;
 
-    const updateNearByChairs = async (coordinate: Coordinate) => {
-      const { latitude, longitude } = coordinate;
+    const updateNearByChairs = async ({ latitude, longitude }: Coordinate) => {
       try {
         abortController?.abort();
         abortController = new AbortController();
