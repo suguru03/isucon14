@@ -1,6 +1,7 @@
 package world
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -313,6 +314,7 @@ func (w *World) CreateChair(ctx *Context, args *CreateChairArgs) (*Chair, error)
 
 func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate, distance int, response *GetNearbyChairsResponse) error {
 	checked := map[string]bool{}
+	var errs []error
 	for _, chair := range response.Chairs {
 		c := w.ChairDB.GetByServerID(chair.ID)
 		if c == nil {
@@ -335,8 +337,8 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
 		}
 		for _, req := range c.RequestHistory.BackwardIter() {
-			if req.BenchMatchedAt.After(baseTime) {
-				// nearbychairsのリクエストを送った後にマッチされていて、レスポンスを生成とマッチのどちらが先か分からないので許容する
+			if req.BenchMatchedAt.After(baseTime.Add(-3 * time.Second)) {
+				// nearbychairsのリクエストを送った3秒前以降にマッチされている場合は許容する
 				break
 			}
 			if !req.Evaluated.Load() {
@@ -354,7 +356,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			return baseTime.Sub(entry.Until.Time) <= 3*time.Second
 		}) {
 			// ソフトエラーとして処理する
-			go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))})
+			errs = append(errs, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))
 		}
 		checked[chair.ID] = true
 	}
@@ -375,9 +377,12 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			c := chair.Location.GetCoordByTime(baseTime)
 			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
 				// ソフトエラーとして処理する
-				go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID))})
+				errs = append(errs, fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID))
 			}
 		}
+	}
+	if len(errs) > 0 {
+		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, errors.Join(errs...))})
 	}
 	return nil
 }
