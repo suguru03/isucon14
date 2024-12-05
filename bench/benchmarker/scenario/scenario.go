@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -264,7 +265,16 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				slog.Debug("仮想世界の時間が60分経過", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
+				if num := s.world.NotInvitedUserCount.Load(); num > 0 {
+					s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人が新規登録しました", num))
+				}
+				if num := s.world.InvitedUserCount.Load(); num > 0 {
+					s.contestantLogger.Info(fmt.Sprintf("これまでに既存ユーザーの招待経由で%d人が新規登録しました", num))
+				}
+				if num := s.world.LeavedUserCount.Load(); num > 0 {
+					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
+				}
+				slog.Debug("時間経過", slog.Int64("tick", s.world.Time))
 			}
 		}
 	}
