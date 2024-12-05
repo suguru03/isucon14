@@ -10,8 +10,7 @@ requires 'Time::Moment';
 requires 'Furl';
 requires 'HTTP::Parser::XS';
 requires 'Syntax::Keyword::Match';
-requires 'IO::Async';
-requires 'Twiggy';
+
 requires 'Mojolicious';
 requires 'Mojo::mysql';
 
