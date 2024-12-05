@@ -56,6 +56,7 @@ type Scenario struct {
 	completedRequests         int
 	evaluationMapLock         sync.RWMutex
 	failed                    bool
+	sendResultWait            sync.WaitGroup
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
@@ -249,15 +250,13 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
-	sendResultWait := sync.WaitGroup{}
-	defer sendResultWait.Wait()
-	sendResultWait.Add(1)
+	s.sendResultWait.Add(1)
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				sendResultWait.Done()
+				s.sendResultWait.Done()
 				return
 			case <-ticker.C:
 				if err := sendResult(s, false, false); err != nil {
@@ -272,9 +271,6 @@ LOOP:
 	for {
 		select {
 		case <-ctx.Done():
-			// 負荷走行終了後、payment server へのリクエストが届くかもしれないので5秒だけ待つ
-			time.Sleep(5 * time.Second)
-			s.paymentServer.Close()
 			break LOOP
 
 		default:
