@@ -1,4 +1,4 @@
-package Isuride::Util;
+package Kossy::Isuride::Util;
 use v5.40;
 use utf8;
 

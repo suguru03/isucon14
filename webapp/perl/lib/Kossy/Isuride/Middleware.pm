@@ -1,4 +1,4 @@
-package Isuride::Middleware;
+package Kossy::Isuride::Middleware;
 use v5.40;
 use utf8;
 use HTTP::Status qw(:constants);

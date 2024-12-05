@@ -1,4 +1,4 @@
-package Isuride::Time;
+package Kossy::Isuride::Time;
 use v5.40;
 use utf8;
 

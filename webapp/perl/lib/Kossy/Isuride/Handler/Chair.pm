@@ -1,4 +1,4 @@
-package Isuride::Handler::Chair;
+package Kossy::Isuride::Handler::Chair;
 use v5.40;
 use utf8;
 use experimental qw(defer);
@@ -15,9 +15,9 @@ use Cpanel::JSON::XS::Type qw(
     json_type_null_or_anyof
 );
 
-use Isuride::Models qw(Coordinate);
-use Isuride::Time qw(unix_milli_from_str);
-use Isuride::Util qw(
+use Kossy::Isuride::Models qw(Coordinate);
+use Kossy::Isuride::Time qw(unix_milli_from_str);
+use Kossy::Isuride::Util qw(
     secure_random_str
     get_latest_ride_status
 
