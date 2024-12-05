@@ -77,7 +77,6 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
     void (async () => {
       try {
         const sales = await fetchOwnerGetSales({
-          // TODO: 機能していない？
           queryParams: {
             since: timestamp(since),
             until: timestamp(until),

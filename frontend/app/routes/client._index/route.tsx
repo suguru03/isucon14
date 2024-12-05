@@ -16,8 +16,8 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientContext } from "~/contexts/client-context";
-import { NearByChair, isClientApiError } from "~/types";
-import { sendClientReady, sendClientRunning } from "~/utils/post-message";
+import { NearByChair } from "~/types";
+import { sendClientReady, sendClientRideRequested } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -112,11 +112,9 @@ export default function Index() {
           destination_coordinate: destLocation,
         },
       });
-      sendClientRunning(window.parent, { rideId: ride_id });
+      sendClientRideRequested(window.parent, { rideId: ride_id });
     } catch (error) {
-      if (isClientApiError(error)) {
-        console.error(error);
-      }
+      console.error(error);
     }
   }, [currentLocation, destLocation]);
 
@@ -223,7 +221,7 @@ export default function Index() {
           ref={locationSelectorModalRef}
           onClose={() => setLocationSelectorModalOpen(false)}
         >
-          <div className="flex flex-col items-center mt-4 h-full">
+          <div className="flex flex-col items-center h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
                 onMove={onSelectMove}
