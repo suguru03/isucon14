@@ -24,9 +24,9 @@ func (r RequestStatus) String() string {
 	case RequestStatusMatching:
 		return "MATCHING"
 	case RequestStatusDispatching:
-		return "DISPATCHING"
+		return "ENROUTE"
 	case RequestStatusDispatched:
-		return "DISPATCHED"
+		return "PICKUP"
 	case RequestStatusCarrying:
 		return "CARRYING"
 	case RequestStatusArrived:
