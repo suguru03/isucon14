@@ -49,7 +49,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
 		mockCtrl := gomock.NewController(t)
 		verifier := NewMockVerifier(mockCtrl)
-		server := NewServer(verifier, 1*time.Millisecond, 1)
+		server := NewServer(verifier, 1*time.Millisecond, 1, make(chan error))
 		httpServer := httptest.NewServer(server)
 		t.Cleanup(httpServer.Close)
 		e := httpexpect.Default(t, httpServer.URL)
@@ -69,7 +69,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Verify(gomock.Cond(func(x *Payment) bool {
 						return x.Token == token && x.Amount == amount
 					})).
-					Return(StatusSuccess)
+					Return(Status{Type: StatusSuccess})
 
 				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
@@ -100,7 +100,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Verify(gomock.Cond(func(x *Payment) bool {
 						return x.Token == token && x.Amount == amount
 					})).
-					Return(StatusInvalidAmount)
+					Return(Status{Type: StatusInvalidAmount})
 
 				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
@@ -122,7 +122,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					Verify(gomock.Cond(func(x *Payment) bool {
 						return x.Token == token && x.Amount == amount
 					})).
-					Return(StatusInvalidToken)
+					Return(Status{Type: StatusInvalidToken})
 
 				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, "idk1").
@@ -147,7 +147,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					IdempotencyKey: idk,
 					Token:          token,
 					Amount:         amount,
-					Status:         StatusSuccess,
+					Status:         Status{Type: StatusSuccess},
 				})
 
 				e.POST("/payments").
@@ -170,7 +170,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					IdempotencyKey: idk,
 					Token:          token,
 					Amount:         amount,
-					Status:         StatusInvalidAmount,
+					Status:         Status{Type: StatusInvalidAmount},
 				})
 
 				e.POST("/payments").
@@ -194,7 +194,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					IdempotencyKey: idk,
 					Token:          token,
 					Amount:         amount,
-					Status:         StatusInvalidToken,
+					Status:         Status{Type: StatusInvalidToken},
 				})
 				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
@@ -217,7 +217,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 					IdempotencyKey: idk,
 					Token:          token,
 					Amount:         10001,
-					Status:         StatusSuccess,
+					Status:         Status{Type: StatusSuccess},
 				})
 				e.POST("/payments").
 					WithHeader(IdempotencyKeyHeader, idk).
@@ -241,7 +241,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 				IdempotencyKey: idk,
 				Token:          token,
 				Amount:         1000,
-				Status:         StatusInitial,
+				Status:         Status{Type: StatusInitial},
 			}
 			p.locked.Store(true)
 
@@ -268,7 +268,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 				Verify(gomock.Cond(func(x *Payment) bool {
 					return x.Token == token && x.Amount == amount
 				})).
-				Return(StatusSuccess)
+				Return(Status{Type: StatusSuccess})
 
 			e.POST("/payments").
 				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
@@ -288,7 +288,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 				Verify(gomock.Cond(func(x *Payment) bool {
 					return x.Token == token && x.Amount == amount
 				})).
-				Return(StatusInvalidAmount)
+				Return(Status{Type: StatusInvalidAmount})
 
 			e.POST("/payments").
 				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
@@ -309,7 +309,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 				Verify(gomock.Cond(func(x *Payment) bool {
 					return x.Token == token && x.Amount == amount
 				})).
-				Return(StatusInvalidToken)
+				Return(Status{Type: StatusInvalidToken})
 
 			e.POST("/payments").
 				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
@@ -327,7 +327,7 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
 		mockCtrl := gomock.NewController(t)
 		verifier := NewMockVerifier(mockCtrl)
-		server := NewServer(verifier, 1*time.Millisecond, 1)
+		server := NewServer(verifier, 1*time.Millisecond, 1, make(chan error))
 		httpServer := httptest.NewServer(server)
 		t.Cleanup(httpServer.Close)
 		e := httpexpect.Default(t, httpServer.URL)
@@ -347,19 +347,19 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 		payments := []*Payment{{
 			Token:  token,
 			Amount: 1000,
-			Status: StatusSuccess,
+			Status: Status{Type: StatusSuccess},
 		}, {
 			Token:  token,
 			Amount: 0,
-			Status: StatusInvalidAmount,
+			Status: Status{Type: StatusInvalidAmount},
 		}, {
 			Token:  token,
 			Amount: 500,
-			Status: StatusInitial,
+			Status: Status{Type: StatusInitial},
 		}, {
 			Token:  token2,
 			Amount: 1000,
-			Status: StatusSuccess,
+			Status: Status{Type: StatusSuccess},
 		}}
 		expectedResponse := []ResponsePayment{}
 		for _, p := range payments {
@@ -381,20 +381,20 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 					}
 				}
 				if !isValidToken {
-					return StatusInvalidToken
+					return Status{Type: StatusInvalidToken}
 				}
 				switch p.Amount {
 				case invalidAmount:
-					return StatusInvalidAmount
+					return Status{Type: StatusInvalidAmount}
 				case initialStatusAmount:
-					return StatusInitial
+					return Status{Type: StatusInitial}
 				}
-				return StatusSuccess
+				return Status{Type: StatusSuccess}
 			})
 
 		for _, p := range payments {
 			status := http.StatusNoContent
-			if p.Status != StatusSuccess && p.Status != StatusInitial {
+			if p.Status.Type != StatusSuccess && p.Status.Type != StatusInitial {
 				status = http.StatusBadRequest
 			}
 			e.POST("/payments").
@@ -422,14 +422,14 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 		p := Payment{
 			Token:  "token2",
 			Amount: 1000,
-			Status: StatusSuccess,
+			Status: Status{Type: StatusSuccess},
 		}
 
 		verifier.EXPECT().
 			Verify(gomock.Cond(func(x *Payment) bool {
 				return p.Token == x.Token && p.Amount == x.Amount
 			})).
-			Return(StatusSuccess)
+			Return(Status{Type: StatusSuccess})
 
 		e.POST("/payments").
 			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
