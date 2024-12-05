@@ -75,7 +75,7 @@ export default function ProviderRegister() {
             id="ownerName"
             name="ownerName"
             label="オーナー名"
-            onChange={setOwnerName}
+            onChange={(e) => setOwnerName(e.target.value)}
           />
         </div>
         <Button

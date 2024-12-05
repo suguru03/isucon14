@@ -1,36 +1,59 @@
-import { FC, PropsWithoutRef } from "react";
+import {
+  ChangeEventHandler,
+  ComponentProps,
+  FC,
+  PropsWithoutRef,
+  useState,
+} from "react";
 import { twMerge } from "tailwind-merge";
 
 type TextInputProps = PropsWithoutRef<{
   id: string;
-  name: string;
   label: string;
-  value?: string;
-  placeholder?: string;
+  name: string;
   className?: string;
-  required?: boolean;
-  onChange?: (v: string) => void;
-}>;
+}> &
+  ComponentProps<"input">;
 
-export const TextInput: FC<TextInputProps> = (props) => {
+export const TextInput: FC<TextInputProps> = ({
+  value: valueFromProps,
+  onChange: onChangeFromProps,
+  defaultValue,
+  id,
+  className,
+  label,
+  ...props
+}) => {
+  const isControlled = typeof valueFromProps != "undefined";
+  const hasDefaultValue = typeof defaultValue != "undefined";
+  const [internalValue, setInternalValue] = useState(
+    hasDefaultValue ? defaultValue : "",
+  );
+  const value = isControlled ? valueFromProps : internalValue;
+  const onChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    if (onChangeFromProps) {
+      onChangeFromProps(e);
+    }
+    if (!isControlled) {
+      setInternalValue(e.target.value);
+    }
+  };
   return (
     <>
-      <label htmlFor={props.name} className="ps-1 text-gray-500">
-        {props.label}
+      <label htmlFor={id} className="ps-1 text-gray-500">
+        {label}
       </label>
       <input
         type="text"
-        id={props.id}
-        name={props.name}
-        value={props.value}
-        placeholder={props.placeholder}
+        id={id}
+        value={value}
+        onChange={onChange}
         className={twMerge(
           "mt-1 px-5 py-3 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-          props?.className,
+          className,
         )}
-        required={props.required}
-        onChange={(e) => props.onChange?.(e.target.value)}
-      ></input>
+        {...props}
+      />
     </>
   );
 };

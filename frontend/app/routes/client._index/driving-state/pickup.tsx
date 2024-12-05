@@ -23,7 +23,7 @@ export const Pickup: FC = () => {
             model={data?.chair?.model ?? ""}
             width={60}
             height={60}
-            className="absolute bottom-0 right-0 animate-shake"
+            className="absolute bottom-0 right-0"
           />
         </div>
       </ModalHeader>
