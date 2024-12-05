@@ -272,7 +272,9 @@ LOOP:
 	for {
 		select {
 		case <-ctx.Done():
-			// 負荷走行終了
+			// 負荷走行終了後、payment server へのリクエストが届くかもしれないので5秒だけ待つ
+			time.Sleep(5 * time.Second)
+			s.paymentServer.Close()
 			break LOOP
 
 		default:
