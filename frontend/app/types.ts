@@ -1,9 +1,4 @@
-import { RideId } from "./api/api-parameters";
-import {
-  Coordinate as ApiCoodinate,
-  RideStatus,
-  User,
-} from "./api/api-schemas";
+import { Coordinate as ApiCoodinate } from "./api/api-schemas";
 
 export type AccessToken = string;
 
@@ -15,39 +10,6 @@ export type ClientAppChair = {
     total_rides_count: number;
     total_evaluation_avg: number;
   }>;
-};
-
-// TODO: この型はデバッグ用の型なので削除する
-export type ClientChairRide = {
-  status?: RideStatus;
-  payload?: Partial<{
-    ride_id: RideId;
-    coordinate: Partial<{
-      pickup: Coordinate;
-      destination: Coordinate;
-    }>;
-    user?: User;
-  }>;
-};
-
-export type SimulatorChair = {
-  id: string;
-  name: string;
-  model: string;
-  token: string;
-  setToken: React.Dispatch<React.SetStateAction<string | undefined>>;
-  coordinateState: {
-    coordinate?: Coordinate;
-    setter: (coordinate: Coordinate) => void;
-  };
-  chairNotification?: ClientChairRide;
-};
-
-export type SimulatorOwner = {
-  id: string;
-  name: string;
-  token: string;
-  chair?: SimulatorChair;
 };
 
 export type DisplayPos = {
@@ -64,6 +26,21 @@ export type NearByChair = {
 
 export type Coordinate = ApiCoodinate;
 
+export type CampaignData = {
+  invitationCode: string;
+  registedAt: string;
+  used: boolean;
+};
+
+export type SimulatorChair = {
+  id: string;
+  name: string;
+  model: string;
+  token: string;
+  coordinate: Coordinate;
+};
+
+// TODO: 後でリファクタ
 export type ClientApiError = {
   message: string;
   name: string;
@@ -71,12 +48,6 @@ export type ClientApiError = {
     payload: string;
     status: number;
   };
-};
-
-export type CampaignData = {
-  invitationCode: string;
-  registedAt: string;
-  used: boolean;
 };
 
 // TODO: 後で場所をutilに移動する

@@ -10,37 +10,35 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
-import { Coordinate, SimulatorChair } from "~/types";
+import type { Coordinate } from "~/types";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
 import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
 
-const CoordinatePickup: FC<{
-  coordinateState: SimulatorChair["coordinateState"];
-}> = ({ coordinateState }) => {
+const CoordinatePickup: FC = () => {
+  const { chair, setCoordinate } = useSimulatorContext();
   const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
   const [mapLocation, setMapLocation] = useState<Coordinate>();
   const [visibleModal, setVisibleModal] = useState<boolean>(false);
   const modalRef = useRef<HTMLElement & { close: () => void }>(null);
 
   const handleOpenModal = useCallback(() => {
-    setInitialMapLocation(coordinateState.coordinate);
+    setInitialMapLocation(chair?.coordinate);
     setVisibleModal(true);
-  }, [coordinateState]);
+  }, [chair?.coordinate]);
 
   const handleCloseModal = useCallback(() => {
     if (mapLocation) {
-      coordinateState.setter(mapLocation);
+      setCoordinate?.(mapLocation);
     }
-
     modalRef.current?.close();
     setVisibleModal(false);
-  }, [mapLocation, coordinateState]);
+  }, [mapLocation, setCoordinate]);
 
   return (
     <>
       <LocationButton
         className="w-full text-right"
-        location={coordinateState.coordinate}
+        location={chair?.coordinate}
         label="椅子位置"
         placeholder="現在位置を設定"
         onClick={handleOpenModal}
@@ -173,11 +171,8 @@ const ChairProgress: FC<{
 };
 
 export const SimulatorChairDisplay: FC = () => {
-  const { targetChair: chair } = useSimulatorContext();
-  const rideStatus = useMemo(
-    () => chair?.chairNotification?.status ?? "MATCHING",
-    [chair],
-  );
+  const { data, chair } = useSimulatorContext();
+  const rideStatus = useMemo(() => data?.status ?? "MATCHING", [data]);
 
   const ChairDetailInfo = memo(
     function ChairDetailInfo({
@@ -215,13 +210,13 @@ export const SimulatorChairDisplay: FC = () => {
             chairName={chair.name}
             rideStatus={rideStatus}
           />
-          <CoordinatePickup coordinateState={chair.coordinateState} />
+          <CoordinatePickup />
           <ChairProgress
             model={chair.model}
             rideStatus={rideStatus}
-            currentLoc={chair.coordinateState.coordinate}
-            pickupLoc={chair.chairNotification?.payload?.coordinate?.pickup}
-            destLoc={chair.chairNotification?.payload?.coordinate?.destination}
+            currentLoc={chair.coordinate}
+            pickupLoc={data?.pickup_coordinate}
+            destLoc={data?.destination_coordinate}
           />
         </div>
       ) : (

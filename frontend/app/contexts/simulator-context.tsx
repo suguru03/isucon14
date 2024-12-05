@@ -17,36 +17,40 @@ import {
   ChairGetNotificationResponse,
   fetchChairGetNotification,
 } from "~/api/api-components";
-import type { ClientChairRide, SimulatorChair } from "~/types";
+import { SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
-type ClientSimulatorContextProps = {
-  targetChair?: SimulatorChair;
+type SimulatorContextProps = {
+  chair?: SimulatorChair;
+  data?: ChairGetNotificationResponse["data"];
+  setCoordinate?: (coordinate: Coordinate) => void;
+  setToken?: (token: string) => void;
 };
 
-const ClientSimulatorContext = createContext<ClientSimulatorContextProps>({});
+const SimulatorContext = createContext<SimulatorContextProps>({});
+const initilalChair = getSimulateChair();
 
 function jsonFromSseResult<T>(value: string) {
   const data = value.slice("data:".length).trim();
   return JSON.parse(data) as T;
 }
 
-export const useClientChairNotification = (id?: string) => {
-  const [notification, setNotification] = useState<
-    ChairGetNotificationResponse & { contentType: "event-stream" | "json" }
-  >();
+const useNotification = (): ChairGetNotificationResponse["data"] => {
+  const [isSse, setIsSse] = useState(false);
+  const [notification, setNotification] =
+    useState<ChairGetNotificationResponse>();
 
   useEffect(() => {
-    let abortController: AbortController | undefined;
-    const run = async () => {
-      abortController = new AbortController();
+    const initialFetch = async () => {
       try {
         const notification = await fetch(`${apiBaseURL}/chair/notification`);
         const isEventStream = !!notification?.headers
           .get("Content-type")
           ?.split(";")?.[0]
           .includes("text/event-stream");
+        setIsSse(isEventStream);
+
         if (isEventStream) {
           const reader = notification.body?.getReader();
           const decoder = new TextDecoder();
@@ -54,20 +58,13 @@ export const useClientChairNotification = (id?: string) => {
           const decoded = decoder.decode(readed);
           const json =
             jsonFromSseResult<ChairGetNotificationResponse["data"]>(decoded);
-          setNotification(
-            json
-              ? {
-                  data: json,
-                  contentType: "event-stream",
-                }
-              : undefined,
-          );
-        } else {
-          const json = (await notification.json()) as
-            | ChairGetNotificationResponse
-            | undefined;
-          setNotification(json ? { ...json, contentType: "json" } : undefined);
+          setNotification(json ? { data: json } : undefined);
+          return;
         }
+        const json = (await notification.json()) as
+          | ChairGetNotificationResponse
+          | undefined;
+        setNotification(json);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -75,34 +72,13 @@ export const useClientChairNotification = (id?: string) => {
         console.error(error);
       }
     };
-    void run();
-    return () => {
-      abortController?.abort();
-    };
+    void initialFetch();
   }, [setNotification]);
 
-  const clientChairPayloadWithStatus = useMemo(
-    () =>
-      notification
-        ? {
-            status: notification.data?.status,
-            payload: {
-              ride_id: notification.data?.ride_id,
-              coordinate: {
-                pickup: notification.data?.pickup_coordinate,
-                destination: notification.data?.destination_coordinate,
-              },
-            },
-          }
-        : undefined,
-    [notification],
-  );
-
   const retryAfterMs = notification?.retry_after_ms ?? 10000;
-  const isSSE = notification?.contentType === "event-stream";
 
   useEffect(() => {
-    if (!isSSE) return;
+    if (!isSse) return;
     const eventSource = new EventSource(`${apiBaseURL}/chair/notification`);
     const onMessage = ({ data }: MessageEvent<{ data?: unknown }>) => {
       if (typeof data !== "string") return;
@@ -135,10 +111,10 @@ export const useClientChairNotification = (id?: string) => {
     return () => {
       eventSource.close();
     };
-  }, [isSSE]);
+  }, [isSse]);
 
   useEffect(() => {
-    if (isSSE) return;
+    if (isSse) return;
     let timeoutId: ReturnType<typeof setTimeout>;
     let abortController: AbortController | undefined;
 
@@ -179,28 +155,16 @@ export const useClientChairNotification = (id?: string) => {
       abortController?.abort();
       clearTimeout(timeoutId);
     };
-  }, [isSSE, retryAfterMs]);
+  }, [isSse, retryAfterMs]);
 
-  const responseClientAppRequest = useMemo<ClientChairRide | undefined>(() => {
-    const candidateAppRequest = clientChairPayloadWithStatus;
-    return {
-      ...candidateAppRequest,
-      status: candidateAppRequest?.status,
-      user: {
-        id,
-        name: "ISUCON太郎",
-      },
-    };
-  }, [clientChairPayloadWithStatus, id]);
-
-  return responseClientAppRequest;
+  return notification?.data;
 };
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string>();
 
-  const simulateChairData = useMemo(() => {
-    return token ? getSimulateChairFromToken(token) : getSimulateChair();
+  const simulateChair = useMemo(() => {
+    return token ? getSimulateChairFromToken(token) : initilalChair;
   }, [token]);
 
   useEffect(() => {
@@ -210,37 +174,30 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     // TODO: tokenがなければUI上で選択させるようにする
-    if (simulateChairData?.token) {
-      document.cookie = `chair_session=${simulateChairData.token}; path=/`;
+    if (initilalChair?.token) {
+      document.cookie = `chair_session=${initilalChair.token}; path=/`;
     }
-  }, [simulateChairData]);
+  }, []);
 
-  const chairNotification = useClientChairNotification(simulateChairData?.id);
+  const data = useNotification();
 
-  const [currentCoodinate, setCurrentCoordinate] = useState<Coordinate>(() => {
+  const [coordinate, setCoordinate] = useState<Coordinate>(() => {
     const coordinate = getSimulatorCurrentCoordinate();
     return coordinate ?? { latitude: 0, longitude: 0 };
   });
 
   return (
-    <ClientSimulatorContext.Provider
+    <SimulatorContext.Provider
       value={{
-        targetChair: simulateChairData
-          ? {
-              ...simulateChairData,
-              chairNotification,
-              coordinateState: {
-                setter: setCurrentCoordinate,
-                coordinate: currentCoodinate,
-              },
-              setToken,
-            }
-          : undefined,
+        data,
+        chair: simulateChair ? { ...simulateChair, coordinate } : undefined,
+        setCoordinate,
+        setToken,
       }}
     >
       {children}
-    </ClientSimulatorContext.Provider>
+    </SimulatorContext.Provider>
   );
 };
 
-export const useSimulatorContext = () => useContext(ClientSimulatorContext);
+export const useSimulatorContext = () => useContext(SimulatorContext);
