@@ -34,7 +34,7 @@ type OwnerContextProps = Partial<{
 const OwnerContext = createContext<OwnerContextProps>({});
 
 const timestamp = (date: DateString) => {
-  return Math.floor(new Date(date).getTime() / 1000);
+  return Math.floor(new Date(date).getTime());
 };
 
 const currentDateString: DateString = (() => {
