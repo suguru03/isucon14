@@ -62,7 +62,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 
 	worldCtx := world.NewContext(w)
 
-	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 5)
+	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 2)
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
 	}()
