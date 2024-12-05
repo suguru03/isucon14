@@ -396,7 +396,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	}
 	// 2個までは無くても許容する
 	if len(errs) >= 3 {
-		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, errors.Join(errs...))})
+		go w.PublishEvent(&EventSoftError{Error: CodeError(ErrorCodeLackOfNearbyChairs)})
 	}
 	return nil
 }
