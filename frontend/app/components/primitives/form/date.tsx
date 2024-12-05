@@ -5,17 +5,13 @@ type DateInputProps = PropsWithoutRef<{
   id: string;
   name: string;
   label?: string;
-  defaultValue?: string;
   className?: string;
-  required?: boolean;
-  onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }> &
   ComponentProps<"input">;
 
 export const DateInput: FC<DateInputProps> = ({
   label,
   id,
-  name,
   className,
   ...props
 }) => {
@@ -29,7 +25,6 @@ export const DateInput: FC<DateInputProps> = ({
       <input
         type="date"
         id={id}
-        name={name}
         className={twMerge(
           "mt-1 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2",
           className,
