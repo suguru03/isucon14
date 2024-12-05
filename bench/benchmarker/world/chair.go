@@ -315,7 +315,7 @@ func (c *Chair) Tick(ctx *Context) error {
 				go c.World.PublishEvent(&EventSoftError{Error: err})
 				return err
 			}
-			c.Location.SetServerTime(res.RecordedAt) // FIXME: ここの反映(ロック)が遅れて、総移動距離の計算が１つずれる場合がある
+			c.Location.SetServerTime(res.RecordedAt)
 			c.Location.ResetDirtyFlag()
 			return nil
 		}, backoff.NewExponentialBackOff())
