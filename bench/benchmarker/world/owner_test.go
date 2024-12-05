@@ -8,7 +8,7 @@ func TestDesiredChairNum(t *testing.T) {
 		num := desiredChairNum(i * 100)
 		if num > n {
 			n = num
-			t.Logf("num: %d, sales: %d", num, i*100)
+			t.Logf("num: %d (original: %d), sales: %d", num, i*100/15000, i*100)
 		}
 	}
 }
