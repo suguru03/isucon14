@@ -337,8 +337,8 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
 		}
 		for _, req := range c.RequestHistory.BackwardIter() {
-			if req.BenchMatchedAt.After(baseTime) {
-				// nearbychairsのリクエストを送った後にマッチされていて、レスポンスを生成とマッチのどちらが先か分からないので許容する
+			if req.BenchMatchedAt.After(baseTime.Add(-3 * time.Second)) {
+				// nearbychairsのリクエストを送った3秒前以降にマッチされている場合は許容する
 				break
 			}
 			if !req.Evaluated.Load() {
