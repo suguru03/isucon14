@@ -145,7 +145,7 @@ type ClientContextProps = {
 
 const ClientContext = createContext<ClientContextProps>({});
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
+export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken] = useState(() => getUserAccessToken());
   const [userId] = useState(() => getUserId());
   const navigate = useNavigate();
