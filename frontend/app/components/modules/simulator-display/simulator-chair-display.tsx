@@ -137,33 +137,36 @@ const ChairProgress: FC<{
     <div className="flex items-center">
       <div className="flex border-b pb-1 w-full">
         <div className="flex w-1/2">
-          <PinIcon color={colors.red[500]} width={20} />
-          <div className="relative w-full ms-6">
-            {rideStatus &&
-              ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
-                <ChairIcon
-                  model={model}
-                  className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                  style={{ right: `${progressToDestination}%` }}
-                />
-              )}
-          </div>
-        </div>
-        <div className="flex w-1/2">
-          <PinIcon color={colors.black} width={20} />
-          <div className="relative w-full ms-6">
+          <div className="relative w-full me-6">
             {rideStatus &&
               ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
                 <ChairIcon
                   model={model}
                   className={twMerge(
-                    "size-6 absolute top-[-2px]",
+                    "scale-x-[-1] size-6 absolute top-[-2px]",
                     rideStatus === "ENROUTE" && "animate-shake",
                   )}
-                  style={{ right: `${progressToPickup}%` }}
+                  style={{ left: `${progressToPickup}%` }}
                 />
               )}
           </div>
+          <PinIcon color={colors.black} width={20} />
+        </div>
+        <div className="flex w-1/2">
+          <div className="relative w-full me-6">
+            {rideStatus &&
+              ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
+                <ChairIcon
+                  model={model}
+                  className={twMerge(
+                    "scale-x-[-1] size-6 absolute top-[-2px]",
+                    rideStatus === "CARRYING" && "animate-shake",
+                  )}
+                  style={{ left: `${progressToDestination}%` }}
+                />
+              )}
+          </div>
+          <PinIcon color={colors.red[500]} width={20} />
         </div>
       </div>
     </div>
