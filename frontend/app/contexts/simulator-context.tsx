@@ -3,10 +3,14 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import type { Coordinate } from "~/api/api-schemas";
-import { getSimulateChair } from "~/utils/get-initial-data";
+import {
+  getSimulateChair,
+  getSimulateChairFromToken,
+} from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
 import {
@@ -15,11 +19,13 @@ import {
 } from "~/api/api-components";
 import { SimulatorChair } from "~/types";
 import { getSimulatorCurrentCoordinate } from "~/utils/storage";
+import { getCookieValue } from "~/utils/get-cookie-value";
 
 type SimulatorContextProps = {
   chair?: SimulatorChair;
   data?: ChairGetNotificationResponse["data"];
   setCoordinate?: (coordinate: Coordinate) => void;
+  setToken?: (token: string) => void;
 };
 
 const SimulatorContext = createContext<SimulatorContextProps>({});
@@ -28,8 +34,6 @@ function jsonFromSseResult<T>(value: string) {
   const data = value.slice("data:".length).trim();
   return JSON.parse(data) as T;
 }
-
-const simulateChair = getSimulateChair();
 
 const useNotification = (): ChairGetNotificationResponse["data"] => {
   const [isSse, setIsSse] = useState(false);
@@ -61,6 +65,9 @@ const useNotification = (): ChairGetNotificationResponse["data"] => {
           | undefined;
         setNotification(json);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -134,6 +141,9 @@ const useNotification = (): ChairGetNotificationResponse["data"] => {
         });
         timeoutId = setTimeout(() => void polling(), retryAfterMs);
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error(error);
       }
     };
@@ -149,8 +159,30 @@ const useNotification = (): ChairGetNotificationResponse["data"] => {
   return notification?.data;
 };
 
+
+
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
+
+  const [token, setToken] = useState<string>();
+
+  const simulateChair = useMemo(() => {
+    return token ? getSimulateChairFromToken(token) : getSimulateChair();
+  }, [token]);
+
+  useEffect(() => {
+    const token = getCookieValue(document.cookie, "chair_session");
+    if (token) {
+      setToken(token);
+      return;
+    }
+    // TODO: tokenがなければUI上で選択させるようにする
+    if (simulateChair?.token) {
+      document.cookie = `chair_session=${simulateChair.token}; path=/`;
+    }
+  }, [simulateChair]);
+
   const data = useNotification();
+
   const [coordinate, setCoordinate] = useState<Coordinate>(() => {
     const coordinate = getSimulatorCurrentCoordinate();
     return coordinate ?? { latitude: 0, longitude: 0 };
@@ -168,6 +200,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
         data,
         chair: simulateChair ? { ...simulateChair, coordinate } : undefined,
         setCoordinate,
+        setToken
       }}
     >
       {children}

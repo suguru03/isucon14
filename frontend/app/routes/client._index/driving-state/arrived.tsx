@@ -12,7 +12,7 @@ import { useClientContext } from "~/contexts/client-context";
 import confetti from "canvas-confetti";
 
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
-  const { accessToken, data } = useClientContext();
+  const { data } = useClientContext();
   const [rating, setRating] = useState(0);
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -20,9 +20,6 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
       e.preventDefault();
       try {
         void fetchAppPostRideEvaluation({
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
           pathParams: {
             rideId: data?.ride_id ?? "",
           },
@@ -35,7 +32,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
       }
       onEvaluated();
     },
-    [onEvaluated, accessToken, data?.ride_id, rating],
+    [onEvaluated, data?.ride_id, rating],
   );
 
   useEffect(() => {

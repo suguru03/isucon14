@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 	"log/slog"
+	"math"
 	"math/rand/v2"
 	"sync/atomic"
 	"time"
@@ -102,7 +103,7 @@ func (p *Owner) Tick(ctx *Context) error {
 			if err := p.ValidateSales(last.ServerCompletedAt, res); err != nil {
 				return WrapCodeError(ErrorCodeSalesMismatched, err)
 			}
-			if increase := res.Total/15000 - p.createChairTryCount; increase > 0 {
+			if increase := desiredChairNum(res.Total) - p.createChairTryCount; increase > 0 {
 				ctx.ContestantLogger().Info("一定の売上が立ったためオーナーの椅子が増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
 				for range increase {
 					p.createChairTryCount++
@@ -232,4 +233,12 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 		}
 	}
 	return nil
+}
+
+func desiredChairNum(s int) int {
+	const (
+		a = 15000
+		r = 1.02
+	)
+	return int(math.Log((a-float64(s)*(1-r))/a) / math.Log(r))
 }
