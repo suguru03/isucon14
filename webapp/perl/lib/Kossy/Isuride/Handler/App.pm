@@ -640,16 +640,24 @@ sub app_get_nearby_chairs ($app, $c) {
             next;
         }
 
-        my $ride = $app->dbh->select_row(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
+        my $rides = $app->dbh->select_all(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC}, $chair->{id});
 
-        if (defined $ride) {
+        my $skip = false;
+
+        for my $ride ($rides->@*) {
             # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
             my $status = get_latest_ride_status($app, $ride->{id});
 
             if ($status ne 'COMPLETED') {
-                next;
+                $skip = true;
+                last;
             }
         }
+
+        if ($skip) {
+            next;
+        }
+
         # 最新の位置情報を取得
         my $chair_location = $app->dbh->select_row(q{SELECT * FROM chair_locations WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1}, $chair->{id});
 
