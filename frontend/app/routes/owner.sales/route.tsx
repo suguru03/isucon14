@@ -123,14 +123,15 @@ const _SalesTable: FC<{ chairs: OwnerChairs; sales: OwnerSales }> = ({
   );
 };
 
+const SalesTable = memo(
+  function SalesTable({ chairs, sales }: Parameters<typeof _SalesTable>[0]) {
+    return <_SalesTable chairs={chairs} sales={sales} />;
+  },
+  (prev, next) => prev.chairs === next.chairs && prev.sales === next.sales,
+);
+
 export default function Index() {
   const { sales, chairs } = useOwnerContext();
-  const SalesTable = memo(
-    function SalesTable({ chairs, sales }: Parameters<typeof _SalesTable>[0]) {
-      return <_SalesTable chairs={chairs} sales={sales} />;
-    },
-    (prev, next) => prev.chairs === next.chairs && prev.sales === next.sales,
-  );
 
   return (
     <div className="min-w-[800px] w-full">
