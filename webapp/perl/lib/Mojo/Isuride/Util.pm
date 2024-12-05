@@ -1,4 +1,4 @@
-package Isuride::Util;
+package Mojo::Isuride::Util;
 use v5.40;
 use utf8;
 
@@ -37,8 +37,8 @@ sub secure_random_str ($byte_length) {
     return unpack('H*', $bytes);
 }
 
-sub get_latest_ride_status ($app, $ride_id) {
-    my $status = $app->dbh->select_one(
+sub get_latest_ride_status ($c, $ride_id) {
+    my $status = $c->mysql->db->select_one(
         q{SELECT status FROM ride_statuses WHERE ride_id = ? ORDER BY created_at DESC LIMIT 1},
         $ride_id
     );
@@ -75,7 +75,7 @@ sub parse_int ($str) {
 
 # XXX: 以下はPerlでの型チェック支援用のユーティリティ
 # 開発環境では、パラメータの型チェックを行う
-use constant ASSERT => ($ENV{PLACK_ENV} || '') ne 'deployment';
+use constant ASSERT => ($ENV{MOJO_MODE} || '') ne 'production';
 
 # Cpanel::JSON::XS::Typeの型定義からType::Tinyの型定義を生成する
 # 例: { a => JSON_TYPE_STRING, b => JSON_TYPE_INT } -> Dict[a => Str, b => Int]

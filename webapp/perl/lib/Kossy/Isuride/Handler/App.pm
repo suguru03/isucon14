@@ -1,4 +1,4 @@
-package Isuride::Handler::App;
+package Kossy::Isuride::Handler::App;
 use v5.40;
 use utf8;
 use experimental qw(defer);
@@ -16,9 +16,9 @@ use Cpanel::JSON::XS::Type qw(
 );
 use List::Util qw(max);
 
-use Isuride::Models qw(Coordinate);
-use Isuride::Time qw(unix_milli_from_str);
-use Isuride::Util qw(
+use Kossy::Isuride::Models qw(Coordinate);
+use Kossy::Isuride::Time qw(unix_milli_from_str);
+use Kossy::Isuride::Util qw(
     InitialFare
     FarePerDistance
     secure_random_str
@@ -28,7 +28,7 @@ use Isuride::Util qw(
 
     check_params
 );
-use Isuride::Payment::Gateway qw(request_payment_gateway_post_payment PaymentGatewayErroredUpstream);
+use Kossy::Isuride::Payment::Gateway qw(request_payment_gateway_post_payment PaymentGatewayErroredUpstream);
 
 use constant AppPostUsersRequest => {
     username        => JSON_TYPE_STRING,

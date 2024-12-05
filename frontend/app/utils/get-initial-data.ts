@@ -12,16 +12,41 @@ type InitialOwner = {
   token: string;
 };
 
-const initialOwnerData = __INITIAL_OWNER_DATA__;
+type initialDataType =
+  | {
+      owners: {
+        id: string;
+        name: string;
+        token: string;
+      }[];
+      simulatorChairs: {
+        id: string;
+        owner_id: string;
+        name: string;
+        model: string;
+        token: string;
+      }[];
+    }
+  | undefined;
+
+const initialData = __INITIAL_DATA__ as initialDataType;
 
 export const getOwners = (): InitialOwner[] => {
   return (
-    initialOwnerData?.owners?.map((owner) => ({
+    initialData?.owners?.map((owner) => ({
       ...owner,
     })) ?? []
   );
 };
 
-export const getSimulateChair = (): InitialChair | undefined => {
-  return initialOwnerData?.targetSimulatorChair;
+export const getSimulateChair = (index?: number): InitialChair | undefined => {
+  return index
+    ? initialData?.simulatorChairs[index]
+    : initialData?.simulatorChairs[0];
+};
+
+export const getSimulateChairFromToken = (
+  token: string,
+): InitialChair | undefined => {
+  return initialData?.simulatorChairs.find((c) => c.token === token);
 };

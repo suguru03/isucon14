@@ -1,4 +1,4 @@
-package Isuride::Handler::Owner;
+package Kossy::Isuride::Handler::Owner;
 use v5.40;
 use utf8;
 use Time::Moment;
@@ -16,8 +16,8 @@ use Cpanel::JSON::XS::Type qw(
     json_type_null_or_anyof
 );
 
-use Isuride::Time qw(unix_milli_from_str);
-use Isuride::Util qw(
+use Kossy::Isuride::Time qw(unix_milli_from_str);
+use Kossy::Isuride::Util qw(
     secure_random_str
     calculate_sale
     parse_int

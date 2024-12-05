@@ -11,6 +11,9 @@ requires 'Furl';
 requires 'HTTP::Parser::XS';
 requires 'Syntax::Keyword::Match';
 
+requires 'Mojolicious';
+requires 'Mojo::mysql';
+
 # DB
 requires 'DBD::mysql', '5.010';
 requires 'DBIx::Sunny', '0.9993';

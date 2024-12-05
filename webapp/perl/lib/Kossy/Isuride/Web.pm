@@ -1,4 +1,4 @@
-package Isuride::Web;
+package Kossy::Isuride::Web;
 use v5.40;
 use utf8;
 
@@ -12,12 +12,12 @@ use HTTP::Status qw(:constants);
 
 $Kossy::JSON_SERIALIZER = Cpanel::JSON::XS->new()->ascii(0)->utf8->allow_blessed(1)->convert_blessed(1);
 
-use Isuride::Middleware;
-use Isuride::Handler::App;
-use Isuride::Handler::Owner;
-use Isuride::Handler::Chair;
-use Isuride::Handler::Internal;
-use Isuride::Util qw(check_params);
+use Kossy::Isuride::Middleware;
+use Kossy::Isuride::Handler::App;
+use Kossy::Isuride::Handler::Owner;
+use Kossy::Isuride::Handler::Chair;
+use Kossy::Isuride::Handler::Internal;
+use Kossy::Isuride::Util qw(check_params);
 
 sub connect_db() {
     my $host     = $ENV{ISUCON_DB_HOST}     || '127.0.0.1';
@@ -48,10 +48,10 @@ use constant OwnerAuthMiddleware => qq(owner_auth_middleware);
 use constant ChairAuthMiddleware => qq(chair_auth_middleware);
 
 # middleware
-filter ErrorHandling()       => \&Isuride::Middleware::error_handling;
-filter AppAuthMiddleware()   => \&Isuride::Middleware::app_auth_middleware;
-filter OwnerAuthMiddleware() => \&Isuride::Middleware::owner_auth_middleware;
-filter ChairAuthMiddleware() => \&Isuride::Middleware::chair_auth_middleware;
+filter ErrorHandling()       => \&Kossy::Isuride::Middleware::error_handling;
+filter AppAuthMiddleware()   => \&Kossy::Isuride::Middleware::app_auth_middleware;
+filter OwnerAuthMiddleware() => \&Kossy::Isuride::Middleware::owner_auth_middleware;
+filter ChairAuthMiddleware() => \&Kossy::Isuride::Middleware::chair_auth_middleware;
 
 use constant AppAuth   => (ErrorHandling, AppAuthMiddleware);
 use constant OwnerAuth => (ErrorHandling, OwnerAuthMiddleware);
@@ -63,38 +63,38 @@ use constant ChairAuth => (ErrorHandling, ChairAuthMiddleware);
 
     #  app handlers
     {
-        post '/api/app/users' => [ErrorHandling] => \&Isuride::Handler::App::app_post_users;
+        post '/api/app/users' => [ErrorHandling] => \&Kossy::Isuride::Handler::App::app_post_users;
 
-        post '/api/app/payment-methods' => [AppAuth] => \&Isuride::Handler::App::app_post_payment_methods;
-        get '/api/app/rides' => [AppAuth] => \&Isuride::Handler::App::app_get_rides;
-        post '/api/app/rides'                     => [AppAuth] => \&Isuride::Handler::App::app_post_rides;
-        post '/api/app/rides/estimated-fare'      => [AppAuth] => \&Isuride::Handler::App::app_post_rides_estimated_fare;
-        post '/api/app/rides/:ride_id/evaluation' => [AppAuth] => \&Isuride::Handler::App::app_post_ride_evaluation;
-        get '/api/app/notification'  => [AppAuth] => \&Isuride::Handler::App::app_get_notification;
-        get '/api/app/nearby-chairs' => [AppAuth] => \&Isuride::Handler::App::app_get_nearby_chairs;
+        post '/api/app/payment-methods' => [AppAuth] => \&Kossy::Isuride::Handler::App::app_post_payment_methods;
+        get '/api/app/rides' => [AppAuth] => \&Kossy::Isuride::Handler::App::app_get_rides;
+        post '/api/app/rides'                     => [AppAuth] => \&Kossy::Isuride::Handler::App::app_post_rides;
+        post '/api/app/rides/estimated-fare'      => [AppAuth] => \&Kossy::Isuride::Handler::App::app_post_rides_estimated_fare;
+        post '/api/app/rides/:ride_id/evaluation' => [AppAuth] => \&Kossy::Isuride::Handler::App::app_post_ride_evaluation;
+        get '/api/app/notification'  => [AppAuth] => \&Kossy::Isuride::Handler::App::app_get_notification;
+        get '/api/app/nearby-chairs' => [AppAuth] => \&Kossy::Isuride::Handler::App::app_get_nearby_chairs;
     }
 
     # chair handlers
     {
-        post '/api/chair/chairs' => [ErrorHandling] => \&Isuride::Handler::Chair::chair_post_chairs;
+        post '/api/chair/chairs' => [ErrorHandling] => \&Kossy::Isuride::Handler::Chair::chair_post_chairs;
 
-        post '/api/chair/activity'   => [ChairAuth] => \&Isuride::Handler::Chair::chair_post_activity;
-        post '/api/chair/coordinate' => [ChairAuth] => \&Isuride::Handler::Chair::chair_post_coordinate;
-        get '/api/chair/notification' => [ChairAuth] => \&Isuride::Handler::Chair::chair_get_notification;
-        post '/api/chair/rides/:ride_id/status' => [ChairAuth] => \&Isuride::Handler::Chair::chair_post_ride_status;
+        post '/api/chair/activity'   => [ChairAuth] => \&Kossy::Isuride::Handler::Chair::chair_post_activity;
+        post '/api/chair/coordinate' => [ChairAuth] => \&Kossy::Isuride::Handler::Chair::chair_post_coordinate;
+        get '/api/chair/notification' => [ChairAuth] => \&Kossy::Isuride::Handler::Chair::chair_get_notification;
+        post '/api/chair/rides/:ride_id/status' => [ChairAuth] => \&Kossy::Isuride::Handler::Chair::chair_post_ride_status;
     }
 
     # owner handlers
     {
-        post '/api/owner/owners' => [ErrorHandling] => \&Isuride::Handler::Owner::owner_post_owners;
+        post '/api/owner/owners' => [ErrorHandling] => \&Kossy::Isuride::Handler::Owner::owner_post_owners;
 
-        get '/api/owner/sales'  => [OwnerAuth] => \&Isuride::Handler::Owner::owner_get_sales;
-        get '/api/owner/chairs' => [OwnerAuth] => \&Isuride::Handler::Owner::owner_get_chairs;
+        get '/api/owner/sales'  => [OwnerAuth] => \&Kossy::Isuride::Handler::Owner::owner_get_sales;
+        get '/api/owner/chairs' => [OwnerAuth] => \&Kossy::Isuride::Handler::Owner::owner_get_chairs;
     }
 
     # internal handlers
     {
-        get '/api/internal/matching' => [ErrorHandling] => \&Isuride::Handler::Internal::internal_get_matching;
+        get '/api/internal/matching' => [ErrorHandling] => \&Kossy::Isuride::Handler::Internal::internal_get_matching;
     }
 }
 

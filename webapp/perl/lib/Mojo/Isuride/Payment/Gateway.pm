@@ -1,4 +1,4 @@
-package Isuride::Payment::Gateway;
+package Mojo::Isuride::Payment::Gateway;
 use v5.40;
 use utf8;
 
@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(
     PaymentGatewayErroredUpstream
 );
 
-use Isuride::Util qw(check_params);
+use Mojo::Isuride::Util qw(check_params);
 
 use HTTP::Status qw(:constants);
 use Time::HiRes qw(sleep);

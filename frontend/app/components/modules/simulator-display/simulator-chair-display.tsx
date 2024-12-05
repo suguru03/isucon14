@@ -99,37 +99,37 @@ const ChairProgress: FC<{
     return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
   }, [rideStatus]);
 
-  const pickupProgress: number = useMemo(() => {
+  const progressToPickup: number = useMemo(() => {
     if (!rideStatus || !pickupLoc || !startLoc || !currentLoc) {
       return 0;
     }
     switch (rideStatus) {
       case "MATCHING":
+      case "COMPLETED":
         return 0;
       case "PICKUP":
       case "ARRIVED":
       case "CARRYING":
-      case "COMPLETED":
         return 100;
       default:
         return progress(startLoc, currentLoc, pickupLoc);
     }
   }, [rideStatus, pickupLoc, startLoc, currentLoc]);
 
-  const distanceProgress: number = useMemo(() => {
+  const progressToDestination: number = useMemo(() => {
     if (!rideStatus || !destLoc || !pickupLoc || !currentLoc) {
       return 0;
     }
     switch (rideStatus) {
       case "MATCHING":
+      case "COMPLETED":
       case "PICKUP":
       case "ENROUTE":
         return 0;
       case "ARRIVED":
-      case "COMPLETED":
         return 100;
       default:
-        return progress(destLoc, currentLoc, pickupLoc);
+        return progress(pickupLoc, currentLoc, destLoc);
     }
   }, [rideStatus, destLoc, pickupLoc, currentLoc]);
 
@@ -140,13 +140,11 @@ const ChairProgress: FC<{
           <PinIcon color={colors.red[500]} width={20} />
           <div className="relative w-full ms-6">
             {rideStatus &&
-              ["PICKUP", "CARRYING", "ARRIVED", "COMPLETED"].includes(
-                rideStatus,
-              ) && (
+              ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
                 <ChairIcon
                   model={model}
                   className={`size-6 absolute top-[-2px] ${rideStatus === "CARRYING" ? "animate-shake" : ""}`}
-                  style={{ right: `${distanceProgress}%` }}
+                  style={{ right: `${progressToDestination}%` }}
                 />
               )}
           </div>
@@ -154,16 +152,17 @@ const ChairProgress: FC<{
         <div className="flex w-1/2">
           <PinIcon color={colors.black} width={20} />
           <div className="relative w-full ms-6">
-            {rideStatus && ["MATCHING", "ENROUTE"].includes(rideStatus) && (
-              <ChairIcon
-                model={model}
-                className={twMerge(
-                  "size-6 absolute top-[-2px]",
-                  rideStatus === "ENROUTE" && "animate-shake",
-                )}
-                style={{ right: `${pickupProgress}%` }}
-              />
-            )}
+            {rideStatus &&
+              ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
+                <ChairIcon
+                  model={model}
+                  className={twMerge(
+                    "size-6 absolute top-[-2px]",
+                    rideStatus === "ENROUTE" && "animate-shake",
+                  )}
+                  style={{ right: `${progressToPickup}%` }}
+                />
+              )}
           </div>
         </div>
       </div>
