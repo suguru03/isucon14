@@ -5,11 +5,10 @@ import { LocationButton } from "~/components/modules/location-button/location-bu
 import { ModalHeader } from "~/components/modules/modal-header/moda-header";
 import { Price } from "~/components/modules/price/price";
 import { Text } from "~/components/primitives/text/text";
-import { useUserContext } from "~/contexts/user-context";
+import { useClientContext } from "~/contexts/client-context";
 
 export const Enroute: FC = () => {
-  const { payload = {} } = useUserContext();
-  const { chair, fare, coordinate } = payload;
+  const { data } = useClientContext();
   return (
     <div className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <ModalHeader
@@ -17,26 +16,28 @@ export const Enroute: FC = () => {
         subTitle="あなたのもとに向かっています"
       >
         <ChairIcon
-          model={chair?.model ?? ""}
+          model={data?.chair?.model ?? ""}
           width={100}
           className="animate-shake"
         />
       </ModalHeader>
-      {chair && <ChairInformation className="mb-8" chair={chair} />}
+      {data?.chair && <ChairInformation className="mb-8" chair={data.chair} />}
       <LocationButton
         label="現在地"
-        location={coordinate?.pickup}
+        location={data?.pickup_coordinate}
         className="w-full"
         disabled
       />
       <Text size="xl">↓</Text>
       <LocationButton
         label="目的地"
-        location={coordinate?.destination}
+        location={data?.destination_coordinate}
         className="w-full"
         disabled
       />
-      {fare && <Price pre="運賃" value={fare} className="mt-8"></Price>}
+      {data?.fare && (
+        <Price pre="運賃" value={data.fare} className="mt-8"></Price>
+      )}
     </div>
   );
 };

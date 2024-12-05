@@ -15,7 +15,7 @@ import { Price } from "~/components/modules/price/price";
 import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
-import { useUserContext } from "~/contexts/user-context";
+import { useClientContext } from "~/contexts/client-context";
 import { NearByChair, isClientApiError } from "~/types";
 import { sendClientReady } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
@@ -35,7 +35,7 @@ type Direction = "from" | "to";
 type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
-  const { status } = useUserContext();
+  const { data } = useClientContext();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
@@ -82,8 +82,8 @@ export default function Index() {
   const emulateChairs = useGhostChairs();
 
   useEffect(() => {
-    setInternalRideStatus(status);
-  }, [status]);
+    setInternalRideStatus(data?.status);
+  }, [data?.status]);
 
   useEffect(() => {
     if (!currentLocation || !destLocation) {

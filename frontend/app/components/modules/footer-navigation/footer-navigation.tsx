@@ -1,21 +1,32 @@
 import { NavLink } from "@remix-run/react";
 import type { ComponentProps, FC } from "react";
+import { HistoryIcon } from "~/components/icon/history";
+import { IsurideIcon } from "~/components/icon/isuride";
 
-type NavigationMenuType = {
+type NavigationMenu = {
   link: `/${string}`;
   label: string;
   icon: FC<ComponentProps<"svg">>;
 };
 
-export const FooterNavigation: FC<{
-  menus:
-    | [NavigationMenuType, NavigationMenuType]
-    | [NavigationMenuType, NavigationMenuType, NavigationMenuType];
-}> = ({ menus }) => {
+const MenuList = [
+  {
+    icon: IsurideIcon,
+    link: "/client",
+    label: "RIDE",
+  },
+  {
+    icon: HistoryIcon,
+    link: "/client/history",
+    label: "HISTORY",
+  },
+] as const satisfies NavigationMenu[];
+
+export const FooterNavigation: FC = () => {
   return (
     <nav className="sticky bottom-[env(safe-area-inset-bottom)] z-10 border-t border-secondary-border bg-white">
-      <ul className="flex justify-around">
-        {menus.map((menu) => (
+      <ul className="flex justify-around mx-10">
+        {MenuList.map((menu) => (
           <li
             key={menu.link}
             className="flex justify-center border-b-4 border-transparent has-[.active]:border-black"

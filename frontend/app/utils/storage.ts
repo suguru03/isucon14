@@ -64,11 +64,3 @@ export const setUserId = (id: string) => {
 export const getUserId = (): string | null => {
   return getStorage("user.id", sessionStorage);
 };
-
-export const setUserAccessToken = (id: string) => {
-  return setStorage("user.accessToken", id, sessionStorage);
-};
-
-export const getUserAccessToken = (): string | null => {
-  return getStorage("user.accessToken", sessionStorage);
-};
