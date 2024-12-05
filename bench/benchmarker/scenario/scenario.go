@@ -54,6 +54,7 @@ type Scenario struct {
 	evalScoreMap              [5]int
 	completedRequests         int
 	evaluationMapLock         sync.RWMutex
+	failed                    bool
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
@@ -157,7 +158,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 			carryingLatency.Record(context.Background(), intervals[2])
 			s.evaluationMapLock.Lock()
 			s.completedRequests++
-			s.evalScoreMap[eval.Score()]++
+			s.evalScoreMap[eval.Score()-1]++
 			for i, ok := range eval.Map() {
 				if ok {
 					s.evaluationMap[i]++
@@ -275,6 +276,7 @@ LOOP:
 			err := s.world.Tick(s.worldCtx)
 			if err != nil {
 				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
+				s.failed = true
 				return err
 			}
 

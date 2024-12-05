@@ -5,8 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/isucon/isucandar"
-	"github.com/isucon/isucon14/bench/benchmarker/world"
-	"github.com/samber/lo"
 )
 
 // Validation はシナリオの結果検証処理を行う
@@ -18,21 +16,19 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 	}
 
 	for _, region := range s.world.Regions {
-		s.contestantLogger.Info("最終Region情報",
-			slog.String("region", region.Name),
-			slog.Int("users", region.UsersDB.Len()),
-			slog.Int("active_users", region.ActiveUserNum()),
+		s.contestantLogger.Info("最終地域情報",
+			slog.String("名前", region.Name),
+			slog.Int("ユーザー登録数", region.UsersDB.Len()),
+			slog.Int("アクティブユーザー数", region.ActiveUserNum()),
 		)
 	}
-	for id, owner := range s.world.OwnerDB.Iter() {
-		s.contestantLogger.Info("最終Owner情報",
-			slog.Int("id", int(id)),
-			slog.Int64("total_sales", owner.TotalSales.Load()),
-			slog.Int("chairs", owner.ChairDB.Len()),
-			slog.Int("chairs_outside_region", lo.CountBy(owner.ChairDB.ToSlice(), func(c *world.Chair) bool { return !c.Location.Current().Within(owner.Region) })),
-			slog.Int("total_chair_travel_distance", lo.SumBy(owner.ChairDB.ToSlice(), func(c *world.Chair) int { return c.Location.TotalTravelDistance() })),
+	for _, owner := range s.world.OwnerDB.Iter() {
+		s.contestantLogger.Info("最終オーナー情報",
+			slog.String("名前", owner.RegisteredData.Name),
+			slog.Int64("売上", owner.TotalSales.Load()),
+			slog.Int("椅子数", owner.ChairDB.Len()),
 		)
 	}
-	s.contestantLogger.Info("種別エラー発生数", slog.Any("errors", s.world.ErrorCounter.Count()))
-	return sendResult(s, true, true)
+	s.contestantLogger.Info("結果", slog.Bool("pass", !s.failed), slog.Int64("スコア", s.Score(true)), slog.Any("種別エラー数", s.world.ErrorCounter.Count()))
+	return sendResult(s, true, !s.failed)
 }
