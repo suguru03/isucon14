@@ -228,7 +228,7 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 			}
 			want := chair.Location.TotalTravelDistanceUntil(data.TotalDistanceUpdatedAt.Time)
 			// LocationのSetServerTimeが間に合ってない場合があるので、総走行距離と一致していても許容する
-			if data.TotalDistance != want || data.TotalDistance != chair.Location.TotalTravelDistance() {
+			if data.TotalDistance != want && data.TotalDistance != chair.Location.TotalTravelDistance() {
 				return fmt.Errorf("total_distanceが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.TotalDistance, want)
 			}
 		}
