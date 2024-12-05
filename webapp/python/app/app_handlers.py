@@ -790,18 +790,26 @@ def app_get_nearby_chairs(
         for chair in chairs:
             if not chair.is_active:
                 continue
-            ride = conn.execute(
+
+            rows = conn.execute(
                 text(
-                    "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC LIMIT 1"
+                    "SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY created_at DESC"
                 ),
                 {"chair_id": chair.id},
-            ).fetchone()
+            ).fetchall()
+            rides = [Ride.model_validate(row) for row in rows]
 
-            if ride:
+            skip = False
+
+            for ride in rides:
                 # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
                 status = get_latest_ride_status(conn, ride.id)
                 if status != "COMPLETED":
-                    continue
+                    skip = True
+                    break
+
+            if skip:
+                continue
 
             # 最新の位置情報を取得
             row = conn.execute(
