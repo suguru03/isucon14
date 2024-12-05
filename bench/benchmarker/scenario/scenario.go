@@ -251,18 +251,18 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 	defer ticker.Stop()
 	sendResultWait := sync.WaitGroup{}
 	defer sendResultWait.Wait()
+	sendResultWait.Add(1)
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
+				sendResultWait.Done()
 				return
 			case <-ticker.C:
-				sendResultWait.Add(1)
 				if err := sendResult(s, false, false); err != nil {
 					slog.Error(err.Error())
 				}
-				sendResultWait.Done()
 			}
 		}
 	}()
