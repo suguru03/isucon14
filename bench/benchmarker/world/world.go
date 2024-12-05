@@ -368,6 +368,11 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		}
 		checked[chair.ID] = true
 	}
+	if len(errs) > 0 {
+		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, errors.Join(errs...))})
+		errs = nil
+	}
+
 	for chair := range w.EmptyChairs.Iter() {
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			ok := false
@@ -389,8 +394,9 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			}
 		}
 	}
-	if len(errs) > 0 {
-		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, errors.Join(errs...))})
+	// 2個までは無くても許容する
+	if len(errs) >= 3 {
+		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, errors.Join(errs...))})
 	}
 	return nil
 }
