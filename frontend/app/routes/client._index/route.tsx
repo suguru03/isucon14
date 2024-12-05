@@ -36,6 +36,7 @@ type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { data } = useClientContext();
+  const emulateChairs = useGhostChairs();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
@@ -44,19 +45,20 @@ export default function Index() {
   const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>([]);
   const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
   const onCenterMove = useCallback(
-    (coordinate: Coordinate) => {
-      setCenterCoodirnate(coordinate);
-    },
-    [setCenterCoodirnate],
+    (coordinate: Coordinate) => setCenterCoodirnate(coordinate),
+    [],
   );
-  const onSelectMove = useCallback((coordinate: Coordinate) => {
-    setSelectedLocation(coordinate);
-  }, []);
+  const onSelectMove = useCallback(
+    (coordinate: Coordinate) => setSelectedLocation(coordinate),
+    [],
+  );
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
+  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
+  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   const handleConfirmLocation = useCallback(() => {
     if (direction === "from") {
       setCurrentLocation(selectedLocation);
@@ -74,10 +76,6 @@ export default function Index() {
       )
     );
   }, [internalRideStatus]);
-
-  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
-  const emulateChairs = useGhostChairs();
 
   useEffect(() => {
     setInternalRideStatus(data?.status);
