@@ -99,15 +99,19 @@ class GetNearbyChairs extends AbstractHttpHandler
                 if (!$chair->isActive) {
                     continue;
                 }
-                $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1');
+                $stmt = $this->db->prepare('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC');
                 $stmt->execute([$chair->id]);
-                $ride = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($ride) {
+                $skip = false;
+                while($ride = $stmt->fetch(PDO::FETCH_ASSOC)){
                     // 過去にライドが存在し、かつ、それが完了していない場合はスキップ
                     $status = $this->getLatestRideStatus($this->db, $ride['id']);
                     if ($status !== 'COMPLETED') {
-                        continue;
+                        $skip = true;
+                        break;
                     }
+                }
+                if ($skip) {
+                    continue;
                 }
 
                 // 最新の位置情報を取得
