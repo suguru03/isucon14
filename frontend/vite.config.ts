@@ -20,10 +20,8 @@ const DEFAULT_URL = `http://${DEFAULT_HOSTNAME}:${DEFAULT_PORT}`;
 
 type APIResponse = Record<string, string>;
 
-const intialOwnerData = existsSync("./initial-owner-data.json")
-  ? (JSON.parse(
-      readFileSync("./initial-owner-data.json").toString(),
-    ) as unknown)
+const intialOwnerData = existsSync("./initial-data.json")
+  ? (JSON.parse(readFileSync("./initial-data.json").toString()) as unknown)
   : undefined;
 
 const getLoggedInURLForClient = async () => {
@@ -253,7 +251,7 @@ export const config = {
   ],
   define: {
     [alternativeURLExpression]: `"${process.env["API_BASE_URL"] ?? "."}"`,
-    __INITIAL_OWNER_DATA__: intialOwnerData,
+    __INITIAL_DATA__: intialOwnerData,
   },
   server: {
     proxy: {

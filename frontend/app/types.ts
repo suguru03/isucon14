@@ -56,6 +56,7 @@ export type SimulatorChair = {
   name: string;
   model: string;
   token: string;
+  setToken: React.Dispatch<React.SetStateAction<string | undefined>>;
   coordinateState: {
     coordinate?: Coordinate;
     setter: (coordinate: Coordinate) => void;

@@ -26,11 +26,27 @@
       "token": "3585ccc78c507660a4802973d269849e"
     }
   ],
-  "targetSimulatorChair": {
-    "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
-    "owner_id": "01JDFEDF008NTA922W12FS7800",
-    "name": "QC-L13-8361",
-    "model": "クエストチェア Lite",
-    "token": "3013d5ec84e1b230f913a17d71ef27c8"
-  }
+  "simulatorChairs": [
+    {
+      "id": "01JDFEF7MGXXCJKW1MNJXPA77A",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "QC-L13-8361",
+      "model": "クエストチェア Lite",
+      "token": "3013d5ec84e1b230f913a17d71ef27c8"
+    },
+    {
+      "id": "01JDFEXJM006PH4C1EVHJ31QMV",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "LC-48-2566",
+      "model": "Legacy Chair",
+      "token": "b63d4c58ded093013ea5a483e2184d91"
+    },
+    {
+      "id": "01JDFGTKR0586QH1QGXRACGB80",
+      "owner_id": "01JDFEDF008NTA922W12FS7800",
+      "name": "IS-33-8740",
+      "model": "Infinity Seat",
+      "token": "091cd034ce1ac4a9dd9fb1b5ec52c3dc"
+    }
+  ]
 }
