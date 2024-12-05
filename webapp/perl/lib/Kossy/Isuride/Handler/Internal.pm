@@ -1,4 +1,4 @@
-package Isuride::Handler::Internal;
+package Kossy::Isuride::Handler::Internal;
 use v5.40;
 use utf8;
 
