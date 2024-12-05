@@ -274,7 +274,7 @@ LOOP:
 				if num := s.world.LeavedUserCount.Load(); num > 0 {
 					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}
-				slog.Debug("仮想世界の時間が60分経過", slog.Int64("time", s.world.Time), slog.Int("timeout", s.world.TimeoutTickCount))
+				slog.Debug("時間経過", slog.Int64("tick", s.world.Time))
 			}
 		}
 	}
