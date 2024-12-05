@@ -219,6 +219,10 @@ func (e Evaluation) String() string {
 	return fmt.Sprintf("score: %d (matching:%v, dispath:%v, pickup:%v, drive:%v)", e.Score(), e.Matching, e.Dispatch, e.Pickup, e.Drive)
 }
 
+func (e Evaluation) Map() [4]bool {
+	return [4]bool{e.Matching, e.Dispatch, e.Pickup, e.Drive}
+}
+
 func (e Evaluation) Score() int {
 	result := 1
 	if e.Matching {

@@ -404,7 +404,7 @@ func (w *World) handleTickError(err error) {
 		_ = w.ErrorCounter.Add(err)
 		w.criticalErrorCh <- err
 	} else {
-		w.contestantLogger.Error("エラーが発生しました", slog.String("error", err.Error()))
+		w.contestantLogger.Error(err.Error())
 		if err2 := w.ErrorCounter.Add(err); err2 != nil {
 			w.criticalErrorCh <- err2
 		}
