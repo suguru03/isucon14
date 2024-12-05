@@ -3,12 +3,18 @@ package scenario
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/isucon/isucandar"
 )
 
 // Validation はシナリオの結果検証処理を行う
 func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep) error {
+	// 負荷走行終了後、payment server へのリクエストが届くかもしれないので5秒だけ待つ
+	time.Sleep(5 * time.Second)
+	s.paymentServer.Close()
+	s.sendResultWait.Wait()
+
 	actual := s.world.PaymentDB.TotalPayment() + s.TotalDiscount()
 	expected := s.TotalSales()
 	if actual != expected {
