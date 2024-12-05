@@ -1,4 +1,4 @@
-import { FC, PropsWithoutRef } from "react";
+import { ComponentProps, FC, PropsWithoutRef } from "react";
 import { twMerge } from "tailwind-merge";
 
 type DateInputProps = PropsWithoutRef<{
@@ -8,31 +8,34 @@ type DateInputProps = PropsWithoutRef<{
   defaultValue?: string;
   className?: string;
   required?: boolean;
-  size?: "sm" | "md";
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
-}>;
+}> &
+  ComponentProps<"input">;
 
-export const DateInput: FC<DateInputProps> = (props) => {
+export const DateInput: FC<DateInputProps> = ({
+  label,
+  id,
+  name,
+  className,
+  ...props
+}) => {
   return (
     <>
-      {props.label ? (
-        <label htmlFor={props.name} className="ps-1 text-gray-500">
-          {props.label}
+      {label ? (
+        <label htmlFor={id} className="ps-1 text-gray-500">
+          {label}
         </label>
       ) : null}
       <input
         type="date"
-        id={props.id}
-        name={props.name}
-        defaultValue={props.defaultValue}
+        id={id}
+        name={name}
         className={twMerge(
-          "mt-1 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-          (props.size ?? "md") === "md" ? "px-5 py-3" : "px-3 py-2",
-          props?.className,
+          "mt-1 w-full border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2",
+          className,
         )}
-        required={props.required}
-        onChange={props.onChange}
-      ></input>
+        {...props}
+      />
     </>
   );
 };
