@@ -11,7 +11,9 @@ After=isuride-rust.service
 [Service]
 User=isucon
 Group=isucon
-ExecStart=/bin/sh -c "while true; do curl -s https://isuride.xiv.isucon.net/api/internal/matching; sleep 0.5; done"
+EnvironmentFile=/home/isucon/env.sh
+
+ExecStart=/bin/sh -c "while true; do curl -s https://isuride.xiv.isucon.net/api/internal/matching; sleep $ISUCON_MATCHING_INTERVAL; done"
 ExecStop=/bin/kill -s QUIT $MAINPID
 
 Restart=on-failure

@@ -100,17 +100,23 @@ $ sudo /opt/isucon-env-checker/envcheck
 
 ## アプリケーションの動作確認
 
-ISURIDEには、サーバーのWebブラウザからHTTPSでアクセスできます。
+ISURIDE には、サーバーのWeb ブラウザから HTTPS でアクセスできます。
+
+### 動作確認のためのhostsファイル設定
+
+ISUPORTSはホスト名に依存した挙動があるため、ブラウザにサーバーのIPアドレスを直打ちする形での閲覧はできません。以下の手順でhostsファイルを編集し、動作確認のためのホスト名が競技サーバーのIPアドレスにつながるようにします。
+
+Mac や Linux であれば `/etc/hosts` に、 Windows であれば `C:\Windows\System32\drivers\etc\hosts` に以下の行を追記します。`${サーバー IP アドレス}` はサーバーの IP アドレスに読み替えてください。
+
+```
+${サーバー IP アドレス} isuride.xiv.isucon.net
+```
+
+上記変更の反映にはブラウザの再起動が必要な場合があります。
 
 ### ISURIDEへのログイン
 
 <!-- TODO: 書く -->
-
-### ブラウザでの表示上の注意
-
-初期実装ではブラウザからのアクセスにより、サーバーの負荷が高くなることが考えられます。
-
-負荷走行への影響を避けるため、ベンチマーカーの実行中はブラウザでの表示は行わないことが推奨されます。
 
 ## ベンチマーカーの実行
 
@@ -121,7 +127,7 @@ ISURIDEには、サーバーのWebブラウザからHTTPSでアクセスでき�
 なお、負荷走行が待機中（`WAITING`）もしくは実行中（`RUNNING`）の間は追加でリクエストを行うことはできません。
 
 <!-- TODO: タイムアウト時間の確認 -->
-ベンチマーカーが不正に終了した場合、結果がすぐに表示されない場合があります。6分以上その状態が続く場合は自動で `ABORT` 状態となり、次の負荷走行のリクエストを行うことができます。
+ベンチマーカーが不正に終了した場合、結果がすぐに表示されない場合があります。
 
 ## 競技環境について
 
@@ -198,11 +204,7 @@ $ sudo /opt/isucon-env-checker/envcheck boot
   * `/etc/systemd/system/envcheck.service`
   * `/etc/systemd/system/multi-user.target.wants/envcheck.service`
   * `/opt/isucon-env-checker` 内のファイル、バイナリファイル
-* aws-env-isucon-subdomain-address.serviceに関わるファイル
-  * `/etc/systemd/system/aws-env-isucon-subdomain-address.service`
-  * `/etc/systemd/system/multi-user.target.wants/aws-env-isucon-subdomain-address.service`
-  * `/opt/aws-env-isucon-subdomain-address.sh`
-* isuadminユーザーに関わるファイルおよびログイン情報
+* isuadminユーザーに関わるファイル・権限およびログイン情報
 * その他、主催者による追試を妨げる変更（例： サーバー上のisucon以外のユーザーに関する、ユーザー削除や既存の公開鍵の削除、サーバーの再起動の妨害）
 
 ## 参考実装
@@ -276,7 +278,6 @@ $ sudo mysql {データベース名}
 
 参考実装では、初期化処理（`POST /api/initialize`）においてデータベースのデータをベンチマーカーが想定している状態に戻します。以下のコマンドでもデータベースのデータを初期化できます。
 
-<!-- TODO: 要確認 -->
 ```sh
 $ ~/webapp/sql/init.sh
 ```
