@@ -14,7 +14,6 @@ import {
   fetchOwnerGetSales,
 } from "~/api/api-components";
 import { OwnerChairs, OwnerSales } from "~/types";
-import { isClientApiError } from "~/utils/api-error";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
 type DateString = `${number}-${number}-${number}`; // YYYY-MM-DD
@@ -85,12 +84,6 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
         });
         setSales(sales);
       } catch (error) {
-        if (isClientApiError(error)) {
-          if (error.stack.status === 401) {
-            navigate("/owner/register");
-            return;
-          }
-        }
         console.error(error);
       }
     })();

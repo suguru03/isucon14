@@ -11,7 +11,6 @@ import {
   AppGetNotificationResponse,
   fetchAppGetNotification,
 } from "~/api/api-components";
-import { isClientApiError } from "~/utils/api-error";
 import { getCookieValue } from "~/utils/get-cookie-value";
 import { getUserId } from "~/utils/storage";
 
@@ -122,9 +121,7 @@ export const useNotification = ():
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        if (isClientApiError(error)) {
-          console.error(error.message);
-        }
+        console.error(error);
       }
     };
     timeoutId = setTimeout(() => void polling(), retryAfterMs);
