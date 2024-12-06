@@ -19,16 +19,21 @@ export const Price: FC<PriceTextProps> = ({
 }) => {
   return (
     <div
-      className={twMerge("flex flex-row space-x-1 items-center", className)}
+      className={twMerge(
+        "flex flex-col min-[440px]:flex-row space-x-1 items-center",
+        className,
+      )}
       {...props}
     >
-      <MoneyIcon width={30} height={30} />
-      {pre && (
-        <Text tagName="span" className="pr-2">
-          {pre}:
-        </Text>
-      )}
-      <PriceText value={value} />
+      <div className="flex items-center space-x-1">
+        <MoneyIcon width={30} height={30} />
+        {pre && (
+          <Text tagName="span" className="pr-2">
+            {pre}:
+          </Text>
+        )}
+        <PriceText value={value} />
+      </div>
       {!!discount && (
         <Text
           tagName="span"
