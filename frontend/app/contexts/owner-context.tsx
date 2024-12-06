@@ -13,7 +13,8 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/api/api-components";
-import { OwnerChairs, OwnerSales, isClientApiError } from "~/types";
+import { OwnerChairs, OwnerSales } from "~/types";
+import { isClientApiError } from "~/utils/api-error";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
 type DateString = `${number}-${number}-${number}`; // YYYY-MM-DD
