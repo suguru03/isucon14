@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -34,6 +35,13 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 			slog.Int64("売上", owner.TotalSales.Load()),
 			slog.Int("椅子数", owner.ChairDB.Len()),
 		)
+	}
+	if s.completedRequests > 0 {
+		s.contestantLogger.Info(fmt.Sprintf("%.1f%%のライドは椅子がマッチされるまでの時間、%.1f%%のライドはマッチされた椅子が乗車地点までに掛かる時間、%.1f%%のライドは椅子の実移動時間に不満がありました",
+			(1-float64(s.evaluationMap[0])/float64(s.completedRequests))*100,
+			(1-float64(s.evaluationMap[1])/float64(s.completedRequests))*100,
+			(1-float64(s.evaluationMap[2]+s.evaluationMap[3])/float64(s.completedRequests*2))*100,
+		))
 	}
 	s.contestantLogger.Info("結果", slog.Bool("pass", !s.failed), slog.Int64("スコア", s.Score(true)), slog.Any("種別エラー数", s.world.ErrorCounter.Count()))
 	return sendResult(s, true, !s.failed)
