@@ -51,7 +51,7 @@ const postEnroute = (rideId: string, coordinate: Coordinate) => {
     pathParams: {
       rideId,
     },
-  }).catch((e) => console.error(e));
+  });
 };
 
 const postCarring = (rideId: string) => {
@@ -60,7 +60,7 @@ const postCarring = (rideId: string) => {
     pathParams: {
       rideId,
     },
-  }).catch((e) => console.error(e));
+  });
 };
 
 const forcePickup = (pickup_coordinate: Coordinate) =>
@@ -78,7 +78,7 @@ const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
     } catch (error) {
       console.error(error);
     }
-  }, 10_000);
+  }, 30_000);
 
 const forceArrive = (pickup_coordinate: Coordinate) =>
   setTimeout(() => {
@@ -116,6 +116,16 @@ export const useEmulator = () => {
   ]);
 
   useEffect(() => {
+    if (!pickup_coordinate || status !== "PICKUP") return;
+    setCoordinate?.(pickup_coordinate);
+  }, [status, pickup_coordinate, setCoordinate]);
+
+  useEffect(() => {
+    if (!destination_coordinate || status !== "ARRIVED") return;
+    setCoordinate?.(destination_coordinate);
+  }, [status, destination_coordinate, setCoordinate]);
+
+  useEffect(() => {
     if (isAnotherSimulatorBeingUsed) return;
     if (!(chair && data)) {
       return;
@@ -129,7 +139,6 @@ export const useEmulator = () => {
             postEnroute(data.ride_id, chair.coordinate);
             break;
           case "PICKUP":
-            setCoordinate?.(data.pickup_coordinate);
             postCarring(data.ride_id);
             break;
           case "ENROUTE":
