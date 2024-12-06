@@ -455,7 +455,7 @@ class AppPostRideEvaluationResponse(BaseModel):
     status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
-    _: Annotated[User, Depends(app_auth_middleware)],
+    _user: Annotated[User, Depends(app_auth_middleware)],
     req: AppPostRideEvaluationRequest,
     ride_id: str,
 ) -> AppPostRideEvaluationResponse:
@@ -777,7 +777,7 @@ class AppGetNearByChairsResponse(BaseModel):
     status_code=HTTPStatus.OK,
 )
 def app_get_nearby_chairs(
-    _: Annotated[User, Depends(app_auth_middleware)],
+    _user: Annotated[User, Depends(app_auth_middleware)],
     latitude: int,
     longitude: int,
     distance: int = 50,
