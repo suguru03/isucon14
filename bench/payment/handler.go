@@ -69,10 +69,10 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	time.Sleep(s.processTime)
-	// (直近1秒で処理された payment の数) / 100 の確率で処理を失敗させる(最大50%)
+	// (直近3秒で処理された payment の数) / 100 の確率で処理を失敗させる(最大50%)
 	var recentProcessedCount int
 	for _, processed := range s.processedPayments.BackwardIter() {
-		if time.Since(processed.processedAt) > 1*time.Second {
+		if time.Since(processed.processedAt) > 3*time.Second {
 			break
 		}
 		recentProcessedCount++
@@ -91,7 +91,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 				s.errChan <- p.Status.Err
 			}
 			s.failureCounts.Delete(token)
-			if rand.IntN(100) > failurePercentage {
+			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
 				writeResponse(w, p.Status)
 			} else {
 				writeRandomError(w)
