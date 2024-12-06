@@ -37,7 +37,7 @@ export const SimulatorChairActiveToggle: FC = () => {
           id="chair-activity"
         />
       </div>
-      {!isAnotherSimulatorBeingUsed && (
+      {isAnotherSimulatorBeingUsed && (
         <div
           role="presentation"
           className="absolute top-0 left-0 w-full h-full bg-neutral-500 bg-opacity-60 flex items-center justify-center cursor-not-allowed"
