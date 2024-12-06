@@ -139,8 +139,8 @@ class AppPostPaymentMethodsRequest(BaseModel):
 
 @router.post("/payment-methods", status_code=HTTPStatus.NO_CONTENT)
 def app_post_payment_methods(
-    req: AppPostPaymentMethodsRequest,
     user: Annotated[User, Depends(app_auth_middleware)],
+    req: AppPostPaymentMethodsRequest,
 ) -> None:
     if req.token == "":
         raise HTTPException(
@@ -277,7 +277,8 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
 
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
-    r: AppPostRidesRequest, user: Annotated[User, Depends(app_auth_middleware)]
+    user: Annotated[User, Depends(app_auth_middleware)],
+    r: AppPostRidesRequest,
 ) -> AppPostRidesResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -409,8 +410,8 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
     status_code=HTTPStatus.OK,
 )
 def app_post_rides_estimated_fare(
-    r: AppPostRidesEstimatedFareRequest,
     user: Annotated[User, Depends(app_auth_middleware)],
+    r: AppPostRidesEstimatedFareRequest,
 ) -> AppPostRidesEstimatedFareResponse:
     if r.pickup_coordinate is None or r.destination_coordinate is None:
         raise HTTPException(
@@ -454,9 +455,9 @@ class AppPostRideEvaluationResponse(BaseModel):
     status_code=HTTPStatus.OK,
 )
 def app_post_ride_evaluation(
+    _: Annotated[User, Depends(app_auth_middleware)],
     req: AppPostRideEvaluationRequest,
     ride_id: str,
-    _: Annotated[User, Depends(app_auth_middleware)],
 ) -> AppPostRideEvaluationResponse:
     if req.evaluation < 1 or req.evaluation > 5:
         raise HTTPException(
@@ -593,7 +594,8 @@ class AppGetNotificationResponse(BaseModel):
     response_model_exclude_none=True,
 )
 def app_get_notification(
-    response: Response, user: Annotated[User, Depends(app_auth_middleware)]
+    user: Annotated[User, Depends(app_auth_middleware)],
+    response: Response,
 ) -> AppGetNotificationResponse | Response:
     with engine.begin() as conn:
         row = conn.execute(

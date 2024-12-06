@@ -78,8 +78,8 @@ class PostChairActivityRequest(BaseModel):
 
 @router.post("/activity", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_activity(
-    req: PostChairActivityRequest,
     chair: Annotated[Chair, Depends(chair_auth_middleware)],
+    req: PostChairActivityRequest,
 ) -> None:
     with engine.begin() as conn:
         conn.execute(
@@ -99,7 +99,8 @@ class ChairPostCoordinateResponse(BaseModel):
 
 @router.post("/coordinate")
 def chair_post_coordinate(
-    req: Coordinate, chair: Annotated[Chair, Depends(chair_auth_middleware)]
+    chair: Annotated[Chair, Depends(chair_auth_middleware)],
+    req: Coordinate,
 ) -> ChairPostCoordinateResponse:
     with engine.begin() as conn:
         chair_location_id = str(ULID())
@@ -247,9 +248,9 @@ class PostChairRidesRideIDStatusRequest(BaseModel):
 
 @router.post("/rides/{ride_id}/status", status_code=HTTPStatus.NO_CONTENT)
 def chair_post_ride_status(
+    chair: Annotated[Chair, Depends(chair_auth_middleware)],
     ride_id: str,
     req: PostChairRidesRideIDStatusRequest,
-    chair: Annotated[Chair, Depends(chair_auth_middleware)],
 ) -> None:
     with engine.begin() as conn:
         row = conn.execute(
