@@ -12,7 +12,6 @@ import { DateInput } from "~/components/primitives/form/date";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
-import { isClientApiError } from "~/utils/api-error";
 import { saveCampaignData } from "~/utils/storage";
 
 export const meta: MetaFunction = () => {
@@ -73,21 +72,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     return redirect(`/client/register-payment`);
   } catch (e) {
     console.error(`ERROR: ${JSON.stringify(e)}`);
-    if (isClientApiError(e)) {
-      if (
-        e.stack.status === 500 &&
-        e.stack.payload.includes("Duplicate entry")
-      ) {
-        errors.register =
-          "ユーザーの登録に失敗しました。入力されたユーザー名はすでに登録済みです。";
-      } else {
-        errors.register = `ユーザーの登録に失敗しました。[${e.stack.payload}]`;
-      }
-    } else if (e instanceof Error) {
-      errors.register = `ユーザーの登録に失敗しました。[${e.message}]`;
-    } else {
-      errors.register = "ユーザーの登録に失敗しました。[Unknown Error]";
-    }
+    errors.register = "ユーザーの登録に失敗しました。接続に問題があるか、ユーザー名が登録済みの可能性があります。";
     return json({ errors });
   }
 };

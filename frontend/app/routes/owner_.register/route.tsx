@@ -6,7 +6,6 @@ import { Button } from "~/components/primitives/button/button";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
-import { isClientApiError } from "~/utils/api-error";
 
 export const meta: MetaFunction = () => {
   return [
@@ -39,23 +38,8 @@ export default function ProviderRegister() {
 
       navigate("/owner");
     } catch (e) {
-      console.error(e);
-      if (isClientApiError(e)) {
-        if (
-          e.stack.status === 500 &&
-          e.stack.payload.includes("Duplicate entry")
-        ) {
-          setErrorMessage(
-            "オーナーの登録に失敗しました。入力されたオーナー名はすでに登録済みです",
-          );
-        } else {
-          setErrorMessage(`オーナーの登録に失敗しました。[${e.stack.payload}]`);
-        }
-      } else if (e instanceof Error) {
-        setErrorMessage(`オーナーの登録に失敗しました。[${e.message}]`);
-      } else {
-        setErrorMessage("オーナーの登録に失敗しました。[Unknown Error]");
-      }
+      console.error(`ERROR: ${JSON.stringify(e)}`);
+      setErrorMessage("オーナーの登録に失敗しました。接続に問題があるか、ユーザー名が登録済みの可能性があります。");
     }
   };
 
