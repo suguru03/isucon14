@@ -7,7 +7,7 @@ export const MainFrame: FC<PropsWithChildren<ComponentProps<"div">>> = ({
   ...props
 }) => {
   return (
-    <div
+    <main
       className={twMerge(
         "md:max-w-screen-md h-full relative ml-auto mr-auto shadow-xl bg-white flex flex-col",
         className,
@@ -15,6 +15,6 @@ export const MainFrame: FC<PropsWithChildren<ComponentProps<"div">>> = ({
       {...props}
     >
       <div className="flex flex-col min-h-screen">{children}</div>
-    </div>
+    </main>
   );
 };

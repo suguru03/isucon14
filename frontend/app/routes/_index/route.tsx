@@ -48,53 +48,56 @@ const Links = [
 
 export default function Index() {
   return (
-    <main>
-      <MainFrame>
-        <img
-          src="/images/top-bg.png"
-          alt=""
-          role="presentation"
-          className="absolute top-0 left-0 w-full opacity-90"
-        />
-        <div className="relative z-10">
-          <h1 className="mt-[35%] flex justify-center w-full mb-24">
-            <img
-              src="/images/top-logo.svg"
-              alt="ISURIDE"
-              role="presentation"
-              style={{ aspectRatio: 544 / 140 }}
-              className="max-w-80 w-full px-4"
-            />
-          </h1>
-          <ul className="space-y-8">
-            {Links.map(({ to, title, description, Icon, style }) => {
-              return (
-                <li key={to} className="">
-                  <Link
-                    to={to}
-                    className={twMerge(
-                      "flex justify-center items-center flex-row space-x-4",
-                      "px-10 py-4 bg-neutral-100 rounded-full mx-auto w-[300px] h-[100px] space-y-1 shadow-md hover:bg-neutral-200 transition-colors",
-                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900",
-                      style,
-                    )}
-                  >
-                    <Icon />
-                    <p className="space-y-1 flex flex-col">
-                      <Text tagName="span" bold>
-                        {title}
-                      </Text>
-                      <Text tagName="span" size="xs" className="break-keep">
-                        {description}
-                      </Text>
-                    </p>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </MainFrame>
-    </main>
+    <MainFrame>
+      <img
+        src="/images/top-bg.png"
+        alt=""
+        role="presentation"
+        className="absolute top-0 left-0 w-full opacity-90"
+      />
+      <div className="relative z-10">
+        <h1 className="mt-[35%] flex justify-center w-full mb-32">
+          <img
+            src="/images/top-logo.svg"
+            alt=""
+            role="presentation"
+            style={{ aspectRatio: 544 / 140 }}
+            className="max-w-80 w-full px-4"
+          />
+          <span className="sr-only">ISURIDE Top</span>
+        </h1>
+        <ul className="space-y-8">
+          {Links.map(({ to, title, description, Icon, style }) => {
+            return (
+              <li key={to} className="">
+                <Link
+                  to={to}
+                  className={twMerge(
+                    "flex justify-center items-center flex-row space-x-4",
+                    "px-10 py-4 bg-neutral-100 rounded-full mx-auto w-[300px] h-[100px] space-y-1 shadow-md hover:bg-neutral-200 transition-colors",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900",
+                    style,
+                  )}
+                >
+                  <Icon />
+                  <p className="space-y-1 flex flex-col">
+                    <Text tagName="span" bold>
+                      {title}
+                    </Text>
+                    <Text
+                      tagName="span"
+                      size="xs"
+                      className="break-keep leading-normal"
+                    >
+                      {description}
+                    </Text>
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </MainFrame>
   );
 }
