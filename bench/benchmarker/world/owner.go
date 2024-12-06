@@ -236,10 +236,20 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 	return nil
 }
 
+const (
+	desiredChairNumFirstTerm   = 15000
+	desiredChairNumCommonRatio = 1.02
+)
+
+var (
+	desiredChairNum50thTerm = desiredChairNumFirstTerm * math.Pow(desiredChairNumCommonRatio, 50-1)
+	desiredChairNum50Sum    = int(desiredChairNumFirstTerm * (math.Pow(desiredChairNumCommonRatio, 50) - 1) / (desiredChairNumCommonRatio - 1))
+)
+
 func desiredChairNum(s int) int {
-	const (
-		a = 15000
-		r = 1.02
-	)
-	return int(math.Log((a-float64(s)*(1-r))/a) / math.Log(r))
+	if s >= desiredChairNum50Sum {
+		// 50個以降は必要売り上げが一定
+		return 50 + int(float64(s-desiredChairNum50Sum)/desiredChairNum50thTerm)
+	}
+	return int(math.Log((desiredChairNumFirstTerm-float64(s)*(1-desiredChairNumCommonRatio))/desiredChairNumFirstTerm) / math.Log(desiredChairNumCommonRatio))
 }

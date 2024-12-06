@@ -4,8 +4,7 @@ const baseUrl = __API_BASE_URL__;
 
 export type ErrorWrapper<TError> =
   | TError
-  | { status: "unknown"; payload: string }
-  | { status: number; payload: string };
+  | { status: "unknown"; payload: string };
 
 export type ApiFetcherOptions<TBody, THeaders, TQueryParams, TPathParams> = {
   url: string;
@@ -74,10 +73,7 @@ export async function apiFetch<
     if (!response.ok) {
       let error: ErrorWrapper<TError>;
       try {
-        error = {
-          status: response.status,
-          payload: await response.text()
-        };
+        error = await response.json();
       } catch (e) {
         error = {
           status: "unknown" as const,
@@ -92,7 +88,7 @@ export async function apiFetch<
     }
 
     if (response.headers.get("content-type")?.includes("json")) {
-      return {...await response.json(), _responseStatus: response.status};
+      return await response.json();
     } else {
       // if it is not a json response, assume it is a blob and cast it to TData
       return (await response.blob()) as unknown as TData;

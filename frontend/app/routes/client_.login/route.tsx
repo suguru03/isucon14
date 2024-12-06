@@ -4,28 +4,28 @@ import { useState } from "react";
 import { Button } from "~/components/primitives/button/button";
 import { TextInput } from "~/components/primitives/form/text-input";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
-import { getOwners } from "~/utils/get-initial-data";
+import { getUsers } from "~/utils/get-initial-data";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Login | Owner | ISURIDE" },
-    { name: "description", content: "オーナーログイン" },
+    { title: "Login | ISURIDE" },
+    { name: "description", content: "ユーザーログイン" },
   ];
 };
 
-export default function OwnerLogin() {
+export default function ClientLogin() {
   const [sessionToken, setSessionToken] = useState<string>();
   const navigate = useNavigate();
-  const presetOwners = getOwners();
+  const presetUsers = getUsers();
 
   const handleOnClick = () => {
-    document.cookie = `owner_session=${sessionToken}; path=/`;
-    navigate("/owner");
+    document.cookie = `app_session=${sessionToken}; path=/`;
+    navigate("/client");
   };
 
   return (
     <FormFrame>
-      <h1 className="text-2xl font-semibold mb-6">オーナーログイン</h1>
+      <h1 className="text-2xl font-semibold mb-6">ユーザーログイン</h1>
       <div className="mb-4">
         <TextInput
           id="sessionToken"
@@ -38,13 +38,13 @@ export default function OwnerLogin() {
         <details className="mt-3">
           <summary className="mb-2 ps-2 cursor-pointer">presetから選択</summary>
           <ul className="list-disc ps-8 space-y-1">
-            {presetOwners.map((preset) => (
+            {presetUsers.map((preset) => (
               <li key={preset.id}>
                 <button
                   className="text-blue-600 hover:underline"
                   onClick={() => setSessionToken(preset.token)}
                 >
-                  {preset.name}
+                  {preset.username}
                 </button>
               </li>
             ))}
@@ -59,8 +59,8 @@ export default function OwnerLogin() {
         >
           ログイン
         </Button>
-        <p className="text-center">
-          <Link to="/owner/register" className="text-blue-600 hover:underline">
+        <p className="text-center mt-2">
+          <Link to="/client/register" className="text-blue-600 hover:underline">
             新規登録
           </Link>
         </p>

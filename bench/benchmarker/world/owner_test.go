@@ -4,7 +4,7 @@ import "testing"
 
 func TestDesiredChairNum(t *testing.T) {
 	n := 0
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 30000; i++ {
 		num := desiredChairNum(i * 100)
 		if num > n {
 			n = num
