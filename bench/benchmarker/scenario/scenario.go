@@ -290,13 +290,24 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
+				slog.Debug("時間経過", slog.Int64("tick", s.world.Time))
+				s.evaluationMapLock.RLock()
+				slog.Debug("eval", slog.Int("reqs", s.completedRequests), slog.Any("score", s.evalScoreMap), slog.Any("criteria", s.evaluationMap))
+				s.evaluationMapLock.RUnlock()
+			}
+			if s.world.Time%(world.LengthOfHour*3) == 0 {
 				s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人、既存ユーザーの招待経由で%d人が新規登録しました", s.world.NotInvitedUserCount.Load(), s.world.InvitedUserCount.Load()))
 				if num := s.world.LeavedUserCount.Load(); num > 0 {
 					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}
-				slog.Debug("時間経過", slog.Int64("tick", s.world.Time))
 				s.evaluationMapLock.RLock()
-				slog.Debug("eval", slog.Int("reqs", s.completedRequests), slog.Any("score", s.evalScoreMap), slog.Any("criteria", s.evaluationMap))
+				if s.completedRequests > 0 {
+					s.contestantLogger.Info(fmt.Sprintf("%.1f%%のライドは椅子がマッチされるまでの時間、%.1f%%のライドはマッチされた椅子が乗車地点までに掛かる時間、%.1f%%のライドは椅子の実移動時間に不満がありました",
+						(1-float64(s.evaluationMap[0])/float64(s.completedRequests))*100,
+						(1-float64(s.evaluationMap[1])/float64(s.completedRequests))*100,
+						(1-float64(s.evaluationMap[2]+s.evaluationMap[3])/float64(s.completedRequests*2))*100,
+					))
+				}
 				s.evaluationMapLock.RUnlock()
 			}
 		}
