@@ -32,7 +32,6 @@ type SimulatorContextProps = {
   setCoordinate?: (coordinate: Coordinate) => void;
   setToken?: (token: string) => void;
   isAnotherSimulatorBeingUsed?: boolean;
-  setClientRideId?: (rideId?: string) => void;
 };
 
 const SimulatorContext = createContext<SimulatorContextProps>({});
@@ -44,7 +43,12 @@ function jsonFromSseResult<T>(value: string) {
 }
 
 function isRiding(status: RideStatus | undefined) {
-  return status === "ARRIVED" || status === "CARRYING" || status === "ENROUTE" || status === "PICKUP"
+  return (
+    status === "ARRIVED" ||
+    status === "CARRYING" ||
+    status === "ENROUTE" ||
+    status === "PICKUP"
+  );
 }
 
 const useNotification = (): ChairGetNotificationResponse["data"] => {
@@ -203,9 +207,13 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isAnotherSimulatorBeingUsed = useMemo(() => {
-    console.log('isAnotherSimulatorBeingUsed', clientRideId, isRiding(data?.status) && clientRideId !== data?.ride_id)
-    return  isRiding(data?.status) && clientRideId !== data?.ride_id
-  }, [clientRideId, data])
+    console.log(
+      "isAnotherSimulatorBeingUsed",
+      clientRideId,
+      isRiding(data?.status) && clientRideId !== data?.ride_id,
+    );
+    return isRiding(data?.status) && clientRideId !== data?.ride_id;
+  }, [clientRideId, data]);
 
   useEffect(() => {
     const onMessage = ({
@@ -234,13 +242,6 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
         setCoordinate,
         setToken,
         isAnotherSimulatorBeingUsed,
-        setClientRideId: (rideId) => {
-          console.log('rideId', rideId);
-          if (rideId) {
-            setClientRideId(rideId);
-            setSimulatorCurrentRideId(rideId);
-          }
-        },
       }}
     >
       {children}

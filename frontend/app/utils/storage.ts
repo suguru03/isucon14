@@ -66,9 +66,9 @@ export const getUserId = (): string | null => {
 };
 
 export const setSimulatorCurrentRideId = (rideId: string) => {
-  return setStorage("simulator.currentRideId", rideId, sessionStorage)
-}
+  return setStorage("simulator.currentRideId", rideId, sessionStorage);
+};
 
 export const getSimulatorCurrentRideId = (): string | null => {
-  return getStorage("simulator.currentRideId", sessionStorage)
-}
+  return getStorage("simulator.currentRideId", sessionStorage);
+};

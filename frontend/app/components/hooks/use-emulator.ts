@@ -64,32 +64,43 @@ const postCarring = (rideId: string) => {
 };
 
 export const useEmulator = () => {
-  const { chair, data, setCoordinate, isAnotherSimulatorBeingUsed, setClientRideId } = useSimulatorContext();
-  const timeoutIdRef = useRef<ReturnType<(typeof setTimeout)>>()
+  const { chair, data, setCoordinate, isAnotherSimulatorBeingUsed } =
+    useSimulatorContext();
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout>>();
+  const { pickup_coordinate, destination_coordinate, ride_id, status } =
+    data ?? {};
   useEffect(() => {
-    if (!isAnotherSimulatorBeingUsed) return () => {
-      clearTimeout(timeoutIdRef.current)
-      timeoutIdRef.current = undefined;
-    };
+    if (!(pickup_coordinate && destination_coordinate && ride_id))
+      return;
+    let timeoutId: ReturnType<typeof setTimeout>;
     if (timeoutIdRef.current === undefined) {
-      console.log('current===undefined')
-      timeoutIdRef.current = setTimeout(() => {
-        const rideId = data?.ride_id;
-        console.log('奪うよ', rideId, data?.status)
-        switch(data?.status) {
+      const polling = () => {
+        switch (status) {
           case "ENROUTE":
+            timeoutId = setTimeout(() => {
+              currentCoodinatePost(pickup_coordinate);
+            }, 60_000)
+            break;
           case "PICKUP":
-            setCoordinate?.(data?.pickup_coordinate)
-            setClientRideId?.(rideId)
-          break;
+            timeoutId = setTimeout(() => {
+              currentCoodinatePost(pickup_coordinate);
+              postCarring(ride_id);
+              void polling();
+            }, 10_000);
+            break;
           case "CARRYING":
-          case "ARRIVED":
-            setCoordinate?.(data?.destination_coordinate)
-            setClientRideId?.(rideId)
+            timeoutId = setTimeout(() => {
+              currentCoodinatePost(destination_coordinate);
+            }, 60_000)
+            break;
         }
-      },60_000)
+      };
+      polling()
     }
-  },[timeoutIdRef, isAnotherSimulatorBeingUsed, data])
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isAnotherSimulatorBeingUsed, status]);
 
   useEffect(() => {
     if (isAnotherSimulatorBeingUsed) return;
@@ -105,6 +116,7 @@ export const useEmulator = () => {
             postEnroute(data.ride_id, chair.coordinate);
             break;
           case "PICKUP":
+            setCoordinate?.(data.pickup_coordinate);
             postCarring(data.ride_id);
             break;
           case "ENROUTE":
@@ -115,6 +127,8 @@ export const useEmulator = () => {
               move(chair.coordinate, data.destination_coordinate),
             );
             break;
+          case "ARRIVED":
+            setCoordinate?.(data.destination_coordinate);
         }
       } catch (e) {
         // statusの更新タイミングの都合で到着状態を期待しているが必ず取れるとは限らない
