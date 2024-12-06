@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/internal")
 @router.get("/matching", status_code=HTTPStatus.NO_CONTENT)
 def internal_get_matching() -> None:
     # MEMO: 一旦最も待たせているリクエストに適当な空いている椅子マッチさせる実装とする。おそらくもっといい方法があるはず…
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         row = conn.execute(
             text(
                 "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1"
@@ -28,7 +28,7 @@ def internal_get_matching() -> None:
     empty = False
 
     for _ in range(0, 10):
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             row = conn.execute(
                 text(
                     "SELECT * FROM chairs INNER JOIN (SELECT id FROM chairs WHERE is_active = TRUE ORDER BY RAND() LIMIT 1) AS tmp ON chairs.id = tmp.id LIMIT 1"
@@ -38,7 +38,7 @@ def internal_get_matching() -> None:
             return
         matched = Chair.model_validate(row)
 
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             empty = bool(
                 conn.execute(
                     text(
@@ -53,9 +53,9 @@ def internal_get_matching() -> None:
     if not empty:
         return
 
-    with engine.begin() as transaction:
+    with engine.begin() as conn:
         assert matched
-        transaction.execute(
+        conn.execute(
             text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
             {"chair_id": matched.id, "id": ride.id},
         )
