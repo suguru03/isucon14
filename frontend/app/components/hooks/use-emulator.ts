@@ -3,6 +3,7 @@ import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
 } from "~/api/api-components";
+import { RideId } from "~/api/api-parameters";
 import { Coordinate } from "~/api/api-schemas";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import {
@@ -36,11 +37,11 @@ const move = (
   }
 };
 
-const currentCoodinatePost = (coordinate: Coordinate) => {
+const currentCoodinatePost = async (coordinate: Coordinate) => {
   setSimulatorCurrentCoordinate(coordinate);
-  void fetchChairPostCoordinate({
+  void (await fetchChairPostCoordinate({
     body: coordinate,
-  }).catch((e) => console.error(e));
+  }));
 };
 
 const postEnroute = (rideId: string, coordinate: Coordinate) => {
@@ -62,22 +63,73 @@ const postCarring = (rideId: string) => {
   }).catch((e) => console.error(e));
 };
 
+const forcePickup = (pickup_coordinate: Coordinate) =>
+  setTimeout(() => {
+    void currentCoodinatePost(pickup_coordinate);
+  }, 60_000);
+
+const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
+  setTimeout(() => {
+    try {
+      void (async () => {
+        void (await currentCoodinatePost(pickup_coordinate));
+        postCarring(rideId);
+      })();
+    } catch (error) {
+      console.error(error);
+    }
+  }, 10_000);
+
+const forceArrive = (pickup_coordinate: Coordinate) =>
+  setTimeout(() => {
+    void currentCoodinatePost(pickup_coordinate);
+  }, 60_000);
+
 export const useEmulator = () => {
-  const { chair, data, setCoordinate } = useSimulatorContext();
+  const { chair, data, setCoordinate, isAnotherSimulatorBeingUsed } =
+    useSimulatorContext();
+  const { pickup_coordinate, destination_coordinate, ride_id, status } =
+    data ?? {};
+  useEffect(() => {
+    if (!(pickup_coordinate && destination_coordinate && ride_id)) return;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    switch (status) {
+      case "ENROUTE":
+        timeoutId = forcePickup(pickup_coordinate);
+        break;
+      case "PICKUP":
+        timeoutId = forceCarry(pickup_coordinate, ride_id);
+        break;
+      case "CARRYING":
+        timeoutId = forceArrive(destination_coordinate);
+        break;
+    }
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [
+    isAnotherSimulatorBeingUsed,
+    status,
+    destination_coordinate,
+    pickup_coordinate,
+    ride_id,
+  ]);
 
   useEffect(() => {
+    if (isAnotherSimulatorBeingUsed) return;
     if (!(chair && data)) {
       return;
     }
 
     const timeoutId = setTimeout(() => {
-      currentCoodinatePost(chair.coordinate);
+      void currentCoodinatePost(chair.coordinate);
       try {
         switch (data.status) {
           case "MATCHING":
             postEnroute(data.ride_id, chair.coordinate);
             break;
           case "PICKUP":
+            setCoordinate?.(data.pickup_coordinate);
             postCarring(data.ride_id);
             break;
           case "ENROUTE":
@@ -88,6 +140,8 @@ export const useEmulator = () => {
               move(chair.coordinate, data.destination_coordinate),
             );
             break;
+          case "ARRIVED":
+            setCoordinate?.(data.destination_coordinate);
         }
       } catch (e) {
         // statusの更新タイミングの都合で到着状態を期待しているが必ず取れるとは限らない
@@ -97,5 +151,5 @@ export const useEmulator = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [chair, data, setCoordinate]);
+  }, [chair, data, setCoordinate, isAnotherSimulatorBeingUsed]);
 };

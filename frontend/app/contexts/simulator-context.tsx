@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Coordinate } from "~/api/api-schemas";
+import type { Coordinate, RideStatus } from "~/api/api-schemas";
 import {
   getSimulateChair,
   getSimulateChairFromToken,
@@ -20,7 +20,11 @@ import {
 import { SimulatorChair } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 import { Message, MessageTypes } from "~/utils/post-message";
-import { getSimulatorCurrentCoordinate } from "~/utils/storage";
+import {
+  getSimulatorCurrentCoordinate,
+  getSimulatorCurrentRideId,
+  setSimulatorCurrentRideId,
+} from "~/utils/storage";
 
 type SimulatorContextProps = {
   chair?: SimulatorChair;
@@ -36,6 +40,15 @@ const initilalChair = getSimulateChair();
 function jsonFromSseResult<T>(value: string) {
   const data = value.slice("data:".length).trim();
   return JSON.parse(data) as T;
+}
+
+function isRiding(status: RideStatus | undefined) {
+  return (
+    status === "ARRIVED" ||
+    status === "CARRYING" ||
+    status === "ENROUTE" ||
+    status === "PICKUP"
+  );
 }
 
 const useNotification = (): ChairGetNotificationResponse["data"] => {
@@ -189,7 +202,13 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [clientRideId, setClientRideId] = useState<string>();
-  const isAnotherSimulatorBeingUsed = !clientRideId && !!data?.ride_id;
+  useEffect(() => {
+    setClientRideId((prev) => prev ?? getSimulatorCurrentRideId() ?? undefined);
+  }, []);
+
+  const isAnotherSimulatorBeingUsed = useMemo(() => {
+    return isRiding(data?.status) && clientRideId !== data?.ride_id;
+  }, [clientRideId, data]);
 
   useEffect(() => {
     const onMessage = ({
@@ -197,7 +216,11 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
     }: MessageEvent<Message["ClientRideRequested"]>) => {
       const isSameOrigin = origin == location.origin;
       if (isSameOrigin && data.type === MessageTypes.ClientRideRequested) {
-        setClientRideId(data?.payload?.rideId);
+        const rideId = data?.payload?.rideId;
+        if (rideId) {
+          setClientRideId(rideId);
+          setSimulatorCurrentRideId(rideId);
+        }
       }
     };
     window.addEventListener("message", onMessage);
