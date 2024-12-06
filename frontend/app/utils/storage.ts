@@ -64,3 +64,11 @@ export const setUserId = (id: string) => {
 export const getUserId = (): string | null => {
   return getStorage("user.id", sessionStorage);
 };
+
+export const setSimulatorCurrentRideId = (rideId: string) => {
+  return setStorage("simulator.currentRideId", rideId, sessionStorage)
+}
+
+export const getSimulatorCurrentRideId = (): string | null => {
+  return getStorage("simulator.currentRideId", sessionStorage)
+}

@@ -20,7 +20,11 @@ import {
 import { SimulatorChair } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 import { Message, MessageTypes } from "~/utils/post-message";
-import { getSimulatorCurrentCoordinate } from "~/utils/storage";
+import {
+  getSimulatorCurrentCoordinate,
+  getSimulatorCurrentRideId,
+  setSimulatorCurrentRideId,
+} from "~/utils/storage";
 
 type SimulatorContextProps = {
   chair?: SimulatorChair;
@@ -189,17 +193,21 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [clientRideId, setClientRideId] = useState<string>();
+  useEffect(() => {
+    setClientRideId((prev) => prev ?? getSimulatorCurrentRideId() ?? undefined);
+  }, []);
   const isAnotherSimulatorBeingUsed = !clientRideId && !!data?.ride_id;
-
-  console.log(isAnotherSimulatorBeingUsed);
-
   useEffect(() => {
     const onMessage = ({
       data,
     }: MessageEvent<Message["ClientRideRequested"]>) => {
       const isSameOrigin = origin == location.origin;
       if (isSameOrigin && data.type === MessageTypes.ClientRideRequested) {
-        setClientRideId(data?.payload?.rideId);
+        const rideId = data?.payload?.rideId;
+        if (rideId) {
+          setClientRideId(rideId);
+          setSimulatorCurrentRideId(rideId);
+        }
       }
     };
     window.addEventListener("message", onMessage);
