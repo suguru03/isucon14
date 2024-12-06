@@ -68,52 +68,12 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		p.Amount = req.Amount
 	}
 
-	time.Sleep(s.processTime)
-	// (直近3秒で処理された payment の数) / 100 の確率で処理を失敗させる(最大50%)
-	var recentProcessedCount int
-	for _, processed := range s.processedPayments.BackwardIter() {
-		if time.Since(processed.processedAt) > 3*time.Second {
-			break
-		}
-		recentProcessedCount++
-	}
-	failurePercentage := recentProcessedCount
-	if failurePercentage > 50 {
-		failurePercentage = 50
-	}
-	if rand.IntN(100) > failurePercentage {
-		// lock はここでしか触らない。lock が true の場合は idempotency key が同じリクエストが処理中の場合のみ
-		if p.locked.CompareAndSwap(false, true) {
-			alreadyProcessed := false
-			if !newPayment {
-				for _, processed := range s.processedPayments.ToSlice() {
-					if processed.payment == p {
-						alreadyProcessed = true
-						break
-					}
-				}
-			}
-			if !alreadyProcessed {
-				p.Status = s.verifier.Verify(p)
-				if p.Status.Err != nil {
-					s.errChan <- p.Status.Err
-				}
-				s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
-				p.locked.Store(false)
-			}
-		}
-	}
+	// 決済処理
+	// キューに入れて完了を待つ(ブロッキング)
+	if s.queue.tryProcess(p) {
+		<-p.processChan
+		p.locked.Store(false)
 
-	// 不安定なエラーを再現
-	switch rand.IntN(4) {
-	case 0:
-		w.WriteHeader(http.StatusInternalServerError)
-	case 1:
-		w.WriteHeader(http.StatusBadGateway)
-	case 2:
-		w.WriteHeader(http.StatusGatewayTimeout)
-	case 3:
-		// ちゃんとレスポンスを返す場合
 		select {
 		case <-r.Context().Done():
 			// クライアントが既に切断している
@@ -121,6 +81,48 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 			writeResponse(w, p.Status)
 		}
+		return
+	}
+
+	// キューが詰まっていても確率で成功させる
+	if rand.IntN(5) == 0 {
+		slog.Debug("決済が詰まったが成功")
+
+		go s.queue.process(p)
+		<-p.processChan
+		p.locked.Store(false)
+
+		select {
+		case <-r.Context().Done():
+			// クライアントが既に切断している
+			w.WriteHeader(http.StatusGatewayTimeout)
+		default:
+			writeResponse(w, p.Status)
+		}
+		return
+	}
+
+	// エラーを返した場合でもキューに入る場合がある
+	if rand.IntN(5) < 4 {
+		go s.queue.process(p)
+		// 処理の終了を待たない
+		go func() {
+			<-p.processChan
+			p.locked.Store(false)
+		}()
+		slog.Debug("決済が詰まったが、キューに積んでエラー")
+	} else {
+		slog.Debug("決済が詰まってエラー")
+	}
+
+	// 不安定なエラーを再現
+	switch rand.IntN(3) {
+	case 0:
+		w.WriteHeader(http.StatusInternalServerError)
+	case 1:
+		w.WriteHeader(http.StatusBadGateway)
+	case 2:
+		w.WriteHeader(http.StatusGatewayTimeout)
 	}
 }
 
@@ -144,14 +146,11 @@ func (s *Server) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payments := s.processedPayments.ToSlice()
+	payments := s.queue.getAllAcceptedPayments(token)
 
 	res := []ResponsePayment{}
 	for _, p := range payments {
-		if p.payment.Token != token {
-			continue
-		}
-		res = append(res, NewResponsePayment(p.payment))
+		res = append(res, NewResponsePayment(p))
 	}
 	writeJSON(w, http.StatusOK, res)
 }
