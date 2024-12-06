@@ -7,9 +7,7 @@ import {
   useState,
 } from "react";
 import type { Coordinate, RideStatus } from "~/api/api-schemas";
-import {
-  getSimulateChair,
-} from "~/utils/get-initial-data";
+import { getSimulateChair } from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
 import {
@@ -171,7 +169,6 @@ const useNotification = (): ChairGetNotificationResponse["data"] => {
 
   return notification?.data;
 };
-
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {

@@ -41,5 +41,5 @@ export const getUsers = (): InitialUser[] => {
 };
 
 export const getSimulateChair = (): InitialChair | undefined => {
-  return initialData?.chair
+  return initialData?.chair;
 };
