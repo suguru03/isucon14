@@ -6,7 +6,7 @@ import { Button } from "~/components/primitives/button/button";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
-import { isClientApiError } from "~/types";
+import { isClientApiError } from "~/utils/api-error";
 
 export const meta: MetaFunction = () => {
   return [

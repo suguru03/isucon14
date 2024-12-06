@@ -11,7 +11,7 @@ import {
   AppGetNotificationResponse,
   fetchAppGetNotification,
 } from "~/api/api-components";
-import { isClientApiError } from "~/types";
+import { isClientApiError } from "~/utils/api-error";
 import { getCookieValue } from "~/utils/get-cookie-value";
 import { getUserId } from "~/utils/storage";
 

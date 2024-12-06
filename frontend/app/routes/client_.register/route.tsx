@@ -12,7 +12,7 @@ import { DateInput } from "~/components/primitives/form/date";
 import { TextInput } from "~/components/primitives/form/text";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
-import { isClientApiError } from "~/types";
+import { isClientApiError } from "~/utils/api-error";
 import { saveCampaignData } from "~/utils/storage";
 
 export const meta: MetaFunction = () => {
