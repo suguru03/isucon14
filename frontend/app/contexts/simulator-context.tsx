@@ -207,11 +207,6 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isAnotherSimulatorBeingUsed = useMemo(() => {
-    console.log(
-      "isAnotherSimulatorBeingUsed",
-      clientRideId,
-      isRiding(data?.status) && clientRideId !== data?.ride_id,
-    );
     return isRiding(data?.status) && clientRideId !== data?.ride_id;
   }, [clientRideId, data]);
 

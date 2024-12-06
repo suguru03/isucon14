@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
 } from "~/api/api-components";
+import { RideId } from "~/api/api-parameters";
 import { Coordinate } from "~/api/api-schemas";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import {
@@ -62,44 +63,51 @@ const postCarring = (rideId: string) => {
   }).catch((e) => console.error(e));
 };
 
+const forcePickup = (pickup_coordinate: Coordinate) =>
+  setTimeout(() => {
+    currentCoodinatePost(pickup_coordinate);
+  }, 60_000);
+
+const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
+  setTimeout(() => {
+    currentCoodinatePost(pickup_coordinate);
+    postCarring(rideId);
+  }, 10_000);
+
+const forceArrive = (pickup_coordinate: Coordinate) =>
+  setTimeout(() => {
+    currentCoodinatePost(pickup_coordinate);
+  }, 60_000);
+
 export const useEmulator = () => {
   const { chair, data, setCoordinate, isAnotherSimulatorBeingUsed } =
     useSimulatorContext();
-  const timeoutIdRef = useRef<ReturnType<typeof setTimeout>>();
   const { pickup_coordinate, destination_coordinate, ride_id, status } =
     data ?? {};
   useEffect(() => {
-    if (!(pickup_coordinate && destination_coordinate && ride_id))
-      return;
+    if (!(pickup_coordinate && destination_coordinate && ride_id)) return;
     let timeoutId: ReturnType<typeof setTimeout>;
-    if (timeoutIdRef.current === undefined) {
-      const polling = () => {
-        switch (status) {
-          case "ENROUTE":
-            timeoutId = setTimeout(() => {
-              currentCoodinatePost(pickup_coordinate);
-            }, 60_000)
-            break;
-          case "PICKUP":
-            timeoutId = setTimeout(() => {
-              currentCoodinatePost(pickup_coordinate);
-              postCarring(ride_id);
-              void polling();
-            }, 10_000);
-            break;
-          case "CARRYING":
-            timeoutId = setTimeout(() => {
-              currentCoodinatePost(destination_coordinate);
-            }, 60_000)
-            break;
-        }
-      };
-      polling()
+    switch (status) {
+      case "ENROUTE":
+        timeoutId = forcePickup(pickup_coordinate);
+        break;
+      case "PICKUP":
+        timeoutId = forceCarry(pickup_coordinate, ride_id);
+        break;
+      case "CARRYING":
+        timeoutId = forceArrive(destination_coordinate);
+        break;
     }
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [isAnotherSimulatorBeingUsed, status, destination_coordinate, pickup_coordinate, ride_id]);
+  }, [
+    isAnotherSimulatorBeingUsed,
+    status,
+    destination_coordinate,
+    pickup_coordinate,
+    ride_id,
+  ]);
 
   useEffect(() => {
     if (isAnotherSimulatorBeingUsed) return;
