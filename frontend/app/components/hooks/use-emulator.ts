@@ -7,7 +7,6 @@ import { Coordinate } from "~/api/api-schemas";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import {
   setSimulatorCurrentCoordinate,
-  setSimulatorCurrentRideId,
   setSimulatorStartCoordinate,
 } from "~/utils/storage";
 
@@ -100,7 +99,7 @@ export const useEmulator = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [isAnotherSimulatorBeingUsed, status]);
+  }, [isAnotherSimulatorBeingUsed, status, destination_coordinate, pickup_coordinate, ride_id]);
 
   useEffect(() => {
     if (isAnotherSimulatorBeingUsed) return;
