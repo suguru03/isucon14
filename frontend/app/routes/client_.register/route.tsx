@@ -72,7 +72,8 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     return redirect(`/client/register-payment`);
   } catch (e) {
     console.error(`ERROR: ${JSON.stringify(e)}`);
-    errors.register = "ユーザーの登録に失敗しました。接続に問題があるか、ユーザー名が登録済みの可能性があります。";
+    errors.register =
+      "ユーザーの登録に失敗しました。接続に問題があるか、ユーザー名が登録済みの可能性があります。";
     return json({ errors });
   }
 };
