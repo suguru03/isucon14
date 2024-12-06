@@ -10,6 +10,11 @@ import (
 
 	"github.com/guregu/null/v5"
 	"github.com/isucon/isucandar"
+	"github.com/isucon/isucandar/agent"
+	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+
 	"github.com/isucon/isucon14/bench/benchmarker/scenario/worldclient"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp"
 	"github.com/isucon/isucon14/bench/benchmarker/webapp/api"
@@ -17,9 +22,6 @@ import (
 	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/benchrun/gen/isuxportal/resources"
 	"github.com/isucon/isucon14/bench/payment"
-	"github.com/samber/lo"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 )
 
 // Scenario はシナリオを表す構造体
@@ -181,13 +183,22 @@ func (s *Scenario) Prepare(ctx context.Context, step *isucandar.BenchmarkStep) e
 		TargetBaseURL:         s.target,
 		TargetAddr:            s.addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-	})
+	}, agent.WithTimeout(30*time.Second))
 	if err != nil {
 		return err
 	}
 
 	if err := s.initializeData(ctx, client); err != nil {
 		s.contestantLogger.Error("initializeに失敗しました", slog.String("error", err.Error()))
+		return err
+	}
+
+	client, err = webapp.NewClient(webapp.ClientConfig{
+		TargetBaseURL:         s.target,
+		TargetAddr:            s.addr,
+		ClientIdleConnTimeout: 10 * time.Second,
+	})
+	if err != nil {
 		return err
 	}
 

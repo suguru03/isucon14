@@ -21,7 +21,7 @@ type ClientConfig struct {
 	ClientIdleConnTimeout time.Duration
 }
 
-func NewClient(config ClientConfig) (*Client, error) {
+func NewClient(config ClientConfig, agentOptions ...agent.AgentOption) (*Client, error) {
 	trs := agent.DefaultTransport.Clone()
 	trs.IdleConnTimeout = config.ClientIdleConnTimeout
 	if len(config.TargetAddr) > 0 {
@@ -34,9 +34,11 @@ func NewClient(config ClientConfig) (*Client, error) {
 		}
 	}
 	ag, err := agent.NewAgent(
-		agent.WithBaseURL(config.TargetBaseURL),
-		agent.WithTimeout(10*time.Second),
-		agent.WithTransport(trs),
+		append([]agent.AgentOption{
+			agent.WithBaseURL(config.TargetBaseURL),
+			agent.WithTimeout(10 * time.Second),
+			agent.WithTransport(trs),
+		}, agentOptions...)...,
 	)
 	if err != nil {
 		return nil, err
