@@ -22,7 +22,7 @@ const Links = [
   {
     to: "/simulator",
     title: "Simulator Aplication",
-    description: "ISUCON競技者用 アプリ動作シュミレーター",
+    description: "ISUCON競技者用 アプリ動作シミュレーター",
     Icon: () => <IsurideIcon fill="#fff" width={30} height={30}></IsurideIcon>,
     style: "bg-sky-600 text-white hover:bg-sky-700",
   },
@@ -84,7 +84,7 @@ export default function Index() {
                       <Text tagName="span" bold>
                         {title}
                       </Text>
-                      <Text tagName="span" size="xs">
+                      <Text tagName="span" size="xs" className="break-keep">
                         {description}
                       </Text>
                     </p>
