@@ -219,16 +219,16 @@ sub app_get_rides ($c) {
         $item->{chair}->{name}  = $chair->{name};
         $item->{chair}->{model} = $chair->{model};
 
-        my $owener = $db->select_row(
+        my $owner = $db->select_row(
             q{SELECT * FROM owners WHERE id = ?},
             $chair->{owner_id}
         );
 
-        unless ($owener) {
+        unless ($owner) {
             return $c->halt_json(HTTP_INTERNAL_SERVER_ERROR, 'sql: no rows in result set');
         }
 
-        $item->{chair}->{owner} = $owener->{name};
+        $item->{chair}->{owner} = $owner->{name};
 
         push $items->@*, $item;
     }
