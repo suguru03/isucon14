@@ -134,7 +134,7 @@ type ResponsePayment struct {
 func NewResponsePayment(p *Payment) ResponsePayment {
 	return ResponsePayment{
 		Amount: p.Amount,
-		Status: p.Status.String(),
+		Status: p.Status.Type.String(),
 	}
 }
 
@@ -164,7 +164,7 @@ func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 }
 
 func writeResponse(w http.ResponseWriter, paymentStatus Status) {
-	switch paymentStatus {
+	switch paymentStatus.Type {
 	case StatusInitial:
 		w.WriteHeader(http.StatusNoContent)
 	case StatusSuccess:

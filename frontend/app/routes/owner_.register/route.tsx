@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import { fetchOwnerPostOwners } from "~/api/api-components";
 import { Button } from "~/components/primitives/button/button";
-import { TextInput } from "~/components/primitives/form/text";
+import { TextInput } from "~/components/primitives/form/text-input";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
 import { isClientApiError } from "~/types";
@@ -75,7 +75,7 @@ export default function ProviderRegister() {
             id="ownerName"
             name="ownerName"
             label="オーナー名"
-            onChange={setOwnerName}
+            onChange={(e) => setOwnerName(e.target.value)}
           />
         </div>
         <Button

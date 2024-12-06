@@ -73,6 +73,8 @@ const (
 	ErrorCodeWrongNearbyChairs
 	// ErrorCodeLackOfNearbyChairs 取得した付近の椅子情報が足りません
 	ErrorCodeLackOfNearbyChairs
+	// ErrorCodeMatchingTimeout マッチングに時間がかかりすぎです
+	ErrorCodeMatchingTimeout
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -83,6 +85,7 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeChairAlreadyHasRequest:                         true,
 	ErrorCodeIncorrectAmountOfFareCharged:                   true,
 	ErrorCodeUncontrollableRequestReceived:                  true,
+	ErrorCodeMatchingTimeout:                                true,
 }
 
 var ErrorTexts = map[ErrorCode]string{
@@ -113,6 +116,7 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeChairReceivedDataIsWrong:                       "椅子が受け取った通知の内容が想定と異なります",
 	ErrorCodeWrongNearbyChairs:                              "取得した付近の椅子情報に不備があります",
 	ErrorCodeLackOfNearbyChairs:                             "付近の椅子情報が想定よりも3つ以上足りていません",
+	ErrorCodeMatchingTimeout:                                "ライドが長時間マッチングされませんでした",
 }
 
 type codeError struct {

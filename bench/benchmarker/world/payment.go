@@ -1,35 +1,16 @@
 package world
 
 import (
-	"log/slog"
+	"fmt"
 
 	"github.com/isucon/isucon14/bench/internal/concurrent"
 	"github.com/isucon/isucon14/bench/payment"
 	"github.com/samber/lo"
 )
 
-type invalidPaymentReason string
-
-const (
-	// 既に支払い済み
-	invalidPaymentReasonAlreadyPaid invalidPaymentReason = "already_paid"
-	// Amount が異なる
-	invalidPaymentReasonInvalidAmount invalidPaymentReason = "invalid_amount"
-	// 進行中のリクエストがない
-	invalidPaymentReasonNoRequest invalidPaymentReason = "no_request"
-)
-
-type invalidPayment struct {
-	Payment *payment.Payment
-	Request *Request
-	Reason  invalidPaymentReason
-}
-
 type PaymentDB struct {
-	PaymentTokens     *concurrent.SimpleMap[string, *User]
-	CommittedPayments *concurrent.SimpleSlice[*payment.Payment]
-	// TODO: このフィールドに入れるんじゃなくてdeductionとかにまとめる
-	invalidPayments    *concurrent.SimpleSlice[*invalidPayment]
+	PaymentTokens      *concurrent.SimpleMap[string, *User]
+	CommittedPayments  *concurrent.SimpleSlice[*payment.Payment]
 	alreadyPaidRequest *concurrent.SimpleMap[*Request, struct{}]
 }
 
@@ -37,7 +18,6 @@ func NewPaymentDB() *PaymentDB {
 	return &PaymentDB{
 		PaymentTokens:      concurrent.NewSimpleMap[string, *User](),
 		CommittedPayments:  concurrent.NewSimpleSlice[*payment.Payment](),
-		invalidPayments:    concurrent.NewSimpleSlice[*invalidPayment](),
 		alreadyPaidRequest: concurrent.NewSimpleMap[*Request, struct{}](),
 	}
 }
@@ -45,34 +25,29 @@ func NewPaymentDB() *PaymentDB {
 func (db *PaymentDB) Verify(p *payment.Payment) payment.Status {
 	user, ok := db.PaymentTokens.Get(p.Token)
 	if !ok {
-		return payment.StatusInvalidToken
+		return payment.Status{Type: payment.StatusInvalidToken, Err: nil}
 	}
 	if p.Amount <= 0 && p.Amount > 1_000_000 {
-		return payment.StatusInvalidAmount
+		return payment.Status{Type: payment.StatusInvalidAmount, Err: nil}
 	}
 
 	// 支払いがリクエストに対して valid かどうかを確認するが、
 	// Payment Server 自体はリクエストに対して valid かどうかに関わらず決済を行う
-	// このため、invalid だった場合も status には反映しないが invalidPayments に記録する
+	// ただこの status に入れた err はベンチマーカーで critical error として扱われて即負荷走行が終了する
 	req := user.Request
+	status := payment.Status{Type: payment.StatusSuccess, Err: nil}
 	if req == nil {
-		db.invalidPayments.Append(&invalidPayment{Payment: p, Reason: invalidPaymentReasonNoRequest})
-		// TODO: ロギング
-		slog.Debug("invalid payment", "payment", p, "reason", invalidPaymentReasonNoRequest)
+		status.Err = fmt.Errorf("進行中のリクエストがありません。token: %s, amount: %v", p.Token, p.Amount)
 	}
 	if _, alreadyPaid := db.alreadyPaidRequest.Get(req); alreadyPaid {
-		db.invalidPayments.Append(&invalidPayment{Payment: p, Request: req, Reason: invalidPaymentReasonAlreadyPaid})
-		// TODO: ロギング
-		slog.Debug("invalid payment", "payment", p, "request", req, "reason", invalidPaymentReasonAlreadyPaid)
+		status.Err = fmt.Errorf("既に支払い済みです。token: %s, amount: %v, request id: %s", p.Token, p.Amount, req.ServerID)
 	}
 	if p.Amount != req.Fare() {
-		db.invalidPayments.Append(&invalidPayment{Payment: p, Request: req, Reason: invalidPaymentReasonInvalidAmount})
-		// TODO: ロギング
-		slog.Debug("invalid payment", "payment", p, "request", req, "reason", invalidPaymentReasonInvalidAmount)
+		status.Err = fmt.Errorf("支払い額が不正です。token: %s, expected amount: %v, actual amount: %v, request id: %s", p.Token, req.Fare(), p.Amount, req.ServerID)
 	}
 
 	db.CommittedPayments.Append(p)
-	return payment.StatusSuccess
+	return status
 }
 
 func (db *PaymentDB) TotalPayment() int64 {

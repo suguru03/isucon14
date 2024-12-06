@@ -5,16 +5,20 @@ import (
 	"sync/atomic"
 )
 
-type Status int
+type Status struct {
+	Type StatusType
+	Err  error
+}
+type StatusType int
 
 const (
-	StatusInitial Status = iota
+	StatusInitial StatusType = iota
 	StatusSuccess
 	StatusInvalidAmount
 	StatusInvalidToken
 )
 
-func (s Status) String() string {
+func (s StatusType) String() string {
 	switch s {
 	case StatusInitial:
 		return "決済処理中"
@@ -41,7 +45,7 @@ type Payment struct {
 func NewPayment(idk string) *Payment {
 	p := &Payment{
 		IdempotencyKey: idk,
-		Status:         StatusInitial,
+		Status:         Status{Type: StatusInitial, Err: nil},
 		processChan:    make(chan struct{}),
 	}
 	p.locked.Store(true)

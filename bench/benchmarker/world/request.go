@@ -24,9 +24,9 @@ func (r RequestStatus) String() string {
 	case RequestStatusMatching:
 		return "MATCHING"
 	case RequestStatusDispatching:
-		return "DISPATCHING"
+		return "ENROUTE"
 	case RequestStatusDispatched:
-		return "DISPATCHED"
+		return "PICKUP"
 	case RequestStatusCarrying:
 		return "CARRYING"
 	case RequestStatusArrived:
@@ -82,6 +82,9 @@ type Request struct {
 	CompletedAt int64
 	// ServerCompletedAt サーバー側で記録されている完了時間
 	ServerCompletedAt time.Time
+
+	// BenchRequestedAt ベンチがライドのリクエストを送って成功した時間
+	BenchRequestedAt time.Time
 	// BenchMatchedAt ベンチがAcceptのリクエストを送って成功した時間
 	BenchMatchedAt time.Time
 
@@ -138,8 +141,8 @@ func (r *Request) CalculateEvaluation() Evaluation {
 	}
 	{
 		// 乗車待ち時間評価
-		if r.StartPoint.V.DistanceTo(r.PickupPoint) < 25 {
-			// 割り当てられた椅子が自分の場所から距離25以内
+		if r.StartPoint.V.DistanceTo(r.PickupPoint) < 10*r.Chair.Model.Speed {
+			// 割り当てられた椅子が自分の場所から距離10*椅子スピード以内
 			result.Dispatch = true
 		}
 	}

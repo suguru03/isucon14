@@ -43,11 +43,15 @@ export default function OwnerLayout() {
 
   return (
     <OwnerProvider>
-      <div className="bg-neutral-100 flex xl:justify-center">
-        <div className="p-6 xl:p-10 h-screen flex flex-col overflow-x-hidden w-full max-w-6xl bg-white">
+      <div className="bg-neutral-100 flex justify-center">
+        <div className="p-6 lg:p-10 h-screen flex flex-col overflow-x-hidden w-full max-w-6xl bg-white">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="flex items-baseline text-3xl">
-              <IsurideIcon className="me-2" width={40} height={40} />
+            <h1 className="flex items-baseline text-xl lg:text-3xl">
+              <IsurideIcon
+                className="relative top-[2px] mr-2"
+                width={40}
+                height={40}
+              />
               オーナー様向け管理画面
             </h1>
             <Button

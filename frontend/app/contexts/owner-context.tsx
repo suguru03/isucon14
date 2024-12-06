@@ -1,9 +1,9 @@
-import { useNavigate, useSearchParams } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -13,88 +13,88 @@ import {
   fetchOwnerGetChairs,
   fetchOwnerGetSales,
 } from "~/api/api-components";
-import { isClientApiError } from "~/types";
+import { OwnerChairs, OwnerSales, isClientApiError } from "~/types";
 import { getCookieValue } from "~/utils/get-cookie-value";
 
+type DateString = `${number}-${number}-${number}`; // YYYY-MM-DD
+
 type OwnerContextProps = Partial<{
-  chairs: OwnerGetChairsResponse["chairs"];
-  sales: OwnerGetSalesResponse;
-  provider: {
+  chairs?: OwnerChairs;
+  sales?: OwnerSales;
+  provider?: {
     id: string;
     name: string;
   };
+  until?: DateString;
+  since?: DateString;
+  setUntil?: (date: string) => void;
+  setSince?: (date: string) => void;
 }>;
 
-// TODO
-const DUMMY_DATA = {
-  total_sales: 8087,
-  chairs: [
-    { id: "chair-a", name: "椅子A", sales: 999 },
-    { id: "chair-b", name: "椅子B", sales: 999 },
-  ],
-  models: [
-    { model: "モデルA", sales: 999 },
-    { model: "モデルB", sales: 999 },
-  ],
-} as const satisfies OwnerGetSalesResponse;
+const OwnerContext = createContext<OwnerContextProps>({});
 
-const OwnerContext = createContext<Partial<OwnerContextProps>>({});
+const timestamp = (date: DateString) => {
+  return Math.floor(new Date(date).getTime());
+};
 
-const timestamp = (date: string) => Math.floor(new Date(date).getTime());
+const currentDateString: DateString = (() => {
+  const offset = new Date().getTimezoneOffset() * 60000;
+  const today = new Date(Date.now() - offset);
+  return today.toISOString().slice(0, 10) as DateString;
+})();
 
 export const OwnerProvider = ({ children }: { children: ReactNode }) => {
-  // TODO: 消す
-  const [searchParams] = useSearchParams();
+  const [chairs, setChairs] = useState<OwnerGetChairsResponse["chairs"]>();
+  const [sales, setSales] = useState<OwnerGetSalesResponse>();
   const navigate = useNavigate();
-  const id = searchParams.get("id") ?? undefined;
-  const name = searchParams.get("name") ?? undefined;
-  const since = searchParams.get("since") ?? undefined;
-  const until = searchParams.get("until") ?? undefined;
+  const [until, _setUntil] = useState(currentDateString);
+  const [since, _setSince] = useState(currentDateString);
 
-  // TODO: 消す
-  const isDummy = useMemo(() => {
-    try {
-      const isDummy = sessionStorage.getItem("is-dummy-for-provider");
-      return isDummy === "true";
-    } catch (e) {
-      if (typeof e === "string") {
-        console.error(`CONSOLE ERROR: ${e}`);
-      }
-      return false;
+  const setUntil = useCallback((value: string) => {
+    if (/\d{4}-\d{2}-\d{2}/.test(value)) {
+      _setUntil(value as DateString);
     }
   }, []);
 
-  const [chairs, setChairs] = useState<OwnerGetChairsResponse>();
-  const [sales, setSales] = useState<OwnerGetSalesResponse>();
+  const setSince = useCallback((value: string) => {
+    if (/\d{4}-\d{2}-\d{2}/.test(value)) {
+      _setSince(value as DateString);
+    }
+  }, []);
 
   useEffect(() => {
-    if (isDummy) {
-      setSales({
-        total_sales: DUMMY_DATA.total_sales,
-        chairs: DUMMY_DATA.chairs,
-        models: DUMMY_DATA.models,
-      });
-    } else {
-      Promise.all([
-        fetchOwnerGetChairs({}).then((res) => setChairs(res)),
-        since && until
-          ? fetchOwnerGetSales({
-              queryParams: {
-                since: timestamp(since),
-                until: timestamp(until),
-              },
-            }).then((res) => setSales(res))
-          : Promise.resolve(),
-      ]).catch((e) => {
-        console.error(e);
-        if (isClientApiError(e)) {
-          if (e.stack.status === 401) {
+    void (async () => {
+      try {
+        const data = await fetchOwnerGetChairs({});
+        setChairs(data.chairs);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const sales = await fetchOwnerGetSales({
+          // TODO: 機能していない？
+          queryParams: {
+            since: timestamp(since),
+            until: timestamp(until),
+          },
+        });
+        setSales(sales);
+      } catch (error) {
+        if (isClientApiError(error)) {
+          if (error.stack.status === 401) {
             navigate("/owner/register");
+            return;
           }
         }
-      });
-    }
-  }, [setChairs, setSales, since, until, isDummy, navigate]);
+        console.error(error);
+      }
+    })();
+  }, [navigate, setChairs, setSales, since, until]);
 
   useEffect(() => {
     const isRegistered =
@@ -104,16 +104,12 @@ export const OwnerProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [navigate]);
 
-  const props = useMemo<OwnerContextProps>(() => {
-    return {
-      chairs: chairs?.chairs ?? [],
-      sales,
-      provider: id && name ? { id, name } : undefined,
-    };
-  }, [chairs, sales, id, name]);
-
   return (
-    <OwnerContext.Provider value={props}>{children}</OwnerContext.Provider>
+    <OwnerContext.Provider
+      value={{ chairs, sales, until, since, setUntil, setSince }}
+    >
+      {children}
+    </OwnerContext.Provider>
   );
 };
 

@@ -44,6 +44,7 @@ type Scenario struct {
 	world                     *world.World
 	worldCtx                  *world.Context
 	paymentServer             *payment.Server
+	paymentErrChan            chan error
 	step                      *isucandar.BenchmarkStep
 	reporter                  benchrun.Reporter
 	meter                     metric.Meter
@@ -55,6 +56,7 @@ type Scenario struct {
 	completedRequests         int
 	evaluationMapLock         sync.RWMutex
 	failed                    bool
+	sendResultWait            sync.WaitGroup
 }
 
 func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
@@ -68,7 +70,8 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 
 	worldCtx := world.NewContext(w)
 
-	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 2)
+	paymentErrChan := make(chan error, 1000)
+	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, 2, paymentErrChan)
 	go func() {
 		http.ListenAndServe(":12345", paymentServer)
 	}()
@@ -143,6 +146,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 		world:                     w,
 		worldCtx:                  worldCtx,
 		paymentServer:             paymentServer,
+		paymentErrChan:            paymentErrChan,
 		reporter:                  reporter,
 		meter:                     meter,
 		prepareOnly:               prepareOnly,
@@ -246,20 +250,18 @@ func (s *Scenario) Load(ctx context.Context, step *isucandar.BenchmarkStep) erro
 
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
-	sendResultWait := sync.WaitGroup{}
-	defer sendResultWait.Wait()
+	s.sendResultWait.Add(1)
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
+				s.sendResultWait.Done()
 				return
 			case <-ticker.C:
-				sendResultWait.Add(1)
 				if err := sendResult(s, false, false); err != nil {
 					slog.Error(err.Error())
 				}
-				sendResultWait.Done()
 			}
 		}
 	}()
@@ -269,7 +271,6 @@ LOOP:
 	for {
 		select {
 		case <-ctx.Done():
-			// 負荷走行終了
 			break LOOP
 
 		default:
@@ -280,13 +281,16 @@ LOOP:
 				return err
 			}
 
+			// paymentErrChan にエラーがあればエラーを返す
+			select {
+			case err := <-s.paymentErrChan:
+				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
+				return err
+			default:
+			}
+
 			if s.world.Time%world.LengthOfHour == 0 {
-				if num := s.world.NotInvitedUserCount.Load(); num > 0 {
-					s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人が新規登録しました", num))
-				}
-				if num := s.world.InvitedUserCount.Load(); num > 0 {
-					s.contestantLogger.Info(fmt.Sprintf("これまでに既存ユーザーの招待経由で%d人が新規登録しました", num))
-				}
+				s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人、既存ユーザーの招待経由で%d人が新規登録しました", s.world.NotInvitedUserCount.Load(), s.world.InvitedUserCount.Load()))
 				if num := s.world.LeavedUserCount.Load(); num > 0 {
 					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}

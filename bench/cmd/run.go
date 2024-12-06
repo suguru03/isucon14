@@ -35,6 +35,8 @@ var (
 	skipStaticFileSanityCheck bool
 )
 
+var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
+
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run a benchmark",
@@ -48,7 +50,14 @@ var runCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		contestantLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+		contestantLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+				if a.Key == "time" && a.Value.Kind() == slog.KindTime {
+					return slog.String(a.Key, a.Value.Time().In(jst).Format("15:04:05.000"))
+				}
+				return a
+			},
+		}))
 
 		var reporter benchrun.Reporter
 		if fd, err := benchrun.GetReportFD(); err != nil {
@@ -65,7 +74,7 @@ var runCmd = &cobra.Command{
 		}
 		defer exporter.Shutdown(context.Background())
 
-		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()))
+		slog.Debug("target", slog.String("targetURL", targetURL), slog.String("targetAddr", targetAddr), slog.String("benchrun.GetTargetAddress()", benchrun.GetTargetAddress()), slog.String("paymentURL", paymentURL))
 
 		if postValidationMode {
 			contestantLogger.Info("post validationを実行します")

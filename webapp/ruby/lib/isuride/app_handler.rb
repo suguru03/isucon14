@@ -405,13 +405,19 @@ module Isuride
             next
           end
 
-          ride = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1', chair.fetch(:id)).first
-          unless ride.nil?
+          rides = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY created_at DESC LIMIT 1', chair.fetch(:id))
+
+          skip = false
+          rides.each do |ride|
             # 過去にライドが存在し、かつ、それが完了していない場合はスキップ
             status = get_latest_ride_status(tx, ride.fetch(:id))
             if status != 'COMPLETED'
-              next
+              skip = true
+              break
             end
+          end
+          if skip
+            next
           end
 
           # 最新の位置情報を取得

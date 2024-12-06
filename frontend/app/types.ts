@@ -1,4 +1,8 @@
-import { Coordinate as ApiCoodinate } from "./api/api-schemas";
+import type {
+  OwnerGetChairsResponse,
+  OwnerGetSalesResponse,
+} from "./api/api-components";
+import type { Coordinate as ApiCoodinate } from "./api/api-schemas";
 
 export type AccessToken = string;
 
@@ -31,6 +35,9 @@ export type CampaignData = {
   registedAt: string;
   used: boolean;
 };
+
+export type OwnerChairs = OwnerGetChairsResponse["chairs"];
+export type OwnerSales = OwnerGetSalesResponse;
 
 export type SimulatorChair = {
   id: string;

@@ -96,7 +96,9 @@ const ChairProgress: FC<{
   destLoc?: Coordinate;
 }> = ({ model, rideStatus, pickupLoc, destLoc, currentLoc }) => {
   const startLoc = useMemo(() => {
-    return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
+    return typeof rideStatus !== "undefined"
+      ? getSimulatorStartCoordinate()
+      : null;
   }, [rideStatus]);
 
   const progressToPickup: number = useMemo(() => {
@@ -134,76 +136,77 @@ const ChairProgress: FC<{
   }, [rideStatus, destLoc, pickupLoc, currentLoc]);
 
   return (
-    <div className="flex items-center">
-      <div className="flex border-b pb-1 w-full">
-        <div className="flex w-1/2">
-          <div className="relative w-full me-6">
-            {rideStatus &&
-              ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
-                <ChairIcon
-                  model={model}
+    <div className="flex items-center border-b pb-0.5 w-full">
+      <div className="flex w-1/2">
+        <div className="w-full me-6">
+          {rideStatus &&
+            ["MATCHING", "COMPLETED", "ENROUTE"].includes(rideStatus) && (
+              <div style={{ transform: `translateX(${progressToPickup}%)` }}>
+                <div
                   className={twMerge(
-                    "scale-x-[-1] size-6 absolute top-[-2px]",
                     rideStatus === "ENROUTE" && "animate-shake",
                   )}
-                  style={{ left: `${progressToPickup}%` }}
-                />
-              )}
-          </div>
-          <PinIcon color={colors.black} width={20} />
+                >
+                  <ChairIcon model={model} className={"scale-x-[-1] size-6"} />
+                </div>
+              </div>
+            )}
         </div>
-        <div className="flex w-1/2">
-          <div className="relative w-full me-6">
-            {rideStatus &&
-              ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
-                <ChairIcon
-                  model={model}
+        <PinIcon color={colors.black} width={20} />
+      </div>
+      <div className="flex w-1/2">
+        <div className="w-full me-6">
+          {rideStatus &&
+            ["PICKUP", "CARRYING", "ARRIVED"].includes(rideStatus) && (
+              <div
+                style={{ transform: `translateX(${progressToDestination}%)` }}
+              >
+                <div
                   className={twMerge(
-                    "scale-x-[-1] size-6 absolute top-[-2px]",
                     rideStatus === "CARRYING" && "animate-shake",
                   )}
-                  style={{ left: `${progressToDestination}%` }}
-                />
-              )}
-          </div>
-          <PinIcon color={colors.red[500]} width={20} />
+                >
+                  <ChairIcon model={model} className={"scale-x-[-1] size-6"} />
+                </div>
+              </div>
+            )}
         </div>
+        <PinIcon color={colors.red[500]} width={20} />
       </div>
     </div>
   );
 };
 
+const ChairDetailInfo = memo(
+  function ChairDetailInfo({
+    chairModel,
+    chairName,
+    rideStatus,
+  }: {
+    chairModel: string;
+    chairName: string;
+    rideStatus: RideStatus;
+  }) {
+    return chairModel && chairName && rideStatus ? (
+      <div className="flex items-center space-x-4">
+        <ChairIcon model={chairModel} className="size-12 shrink-0" />
+        <div className="space-y-0.5 w-full">
+          <Text bold>{chairName}</Text>
+          <Text className="text-xs text-neutral-500">{chairModel}</Text>
+          <SimulatorChairRideStatus currentStatus={rideStatus} />
+        </div>
+      </div>
+    ) : null;
+  },
+  (prev, next) =>
+    prev.chairModel === next.chairModel &&
+    prev.chairName === next.chairName &&
+    prev.rideStatus === next.rideStatus,
+);
+
 export const SimulatorChairDisplay: FC = () => {
   const { data, chair } = useSimulatorContext();
   const rideStatus = useMemo(() => data?.status ?? "MATCHING", [data]);
-
-  const ChairDetailInfo = memo(
-    function ChairDetailInfo({
-      chairModel,
-      chairName,
-      rideStatus,
-    }: {
-      chairModel: string;
-      chairName: string;
-      rideStatus: RideStatus;
-    }) {
-      return chairModel && chairName && rideStatus ? (
-        <div className="flex items-center space-x-4">
-          <ChairIcon model={chairModel} className="size-12 shrink-0" />
-          <div className="space-y-0.5 w-full">
-            <Text bold>{chairName}</Text>
-            <Text className="text-xs text-neutral-500">{chairModel}</Text>
-            <SimulatorChairRideStatus currentStatus={rideStatus} />
-          </div>
-        </div>
-      ) : null;
-    },
-    (prev, next) =>
-      prev.chairModel === next.chairModel &&
-      prev.chairName === next.chairName &&
-      prev.rideStatus === next.rideStatus,
-  );
-
   return (
     <div className="bg-white rounded shadow px-6 py-4 w-full">
       {chair ? (
