@@ -19,7 +19,7 @@ export default function Index() {
       <h2 className="text-xl my-6">ユーザー</h2>
       <Button
         className="w-full flex items-center justify-center "
-        onClick={() => navigate("/client/register")}
+        onClick={() => navigate("/client/login")}
       >
         <AccountSwitchIcon className="me-1" fill={colors.neutral[600]} />
         ユーザーを切り替える

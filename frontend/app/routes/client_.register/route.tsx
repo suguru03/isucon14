@@ -3,6 +3,7 @@ import {
   ClientActionFunctionArgs,
   Form,
   json,
+  Link,
   redirect,
   useActionData,
 } from "@remix-run/react";
@@ -145,6 +146,11 @@ export default function ClientRegister() {
         <Button type="submit" variant="primary" className="text-lg">
           登録
         </Button>
+        <p className="text-center mt-2">
+          <Link to="/client/login" className="text-blue-600 hover:underline">
+            ログイン
+          </Link>
+        </p>
       </Form>
     </FormFrame>
   );

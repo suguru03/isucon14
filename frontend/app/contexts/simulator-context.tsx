@@ -191,8 +191,6 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
   const [clientRideId, setClientRideId] = useState<string>();
   const isAnotherSimulatorBeingUsed = !clientRideId && !!data?.ride_id;
 
-  console.log(isAnotherSimulatorBeingUsed);
-
   useEffect(() => {
     const onMessage = ({
       data,
