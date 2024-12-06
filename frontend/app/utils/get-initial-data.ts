@@ -12,31 +12,32 @@ type InitialOwner = {
   token: string;
 };
 
+type InitialUser = {
+  id: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  token: string;
+  date_of_birth: string;
+  invitation_code: string;
+};
+
 type initialDataType =
   | {
-      owners: {
-        id: string;
-        name: string;
-        token: string;
-      }[];
-      simulatorChairs: {
-        id: string;
-        owner_id: string;
-        name: string;
-        model: string;
-        token: string;
-      }[];
+      owners: InitialOwner[];
+      simulatorChairs: InitialChair[];
+      users: InitialUser[];
     }
   | undefined;
 
 const initialData = __INITIAL_DATA__ as initialDataType;
 
 export const getOwners = (): InitialOwner[] => {
-  return (
-    initialData?.owners?.map((owner) => ({
-      ...owner,
-    })) ?? []
-  );
+  return initialData?.owners ?? [];
+};
+
+export const getUsers = (): InitialUser[] => {
+  return initialData?.users ?? [];
 };
 
 export const getSimulateChair = (index?: number): InitialChair | undefined => {
