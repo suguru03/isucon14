@@ -1,78 +1,16 @@
-import { FC, memo, useCallback, useMemo, useRef, useState } from "react";
+import { FC, memo, useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 import colors from "tailwindcss/colors";
 import { RideStatus } from "~/api/api-schemas";
 import { ChairIcon } from "~/components/icon/chair";
 import { PinIcon } from "~/components/icon/pin";
-import { LocationButton } from "~/components/modules/location-button/location-button";
-import { Map } from "~/components/modules/map/map";
-import { Button } from "~/components/primitives/button/button";
-import { Modal } from "~/components/primitives/modal/modal";
+import { ConfigFrame } from "~/components/primitives/frame/config-frame";
 import { Text } from "~/components/primitives/text/text";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import type { Coordinate } from "~/types";
 import { getSimulatorStartCoordinate } from "~/utils/storage";
-import { SimulatorChairRideStatus } from "../simulator-chair-status/simulator-chair-status";
-
-const CoordinatePickup: FC = () => {
-  const { chair, setCoordinate } = useSimulatorContext();
-  const [initialMapLocation, setInitialMapLocation] = useState<Coordinate>();
-  const [mapLocation, setMapLocation] = useState<Coordinate>();
-  const [visibleModal, setVisibleModal] = useState<boolean>(false);
-  const modalRef = useRef<HTMLElement & { close: () => void }>(null);
-
-  const handleOpenModal = useCallback(() => {
-    setInitialMapLocation(chair?.coordinate);
-    setVisibleModal(true);
-  }, [chair?.coordinate]);
-
-  const handleCloseModal = useCallback(() => {
-    if (mapLocation) {
-      setCoordinate?.(mapLocation);
-    }
-    modalRef.current?.close();
-    setVisibleModal(false);
-  }, [mapLocation, setCoordinate]);
-
-  return (
-    <>
-      <LocationButton
-        className="w-full text-right"
-        location={chair?.coordinate}
-        label="椅子位置"
-        placeholder="現在位置を設定"
-        onClick={handleOpenModal}
-      />
-      {visibleModal && (
-        <div className="fixed inset-0 z-10">
-          <Modal
-            ref={modalRef}
-            center
-            onClose={handleCloseModal}
-            className="absolute w-full max-w-[800px] max-h-none h-[700px]"
-          >
-            <div className="w-full h-full flex flex-col items-center">
-              <Map
-                className="flex-1"
-                initialCoordinate={initialMapLocation}
-                from={initialMapLocation}
-                onMove={(c) => setMapLocation(c)}
-                selectable
-              />
-              <Button
-                className="w-full mt-6"
-                onClick={handleCloseModal}
-                variant="primary"
-              >
-                この位置で確定する
-              </Button>
-            </div>
-          </Modal>
-        </div>
-      )}
-    </>
-  );
-};
+import { SimulatorChairLocationButton } from "../simulator-parts/simulator-chair-location-button";
+import { SimulatorChairRideStatus } from "../simulator-parts/simulator-chair-status-label";
 
 const progress = (
   start: Coordinate,
@@ -204,32 +142,46 @@ const ChairDetailInfo = memo(
     prev.rideStatus === next.rideStatus,
 );
 
-export const SimulatorChairDisplay: FC = () => {
-  const { data, chair } = useSimulatorContext();
+export const SimulatorChairConfig: FC = () => {
+  const { data, chair, setCoordinate, isAnotherSimulatorBeingUsed } =
+    useSimulatorContext();
   const rideStatus = useMemo(() => data?.status ?? "MATCHING", [data]);
   return (
-    <div className="bg-white rounded shadow px-6 py-4 w-full">
-      {chair ? (
-        <div className="space-y-4">
-          <ChairDetailInfo
-            chairModel={chair.model}
-            chairName={chair.name}
-            rideStatus={rideStatus}
-          />
-          <CoordinatePickup />
-          <ChairProgress
-            model={chair.model}
-            rideStatus={rideStatus}
-            currentLoc={chair.coordinate}
-            pickupLoc={data?.pickup_coordinate}
-            destLoc={data?.destination_coordinate}
-          />
-        </div>
-      ) : (
+    <ConfigFrame aria-disabled={isAnotherSimulatorBeingUsed}>
+      {!chair && (
         <Text className="m-4" size="sm">
           椅子のデータがありません
         </Text>
       )}
-    </div>
+      {chair && (
+        <>
+          <div className="space-y-4">
+            <ChairDetailInfo
+              chairModel={chair.model}
+              chairName={chair.name}
+              rideStatus={rideStatus}
+            />
+            <SimulatorChairLocationButton
+              coordinate={chair.coordinate}
+              setCoordinate={setCoordinate}
+            />
+            <ChairProgress
+              model={chair.model}
+              rideStatus={rideStatus}
+              currentLoc={chair.coordinate}
+              pickupLoc={data?.pickup_coordinate}
+              destLoc={data?.destination_coordinate}
+            />
+          </div>
+          {!isAnotherSimulatorBeingUsed && (
+            <div className="absolute top-0 left-0 w-full h-full bg-neutral-500 bg-opacity-60 flex items-center justify-center cursor-not-allowed">
+              <Text className="text-white" bold size="sm">
+                現在、他のシミュレーターが使用中です
+              </Text>
+            </div>
+          )}
+        </>
+      )}
+    </ConfigFrame>
   );
 };
