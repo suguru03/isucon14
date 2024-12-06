@@ -49,7 +49,9 @@ class AppPostUsersResponse(BaseModel):
 
 
 @router.post("/users", status_code=HTTPStatus.CREATED)
-def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersResponse:
+def app_post_users(
+    req: AppPostUsersRequest, response: Response
+) -> AppPostUsersResponse:
     user_id = str(ULID())
     access_token = secure_random_str(32)
     invitation_code = secure_random_str(15)
@@ -62,10 +64,10 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
             ),
             {
                 "id": user_id,
-                "username": r.username,
-                "firstname": r.firstname,
-                "lastname": r.lastname,
-                "date_of_birth": r.date_of_birth,
+                "username": req.username,
+                "firstname": req.firstname,
+                "lastname": req.lastname,
+                "date_of_birth": req.date_of_birth,
                 "access_token": access_token,
                 "invitation_code": invitation_code,
             },
@@ -80,11 +82,11 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
         )
 
         # 招待コードを使った登録
-        if r.invitation_code:
+        if req.invitation_code:
             # 招待する側の招待数をチェック
             coupons = conn.execute(
                 text("SELECT * FROM coupons WHERE code = :code FOR UPDATE"),
-                {"code": "INV_" + r.invitation_code},
+                {"code": "INV_" + req.invitation_code},
             ).fetchall()
 
             if len(coupons) >= 3:
@@ -96,7 +98,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
             # ユーザーチェック
             inviter = conn.execute(
                 text("SELECT * FROM users WHERE invitation_code = :invitation_code"),
-                {"invitation_code": r.invitation_code},
+                {"invitation_code": req.invitation_code},
             ).fetchone()
 
             if inviter is None:
@@ -112,7 +114,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 ),
                 {
                     "user_id": user_id,
-                    "code": "INV_" + r.invitation_code,
+                    "code": "INV_" + req.invitation_code,
                     "discount": 1500,
                 },
             )
@@ -124,7 +126,7 @@ def app_post_users(r: AppPostUsersRequest, response: Response) -> AppPostUsersRe
                 ),
                 {
                     "user_id": inviter.id,
-                    "code_prefix": "RWD_" + r.invitation_code,
+                    "code_prefix": "RWD_" + req.invitation_code,
                     "discount": 1000,
                 },
             )
@@ -278,9 +280,9 @@ def get_latest_ride_status(conn: Connection, ride_id: str) -> str:
 @router.post("/rides", status_code=HTTPStatus.ACCEPTED)
 def app_post_rides(
     user: Annotated[User, Depends(app_auth_middleware)],
-    r: AppPostRidesRequest,
+    req: AppPostRidesRequest,
 ) -> AppPostRidesResponse:
-    if r.pickup_coordinate is None or r.destination_coordinate is None:
+    if req.pickup_coordinate is None or req.destination_coordinate is None:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
@@ -311,10 +313,10 @@ def app_post_rides(
             {
                 "id": ride_id,
                 "user_id": user.id,
-                "pickup_latitude": r.pickup_coordinate.latitude,
-                "pickup_longitude": r.pickup_coordinate.longitude,
-                "destination_latitude": r.destination_coordinate.latitude,
-                "destination_longitude": r.destination_coordinate.longitude,
+                "pickup_latitude": req.pickup_coordinate.latitude,
+                "pickup_longitude": req.pickup_coordinate.longitude,
+                "destination_latitude": req.destination_coordinate.latitude,
+                "destination_longitude": req.destination_coordinate.longitude,
             },
         )
 
@@ -386,10 +388,10 @@ def app_post_rides(
             conn,
             user.id,
             ride,
-            r.pickup_coordinate.latitude,
-            r.pickup_coordinate.longitude,
-            r.destination_coordinate.latitude,
-            r.destination_coordinate.longitude,
+            req.pickup_coordinate.latitude,
+            req.pickup_coordinate.longitude,
+            req.destination_coordinate.latitude,
+            req.destination_coordinate.longitude,
         )
 
     return AppPostRidesResponse(ride_id=ride_id, fare=fare)
@@ -411,9 +413,9 @@ class AppPostRidesEstimatedFareResponse(BaseModel):
 )
 def app_post_rides_estimated_fare(
     user: Annotated[User, Depends(app_auth_middleware)],
-    r: AppPostRidesEstimatedFareRequest,
+    req: AppPostRidesEstimatedFareRequest,
 ) -> AppPostRidesEstimatedFareResponse:
-    if r.pickup_coordinate is None or r.destination_coordinate is None:
+    if req.pickup_coordinate is None or req.destination_coordinate is None:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="required fields(pickup_coordinate, destination_coordinate) are empty",
@@ -424,19 +426,19 @@ def app_post_rides_estimated_fare(
             conn,
             user.id,
             None,
-            r.pickup_coordinate.latitude,
-            r.pickup_coordinate.longitude,
-            r.destination_coordinate.latitude,
-            r.destination_coordinate.longitude,
+            req.pickup_coordinate.latitude,
+            req.pickup_coordinate.longitude,
+            req.destination_coordinate.latitude,
+            req.destination_coordinate.longitude,
         )
 
         return AppPostRidesEstimatedFareResponse(
             fare=discounted,
             discount=calculate_fare(
-                r.pickup_coordinate.latitude,
-                r.pickup_coordinate.longitude,
-                r.destination_coordinate.latitude,
-                r.destination_coordinate.longitude,
+                req.pickup_coordinate.latitude,
+                req.pickup_coordinate.longitude,
+                req.destination_coordinate.latitude,
+                req.destination_coordinate.longitude,
             )
             - discounted,
         )
