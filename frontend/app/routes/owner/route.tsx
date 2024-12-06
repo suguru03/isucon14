@@ -11,7 +11,7 @@ const tabs = [
   { key: "sales", label: "売上", to: "/owner/sales" },
 ] as const;
 
-const Tab = () => {
+const Content = () => {
   const matches = useMatches();
   const activeTab = matches[2]?.pathname.split("/").at(-1) || "index";
 
@@ -63,7 +63,7 @@ export default function OwnerLayout() {
               アカウント切替え
             </Button>
           </div>
-          <Tab />
+          <Content />
           <div className="flex-1 overflow-auto pt-8 pb-16 max-w-7xl xl:flex justify-center">
             <Outlet />
           </div>
