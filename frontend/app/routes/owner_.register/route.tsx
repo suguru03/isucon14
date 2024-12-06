@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function ProviderRegister() {
+export default function OwnerRegister() {
   const [ownerName, setOwnerName] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const navigate = useNavigate();
