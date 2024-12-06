@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException, Request
@@ -50,8 +51,10 @@ def post_initialize(req: PostInitializeRequest) -> PostInitializeResponse:
 
 @app.exception_handler(SQLAlchemyError)
 def sql_alchemy_error_handler(_: Request, exc: SQLAlchemyError) -> JSONResponse:
+    message = str(exc)
+    print(message, file=sys.stderr)
     return JSONResponse(
-        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": message}
     )
 
 
@@ -59,12 +62,16 @@ def sql_alchemy_error_handler(_: Request, exc: SQLAlchemyError) -> JSONResponse:
 def validation_exception_handler(
     _: Request, exc: RequestValidationError
 ) -> JSONResponse:
+    message = str(exc.errors())
+    print(message, file=sys.stderr)
     return JSONResponse(
         status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-        content={"message": str(exc.errors())},
+        content={"message": message},
     )
 
 
 @app.exception_handler(HTTPException)
 def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
+    message = exc.detail
+    print(message, file=sys.stderr)
+    return JSONResponse(status_code=exc.status_code, content={"message": message})
