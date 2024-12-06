@@ -2,8 +2,9 @@ import type { MetaFunction } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 import { fetchChairPostActivity } from "~/api/api-components";
 import { useEmulator } from "~/components/hooks/use-emulator";
-import { SimulatorChairDisplay } from "~/components/modules/simulator-display/simulator-chair-display";
-import { SimulatorConfigDisplay } from "~/components/modules/simulator-display/simulator-config-display";
+import { SimulatorChairActiveToggle } from "~/components/modules/simulator-configs/simulator-chair-active-toggle";
+import { SimulatorChairConfig } from "~/components/modules/simulator-configs/simulator-chair-config";
+import { SimulatorGhostChairToggle } from "~/components/modules/simulator-configs/simulator-ghost-chair-toggle";
 import { SmartPhone } from "~/components/primitives/smartphone/smartphone";
 
 export const meta: MetaFunction = () => {
@@ -38,8 +39,9 @@ export default function Index() {
       </SmartPhone>
       <div className="space-y-4 min-w-[320px] lg:w-[400px]">
         <h1 className="text-lg font-semibold mb-4">Chair Simulator</h1>
-        <SimulatorChairDisplay />
-        <SimulatorConfigDisplay simulatorRef={ref} />
+        <SimulatorChairConfig />
+        <SimulatorChairActiveToggle />
+        <SimulatorGhostChairToggle simulatorRef={ref} />
       </div>
     </main>
   );
