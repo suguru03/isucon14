@@ -37,11 +37,11 @@ const move = (
   }
 };
 
-const currentCoodinatePost = (coordinate: Coordinate) => {
+const currentCoodinatePost = async (coordinate: Coordinate) => {
   setSimulatorCurrentCoordinate(coordinate);
-  void fetchChairPostCoordinate({
+  void (await fetchChairPostCoordinate({
     body: coordinate,
-  }).catch((e) => console.error(e));
+  }));
 };
 
 const postEnroute = (rideId: string, coordinate: Coordinate) => {
@@ -65,20 +65,24 @@ const postCarring = (rideId: string) => {
 
 const forcePickup = (pickup_coordinate: Coordinate) =>
   setTimeout(() => {
-    currentCoodinatePost(pickup_coordinate);
+    void currentCoodinatePost(pickup_coordinate);
   }, 60_000);
 
 const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
   setTimeout(() => {
-    (async() => {
-      void await currentCoodinatePost(pickup_coordinate);
-      void await postCarring(rideId);
-    })()
+    try {
+      void (async () => {
+        void (await currentCoodinatePost(pickup_coordinate));
+        postCarring(rideId);
+      })();
+    } catch (error) {
+      console.error(error);
+    }
   }, 10_000);
 
 const forceArrive = (pickup_coordinate: Coordinate) =>
   setTimeout(() => {
-    currentCoodinatePost(pickup_coordinate);
+    void currentCoodinatePost(pickup_coordinate);
   }, 60_000);
 
 export const useEmulator = () => {
@@ -118,7 +122,7 @@ export const useEmulator = () => {
     }
 
     const timeoutId = setTimeout(() => {
-      currentCoodinatePost(chair.coordinate);
+      void currentCoodinatePost(chair.coordinate);
       try {
         switch (data.status) {
           case "MATCHING":
