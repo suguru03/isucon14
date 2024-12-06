@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
@@ -7,6 +7,7 @@ import { Coordinate } from "~/api/api-schemas";
 import { useSimulatorContext } from "~/contexts/simulator-context";
 import {
   setSimulatorCurrentCoordinate,
+  setSimulatorCurrentRideId,
   setSimulatorStartCoordinate,
 } from "~/utils/storage";
 
@@ -63,9 +64,35 @@ const postCarring = (rideId: string) => {
 };
 
 export const useEmulator = () => {
-  const { chair, data, setCoordinate } = useSimulatorContext();
+  const { chair, data, setCoordinate, isAnotherSimulatorBeingUsed, setClientRideId } = useSimulatorContext();
+  const timeoutIdRef = useRef<ReturnType<(typeof setTimeout)>>()
+  useEffect(() => {
+    if (!isAnotherSimulatorBeingUsed) return () => {
+      clearTimeout(timeoutIdRef.current)
+      timeoutIdRef.current = undefined;
+    };
+    if (timeoutIdRef.current === undefined) {
+      console.log('current===undefined')
+      timeoutIdRef.current = setTimeout(() => {
+        const rideId = data?.ride_id;
+        console.log('奪うよ', rideId, data?.status)
+        switch(data?.status) {
+          case "ENROUTE":
+          case "PICKUP":
+            setCoordinate?.(data?.pickup_coordinate)
+            setClientRideId?.(rideId)
+          break;
+          case "CARRYING":
+          case "ARRIVED":
+            setCoordinate?.(data?.destination_coordinate)
+            setClientRideId?.(rideId)
+        }
+      },60_000)
+    }
+  },[timeoutIdRef, isAnotherSimulatorBeingUsed, data])
 
   useEffect(() => {
+    if (isAnotherSimulatorBeingUsed) return;
     if (!(chair && data)) {
       return;
     }
@@ -97,5 +124,5 @@ export const useEmulator = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [chair, data, setCoordinate]);
+  }, [chair, data, setCoordinate, isAnotherSimulatorBeingUsed]);
 };
