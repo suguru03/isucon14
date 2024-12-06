@@ -298,7 +298,7 @@ LOOP:
 			if s.world.Time%(world.LengthOfHour*3) == 0 {
 				s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人、既存ユーザーの招待経由で%d人が新規登録しました", s.world.NotInvitedUserCount.Load(), s.world.InvitedUserCount.Load()))
 				if num := s.world.LeavedUserCount.Load(); num > 0 {
-					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
+					s.contestantLogger.Info(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}
 				s.evaluationMapLock.RLock()
 				if s.completedRequests > 0 {

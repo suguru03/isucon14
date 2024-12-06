@@ -137,7 +137,7 @@ func (c *Chair) Tick(ctx *Context) error {
 
 				c.RequestHistory.Append(c.Request)
 				if !c.Request.User.Region.Contains(c.Location.Current()) {
-					ctx.ContestantLogger().Warn("ユーザーのリージョン外部に存在する椅子がマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
+					ctx.ContestantLogger().Info("ユーザーのリージョン外部に存在する椅子がマッチングされました", slog.Int("distance", c.Request.PickupPoint.DistanceTo(c.Location.Current())))
 				}
 			}
 
