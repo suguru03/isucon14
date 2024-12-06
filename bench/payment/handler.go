@@ -84,43 +84,33 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	if rand.IntN(100) > failurePercentage {
 		// lock はここでしか触らない。lock が true の場合は idempotency key が同じリクエストが処理中の場合のみ
 		if p.locked.CompareAndSwap(false, true) {
-			alreadyProcessed := false
-			if !newPayment {
-				for _, processed := range s.processedPayments.ToSlice() {
-					if processed.payment == p {
-						alreadyProcessed = true
-						break
-					}
-				}
-			}
-			if !alreadyProcessed {
-				p.Status = s.verifier.Verify(p)
-				if p.Status.Err != nil {
-					s.errChan <- p.Status.Err
-				}
-				s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
-				p.locked.Store(false)
+			s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
+			p.Status = s.verifier.Verify(p)
+			if p.Status.Err != nil {
+				s.errChan <- p.Status.Err
 			}
 		}
+		switch rand.IntN(2) {
+		case 0:
+			writeRandomError(w)
+		case 1:
+			writeResponse(w, p.Status)
+		}
+		return
 	}
 
 	// 不安定なエラーを再現
-	switch rand.IntN(4) {
+	writeRandomError(w)
+}
+
+func writeRandomError(w http.ResponseWriter) {
+	switch rand.IntN(3) {
 	case 0:
 		w.WriteHeader(http.StatusInternalServerError)
 	case 1:
 		w.WriteHeader(http.StatusBadGateway)
 	case 2:
 		w.WriteHeader(http.StatusGatewayTimeout)
-	case 3:
-		// ちゃんとレスポンスを返す場合
-		select {
-		case <-r.Context().Done():
-			// クライアントが既に切断している
-			w.WriteHeader(http.StatusGatewayTimeout)
-		default:
-			writeResponse(w, p.Status)
-		}
 	}
 }
 
