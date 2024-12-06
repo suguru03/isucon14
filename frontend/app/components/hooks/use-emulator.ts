@@ -70,8 +70,10 @@ const forcePickup = (pickup_coordinate: Coordinate) =>
 
 const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
   setTimeout(() => {
-    currentCoodinatePost(pickup_coordinate);
-    postCarring(rideId);
+    (async() => {
+      void await currentCoodinatePost(pickup_coordinate);
+      void await postCarring(rideId);
+    })()
   }, 10_000);
 
 const forceArrive = (pickup_coordinate: Coordinate) =>
