@@ -9,7 +9,6 @@ import {
 import type { Coordinate, RideStatus } from "~/api/api-schemas";
 import {
   getSimulateChair,
-  getSimulateChairFromToken,
 } from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
@@ -18,7 +17,6 @@ import {
   fetchChairGetNotification,
 } from "~/api/api-components";
 import { SimulatorChair } from "~/types";
-import { getCookieValue } from "~/utils/get-cookie-value";
 import { Message, MessageTypes } from "~/utils/post-message";
 import {
   getSimulatorCurrentCoordinate,

@@ -25,7 +25,7 @@ type InitialUser = {
 type initialDataType =
   | {
       owners: InitialOwner[];
-      simulatorChairs: InitialChair[];
+      chair: InitialChair;
       users: InitialUser[];
     }
   | undefined;
@@ -40,14 +40,6 @@ export const getUsers = (): InitialUser[] => {
   return initialData?.users ?? [];
 };
 
-export const getSimulateChair = (index?: number): InitialChair | undefined => {
-  return index
-    ? initialData?.simulatorChairs[index]
-    : initialData?.simulatorChairs[0];
-};
-
-export const getSimulateChairFromToken = (
-  token: string,
-): InitialChair | undefined => {
-  return initialData?.simulatorChairs.find((c) => c.token === token);
+export const getSimulateChair = (): InitialChair | undefined => {
+  return initialData?.chair
 };
