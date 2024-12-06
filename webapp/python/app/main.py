@@ -65,7 +65,7 @@ def validation_exception_handler(
     message = str(exc.errors())
     print(message, file=sys.stderr)
     return JSONResponse(
-        status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        status_code=HTTPStatus.BAD_REQUEST,
         content={"message": message},
     )
 
