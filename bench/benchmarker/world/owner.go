@@ -79,11 +79,12 @@ func (p *Owner) Tick(ctx *Context) error {
 			return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
 		}
 
+		baseTime := time.Now()
 		res, err := p.Client.GetOwnerChairs(ctx, &GetOwnerChairsRequest{})
 		if err != nil {
 			return WrapCodeError(ErrorCodeFailedToGetOwnerChairs, err)
 		}
-		if err := p.ValidateChairs(res); err != nil {
+		if err := p.ValidateChairs(res, baseTime); err != nil {
 			return WrapCodeError(ErrorCodeIncorrectOwnerChairsData, err)
 		}
 	} else if ctx.CurrentTime()%LengthOfHour == LengthOfHour-1 {
@@ -201,7 +202,7 @@ func (p *Owner) ValidateSales(until time.Time, serverSide *GetOwnerSalesResponse
 	return nil
 }
 
-func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
+func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse, baseTime time.Time) error {
 	if p.ChairDB.Len() != len(serverSide.Chairs) {
 		return fmt.Errorf("オーナーの椅子の数が一致していません")
 	}
@@ -222,8 +223,8 @@ func (p *Owner) ValidateChairs(serverSide *GetOwnerChairsResponse) error {
 		//	return fmt.Errorf("activeが一致しないデータがあります (id: %s, got: %v, want: %v)", chair.ServerID, data.Active, !data.Active)
 		//}
 		if data.TotalDistanceUpdatedAt.Valid {
-			lastMovedAt, ok := chair.Location.LastMovedAt()
-			if ok && data.TotalDistanceUpdatedAt.Time.Sub(lastMovedAt) > 3*time.Second {
+			lastMoved := chair.Location.GetLocationEntryByTime(baseTime)
+			if lastMoved != nil && lastMoved.ServerTime.Time.Sub(data.TotalDistanceUpdatedAt.Time) > 3*time.Second {
 				return fmt.Errorf("total_distanceの反映が遅いデータがあります (id: %s)", chair.ServerID)
 			}
 			want := chair.Location.TotalTravelDistanceUntil(data.TotalDistanceUpdatedAt.Time)

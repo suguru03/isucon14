@@ -152,3 +152,15 @@ func (r *ChairLocation) GetCoordByTime(t time.Time) Coordinate {
 	}
 	return r.Initial
 }
+
+func (r *ChairLocation) GetLocationEntryByTime(t time.Time) *LocationEntry {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, entry := range slices.Backward(r.history) {
+		if entry.ServerTime.Valid && !entry.ServerTime.Time.After(t) {
+			return entry
+		}
+	}
+	return nil
+}
