@@ -16,8 +16,8 @@ import { Button } from "~/components/primitives/button/button";
 import { Modal } from "~/components/primitives/modal/modal";
 import { Text } from "~/components/primitives/text/text";
 import { useClientContext } from "~/contexts/client-context";
-import { NearByChair, isClientApiError } from "~/types";
-import { sendClientReady } from "~/utils/post-message";
+import { NearByChair } from "~/types";
+import { sendClientReady, sendClientRideRequested } from "~/utils/post-message";
 import { Arrived } from "./driving-state/arrived";
 import { Carrying } from "./driving-state/carrying";
 import { Enroute } from "./driving-state/enroute";
@@ -36,6 +36,7 @@ type EstimatePrice = { fare: number; discount: number };
 
 export default function Index() {
   const { data } = useClientContext();
+  const emulateChairs = useGhostChairs();
   const [internalRideStatus, setInternalRideStatus] = useState<RideStatus>();
   const [currentLocation, setCurrentLocation] = useState<Coordinate>();
   const [destLocation, setDestLocation] = useState<Coordinate>();
@@ -44,28 +45,27 @@ export default function Index() {
   const [displayedChairs, setDisplayedChairs] = useState<NearByChair[]>([]);
   const [centerCoordinate, setCenterCoodirnate] = useState<Coordinate>();
   const onCenterMove = useCallback(
-    (coordinate: Coordinate) => {
-      setCenterCoodirnate(coordinate);
-    },
-    [setCenterCoodirnate],
+    (coordinate: Coordinate) => setCenterCoodirnate(coordinate),
+    [],
   );
-  const onSelectMove = useCallback((coordinate: Coordinate) => {
-    setSelectedLocation(coordinate);
-  }, []);
+  const onSelectMove = useCallback(
+    (coordinate: Coordinate) => setSelectedLocation(coordinate),
+    [],
+  );
   const [isLocationSelectorModalOpen, setLocationSelectorModalOpen] =
     useState(false);
   const locationSelectorModalRef = useRef<HTMLElement & { close: () => void }>(
     null,
   );
+  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
+  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
   const handleConfirmLocation = useCallback(() => {
     if (direction === "from") {
       setCurrentLocation(selectedLocation);
     } else if (direction === "to") {
       setDestLocation(selectedLocation);
     }
-    if (locationSelectorModalRef.current) {
-      locationSelectorModalRef.current.close();
-    }
+    locationSelectorModalRef.current?.close();
   }, [direction, selectedLocation]);
 
   const isStatusModalOpen = useMemo(() => {
@@ -76,10 +76,6 @@ export default function Index() {
       )
     );
   }, [internalRideStatus]);
-
-  const statusModalRef = useRef<HTMLElement & { close: () => void }>(null);
-  const [estimatePrice, setEstimatePrice] = useState<EstimatePrice>();
-  const emulateChairs = useGhostChairs();
 
   useEffect(() => {
     setInternalRideStatus(data?.status);
@@ -110,16 +106,15 @@ export default function Index() {
     }
     setInternalRideStatus("MATCHING");
     try {
-      void (await fetchAppPostRides({
+      const { ride_id } = await fetchAppPostRides({
         body: {
           pickup_coordinate: currentLocation,
           destination_coordinate: destLocation,
         },
-      }));
+      });
+      sendClientRideRequested(window.parent, { rideId: ride_id });
     } catch (error) {
-      if (isClientApiError(error)) {
-        console.error(error);
-      }
+      console.error(error);
     }
   }, [currentLocation, destLocation]);
 
@@ -129,8 +124,7 @@ export default function Index() {
     let abortController: AbortController | undefined;
     let timeoutId: NodeJS.Timeout | undefined;
 
-    const updateNearByChairs = async (coordinate: Coordinate) => {
-      const { latitude, longitude } = coordinate;
+    const updateNearByChairs = async ({ latitude, longitude }: Coordinate) => {
       try {
         abortController?.abort();
         abortController = new AbortController();
@@ -227,7 +221,7 @@ export default function Index() {
           ref={locationSelectorModalRef}
           onClose={() => setLocationSelectorModalOpen(false)}
         >
-          <div className="flex flex-col items-center mt-4 h-full">
+          <div className="flex flex-col items-center h-full">
             <div className="flex-grow w-full max-h-[75%] mb-6">
               <Map
                 onMove={onSelectMove}
