@@ -173,7 +173,7 @@ export const SimulatorChairConfig: FC = () => {
               destLoc={data?.destination_coordinate}
             />
           </div>
-          {!isAnotherSimulatorBeingUsed && (
+          {isAnotherSimulatorBeingUsed && (
             <div className="absolute top-0 left-0 w-full h-full bg-neutral-500 bg-opacity-60 flex items-center justify-center cursor-not-allowed">
               <Text className="text-white" bold size="sm">
                 現在、他のシミュレーターが使用中です
