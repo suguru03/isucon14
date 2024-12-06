@@ -8,9 +8,10 @@ const setStorage = (
   storage: Storage,
 ): boolean => {
   try {
-    const existing = JSON.parse(
-      localStorage.getItem(GroupId) || "{}",
-    ) as Record<string, string>;
+    const existing = JSON.parse(storage.getItem(GroupId) || "{}") as Record<
+      string,
+      string
+    >;
     storage.setItem(
       GroupId,
       JSON.stringify({ ...existing, [fieldId]: itemData }),
