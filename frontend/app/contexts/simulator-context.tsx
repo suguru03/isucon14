@@ -7,10 +7,7 @@ import {
   useState,
 } from "react";
 import type { Coordinate, RideStatus } from "~/api/api-schemas";
-import {
-  getSimulateChair,
-  getSimulateChairFromToken,
-} from "~/utils/get-initial-data";
+import { getSimulateChair } from "~/utils/get-initial-data";
 
 import { apiBaseURL } from "~/api/api-base-url";
 import {
@@ -18,7 +15,6 @@ import {
   fetchChairGetNotification,
 } from "~/api/api-components";
 import { SimulatorChair } from "~/types";
-import { getCookieValue } from "~/utils/get-cookie-value";
 import { Message, MessageTypes } from "~/utils/post-message";
 import {
   getSimulatorCurrentCoordinate,
@@ -30,7 +26,6 @@ type SimulatorContextProps = {
   chair?: SimulatorChair;
   data?: ChairGetNotificationResponse["data"];
   setCoordinate?: (coordinate: Coordinate) => void;
-  setToken?: (token: string) => void;
   isAnotherSimulatorBeingUsed?: boolean;
 };
 
@@ -176,19 +171,7 @@ const useNotification = (): ChairGetNotificationResponse["data"] => {
 };
 
 export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string>();
-
-  const simulateChair = useMemo(() => {
-    return token ? getSimulateChairFromToken(token) : initilalChair;
-  }, [token]);
-
   useEffect(() => {
-    const token = getCookieValue(document.cookie, "chair_session");
-    if (token) {
-      setToken(token);
-      return;
-    }
-    // TODO: tokenがなければUI上で選択させるようにする
     if (initilalChair?.token) {
       document.cookie = `chair_session=${initilalChair.token}; path=/`;
     }
@@ -233,9 +216,8 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
     <SimulatorContext.Provider
       value={{
         data,
-        chair: simulateChair ? { ...simulateChair, coordinate } : undefined,
+        chair: initilalChair ? { ...initilalChair, coordinate } : undefined,
         setCoordinate,
-        setToken,
         isAnotherSimulatorBeingUsed,
       }}
     >
