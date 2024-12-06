@@ -1,7 +1,7 @@
 import type { ComponentProps, FC } from "react";
 import colors from "tailwindcss/colors";
 
-export const MoneyIcon: FC<ComponentProps<"svg">> = function (props) {
+export const MoneyIcon: FC<ComponentProps<"svg">> = (props) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
