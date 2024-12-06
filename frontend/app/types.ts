@@ -46,13 +46,3 @@ export type SimulatorChair = {
   token: string;
   coordinate: Coordinate;
 };
-
-// TODO: 後でリファクタ
-export type ClientApiError = {
-  message: string;
-  name: string;
-  stack: {
-    payload: string;
-    status: number;
-  };
-};
