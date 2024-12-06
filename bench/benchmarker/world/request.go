@@ -82,6 +82,9 @@ type Request struct {
 	CompletedAt int64
 	// ServerCompletedAt サーバー側で記録されている完了時間
 	ServerCompletedAt time.Time
+
+	// BenchRequestedAt ベンチがライドのリクエストを送って成功した時間
+	BenchRequestedAt time.Time
 	// BenchMatchedAt ベンチがAcceptのリクエストを送って成功した時間
 	BenchMatchedAt time.Time
 

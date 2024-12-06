@@ -138,8 +138,10 @@ func (u *User) Tick(ctx *Context) error {
 		switch u.Request.Statuses.User {
 		case RequestStatusMatching:
 			// マッチングされるまで待機する
-			// 一向にマッチングされない場合は、このユーザーの行動はハングする
-			break
+			// 30秒待ってもマッチされない場合は、サービスとして重大な問題があるのでクリティカルエラーとして落とす
+			if time.Now().Sub(u.Request.BenchRequestedAt) >= 30*time.Second {
+				return CodeError(ErrorCodeMatchingTimeout)
+			}
 
 		case RequestStatusDispatching:
 			// 椅子が到着するまで待つ
@@ -352,6 +354,7 @@ func (u *User) CreateRequest(ctx *Context) error {
 		return WrapCodeError(ErrorCodeFailedToCreateRequest, err)
 	}
 	req.ServerID = res.ServerRequestID
+	req.BenchRequestedAt = time.Now()
 	u.Request = req
 	u.RequestHistory = append(u.RequestHistory, req)
 	u.World.RequestDB.Create(req)
