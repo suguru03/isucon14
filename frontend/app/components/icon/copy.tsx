@@ -1,6 +1,6 @@
 import type { ComponentProps, FC } from "react";
 
-export const CopyIcon: FC<ComponentProps<"svg">> = function (props) {
+export const CopyIcon: FC<ComponentProps<"svg">> = (props) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

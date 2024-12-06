@@ -96,7 +96,9 @@ const ChairProgress: FC<{
   destLoc?: Coordinate;
 }> = ({ model, rideStatus, pickupLoc, destLoc, currentLoc }) => {
   const startLoc = useMemo(() => {
-    return rideStatus !== undefined ? getSimulatorStartCoordinate() : null;
+    return typeof rideStatus !== "undefined"
+      ? getSimulatorStartCoordinate()
+      : null;
   }, [rideStatus]);
 
   const progressToPickup: number = useMemo(() => {
@@ -175,37 +177,36 @@ const ChairProgress: FC<{
   );
 };
 
+const ChairDetailInfo = memo(
+  function ChairDetailInfo({
+    chairModel,
+    chairName,
+    rideStatus,
+  }: {
+    chairModel: string;
+    chairName: string;
+    rideStatus: RideStatus;
+  }) {
+    return chairModel && chairName && rideStatus ? (
+      <div className="flex items-center space-x-4">
+        <ChairIcon model={chairModel} className="size-12 shrink-0" />
+        <div className="space-y-0.5 w-full">
+          <Text bold>{chairName}</Text>
+          <Text className="text-xs text-neutral-500">{chairModel}</Text>
+          <SimulatorChairRideStatus currentStatus={rideStatus} />
+        </div>
+      </div>
+    ) : null;
+  },
+  (prev, next) =>
+    prev.chairModel === next.chairModel &&
+    prev.chairName === next.chairName &&
+    prev.rideStatus === next.rideStatus,
+);
+
 export const SimulatorChairDisplay: FC = () => {
   const { data, chair } = useSimulatorContext();
   const rideStatus = useMemo(() => data?.status ?? "MATCHING", [data]);
-
-  const ChairDetailInfo = memo(
-    function ChairDetailInfo({
-      chairModel,
-      chairName,
-      rideStatus,
-    }: {
-      chairModel: string;
-      chairName: string;
-      rideStatus: RideStatus;
-    }) {
-      return chairModel && chairName && rideStatus ? (
-        <div className="flex items-center space-x-4">
-          <ChairIcon model={chairModel} className="size-12 shrink-0" />
-          <div className="space-y-0.5 w-full">
-            <Text bold>{chairName}</Text>
-            <Text className="text-xs text-neutral-500">{chairModel}</Text>
-            <SimulatorChairRideStatus currentStatus={rideStatus} />
-          </div>
-        </div>
-      ) : null;
-    },
-    (prev, next) =>
-      prev.chairModel === next.chairModel &&
-      prev.chairName === next.chairName &&
-      prev.rideStatus === next.rideStatus,
-  );
-
   return (
     <div className="bg-white rounded shadow px-6 py-4 w-full">
       {chair ? (

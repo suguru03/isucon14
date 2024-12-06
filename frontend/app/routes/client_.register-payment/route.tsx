@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { ClientActionFunctionArgs, Form, redirect } from "@remix-run/react";
 import { fetchAppPostPaymentMethods } from "~/api/api-components";
 import { Button } from "~/components/primitives/button/button";
-import { TextInput } from "~/components/primitives/form/text";
+import { TextInput } from "~/components/primitives/form/text-input";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 
 export const meta: MetaFunction = () => {

@@ -18,14 +18,16 @@ import {
   fetchChairGetNotification,
 } from "~/api/api-components";
 import { SimulatorChair } from "~/types";
-import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 import { getCookieValue } from "~/utils/get-cookie-value";
+import { Message, MessageTypes } from "~/utils/post-message";
+import { getSimulatorCurrentCoordinate } from "~/utils/storage";
 
 type SimulatorContextProps = {
   chair?: SimulatorChair;
   data?: ChairGetNotificationResponse["data"];
   setCoordinate?: (coordinate: Coordinate) => void;
   setToken?: (token: string) => void;
+  isAnotherSimulatorBeingUsed?: boolean;
 };
 
 const SimulatorContext = createContext<SimulatorContextProps>({});
@@ -186,6 +188,26 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
     return coordinate ?? { latitude: 0, longitude: 0 };
   });
 
+  const [clientRideId, setClientRideId] = useState<string>();
+  const isAnotherSimulatorBeingUsed = !clientRideId && !!data?.ride_id;
+
+  console.log(isAnotherSimulatorBeingUsed);
+
+  useEffect(() => {
+    const onMessage = ({
+      data,
+    }: MessageEvent<Message["ClientRideRequested"]>) => {
+      const isSameOrigin = origin == location.origin;
+      if (isSameOrigin && data.type === MessageTypes.ClientRideRequested) {
+        setClientRideId(data?.payload?.rideId);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
+  }, []);
+
   return (
     <SimulatorContext.Provider
       value={{
@@ -193,6 +215,7 @@ export const SimulatorProvider = ({ children }: { children: ReactNode }) => {
         chair: simulateChair ? { ...simulateChair, coordinate } : undefined,
         setCoordinate,
         setToken,
+        isAnotherSimulatorBeingUsed,
       }}
     >
       {children}

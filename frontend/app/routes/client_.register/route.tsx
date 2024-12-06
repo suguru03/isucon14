@@ -8,8 +8,8 @@ import {
 } from "@remix-run/react";
 import { fetchAppPostUsers } from "~/api/api-components";
 import { Button } from "~/components/primitives/button/button";
-import { DateInput } from "~/components/primitives/form/date";
-import { TextInput } from "~/components/primitives/form/text";
+import { DateInput } from "~/components/primitives/form/date-input";
+import { TextInput } from "~/components/primitives/form/text-input";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { Text } from "~/components/primitives/text/text";
 import { saveCampaignData } from "~/utils/storage";

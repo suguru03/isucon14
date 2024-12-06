@@ -1,5 +1,6 @@
 import { NavLink } from "@remix-run/react";
 import type { ComponentProps, FC } from "react";
+import { AccountIcon } from "~/components/icon/account";
 import { HistoryIcon } from "~/components/icon/history";
 import { IsurideIcon } from "~/components/icon/isuride";
 
@@ -19,6 +20,11 @@ const MenuList = [
     icon: HistoryIcon,
     link: "/client/history",
     label: "HISTORY",
+  },
+  {
+    icon: AccountIcon,
+    link: "/client/user",
+    label: "USER",
   },
 ] as const satisfies NavigationMenu[];
 

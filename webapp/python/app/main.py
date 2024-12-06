@@ -26,28 +26,6 @@ class PostInitializeResponse(BaseModel):
     language: str
 
 
-@app.exception_handler(SQLAlchemyError)
-def sql_alchemy_error_handler(_: Request, exc: SQLAlchemyError) -> JSONResponse:
-    return JSONResponse(
-        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
-    )
-
-
-@app.exception_handler(RequestValidationError)
-def validation_exception_handler(
-    _: Request, exc: RequestValidationError
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-        content={"message": str(exc.errors())},
-    )
-
-
-@app.exception_handler(HTTPException)
-def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
-
-
 @app.post("/api/initialize")
 def post_initialize(req: PostInitializeRequest) -> PostInitializeResponse:
     result = subprocess.run(
@@ -68,3 +46,25 @@ def post_initialize(req: PostInitializeRequest) -> PostInitializeResponse:
         )
 
     return PostInitializeResponse(language="python")
+
+
+@app.exception_handler(SQLAlchemyError)
+def sql_alchemy_error_handler(_: Request, exc: SQLAlchemyError) -> JSONResponse:
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"message": str(exc)}
+    )
+
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(
+    _: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        content={"message": str(exc.errors())},
+    )
+
+
+@app.exception_handler(HTTPException)
+def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})
