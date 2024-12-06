@@ -84,7 +84,7 @@ export default function Index() {
                       <Text tagName="span" bold>
                         {title}
                       </Text>
-                      <Text tagName="span" size="xs">
+                      <Text tagName="span" size="xs" className="break-keep">
                         {description}
                       </Text>
                     </p>
