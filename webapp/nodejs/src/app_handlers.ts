@@ -29,7 +29,7 @@ import {
 } from "./common.js";
 import type { CountResult } from "./types/util.js";
 import { requestPaymentGatewayPostPayment } from "./payment_gateway.js";
-import { atoi } from "./utils/intger.js";
+import { atoi } from "./utils/integer.js";
 
 type AppPostUserRequest = Readonly<{
   username: string;
