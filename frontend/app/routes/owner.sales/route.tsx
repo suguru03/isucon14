@@ -3,7 +3,7 @@ import { memo, useMemo, useState, type FC } from "react";
 import { ChairIcon } from "~/components/icon/chair";
 import { PriceText } from "~/components/modules/price-text/price-text";
 import { Price } from "~/components/modules/price/price";
-import { DateInput } from "~/components/primitives/form/date";
+import { DateInput } from "~/components/primitives/form/date-input";
 import { Text } from "~/components/primitives/text/text";
 import { useOwnerContext } from "~/contexts/owner-context";
 import { OwnerChairs, OwnerSales } from "~/types";

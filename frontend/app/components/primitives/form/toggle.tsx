@@ -42,7 +42,7 @@ export const Toggle: FC<Props> = ({
           "peer-checked:translate-x-7 peer-checked:border-emerald-500",
           !disabled && "cursor-pointer",
         )}
-      ></label>
+      />
     </div>
   );
 };
