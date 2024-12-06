@@ -19,15 +19,13 @@ def internal_get_matching() -> None:
                 "SELECT * FROM rides WHERE chair_id IS NULL ORDER BY created_at LIMIT 1"
             )
         ).fetchone()
-
-    if not row:
+    if row is None:
         return
-
     ride = Ride.model_validate(row)
+
     matched: Chair | None = None
     empty = False
-
-    for _ in range(0, 10):
+    for _ in range(10):
         with engine.begin() as conn:
             row = conn.execute(
                 text(
@@ -53,8 +51,8 @@ def internal_get_matching() -> None:
     if not empty:
         return
 
+    assert matched is not None
     with engine.begin() as conn:
-        assert matched
         conn.execute(
             text("UPDATE rides SET chair_id = :chair_id WHERE id = :id"),
             {"chair_id": matched.id, "id": ride.id},
