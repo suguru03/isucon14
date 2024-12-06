@@ -22,7 +22,7 @@ const Links = [
   {
     to: "/simulator",
     title: "Simulator Aplication",
-    description: "ISUCON競技者用 アプリ動作シュミレーター",
+    description: "ISUCON競技者用 アプリ動作シミュレーター",
     Icon: () => <IsurideIcon fill="#fff" width={30} height={30}></IsurideIcon>,
     style: "bg-sky-600 text-white hover:bg-sky-700",
   },
