@@ -340,10 +340,6 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		if current.DistanceTo(chair.Coordinate) > distance {
 			return fmt.Errorf("ID:%sの椅子は指定の範囲内にありません", chair.ID)
 		}
-		entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
-		if len(entries) == 0 {
-			return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
-		}
 		for _, req := range c.RequestHistory.BackwardIter() {
 			if req.BenchMatchedAt.After(baseTime.Add(-3 * time.Second)) {
 				// nearbychairsのリクエストを送った3秒前以降にマッチされている場合は許容する
@@ -354,17 +350,24 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			}
 			break
 		}
-
-		if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
-			if !entry.Until.Valid {
-				// untilが無い場合は今もその位置にいることになるので、最新
-				return true
+		if !c.Location.Current().Equals(chair.Coordinate) {
+			// 最新の座標ではないなら過去を遡る
+			entries := c.Location.GetPeriodsByCoord(chair.Coordinate)
+			if len(entries) == 0 {
+				return fmt.Errorf("ID:%sの椅子はレスポンスされた座標に過去存在したことがありません", chair.ID)
+			} else {
+				if !lo.SomeBy(entries, func(entry GetPeriodsByCoordResultEntry) bool {
+					if !entry.Until.Valid {
+						// untilが無い場合は今もその位置にいることになるので、最新
+						return true
+					}
+					// untilがある場合は今より3秒以内にその位置にいればOK
+					return baseTime.Sub(entry.Until.Time) <= 3*time.Second
+				}) {
+					// ソフトエラーとして処理する
+					errs = append(errs, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))
+				}
 			}
-			// untilがある場合は今より3秒以内にその位置にいればOK
-			return baseTime.Sub(entry.Until.Time) <= 3*time.Second
-		}) {
-			// ソフトエラーとして処理する
-			errs = append(errs, fmt.Errorf("ID:%sの椅子は直近に指定の範囲内にありません", chair.ID))
 		}
 		checked[chair.ID] = true
 	}
