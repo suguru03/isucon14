@@ -33,7 +33,7 @@ const Chair: FC<
   {
     chairType: (typeof ChairTypes)[number];
   } & ComponentProps<"svg">
-> = function ({ chairType, ...props }) {
+> = ({ chairType, ...props }) => {
   const { bodyColor, windowColor, wheelColor } = chairType;
   return (
     <svg

@@ -2,7 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Link, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import { Button } from "~/components/primitives/button/button";
-import { TextInput } from "~/components/primitives/form/text";
+import { TextInput } from "~/components/primitives/form/text-input";
 import { FormFrame } from "~/components/primitives/frame/form-frame";
 import { getOwners } from "~/utils/get-initial-data";
 

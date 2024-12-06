@@ -290,12 +290,7 @@ LOOP:
 			}
 
 			if s.world.Time%world.LengthOfHour == 0 {
-				if num := s.world.NotInvitedUserCount.Load(); num > 0 {
-					s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人が新規登録しました", num))
-				}
-				if num := s.world.InvitedUserCount.Load(); num > 0 {
-					s.contestantLogger.Info(fmt.Sprintf("これまでに既存ユーザーの招待経由で%d人が新規登録しました", num))
-				}
+				s.contestantLogger.Info(fmt.Sprintf("これまでに地域内の評判によって%d人、既存ユーザーの招待経由で%d人が新規登録しました", s.world.NotInvitedUserCount.Load(), s.world.InvitedUserCount.Load()))
 				if num := s.world.LeavedUserCount.Load(); num > 0 {
 					s.contestantLogger.Warn(fmt.Sprintf("これまでに低評価なライドによって%d人が利用をやめました", num))
 				}

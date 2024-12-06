@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,7 +21,7 @@ type paymentGatewayGetPaymentsResponseOne struct {
 	Status string `json:"status"`
 }
 
-func requestPaymentGatewayPostPayment(paymentGatewayURL string, token string, param *paymentGatewayPostPaymentRequest, retrieveRidesOrderByCreatedAtAsc func() ([]Ride, error)) error {
+func requestPaymentGatewayPostPayment(ctx context.Context, paymentGatewayURL string, token string, param *paymentGatewayPostPaymentRequest, retrieveRidesOrderByCreatedAtAsc func() ([]Ride, error)) error {
 	b, err := json.Marshal(param)
 	if err != nil {
 		return err
@@ -31,7 +32,7 @@ func requestPaymentGatewayPostPayment(paymentGatewayURL string, token string, pa
 	retry := 0
 	for {
 		err := func() error {
-			req, err := http.NewRequest(http.MethodPost, paymentGatewayURL+"/payments", bytes.NewBuffer(b))
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, paymentGatewayURL+"/payments", bytes.NewBuffer(b))
 			if err != nil {
 				return err
 			}
@@ -46,7 +47,7 @@ func requestPaymentGatewayPostPayment(paymentGatewayURL string, token string, pa
 
 			if res.StatusCode != http.StatusNoContent {
 				// エラーが返ってきても成功している場合があるので、社内決済マイクロサービスに問い合わせ
-				getReq, err := http.NewRequest(http.MethodGet, paymentGatewayURL+"/payments", bytes.NewBuffer([]byte{}))
+				getReq, err := http.NewRequestWithContext(ctx, http.MethodGet, paymentGatewayURL+"/payments", bytes.NewBuffer([]byte{}))
 				if err != nil {
 					return err
 				}
