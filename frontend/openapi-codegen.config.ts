@@ -3,13 +3,13 @@ import {
   generateReactQueryComponents,
   generateSchemaTypes,
 } from "@openapi-codegen/typescript";
+import { ConfigBase } from "@openapi-codegen/typescript/lib/generators/types";
 import { readFile, readdir, writeFile } from "fs/promises";
 import { join as pathJoin } from "path";
 import {
   alternativeAPIURLString,
   alternativeURLExpression,
 } from "./api-url.mjs";
-import { ConfigBase } from "@openapi-codegen/typescript/lib/generators/types";
 
 const outputDir = "./app/api";
 
@@ -53,25 +53,6 @@ export default defineConfig({
       await generateReactQueryComponents(context, {
         ...configBase,
         schemasFiles,
-      });
-
-      /**
-       * fetch.responseのstatusを内包させる
-       */
-      await rewriteFile("./app/api/api-fetcher.ts", (content) => {
-        return content
-          .replace(
-            "return await response.json();",
-            "return {...await response.json(), _responseStatus: response.status};",
-          )
-          .replace(
-            '| { status: "unknown"; payload: string }',
-            '| { status: "unknown"; payload: string }\n  | { status: number; payload: string }',
-          )
-          .replace(
-            "error = await response.json();",
-            "error = {\n          status: response.status,\n          payload: await response.text()\n        };",
-          );
       });
 
       /**
