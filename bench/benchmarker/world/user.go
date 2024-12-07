@@ -478,7 +478,7 @@ func (u *User) ValidateNotificationEvent(rideID string, serverSide UserNotificat
 		return fmt.Errorf("椅子の名前が一致しません。(ride_id: %s, chair_id: %s, got: %s, want: %s)", rideID, serverSide.Chair.ID, serverSide.Chair.Name, u.Request.Chair.RegisteredData.Name)
 	}
 	if serverSideChair.Model != chair.Model.Name {
-		return fmt.Errorf("椅子のモデルが一致しません。(ride_id: %s, chair_id: %s, got: %s, want: %s)", rideID, serverSide.Chair.ID, serverSide.Chair.Model, u.Request.Chair.Model)
+		return fmt.Errorf("椅子のモデルが一致しません。(ride_id: %s, chair_id: %s, got: %s, want: %s)", rideID, serverSide.Chair.ID, serverSide.Chair.Model, u.Request.Chair.Model.Name)
 	}
 
 	totalRideCount := 0
