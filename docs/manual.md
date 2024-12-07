@@ -327,7 +327,7 @@ $ cat webapp/sql/1-schema.sql | sudo mysql isuride
 
 ベンチマーカーのクライアントのタイムアウトはそれぞれ以下のように設定されています。
 
-- 初期化処理の実行： 30秒
+- `POST /api/initialize`： 30秒
 - `GET /api/app/notification`, `GET /api/chair/notification`： 60秒
 - それ以外のリクエスト： 10秒
 
