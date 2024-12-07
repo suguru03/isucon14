@@ -587,6 +587,7 @@ class AppGetNotificationResponseData(BaseModel):
 
 class AppGetNotificationResponse(BaseModel):
     data: AppGetNotificationResponseData | None = None
+    retry_after_ms: int | None = None
 
 
 @router.get(
@@ -607,8 +608,8 @@ def app_get_notification(
             {"user_id": user.id},
         ).fetchone()
         if row is None:
-            response.status_code = HTTPStatus.OK
-            return response
+            notification_response = AppGetNotificationResponse(retry_after_ms=30)
+            return notification_response
 
         ride: Ride = Ride.model_validate(row)
 
@@ -650,7 +651,8 @@ def app_get_notification(
                 chair=None,
                 created_at=timestamp_millis(ride.created_at),
                 updated_at=timestamp_millis(ride.updated_at),
-            )
+            ),
+            retry_after_ms=30,
         )
 
         if ride.chair_id:
