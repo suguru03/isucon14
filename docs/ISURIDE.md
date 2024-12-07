@@ -63,7 +63,7 @@ stateDiagram-v2
   PICKUP --> CARRYING: 椅子：ユーザーを乗車させた
   CARRYING --> ARRIVED: 椅子：目的地に到着
   ARRIVED --> COMPLETED: ユーザー：配車依頼の評価を完了
-  COMPLETED --> [*]
+  COMPLETED --> [*]: 次の配車依頼が作成されるまで（MATCHINGになるまで）はCOMPLETEDの状態が継続
 ```
 
 ## 通知エンドポイント
