@@ -68,45 +68,54 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		p.Amount = req.Amount
 	}
 
-	time.Sleep(s.processTime)
-	// (直近3秒で処理された payment の数) / 100 の確率で処理を失敗させる(最大50%)
-	var recentProcessedCount int
-	for _, processed := range s.processedPayments.BackwardIter() {
-		if time.Since(processed.processedAt) > 3*time.Second {
-			break
+	// 決済処理
+	// キューに入れて完了を待つ(ブロッキング)
+	if s.queue.tryProcess(p) {
+		<-p.processChan
+		p.locked.Store(false)
+
+		select {
+		case <-r.Context().Done():
+			// クライアントが既に切断している
+			w.WriteHeader(http.StatusGatewayTimeout)
+		default:
+			writeResponse(w, p.Status)
 		}
-		recentProcessedCount++
+		return
 	}
-	failurePercentage := recentProcessedCount
-	if failurePercentage > 50 {
-		failurePercentage = 50
-	}
-	failureCount, _ := s.failureCounts.GetOrSetDefault(token, func() int { return 0 })
-	if rand.IntN(100) > failurePercentage || failureCount >= 4 {
-		// lock はここでしか触らない。lock が true の場合は idempotency key が同じリクエストが処理中の場合のみ
-		if p.locked.CompareAndSwap(false, true) {
-			s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
-			p.Status = s.verifier.Verify(p)
-			if p.Status.Err != nil {
-				s.errChan <- p.Status.Err
-			}
-			s.failureCounts.Delete(token)
-			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
-				writeResponse(w, p.Status)
-			} else {
-				writeRandomError(w)
-			}
-			return
+
+	// キューが詰まっていても確率で成功させる
+	if rand.IntN(5) == 0 {
+		slog.Debug("決済が詰まったが成功")
+
+		go s.queue.process(p)
+		<-p.processChan
+		p.locked.Store(false)
+
+		select {
+		case <-r.Context().Done():
+			// クライアントが既に切断している
+			w.WriteHeader(http.StatusGatewayTimeout)
+		default:
+			writeResponse(w, p.Status)
 		}
+		return
+	}
+
+	// エラーを返した場合でもキューに入る場合がある
+	if rand.IntN(5) < 4 {
+		go s.queue.process(p)
+		// 処理の終了を待たない
+		go func() {
+			<-p.processChan
+			p.locked.Store(false)
+		}()
+		slog.Debug("決済が詰まったが、キューに積んでエラー")
 	} else {
-		s.failureCounts.Set(token, failureCount+1)
+		slog.Debug("決済が詰まってエラー")
 	}
 
 	// 不安定なエラーを再現
-	writeRandomError(w)
-}
-
-func writeRandomError(w http.ResponseWriter) {
 	switch rand.IntN(3) {
 	case 0:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -137,14 +146,11 @@ func (s *Server) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payments := s.processedPayments.ToSlice()
+	payments := s.queue.getAllAcceptedPayments(token)
 
 	res := []ResponsePayment{}
 	for _, p := range payments {
-		if p.payment.Token != token {
-			continue
-		}
-		res = append(res, NewResponsePayment(p.payment))
+		res = append(res, NewResponsePayment(p))
 	}
 	writeJSON(w, http.StatusOK, res)
 }

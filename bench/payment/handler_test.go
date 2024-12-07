@@ -49,7 +49,7 @@ func TestServer_PaymentHandler(t *testing.T) {
 	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
 		mockCtrl := gomock.NewController(t)
 		verifier := NewMockVerifier(mockCtrl)
-		server := NewServer(verifier, 1*time.Millisecond, make(chan error))
+		server := NewServer(verifier, 1*time.Millisecond, 1, make(chan error))
 		httpServer := httptest.NewServer(server)
 		t.Cleanup(httpServer.Close)
 		e := httpexpect.Default(t, httpServer.URL)
@@ -327,7 +327,7 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 	prepare := func(t *testing.T) (*Server, *MockVerifier, *httpexpect.Expect) {
 		mockCtrl := gomock.NewController(t)
 		verifier := NewMockVerifier(mockCtrl)
-		server := NewServer(verifier, 1*time.Millisecond, make(chan error))
+		server := NewServer(verifier, 1*time.Millisecond, 1, make(chan error))
 		httpServer := httptest.NewServer(server)
 		t.Cleanup(httpServer.Close)
 		e := httpexpect.Default(t, httpServer.URL)
@@ -393,12 +393,17 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 			})
 
 		for _, p := range payments {
+			status := http.StatusNoContent
+			if p.Status.Type != StatusSuccess && p.Status.Type != StatusInitial {
+				status = http.StatusBadRequest
+			}
 			e.POST("/payments").
 				WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+p.Token).
 				WithJSON(map[string]any{
 					"amount": p.Amount,
 				}).
-				Expect()
+				Expect().
+				Status(status)
 		}
 
 		e.GET("/payments").
@@ -431,7 +436,8 @@ func TestServer_GetPaymentsHandler(t *testing.T) {
 			WithJSON(map[string]any{
 				"amount": p.Amount,
 			}).
-			Expect()
+			Expect().
+			Status(http.StatusNoContent)
 
 		e.GET("/payments").
 			WithHeader(AuthorizationHeader, AuthorizationHeaderPrefix+token).
