@@ -14,6 +14,9 @@
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[markdown]": {
+    "editor.formatOnSave": false
+  },
   "perlnavigator.includePaths": [
     "webapp/perl/lib",
     "webapp/perl/local/lib/perl5"
