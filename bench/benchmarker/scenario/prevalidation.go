@@ -15,33 +15,12 @@ import (
 	"github.com/isucon/isucon14/bench/benchrun"
 )
 
-// 実装の検証を行う
-func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) error {
-	clientConfig := webapp.ClientConfig{
+func (s *Scenario) validateFrontendFiles(ctx context.Context) error {
+	client, err := webapp.NewClient(webapp.ClientConfig{
 		TargetBaseURL:         s.target,
 		TargetAddr:            s.addr,
 		ClientIdleConnTimeout: 10 * time.Second,
-	}
-
-	if s.skipStaticFileSanityCheck {
-		s.contestantLogger.Info("静的ファイルのチェックをスキップします")
-	} else {
-		if err := validateFrontendFiles(ctx, clientConfig); err != nil {
-			s.contestantLogger.Error("静的ファイルのチェックに失敗しました", slog.String("error", err.Error()))
-			return err
-		}
-	}
-
-	if err := validateInitialData(ctx, clientConfig); err != nil {
-		s.contestantLogger.Error("初期データのチェックに失敗しました", slog.String("error", err.Error()))
-		return err
-	}
-
-	return nil
-}
-
-func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig) error {
-	client, err := webapp.NewClient(clientConfig)
+	})
 	if err != nil {
 		return err
 	}
@@ -83,6 +62,22 @@ func validateFrontendFiles(ctx context.Context, clientConfig webapp.ClientConfig
 		if actualHash != indexHtmlHash {
 			return errors.New("/ownerの内容が正しくありません")
 		}
+	}
+
+	return nil
+}
+
+// 実装の検証を行う
+func (s *Scenario) prevalidation(ctx context.Context, client *webapp.Client) error {
+	clientConfig := webapp.ClientConfig{
+		TargetBaseURL:         s.target,
+		TargetAddr:            s.addr,
+		ClientIdleConnTimeout: 10 * time.Second,
+	}
+
+	if err := validateInitialData(ctx, clientConfig); err != nil {
+		s.contestantLogger.Error("初期データのチェックに失敗しました", slog.String("error", err.Error()))
+		return err
 	}
 
 	return nil
