@@ -307,7 +307,7 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 					}
 				}
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(30 * time.Millisecond)
 		}
 	}()
 
@@ -515,7 +515,7 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 					}
 				}
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(30 * time.Millisecond)
 		}
 	}()
 
