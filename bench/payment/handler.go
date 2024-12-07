@@ -100,12 +100,12 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 					s.errChan <- p.Status.Err
 				}
 			}
-			if rand.IntN(100) > failurePercentage || failureCount >= 4 || alreadyProcessed {
+			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
+				s.failureCounts.Set(token, 0)
 				writeResponse(w, p.Status)
 			} else {
 				writeRandomError(w)
 			}
-			s.failureCounts.Set(token, 0)
 			return
 		}
 	} else {
