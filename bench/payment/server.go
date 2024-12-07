@@ -11,31 +11,18 @@ const IdempotencyKeyHeader = "Idempotency-Key"
 const AuthorizationHeader = "Authorization"
 const AuthorizationHeaderPrefix = "Bearer "
 
-type processedPayment struct {
-	payment     *Payment
-	processedAt time.Time
-}
-
 type Server struct {
-	mux               *http.ServeMux
-	knownKeys         *concurrent.SimpleMap[string, *Payment]
-	failureCounts     *concurrent.SimpleMap[string, int]
-	processedPayments *concurrent.SimpleSlice[*processedPayment]
-	processTime       time.Duration
-	verifier          Verifier
-	errChan           chan error
-	closed            bool
+	mux       *http.ServeMux
+	knownKeys *concurrent.SimpleMap[string, *Payment]
+	queue     *paymentQueue
+	closed    bool
 }
 
-func NewServer(verifier Verifier, processTime time.Duration, errChan chan error) *Server {
+func NewServer(verifier Verifier, processTime time.Duration, queueSize int, errChan chan error) *Server {
 	s := &Server{
-		mux:               http.NewServeMux(),
-		knownKeys:         concurrent.NewSimpleMap[string, *Payment](),
-		failureCounts:     concurrent.NewSimpleMap[string, int](),
-		processedPayments: concurrent.NewSimpleSlice[*processedPayment](),
-		processTime:       processTime,
-		verifier:          verifier,
-		errChan:           errChan,
+		mux:       http.NewServeMux(),
+		knownKeys: concurrent.NewSimpleMap[string, *Payment](),
+		queue:     newPaymentQueue(queueSize, verifier, processTime, errChan),
 	}
 	s.mux.HandleFunc("GET /payments", s.GetPaymentsHandler)
 	s.mux.HandleFunc("POST /payments", s.PostPaymentsHandler)
@@ -52,4 +39,5 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) Close() {
 	s.closed = true
+	s.queue.close()
 }

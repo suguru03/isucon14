@@ -10,5 +10,7 @@ func TestNewPayment(t *testing.T) {
 	p := NewPayment("test")
 	assert.Equal(t, "test", p.IdempotencyKey)
 	assert.Equal(t, StatusInitial, p.Status.Type)
-	assert.False(t, p.locked.Load())
+	assert.True(t, p.locked.Load())
+	assert.NotNil(t, p.processChan)
+	assert.NotPanics(t, func() { close(p.processChan) })
 }
