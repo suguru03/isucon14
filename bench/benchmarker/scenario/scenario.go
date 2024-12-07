@@ -306,6 +306,7 @@ LOOP:
 			select {
 			case err := <-s.paymentErrChan:
 				s.contestantLogger.Error("クリティカルエラーが発生しました", slog.String("error", err.Error()))
+				s.failed = true
 				return err
 			default:
 			}
