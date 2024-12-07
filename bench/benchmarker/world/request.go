@@ -90,6 +90,8 @@ type Request struct {
 
 	// Evaluated リクエストの評価が完了しているかどうか
 	Evaluated atomic.Bool
+	// Paid リクエストの支払いが完了しているかどうか
+	Paid atomic.Bool
 
 	Statuses RequestStatuses
 }
