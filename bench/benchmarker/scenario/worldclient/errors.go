@@ -57,7 +57,8 @@ func (e *codeError) Error() string {
 	if e.err == nil {
 		return fmt.Sprintf("CODE=%d", e.code)
 	}
-	return fmt.Sprintf("CODE=%d: %s", e.code, e.err)
+	return e.err.Error()
+	//return fmt.Sprintf("CODE=%d: %s", e.code, e.err)
 }
 
 func (e *codeError) Unwrap() error {
