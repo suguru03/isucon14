@@ -187,8 +187,11 @@ func (p *Owner) ValidateSales(until time.Time, serverSide *GetOwnerSalesResponse
 
 		// 期待していない椅子の売り上げは0として扱う
 		minSales := perChairsAtSnapshot[chair.ID]
-		if chair.Sales < minSales.Sales || sales.Sales < chair.Sales {
-			return fmt.Errorf("salesがずれているデータがあります (id: %s, got: %d, want(min): %dm want(max): %d)", chair.ID, chair.Sales, minSales.Sales, sales.Sales)
+		if chair.Sales < minSales.Sales {
+			return fmt.Errorf("salesが小さいデータがあります (id: %s, got: %d)", chair.ID, chair.Sales)
+		}
+		if sales.Sales < chair.Sales {
+			return fmt.Errorf("salesが大きいデータがあります (id: %s, got: %d)", chair.ID, chair.Sales)
 		}
 	}
 
@@ -203,14 +206,20 @@ func (p *Owner) ValidateSales(until time.Time, serverSide *GetOwnerSalesResponse
 		}
 		// 期待していない椅子モデルの売り上げは0として扱う
 		minSales := perModelsAtSnapshot[model.Model]
-		if model.Sales < minSales.Sales || sales.Sales < model.Sales {
-			return fmt.Errorf("salesがずれているデータがあります (model: %s, got: %d, want(min): %d, want(max): %d)", model.Model, model.Sales, minSales.Sales, sales.Sales)
+		if model.Sales < minSales.Sales {
+			return fmt.Errorf("salesが小さいデータがあります (model: %s, got: %d)", model.Model, model.Sales)
+		}
+		if sales.Sales < model.Sales {
+			return fmt.Errorf("salesが大きいデータがあります (model: %s, got: %d)", model.Model, model.Sales)
 		}
 	}
 
 	// Totalの検証
-	if serverSide.Total < totalsAtSnapshot || totals < serverSide.Total {
-		return fmt.Errorf("totalがずれているデータがあります (got: %d, want(min): %d, want(max): %d)", serverSide.Total, totalsAtSnapshot, totals)
+	if serverSide.Total < totalsAtSnapshot {
+		return fmt.Errorf("totalが小さいデータがあります (got: %d)", serverSide.Total)
+	}
+	if totals < serverSide.Total {
+		return fmt.Errorf("totalが大きいデータがあります (got: %d)", serverSide.Total)
 	}
 
 	return nil
