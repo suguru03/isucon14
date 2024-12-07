@@ -421,7 +421,6 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 	case *ChairNotificationEventMatched:
 		if c.matchingData != nil && c.matchingData.ServerRequestID != data.ServerRequestID {
 			// 椅子が別のリクエストを保持している
-			slog.Debug(fmt.Sprintf("code:%d", ErrorCodeChairAlreadyHasRequest), slog.Any("ride", c.Request))
 			return WrapCodeError(ErrorCodeChairAlreadyHasRequest, fmt.Errorf("chair_id: %s, current_ride_id: %s, got: %s", c.ServerID, c.matchingData.ServerRequestID, data.ServerRequestID))
 		}
 		c.World.EmptyChairs.Delete(c)
@@ -445,12 +444,32 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 		if request.Statuses.Desired != RequestStatusCompleted {
 			return WrapCodeError(ErrorCodeUnexpectedChairRequestStatusTransitionOccurred, fmt.Errorf("ride_id: %s, expect: %v, got: %v", request.ServerID, request.Statuses.Desired, RequestStatusCompleted))
 		}
+		if err := c.ValidateChairNotificationEvent(data.ServerRequestID, data.ChairNotificationEvent); err != nil {
+			return WrapCodeError(ErrorCodeChairReceivedDataIsWrong, err)
+		}
+
 		request.Statuses.Chair = RequestStatusCompleted
 
 		// 進行中のリクエストが無い状態にする
 		c.Request = nil
 		c.matchingData = nil
 		c.World.EmptyChairs.Add(c)
+	}
+	return nil
+}
+
+func (c *Chair) ValidateChairNotificationEvent(rideID string, event ChairNotificationEvent) error {
+	if event.User.ID != c.matchingData.User.ID {
+		return fmt.Errorf("ユーザーのIDが一致しません。(ride_id: %s, got: %s, want: %s", rideID, event.User.ID, c.matchingData.User.ID)
+	}
+	if event.User.Name != c.matchingData.User.Name {
+		return fmt.Errorf("ユーザーの名前が一致しません。(ride_id: %s, got: %s, want: %s)", rideID, event.User.Name, c.matchingData.User.Name)
+	}
+	if !event.Pickup.Equals(c.matchingData.Pickup) {
+		return fmt.Errorf("配車位置が一致しません。(ride_id: %s, got: %s, want: %s)", rideID, event.Pickup, c.matchingData.Pickup)
+	}
+	if !event.Destination.Equals(c.matchingData.Destination) {
+		return fmt.Errorf("目的地が一致しません。(ride_id: %s, got: %s, want: %s)", rideID, event.Destination, c.matchingData.Destination)
 	}
 	return nil
 }
