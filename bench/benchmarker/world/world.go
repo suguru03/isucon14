@@ -408,7 +408,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			for _, chair := range suspiciousChairs {
 				ok := false
 				for _, req := range chair.RequestHistory.BackwardIter() {
-					if !req.ServerCompletedAt.Before(baseTime.Add(-3 * time.Second)) {
+					if !req.ServerCompletedAt.IsZero() && !req.ServerCompletedAt.Before(baseTime.Add(-3*time.Second)) {
 						// 完了日時がbaseTime-3sよりも後のリクエストだけを見る
 						// baseTime-3sとbaseTimeの座標が少なくとも一致しているので、ずっと止まっていると見なす
 						break
