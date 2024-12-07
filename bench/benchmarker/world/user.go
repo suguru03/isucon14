@@ -273,19 +273,19 @@ func (u *User) CheckRequestHistory(ctx *Context) error {
 			return fmt.Errorf("想定されないライドが含まれています: id=%s", req.ID)
 		}
 		if !req.DestinationCoordinate.Equals(expected.DestinationPoint) || !req.PickupCoordinate.Equals(expected.PickupPoint) {
-			return fmt.Errorf("ライドの座標情報が正しくありません: id=%s", req.ID)
+			return fmt.Errorf("ライドの座標情報が期待したものと異なります: id=%s", req.ID)
 		}
 		if req.Fare != expected.Fare() {
-			return fmt.Errorf("ライドの運賃が正しくありません: id=%s", req.ID)
+			return fmt.Errorf("ライドの運賃が期待したものと異なります: id=%s", req.ID)
 		}
 		if req.Evaluation != expected.CalculateEvaluation().Score() {
-			return fmt.Errorf("ライドの評価が正しくありません: id=%s", req.ID)
+			return fmt.Errorf("ライドの評価が期待したものと異なります: id=%s", req.ID)
 		}
 		if req.Chair.ID != expected.Chair.ServerID || req.Chair.Name != expected.Chair.RegisteredData.Name || req.Chair.Model != expected.Chair.Model.Name || req.Chair.Owner != expected.Chair.Owner.RegisteredData.Name {
-			return fmt.Errorf("ライドの椅子の情報が正しくありません: id=%s", req.ID)
+			return fmt.Errorf("ライドの椅子の情報が期待したものと異なります: id=%s", req.ID)
 		}
 		if !req.CompletedAt.Equal(expected.ServerCompletedAt) {
-			return fmt.Errorf("ライドの完了日時が正しくありません: id=%s", req.ID)
+			return fmt.Errorf("ライドの完了日時が期待したものと異なります: id=%s", req.ID)
 		}
 	}
 

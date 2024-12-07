@@ -536,7 +536,7 @@ func browserAccess(ctx context.Context, client *webapp.Client, scenario benchrun
 			return WrapCodeError(ErrorCodeFailedToGetStaticFile, err)
 		}
 		if hash != benchrun.FrontendHashesMap["index.html"] {
-			return WrapCodeError(ErrorCodeInvalidContent, errors.New("invalid content for "+path))
+			return WrapCodeError(ErrorCodeInvalidContent, errors.New(path+"の内容が期待したものと一致しません"))
 		}
 	}
 
@@ -547,7 +547,7 @@ func browserAccess(ctx context.Context, client *webapp.Client, scenario benchrun
 			return WrapCodeError(ErrorCodeFailedToGetStaticFile, err)
 		}
 		if hash != benchrun.FrontendHashesMap[filePath[1:]] {
-			return WrapCodeError(ErrorCodeInvalidContent, errors.New("invalid content for "+filePath))
+			return WrapCodeError(ErrorCodeInvalidContent, errors.New(filePath+"の内容が期待したものと一致しません"))
 		}
 	}
 
