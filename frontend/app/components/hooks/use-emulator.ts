@@ -100,7 +100,7 @@ const postCarring = async (rideId: string) => {
     return;
   }
   return fetchChairPostRideStatus({
-    body: { status: "CsRRYING" },
+    body: { status: "CARRYING" },
     pathParams: {
       rideId,
     },
