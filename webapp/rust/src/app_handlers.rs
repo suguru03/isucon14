@@ -673,7 +673,7 @@ async fn get_chair_stats(
             .fetch_all(&mut *tx)
             .await?;
 
-    let total_ride_count = rides.len() as i32;
+    let mut total_ride_count = 0;
     let mut total_evaluation = 0.0;
     for ride in rides {
         let ride_statuses: Vec<RideStatus> =
@@ -701,6 +701,7 @@ async fn get_chair_stats(
             continue;
         }
 
+        total_ride_count += 1;
         total_evaluation += ride.evaluation.unwrap() as f64;
     }
 
