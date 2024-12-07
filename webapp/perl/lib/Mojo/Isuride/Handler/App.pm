@@ -569,7 +569,7 @@ sub get_chair_stats ($c, $chair_id) {
     my $db    = $c->mysql->db;
     my $rides = $db->select_all(q{SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC}, $chair_id);
 
-    my $total_rides_count    = scalar $rides->@*;
+    my $total_rides_count    = 0;
     my $total_evaluation_avg = 0;
 
     for my $ride ($rides->@*) {
@@ -596,12 +596,15 @@ sub get_chair_stats ($c, $chair_id) {
             next;
         }
 
+        $total_rides_count++;
         $total_evaluation_avg += $ride->{evaluation};
     }
     $stats->{total_rides_count} = $total_rides_count;
 
     if ($total_rides_count > 0) {
         $stats->{total_evaluation_avg} = $total_evaluation_avg / $total_rides_count;
+    } else {
+        $stats->{total_evaluation_avg} = 0;
     }
 
     return $stats;
