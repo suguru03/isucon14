@@ -51,7 +51,8 @@ var runCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
+			AddSource: true,
+			Level:     slog.LevelDebug,
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
 				if a.Key == "time" && a.Value.Kind() == slog.KindTime {
 					return slog.String(a.Key, a.Value.Time().In(jst).Format("15:04:05.000"))
