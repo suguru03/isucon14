@@ -414,7 +414,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 						break
 					}
 					// nearbyChairsのリクエストを送ってから３秒以内にマッチの通知が送られているなら含まれていなくて良い
-					if req.BenchRequestAcceptTime.Before(baseTime.Add(3 * time.Second)) {
+					if !req.BenchRequestAcceptTime.IsZero() && req.BenchRequestAcceptTime.Before(baseTime.Add(3*time.Second)) {
 						ok = true
 						break
 					}
