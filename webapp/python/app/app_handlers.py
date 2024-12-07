@@ -724,7 +724,7 @@ def get_chair_stats(
         text("SELECT * FROM rides WHERE chair_id = :chair_id ORDER BY updated_at DESC"),
         {"chair_id": chair_id},
     ).fetchall()
-    total_ride_count = len(rides)
+    total_ride_count = 0
     total_evaluation = 0.0
 
     for ride in rides:
@@ -752,6 +752,7 @@ def get_chair_stats(
         if not is_completed:
             continue
 
+        total_ride_count += 1
         total_evaluation += float(ride.evaluation)
 
     if total_ride_count > 0:
