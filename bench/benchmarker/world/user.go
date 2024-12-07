@@ -187,7 +187,7 @@ func (u *User) Tick(ctx *Context) error {
 				u.Request.ServerCompletedAt = res.CompletedAt
 				u.Request.Statuses.Desired = RequestStatusCompleted
 				u.Request.Evaluated.Store(true)
-				if u.Request.Paid.Load() {
+				if !u.Request.Paid.Load() {
 					return CodeError(ErrorCodeSkippedPaymentButEvaluated)
 				}
 				if requests := len(u.RequestHistory); requests == 1 {
