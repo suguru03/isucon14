@@ -104,7 +104,7 @@ func validateInitialData(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		ownerClient.SetCookie(&http.Cookie{Name: "owner_session", Value: "0811617de5c97aea5ddb433f085c3d1e"})
+		ownerClient.SetCookie(&http.Cookie{Name: "owner_session", Value: "0811617de5c97aea5ddb433f085c3d1ef2598ab71531ab3492ebb8629f0598d2"})
 
 		chairs, err := ownerClient.OwnerGetChairs(ctx)
 		if err != nil {
@@ -135,7 +135,7 @@ func validateInitialData(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "21e9562de048ee9b34da840296509fa9"})
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "21e9562de048ee9b34da840296509fa913bc34d804b3aab4dc4db77f3f6995e4"})
 
 		rides, err := userClient.AppGetRequests(ctx)
 		if err != nil {
@@ -150,7 +150,7 @@ func validateInitialData(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "c9e15fd57545f43105ace9088f1c467e"})
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "c9e15fd57545f43105ace9088f1c467eb3ddd232b49ac1ce6b6c52f5fb4d59e3"})
 
 		rides, err := userClient.AppGetRequests(ctx)
 		if err != nil {
@@ -187,7 +187,7 @@ func validateInitialData(ctx context.Context, clientConfig webapp.ClientConfig) 
 		if err != nil {
 			return err
 		}
-		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "a8b21d78f143c3facdece4dffba964cc"})
+		userClient.SetCookie(&http.Cookie{Name: "app_session", Value: "a8b21d78f143c3facdece4dffba964cc5120a341e383b1077e308be5cc67a8eb"})
 
 		rides, err := userClient.AppGetRequests(ctx)
 		if err != nil {

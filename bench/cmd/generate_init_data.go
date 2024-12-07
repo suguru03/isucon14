@@ -148,8 +148,8 @@ $ mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-crea
 			owner := &Owner{
 				ID:                 makeULIDFromTime(registeredAt),
 				Name:               random.GenerateOwnerName(),
-				AccessToken:        random.GenerateHexString(32),
-				ChairRegisterToken: random.GenerateHexString(32),
+				AccessToken:        random.GenerateHexString(64),
+				ChairRegisterToken: random.GenerateHexString(64),
 				CreatedAt:          registeredAt,
 				UpdatedAt:          registeredAt,
 			}
@@ -164,7 +164,7 @@ $ mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-crea
 					Name:                 model.GenerateName(),
 					Model:                model.Name,
 					IsActive:             false,
-					AccessToken:          random.GenerateHexString(32),
+					AccessToken:          random.GenerateHexString(64),
 					CreatedAt:            createdAt,
 					UpdatedAt:            createdAt,
 					modelData:            model,
@@ -182,8 +182,8 @@ $ mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-crea
 				FirstName:      random.GenerateFirstName(),
 				LastName:       random.GenerateLastName(),
 				DateOfBirth:    random.GenerateDateOfBirth(),
-				AccessToken:    random.GenerateHexString(32),
-				InvitationCode: random.GenerateHexString(15),
+				AccessToken:    random.GenerateHexString(64),
+				InvitationCode: random.GenerateHexString(30),
 				CreatedAt:      registeredAt,
 				UpdatedAt:      registeredAt,
 			}
@@ -197,8 +197,8 @@ $ mysqldump --skip-create-options --skip-add-drop-table --disable-keys --no-crea
 						FirstName:      random.GenerateFirstName(),
 						LastName:       random.GenerateLastName(),
 						DateOfBirth:    random.GenerateDateOfBirth(),
-						AccessToken:    random.GenerateHexString(32),
-						InvitationCode: random.GenerateHexString(15),
+						AccessToken:    random.GenerateHexString(64),
+						InvitationCode: random.GenerateHexString(30),
 						CreatedAt:      registeredAt,
 						UpdatedAt:      registeredAt,
 					}
