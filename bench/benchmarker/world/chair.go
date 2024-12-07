@@ -477,6 +477,9 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 }
 
 func (c *Chair) ValidateChairNotificationEvent(rideID string, event ChairNotificationEvent) error {
+	if c.matchingData == nil {
+		return fmt.Errorf("進行中のライドがないときに進行中状態の通知が届きました (ride_id: %s)", rideID)
+	}
 	if event.User.ID != c.matchingData.User.ID {
 		return fmt.Errorf("ユーザーのIDが一致しません。(ride_id: %s, got: %s, want: %s", rideID, event.User.ID, c.matchingData.User.ID)
 	}
