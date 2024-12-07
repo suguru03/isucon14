@@ -417,9 +417,16 @@ func (u *User) ChangeRequestStatus(status RequestStatus, serverRequestID string,
 
 func (u *User) HandleNotification(event NotificationEvent) error {
 	switch data := event.(type) {
+	case *UserNotificationEventMatching:
+		err := u.ChangeRequestStatus(RequestStatusMatching, data.ServerRequestID, func() error {
+			return u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, true)
+		})
+		if err != nil {
+			return err
+		}
 	case *UserNotificationEventDispatching:
 		err := u.ChangeRequestStatus(RequestStatusDispatching, data.ServerRequestID, func() error {
-			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent); err != nil {
+			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, false); err != nil {
 				return err
 			}
 			u.validatedRideNotificationEvent = &data.UserNotificationEvent
@@ -429,22 +436,51 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 			return err
 		}
 	case *UserNotificationEventDispatched:
-		err := u.ChangeRequestStatus(RequestStatusDispatched, data.ServerRequestID, nil)
+		err := u.ChangeRequestStatus(RequestStatusDispatched, data.ServerRequestID, func() error {
+			if u.validatedRideNotificationEvent != nil {
+				return compareUserNotificationEvent(data.ServerRequestID, *u.validatedRideNotificationEvent, data.UserNotificationEvent)
+			}
+			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, false); err != nil {
+				return err
+			}
+			u.validatedRideNotificationEvent = &data.UserNotificationEvent
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventCarrying:
-		err := u.ChangeRequestStatus(RequestStatusCarrying, data.ServerRequestID, nil)
+		err := u.ChangeRequestStatus(RequestStatusCarrying, data.ServerRequestID, func() error {
+			if u.validatedRideNotificationEvent != nil {
+				return compareUserNotificationEvent(data.ServerRequestID, *u.validatedRideNotificationEvent, data.UserNotificationEvent)
+			}
+			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, false); err != nil {
+				return err
+			}
+			u.validatedRideNotificationEvent = &data.UserNotificationEvent
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventArrived:
-		err := u.ChangeRequestStatus(RequestStatusArrived, data.ServerRequestID, nil)
+		err := u.ChangeRequestStatus(RequestStatusArrived, data.ServerRequestID, func() error {
+			if u.validatedRideNotificationEvent != nil {
+				return compareUserNotificationEvent(data.ServerRequestID, *u.validatedRideNotificationEvent, data.UserNotificationEvent)
+			}
+			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, false); err != nil {
+				return err
+			}
+			u.validatedRideNotificationEvent = &data.UserNotificationEvent
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 	case *UserNotificationEventCompleted:
-		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID, nil)
+		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID, func() error {
+			return u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent, false)
+		})
 		if err != nil {
 			return err
 		}
@@ -452,7 +488,7 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 	return nil
 }
 
-func (u *User) ValidateNotificationEvent(rideID string, serverSide UserNotificationEvent) error {
+func (u *User) ValidateNotificationEvent(rideID string, serverSide UserNotificationEvent, ignoreChair bool) error {
 	if !serverSide.Pickup.Equals(u.Request.PickupPoint) {
 		return fmt.Errorf("配車位置が一致しません。(ride_id: %s, got: %s, want: %s)", rideID, serverSide.Pickup, u.Request.PickupPoint)
 	}
@@ -462,6 +498,10 @@ func (u *User) ValidateNotificationEvent(rideID string, serverSide UserNotificat
 
 	if serverSide.Fare != u.Request.Fare() {
 		return fmt.Errorf("運賃が一致しません。(ride_id: %s, got: %d, want: %d)", rideID, serverSide.Fare, u.Request.Fare())
+	}
+
+	if ignoreChair {
+		return nil
 	}
 
 	if serverSide.Chair == nil {
@@ -536,7 +576,7 @@ func compareUserNotificationEvent(rideID string, old, new UserNotificationEvent)
 	if new.Chair.Stats.TotalRidesCount != old.Chair.Stats.TotalRidesCount {
 		return fmt.Errorf("椅子の総乗車回数が一致しません。(ride_id: %s, chair_id: %s, got: %d, want: %d)", rideID, new.Chair.ID, new.Chair.Stats.TotalRidesCount, old.Chair.Stats.TotalRidesCount)
 	}
-	if new.Chair.Stats.TotalEvaluationAvg != old.Chair.Stats.TotalEvaluationAvg {
+	if !almostEqual(new.Chair.Stats.TotalEvaluationAvg, old.Chair.Stats.TotalEvaluationAvg, 0.01) {
 		return fmt.Errorf("椅子の評価の平均が一致しません。(ride_id: %s, chair_id: %s, got: %f, want: %f)", rideID, new.Chair.ID, new.Chair.Stats.TotalEvaluationAvg, old.Chair.Stats.TotalEvaluationAvg)
 	}
 
