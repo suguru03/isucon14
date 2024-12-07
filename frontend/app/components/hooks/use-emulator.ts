@@ -37,16 +37,16 @@ const move = (
   }
 };
 
-const currentCoodinatePost = async (coordinate: Coordinate) => {
+const currentCoodinatePost = (coordinate: Coordinate) => {
   setSimulatorCurrentCoordinate(coordinate);
-  void (await fetchChairPostCoordinate({
+  return fetchChairPostCoordinate({
     body: coordinate,
-  }));
+  });
 };
 
 const postEnroute = (rideId: string, coordinate: Coordinate) => {
   setSimulatorStartCoordinate(coordinate);
-  void fetchChairPostRideStatus({
+  return fetchChairPostRideStatus({
     body: { status: "ENROUTE" },
     pathParams: {
       rideId,
@@ -55,7 +55,7 @@ const postEnroute = (rideId: string, coordinate: Coordinate) => {
 };
 
 const postCarring = (rideId: string) => {
-  void fetchChairPostRideStatus({
+  return fetchChairPostRideStatus({
     body: { status: "CARRYING" },
     pathParams: {
       rideId,
@@ -72,8 +72,8 @@ const forceCarry = (pickup_coordinate: Coordinate, rideId: RideId) =>
   setTimeout(() => {
     try {
       void (async () => {
-        void (await currentCoodinatePost(pickup_coordinate));
-        postCarring(rideId);
+        await currentCoodinatePost(pickup_coordinate);
+        void postCarring(rideId);
       })();
     } catch (error) {
       console.error(error);
@@ -136,10 +136,10 @@ export const useEmulator = () => {
       try {
         switch (data.status) {
           case "MATCHING":
-            postEnroute(data.ride_id, chair.coordinate);
+            void postEnroute(data.ride_id, chair.coordinate);
             break;
           case "PICKUP":
-            postCarring(data.ride_id);
+            void postCarring(data.ride_id);
             break;
           case "ENROUTE":
             setCoordinate?.(move(chair.coordinate, data.pickup_coordinate));
