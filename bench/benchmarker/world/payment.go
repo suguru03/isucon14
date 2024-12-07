@@ -35,13 +35,13 @@ func (db *PaymentDB) Verify(p *payment.Payment) payment.Status {
 	req := user.Request
 	status := payment.Status{Type: payment.StatusSuccess, Err: nil}
 	if req == nil {
-		status.Err = fmt.Errorf("進行中のリクエストがありません。token: %s, amount: %v", p.Token, p.Amount)
+		status.Err = WrapCodeError(ErrorCodeWrongPaymentRequest, fmt.Errorf("進行中のリクエストがありません。token: %s, amount: %v", p.Token, p.Amount))
 	} else {
 		if !req.Paid.CompareAndSwap(false, true) {
-			status.Err = fmt.Errorf("既に支払い済みです。token: %s, amount: %v, request id: %s", p.Token, p.Amount, req.ServerID)
+			status.Err = WrapCodeError(ErrorCodeWrongPaymentRequest, fmt.Errorf("既に支払い済みです。token: %s, amount: %v, request id: %s", p.Token, p.Amount, req.ServerID))
 		}
 		if p.Amount != req.Fare() {
-			status.Err = fmt.Errorf("支払い額が不正です。token: %s, expected amount: %v, actual amount: %v, request id: %s", p.Token, req.Fare(), p.Amount, req.ServerID)
+			status.Err = WrapCodeError(ErrorCodeWrongPaymentRequest, fmt.Errorf("支払い額が不正です。token: %s, expected amount: %v, actual amount: %v, request id: %s", p.Token, req.Fare(), p.Amount, req.ServerID))
 		}
 	}
 

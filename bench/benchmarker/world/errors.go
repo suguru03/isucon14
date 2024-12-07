@@ -57,8 +57,7 @@ const (
 	ErrorCodeFailedToRegisterPaymentMethods
 	// ErrorCodeFailedToGetOwnerSales オーナーの売り上げ情報の取得に失敗した
 	ErrorCodeFailedToGetOwnerSales
-	// ErrorCodeIncorrectAmountOfFareCharged ユーザーのリクエストに対して誤った金額が請求されました
-	ErrorCodeIncorrectAmountOfFareCharged
+	_
 	// ErrorCodeSalesMismatched 取得したオーナーの売り上げ情報が想定しているものとズレています
 	ErrorCodeSalesMismatched
 	// ErrorCodeFailedToGetOwnerChairs オーナーの椅子一覧の取得に失敗した
@@ -78,8 +77,10 @@ const (
 	ErrorCodeMatchingTimeout
 	// ErrorCodeUserReceivedDataIsWrong ユーザーが通知から受け取ったデータが想定と異なります
 	ErrorCodeUserReceivedDataIsWrong
-	// ErrorCodeUserSkippedPayment 評価は完了していますが支払いがされていません
+	// ErrorCodeSkippedPaymentButEvaluated 評価は完了していますが支払いがされていません
 	ErrorCodeSkippedPaymentButEvaluated
+	// ErrorCodeWrongPaymentRequest 決済サーバーに誤った支払いのリクエストが発生しています
+	ErrorCodeWrongPaymentRequest
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -88,10 +89,10 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUnexpectedUserRequestStatusTransitionOccurred:  true,
 	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: true,
 	ErrorCodeChairAlreadyHasRequest:                         true,
-	ErrorCodeIncorrectAmountOfFareCharged:                   true,
 	ErrorCodeMatchingTimeout:                                true,
 	ErrorCodeEvaluateTimeout:                                true,
 	ErrorCodeSkippedPaymentButEvaluated:                     true,
+	ErrorCodeWrongPaymentRequest:                            true,
 }
 
 var ErrorTexts = map[ErrorCode]string{
@@ -114,7 +115,6 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeFailedToConnectNotificationStream:              "通知APIの接続に失敗しました",
 	ErrorCodeFailedToRegisterPaymentMethods:                 "ユーザーの支払い情報の登録に失敗しました",
 	ErrorCodeFailedToGetOwnerSales:                          "オーナーの売り上げ情報の取得に失敗しました",
-	ErrorCodeIncorrectAmountOfFareCharged:                   "ユーザーに誤った金額が請求されました",
 	ErrorCodeSalesMismatched:                                "取得したオーナーの売り上げ情報が想定しているものと異なります",
 	ErrorCodeFailedToGetOwnerChairs:                         "オーナーの椅子一覧の取得に失敗しました",
 	ErrorCodeIncorrectOwnerChairsData:                       "取得したオーナーの椅子一覧の情報が想定しているものと異なります",
@@ -125,6 +125,7 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeMatchingTimeout:                                "ライドが長時間マッチングされませんでした",
 	ErrorCodeUserReceivedDataIsWrong:                        "ユーザーが受け取った通知の内容が想定と異なります",
 	ErrorCodeSkippedPaymentButEvaluated:                     "評価は完了していますが支払いがされていません",
+	ErrorCodeWrongPaymentRequest:                            "決済サーバーに誤った支払いのリクエストが発生しています",
 }
 
 type codeError struct {
