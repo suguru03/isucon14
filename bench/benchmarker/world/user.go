@@ -471,7 +471,12 @@ func (u *User) HandleNotification(event NotificationEvent) error {
 			return err
 		}
 	case *UserNotificationEventCompleted:
-		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID, nil)
+		err := u.ChangeRequestStatus(RequestStatusCompleted, data.ServerRequestID, func() error {
+			if err := u.ValidateNotificationEvent(data.ServerRequestID, data.UserNotificationEvent); err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
