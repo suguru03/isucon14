@@ -585,7 +585,10 @@ async fn app_get_notification(
             .fetch_optional(&mut *tx)
             .await?
     else {
-        return Ok(axum::Json(AppGetNotificationResponse { data: None, retry_after_ms: Some(30) }));
+        return Ok(axum::Json(AppGetNotificationResponse {
+            data: None,
+            retry_after_ms: Some(30),
+        }));
     };
 
     let yet_sent_ride_status: Option<RideStatus> = sqlx::query_as("SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1")
@@ -654,7 +657,10 @@ async fn app_get_notification(
 
     tx.commit().await?;
 
-    Ok(axum::Json(AppGetNotificationResponse { data: Some(data), retry_after_ms: Some(30) }))
+    Ok(axum::Json(AppGetNotificationResponse {
+        data: Some(data),
+        retry_after_ms: Some(30),
+    }))
 }
 
 async fn get_chair_stats(
