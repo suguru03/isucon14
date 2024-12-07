@@ -15,6 +15,34 @@ type ChairNotificationEventMatched struct {
 	unimplementedNotificationEvent
 }
 
+type ChairNotificationEventDispatching struct {
+	ServerRequestID string
+	ChairNotificationEvent
+
+	unimplementedNotificationEvent
+}
+
+type ChairNotificationEventDispatched struct {
+	ServerRequestID string
+	ChairNotificationEvent
+
+	unimplementedNotificationEvent
+}
+
+type ChairNotificationEventCarrying struct {
+	ServerRequestID string
+	ChairNotificationEvent
+
+	unimplementedNotificationEvent
+}
+
+type ChairNotificationEventArrived struct {
+	ServerRequestID string
+	ChairNotificationEvent
+
+	unimplementedNotificationEvent
+}
+
 type ChairNotificationEventCompleted struct {
 	ServerRequestID string
 	ChairNotificationEvent
