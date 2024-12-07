@@ -21,7 +21,7 @@ pub async fn app_auth_middleware(
         .fetch_optional(&pool)
         .await?
     else {
-        return Err(Error::BadRequest("invalid access token"));
+        return Err(Error::Unauthorized("invalid access token"));
     };
 
     req.extensions_mut().insert(user);
@@ -44,7 +44,7 @@ pub async fn owner_auth_middleware(
         .fetch_optional(&pool)
         .await?
     else {
-        return Err(Error::BadRequest("invalid access token"));
+        return Err(Error::Unauthorized("invalid access token"));
     };
 
     req.extensions_mut().insert(owner);
@@ -67,7 +67,7 @@ pub async fn chair_auth_middleware(
         .fetch_optional(&pool)
         .await?
     else {
-        return Err(Error::BadRequest("invalid access token"));
+        return Err(Error::Unauthorized("invalid access token"));
     };
 
     req.extensions_mut().insert(chair);
