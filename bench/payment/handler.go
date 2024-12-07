@@ -99,7 +99,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 				if p.Status.Err != nil {
 					s.errChan <- p.Status.Err
 				}
-				s.failureCounts.Delete(token)
+				s.failureCounts.Set(token, 0)
 			}
 			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
 				writeResponse(w, p.Status)
