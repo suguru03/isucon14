@@ -689,32 +689,6 @@ class RecentRide(BaseModel):
     evaluation: int
 
 
-class AppChairStats(BaseModel):
-    # 最近の乗車履歴
-    recent_rides: list[RecentRide]
-
-    # 累計の情報
-    total_rides_count: int
-    total_evaluation_avg: float
-
-
-class AppChair(BaseModel):
-    id: str
-    name: str
-    model: str
-    stats: AppChairStats
-
-
-class AppGetRideResponse(BaseModel):
-    id: str
-    pickup_coordinate: Coordinate
-    destination_coordinate: Coordinate
-    status: str
-    chair: AppChair | None = None
-    created_at: int
-    updated_at: int
-
-
 def get_chair_stats(
     conn: Connection, chair_id: str
 ) -> AppGetNotificationResponseChairStats:
