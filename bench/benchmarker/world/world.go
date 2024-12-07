@@ -401,16 +401,20 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	if len(suspiciousChairs) > 0 {
 		go func() {
 			// レスポンスを受け取った瞬間ではベンチマーカーとwebapp間で空いてる椅子の乖離があり得るので
-			// 3秒後に同期されたことを期待して、3秒後に実際に含まれるべきが全て含まれていたかどうかをチェックする
+			// 3秒後に同期されたことを期待して、3秒後に実際に含まれるべきかどうかをチェックする
 			time.Sleep(3 * time.Second)
 
 			ng := 0
 			for _, chair := range suspiciousChairs {
 				ok := false
 				for _, req := range chair.RequestHistory.BackwardIter() {
-					// suspiciousChairsに入ってる時点で、baseTime-3sとbaseTimeの時間の椅子の座標は同じ(止まっている)という前提があるので、
-					// benchRequestAcceptTime < baseTime < ServerCompletedAt なら含まれていなくて良い
-					if req.ServerCompletedAt.After(baseTime) && req.BenchRequestAcceptTime.Before(baseTime) {
+					if !req.ServerCompletedAt.Before(baseTime.Add(-3 * time.Second)) {
+						// 完了日時がbaseTime-3sよりも後のリクエストだけを見る
+						// baseTime-3sとbaseTimeの座標が少なくとも一致しているので、ずっと止まっていると見なす
+						break
+					}
+					// nearbyChairsのリクエストを送ってから３秒以内にマッチの通知が送られているなら含まれていなくて良い
+					if req.BenchRequestAcceptTime.Before(baseTime.Add(3 * time.Second)) {
 						ok = true
 						break
 					}
