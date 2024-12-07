@@ -69,6 +69,9 @@ type World struct {
 	InvitedUserCount atomic.Int32
 	// NotInvitedUserCount 招待されずに登録したユーザーの数
 	NotInvitedUserCount atomic.Int32
+
+	// 負荷走行完了
+	finished atomic.Bool
 }
 
 func NewWorld(tickTimeout time.Duration, completedRequestChan chan *Request, client WorldClient, contestantLogger *slog.Logger) *World {
@@ -446,7 +449,9 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 				ng++
 			}
 			if ng > 0 {
-				w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, fmt.Errorf("不足数%d台", ng))})
+				if !w.finished.Load() {
+					w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, fmt.Errorf("不足数%d台", ng))})
+				}
 			}
 		}()
 	}
@@ -492,4 +497,8 @@ func (w *World) PublishEvent(e Event) {
 	case *EventSoftError:
 		w.handleTickError(data.Error)
 	}
+}
+
+func (w *World) Finish() {
+	w.finished.Store(true)
 }
