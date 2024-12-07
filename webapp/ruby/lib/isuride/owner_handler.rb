@@ -47,7 +47,7 @@ module Isuride
 
       db.xquery('INSERT INTO owners (id, name, access_token, chair_register_token) VALUES (?, ?, ?, ?)', owner_id, req.name, access_token, chair_register_token)
 
-      cookies.set(:owner_session, value: access_token, path: '/')
+      cookies.set(:owner_session, httponly: false, value: access_token, path: '/')
       status(201)
       json(id: owner_id, chair_register_token:)
     end

@@ -82,7 +82,7 @@ module Isuride
         end
       end
 
-      cookies.set(:app_session, value: access_token, path: '/')
+      cookies.set(:app_session, httponly: false, value: access_token, path: '/')
       status(201)
       json(id: user_id, invitation_code:)
     end
