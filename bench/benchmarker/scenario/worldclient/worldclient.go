@@ -259,12 +259,14 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				case api.RideStatusMATCHING:
 					event = &world.ChairNotificationEventMatched{
 						ServerRequestID: data.RideID,
-						User: world.ChairNotificationEventUserPayload{
-							ID:   data.User.ID,
-							Name: data.User.Name,
+						ChairNotificationEvent: world.ChairNotificationEvent{
+							User: world.ChairNotificationEventUserPayload{
+								ID:   data.User.ID,
+								Name: data.User.Name,
+							},
+							Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
+							Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
 						},
-						Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
-						Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
 					}
 				case api.RideStatusENROUTE:
 					// event = &world.ChairNotificationEventDispatching{}
@@ -277,6 +279,14 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 				case api.RideStatusCOMPLETED:
 					event = &world.ChairNotificationEventCompleted{
 						ServerRequestID: data.RideID,
+						ChairNotificationEvent: world.ChairNotificationEvent{
+							User: world.ChairNotificationEventUserPayload{
+								ID:   data.User.ID,
+								Name: data.User.Name,
+							},
+							Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
+							Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
+						},
 					}
 				}
 				if event == nil {
