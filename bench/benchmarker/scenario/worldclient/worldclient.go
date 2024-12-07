@@ -244,63 +244,70 @@ func (c *chairClient) ConnectChairNotificationStream(ctx *world.Context, chair *
 	sseContext, cancel := context.WithCancel(c.ctx)
 
 	go func() {
-		for r, err := range c.client.ChairGetNotification(sseContext) {
-			if err != nil {
-				if !errors.Is(err, context.Canceled) {
-					// TODO ロギング
-					slog.Debug(err.Error())
+		for {
+			select {
+			case <-sseContext.Done():
+				return
+			default:
+				for r, err := range c.client.ChairGetNotification(sseContext) {
+					if err != nil {
+						if !errors.Is(err, context.Canceled) {
+							slog.Debug(err.Error())
+						}
+						continue
+					}
+					if r.Data.Valid {
+						data := r.Data.V
+						var event world.NotificationEvent
+						notificationEvent := world.ChairNotificationEvent{
+							User: world.ChairNotificationEventUserPayload{
+								ID:   data.User.ID,
+								Name: data.User.Name,
+							},
+							Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
+							Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
+						}
+						switch data.Status {
+						case api.RideStatusMATCHING:
+							event = &world.ChairNotificationEventMatched{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						case api.RideStatusENROUTE:
+							event = &world.ChairNotificationEventDispatching{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						case api.RideStatusPICKUP:
+							event = &world.ChairNotificationEventDispatched{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						case api.RideStatusCARRYING:
+							event = &world.ChairNotificationEventCarrying{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						case api.RideStatusARRIVED:
+							event = &world.ChairNotificationEventArrived{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						case api.RideStatusCOMPLETED:
+							event = &world.ChairNotificationEventCompleted{
+								ServerRequestID:        data.RideID,
+								ChairNotificationEvent: notificationEvent,
+							}
+						}
+						if event == nil {
+							// 意図しない通知の種類は無視する
+							continue
+						}
+						receiver(event)
+					}
 				}
-				continue
 			}
-			if r.Data.Valid {
-				data := r.Data.V
-				var event world.NotificationEvent
-				notificationEvent := world.ChairNotificationEvent{
-					User: world.ChairNotificationEventUserPayload{
-						ID:   data.User.ID,
-						Name: data.User.Name,
-					},
-					Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
-					Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
-				}
-				switch data.Status {
-				case api.RideStatusMATCHING:
-					event = &world.ChairNotificationEventMatched{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				case api.RideStatusENROUTE:
-					event = &world.ChairNotificationEventDispatching{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				case api.RideStatusPICKUP:
-					event = &world.ChairNotificationEventDispatched{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				case api.RideStatusCARRYING:
-					event = &world.ChairNotificationEventCarrying{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				case api.RideStatusARRIVED:
-					event = &world.ChairNotificationEventArrived{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				case api.RideStatusCOMPLETED:
-					event = &world.ChairNotificationEventCompleted{
-						ServerRequestID:        data.RideID,
-						ChairNotificationEvent: notificationEvent,
-					}
-				}
-				if event == nil {
-					// 意図しない通知の種類は無視する
-					continue
-				}
-				receiver(event)
-			}
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
@@ -436,72 +443,79 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 	sseContext, cancel := context.WithCancel(c.ctx)
 
 	go func() {
-		for r, err := range c.client.AppGetNotification(sseContext) {
-			if err != nil {
-				if !errors.Is(err, context.Canceled) {
-					// TODO ロギング
-					slog.Debug(err.Error())
+		for {
+			select {
+			case <-sseContext.Done():
+				return
+			default:
+				for r, err := range c.client.AppGetNotification(sseContext) {
+					if err != nil {
+						if !errors.Is(err, context.Canceled) {
+							slog.Debug(err.Error())
+						}
+						continue
+					}
+					if r.Data.Valid {
+						data := r.Data.V
+						var event world.NotificationEvent
+						userNotificationEvent := world.UserNotificationEvent{
+							Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
+							Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
+							Fare:        data.Fare,
+							Chair:       nil,
+						}
+						if data.Chair.Set {
+							userNotificationEvent.Chair = &world.UserNotificationEventChairPayload{
+								ID:    data.Chair.Value.ID,
+								Name:  data.Chair.Value.Name,
+								Model: data.Chair.Value.Model,
+								Stats: world.UserNotificationEventChairStatsPayload{
+									TotalRidesCount:    data.Chair.Value.Stats.TotalRidesCount,
+									TotalEvaluationAvg: data.Chair.Value.Stats.TotalEvaluationAvg,
+								},
+							}
+						}
+						switch data.Status {
+						case api.RideStatusMATCHING:
+							event = &world.UserNotificationEventMatching{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						case api.RideStatusENROUTE:
+							event = &world.UserNotificationEventDispatching{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						case api.RideStatusPICKUP:
+							event = &world.UserNotificationEventDispatched{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						case api.RideStatusCARRYING:
+							event = &world.UserNotificationEventCarrying{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						case api.RideStatusARRIVED:
+							event = &world.UserNotificationEventArrived{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						case api.RideStatusCOMPLETED:
+							event = &world.UserNotificationEventCompleted{
+								ServerRequestID:       data.RideID,
+								UserNotificationEvent: userNotificationEvent,
+							}
+						}
+						if event == nil {
+							// 意図しない通知の種類は無視する
+							continue
+						}
+						receiver(event)
+					}
 				}
-				continue
 			}
-			if r.Data.Valid {
-				data := r.Data.V
-				var event world.NotificationEvent
-				userNotificationEvent := world.UserNotificationEvent{
-					Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
-					Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
-					Fare:        data.Fare,
-					Chair:       nil,
-				}
-				if data.Chair.Set {
-					userNotificationEvent.Chair = &world.UserNotificationEventChairPayload{
-						ID:    data.Chair.Value.ID,
-						Name:  data.Chair.Value.Name,
-						Model: data.Chair.Value.Model,
-						Stats: world.UserNotificationEventChairStatsPayload{
-							TotalRidesCount:    data.Chair.Value.Stats.TotalRidesCount,
-							TotalEvaluationAvg: data.Chair.Value.Stats.TotalEvaluationAvg,
-						},
-					}
-				}
-				switch data.Status {
-				case api.RideStatusMATCHING:
-					event = &world.UserNotificationEventMatching{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				case api.RideStatusENROUTE:
-					event = &world.UserNotificationEventDispatching{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				case api.RideStatusPICKUP:
-					event = &world.UserNotificationEventDispatched{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				case api.RideStatusCARRYING:
-					event = &world.UserNotificationEventCarrying{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				case api.RideStatusARRIVED:
-					event = &world.UserNotificationEventArrived{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				case api.RideStatusCOMPLETED:
-					event = &world.UserNotificationEventCompleted{
-						ServerRequestID:       data.RideID,
-						UserNotificationEvent: userNotificationEvent,
-					}
-				}
-				if event == nil {
-					// 意図しない通知の種類は無視する
-					continue
-				}
-				receiver(event)
-			}
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
