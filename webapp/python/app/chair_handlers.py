@@ -270,7 +270,7 @@ def chair_post_ride_status(
             )
 
         match req.status:
-            # Accept matching
+            # Acknowledge the ride
             case "ENROUTE":
                 conn.execute(
                     text(
