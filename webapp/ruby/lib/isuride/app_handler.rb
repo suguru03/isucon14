@@ -481,7 +481,7 @@ module Isuride
           end
 
           total_rides_count += 1
-          total_evaluation = ride.fetch(:evaluation)
+          total_evaluation += ride.fetch(:evaluation)
         end
 
         total_evaluation_avg =
