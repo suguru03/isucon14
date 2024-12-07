@@ -85,12 +85,24 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	if rand.IntN(100) > failurePercentage || failureCount >= 4 {
 		// lock はここでしか触らない。lock が true の場合は idempotency key が同じリクエストが処理中の場合のみ
 		if p.locked.CompareAndSwap(false, true) {
-			s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
-			p.Status = s.verifier.Verify(p)
-			if p.Status.Err != nil {
-				s.errChan <- p.Status.Err
+			alreadyProcessed := false
+			if !newPayment {
+				for _, processed := range s.processedPayments.ToSlice() {
+					if processed.payment == p {
+						alreadyProcessed = true
+						break
+					}
+				}
 			}
-			s.failureCounts.Delete(token)
+			if !alreadyProcessed {
+				s.processedPayments.Append(&processedPayment{payment: p, processedAt: time.Now()})
+				p.Status = s.verifier.Verify(p)
+				if p.Status.Err != nil {
+					s.errChan <- p.Status.Err
+				}
+				s.failureCounts.Delete(token)
+				p.locked.Store(false) // idenpotency key が同じリクエストが来たときにエラーを返さないように
+			}
 			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
 				writeResponse(w, p.Status)
 			} else {
