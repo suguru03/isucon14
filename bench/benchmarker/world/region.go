@@ -58,7 +58,6 @@ func (r *Region) RangeY() (bottom, top int) {
 
 // UserSatisfactionScore 地域内のユーザーの満足度
 func (r *Region) UserSatisfactionScore() int {
-	// TODO: 検討
 	// 地域内の全ユーザーの平均評価の平均値を地域のユーザー満足度にしている
 	// (ユーザーの評価の初期値は0)
 	return int(math.Round(float64(r.TotalEvaluation.Load()) / float64(r.UsersDB.Len())))

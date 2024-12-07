@@ -132,7 +132,6 @@ func (r *Request) CalculateEvaluation() Evaluation {
 		panic("計算に必要な時間情報が足りていない状況なのに評価値を計算しようとしている")
 	}
 
-	// TODO: いい感じにする
 	result := Evaluation{}
 	{
 		// マッチング待ち時間評価

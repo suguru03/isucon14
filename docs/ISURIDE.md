@@ -160,12 +160,14 @@ data: {"ride_id":"01JEG4X2TZSE169T99XERS990M","user":{"id":"01JEG4W4E1QF0ZA1YY4B
 1. `/home/isucon/env.sh` を編集し、`ISUCON_MATCHING_INTERVAL` の値を変更します。
 2. `sudo systemctl restart isuride-matcher.service` でサービスを再起動します。
 
+なお、`GET /api/internal/matching`はインターネットには公開されず、ISURIDE 内部で利用される想定のエンドポイントであるため、自由に利用方法及び仕様を変更して構いません。
+
 ## 決済マイクロサービス
 ISURIDEを利用して目的地に到着した際、ユーザーは椅子の利用料金を支払う必要があります。
 この支払い処理は社内の決済マイクロサービスを使用していますが、現在そのインフラが不安定なためリクエストが集中すると決済処理の途中でサーバーからのレスポンスが失われる可能性があります。
 そのためリファレンス実装ではリクエストが失敗した場合は支払履歴を確認し、支払処理が完了していないことを確認した場合にはリクエストをリトライする実装となっています。
 ただし既に支払い処理が開始されている場合、後述する`Idempotency-Key`ヘッダを使用せずにリトライを行うと、複数回の支払いが発生しエラーとなります。
-<!-- TODO: APIについては /path/to/openapi.yaml を参照する旨を記載 -->
+決済マイクロサービスのAPIの詳細については`/home/isucon/webapp/payment_mock/openapi.yaml`を参照してください。
 
 ### Idempotency-Key ヘッダを利用したリクエストの重複防止
 決済マイクロサービスでは、`Idempotency-Key`ヘッダを利用して決済の重複を防ぐことができます。
