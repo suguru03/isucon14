@@ -56,7 +56,6 @@ def app_post_users(
     access_token = secure_random_str(32)
     invitation_code = secure_random_str(15)
 
-    # start transaction
     with engine.begin() as conn:
         conn.execute(
             text(
