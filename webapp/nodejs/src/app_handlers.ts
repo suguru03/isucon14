@@ -594,7 +594,7 @@ async function getChairStats(
     [chairId],
   );
 
-  const totalRidesCount = rides.length;
+  let totalRidesCount = 0;
   let totalEvaluation = 0.0;
   for (const ride of rides) {
     const [rideStatuses] = await dbConn.query<
@@ -621,6 +621,7 @@ async function getChairStats(
         continue;
       }
 
+      totalRidesCount++;
       totalEvaluation += ride.evaluation ?? 0;
     }
   }
