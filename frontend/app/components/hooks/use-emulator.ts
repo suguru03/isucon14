@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+import { apiBaseURL } from "~/api/api-base-url";
 import {
+  ChairGetNotificationResponse,
   fetchChairPostCoordinate,
   fetchChairPostRideStatus,
 } from "~/api/api-components";
@@ -37,6 +39,42 @@ const move = (
   }
 };
 
+function jsonFromSseResult<T>(value: string) {
+  const data = value.slice("data:".length).trim();
+  return JSON.parse(data) as T;
+}
+
+const notificationFetch = async () => {
+  try {
+    const notification = await fetch(`${apiBaseURL}/chair/notification`);
+    const isEventStream = !!notification?.headers
+      .get("Content-type")
+      ?.split(";")?.[0]
+      .includes("text/event-stream");
+
+    if (isEventStream) {
+      const reader = notification.body?.getReader();
+      const decoder = new TextDecoder();
+      const readed = (await reader?.read())?.value;
+      const decoded = decoder.decode(readed);
+      const json =
+        jsonFromSseResult<ChairGetNotificationResponse["data"]>(decoded);
+      return { data: json };
+    }
+    const json = (await notification.json()) as
+      | ChairGetNotificationResponse
+      | undefined;
+    return json;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const getStatus = async () => {
+  const notification = await notificationFetch();
+  return notification?.data?.status;
+};
+
 const currentCoodinatePost = (coordinate: Coordinate) => {
   setSimulatorCurrentCoordinate(coordinate);
   return fetchChairPostCoordinate({
@@ -44,7 +82,10 @@ const currentCoodinatePost = (coordinate: Coordinate) => {
   });
 };
 
-const postEnroute = (rideId: string, coordinate: Coordinate) => {
+const postEnroute = async (rideId: string, coordinate: Coordinate) => {
+  if ((await getStatus()) !== "MATCHING") {
+    return;
+  }
   setSimulatorStartCoordinate(coordinate);
   return fetchChairPostRideStatus({
     body: { status: "ENROUTE" },
@@ -54,9 +95,12 @@ const postEnroute = (rideId: string, coordinate: Coordinate) => {
   });
 };
 
-const postCarring = (rideId: string) => {
+const postCarring = async (rideId: string) => {
+  if ((await getStatus()) !== "PICKUP") {
+    return;
+  }
   return fetchChairPostRideStatus({
-    body: { status: "CARRYING" },
+    body: { status: "CsRRYING" },
     pathParams: {
       rideId,
     },
