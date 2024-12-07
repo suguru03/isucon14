@@ -206,21 +206,21 @@ $ sudo /opt/isucon-env-checker/envcheck
 ### 1. `isuride-go.service` を停止、無効化します
 
 ```sh
-$ sudo systemctl stop isuride-go.service
-$ sudo systemctl disable isuride-go.service
+sudo systemctl stop isuride-go.service
+sudo systemctl disable isuride-go.service
 ```
 
 以下のコマンドでstopとdisableを同時に行うことができます。
 
 ```sh
-$ sudo systemctl disable --now isuride-go.service
+sudo systemctl disable --now isuride-go.service
 ```
 
 ### 2. `isuride-{言語名}.service` を起動、有効化します
 
 ```sh
-$ sudo systemctl start isuride-{言語名}.service
-$ sudo systemctl enable isuride-{言語名}.service
+sudo systemctl start isuride-{言語名}.service
+sudo systemctl enable isuride-{言語名}.service
 ```
 
 `{言語名}` には以下の言語名を指定してください。
@@ -238,7 +238,7 @@ $ sudo systemctl enable isuride-{言語名}.service
 以下のコマンドでstartとenableを同時に行うことができます。
 
 ```sh
-$ sudo systemctl enable --now isuride-{言語名}.service
+sudo systemctl enable --now isuride-{言語名}.service
 ```
 
 #### PHPへの切り替え
@@ -246,8 +246,8 @@ $ sudo systemctl enable --now isuride-{言語名}.service
 ただし、PHPのリファレンス実装を使う場合のみ、systemdの設定変更の他に、次のようなnginxの設定変更が必要です。
 
 ```sh
-$ sudo ln -s /etc/nginx/sites-available/isuride-php.conf /etc/nginx/sites-enabled/
-$ sudo systemctl restart nginx.service
+sudo ln -s /etc/nginx/sites-available/isuride-php.conf /etc/nginx/sites-enabled/
+sudo systemctl restart nginx.service
 ```
 
 ## データベース(MySQL)について
@@ -259,7 +259,7 @@ $ sudo systemctl restart nginx.service
 リファレンス実装のMySQLに管理者権限で接続するには以下のようにします。
 
 ```sh
-$ sudo mysql isuride
+sudo mysql isuride
 ```
 
 ### データベースのデータの初期化
@@ -268,7 +268,7 @@ $ sudo mysql isuride
 以下のコマンドでもデータベースのデータを初期化できます。
 
 ```sh
-$ ~/webapp/sql/init.sh
+~/webapp/sql/init.sh
 ```
 
 初期状態において、初期化処理はベンチマーカーが要求する範囲の整合性を担保します。
@@ -288,7 +288,7 @@ $ ~/webapp/sql/init.sh
 `isuride`データベースを初期化するにはデータベースを`DROP DATABASE isuride`および`CREATE DATABASE isuride`で再作成し、以下のコマンドでテーブルの作成を行ったのち、データの初期化を行なってください。
 
 ```sh
-$ cat webapp/sql/1-schema.sql | sudo mysql isuride
+cat webapp/sql/1-schema.sql | sudo mysql isuride
 ```
 
 ## TLS証明書について

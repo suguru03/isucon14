@@ -233,7 +233,6 @@ func (u *User) Tick(ctx *Context) error {
 		}
 
 		// リクエストを作成する
-		// TODO 作成する条件・頻度
 		err = u.CreateRequest(ctx)
 		if err != nil {
 			return err
