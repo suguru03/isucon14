@@ -17,10 +17,7 @@ export type ClientAppChair = {
 
 export type Coordinate = { latitude: number; longitude: number };
 
-export type DisplayPos = {
-  x: number;
-  y: number;
-};
+export type DisplayPos = { x: number; y: number };
 
 export type Distance = { horizontalDistance: number; verticalDistance: number };
 
