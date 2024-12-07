@@ -32,7 +32,7 @@ export const ChairInformation: FC<
             <Text tagName="span" className="pr-1">
               評価:
             </Text>
-            {chair.stats?.total_evaluation_avg}
+            {chair.stats.total_evaluation_avg.toFixed(1)}
           </Text>
         )}
         {chair.stats?.total_rides_count && (
