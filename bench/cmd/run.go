@@ -50,6 +50,16 @@ var runCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			AddSource: true,
+			Level:     slog.LevelDebug,
+			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+				if a.Key == "time" && a.Value.Kind() == slog.KindTime {
+					return slog.String(a.Key, a.Value.Time().In(jst).Format("15:04:05.000"))
+				}
+				return a
+			},
+		})))
 		contestantLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
 				if a.Key == "time" && a.Value.Kind() == slog.KindTime {
