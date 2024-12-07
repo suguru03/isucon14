@@ -75,6 +75,8 @@ const (
 	ErrorCodeLackOfNearbyChairs
 	// ErrorCodeMatchingTimeout マッチングに時間がかかりすぎです
 	ErrorCodeMatchingTimeout
+	// ErrorCodeUserReceivedDataIsWrong ユーザーが通知から受け取ったデータが想定と異なります
+	ErrorCodeUserReceivedDataIsWrong
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -117,6 +119,7 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeWrongNearbyChairs:                              "取得した付近の椅子情報に不備があります",
 	ErrorCodeLackOfNearbyChairs:                             "付近の椅子情報が想定よりも3つ以上足りていません",
 	ErrorCodeMatchingTimeout:                                "ライドが長時間マッチングされませんでした",
+	ErrorCodeUserReceivedDataIsWrong:                        "ユーザーが受け取った通知の内容が想定と異なります",
 }
 
 type codeError struct {

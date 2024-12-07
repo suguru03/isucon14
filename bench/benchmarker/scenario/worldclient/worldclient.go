@@ -441,28 +441,53 @@ func (c *userClient) ConnectUserNotificationStream(ctx *world.Context, user *wor
 			if r.Data.Valid {
 				data := r.Data.V
 				var event world.NotificationEvent
+				userNotificationEvent := world.UserNotificationEvent{
+					Pickup:      world.C(data.PickupCoordinate.Latitude, data.PickupCoordinate.Longitude),
+					Destination: world.C(data.DestinationCoordinate.Latitude, data.DestinationCoordinate.Longitude),
+					Fare:        data.Fare,
+					Chair:       nil,
+				}
+				if data.Chair.Set {
+					userNotificationEvent.Chair = &world.UserNotificationEventChairPayload{
+						ID:    data.Chair.Value.ID,
+						Name:  data.Chair.Value.Name,
+						Model: data.Chair.Value.Model,
+						Stats: world.UserNotificationEventChairStatsPayload{
+							TotalRidesCount:    data.Chair.Value.Stats.TotalRidesCount,
+							TotalEvaluationAvg: data.Chair.Value.Stats.TotalEvaluationAvg,
+						},
+					}
+				}
 				switch data.Status {
 				case api.RideStatusMATCHING:
-					// event = &world.UserNotificationEventMatching{}
+					event = &world.UserNotificationEventMatching{
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
+					}
 				case api.RideStatusENROUTE:
 					event = &world.UserNotificationEventDispatching{
-						ServerRequestID: data.RideID,
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
 					}
 				case api.RideStatusPICKUP:
 					event = &world.UserNotificationEventDispatched{
-						ServerRequestID: data.RideID,
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
 					}
 				case api.RideStatusCARRYING:
 					event = &world.UserNotificationEventCarrying{
-						ServerRequestID: data.RideID,
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
 					}
 				case api.RideStatusARRIVED:
 					event = &world.UserNotificationEventArrived{
-						ServerRequestID: data.RideID,
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
 					}
 				case api.RideStatusCOMPLETED:
 					event = &world.UserNotificationEventCompleted{
-						ServerRequestID: data.RideID,
+						ServerRequestID:       data.RideID,
+						UserNotificationEvent: userNotificationEvent,
 					}
 				}
 				if event == nil {

@@ -33,32 +33,63 @@ type ChairNotificationEventUserPayload struct {
 	Name string
 }
 
+type UserNotificationEventMatching struct {
+	ServerRequestID string
+	UserNotificationEvent
+
+	unimplementedNotificationEvent
+}
+
 type UserNotificationEventDispatching struct {
 	ServerRequestID string
+	UserNotificationEvent
 
 	unimplementedNotificationEvent
 }
 
 type UserNotificationEventDispatched struct {
 	ServerRequestID string
+	UserNotificationEvent
 
 	unimplementedNotificationEvent
 }
 
 type UserNotificationEventCarrying struct {
 	ServerRequestID string
+	UserNotificationEvent
 
 	unimplementedNotificationEvent
 }
 
 type UserNotificationEventArrived struct {
 	ServerRequestID string
+	UserNotificationEvent
 
 	unimplementedNotificationEvent
 }
 
 type UserNotificationEventCompleted struct {
 	ServerRequestID string
+	UserNotificationEvent
 
 	unimplementedNotificationEvent
+}
+
+type UserNotificationEvent struct {
+	Pickup      Coordinate
+	Destination Coordinate
+	Fare        int
+	Chair       *UserNotificationEventChairPayload
+}
+
+type UserNotificationEventChairPayload struct {
+	ID    string
+	Name  string
+	Model string
+	Stats UserNotificationEventChairStatsPayload
+}
+
+type UserNotificationEventChairStatsPayload struct {
+	TotalRidesCount    int
+	TotalEvaluationAvg float64
 }
