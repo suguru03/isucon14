@@ -282,6 +282,7 @@ LOOP:
 	for {
 		select {
 		case <-ctx.Done():
+			s.world.Finish()
 			break LOOP
 
 		default:
