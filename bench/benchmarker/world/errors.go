@@ -67,8 +67,7 @@ const (
 	ErrorCodeIncorrectOwnerChairsData
 	// ErrorCodeTooOldNearbyChairsResponse 取得した付近の椅子情報が古すぎます
 	ErrorCodeTooOldNearbyChairsResponse
-	// ErrorCodeUncontrollableRequestReceived アサインされたライドがベンチマーカー外で作られたものであるため、処理できない
-	ErrorCodeUncontrollableRequestReceived
+	_
 	// ErrorCodeChairReceivedDataIsWrong 椅子が通知から受け取ったデータが想定と異なります
 	ErrorCodeChairReceivedDataIsWrong
 	// ErrorCodeWrongNearbyChairs 取得した付近の椅子情報に不備があります
@@ -90,7 +89,6 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUnexpectedChairRequestStatusTransitionOccurred: true,
 	ErrorCodeChairAlreadyHasRequest:                         true,
 	ErrorCodeIncorrectAmountOfFareCharged:                   true,
-	ErrorCodeUncontrollableRequestReceived:                  true,
 	ErrorCodeMatchingTimeout:                                true,
 	ErrorCodeEvaluateTimeout:                                true,
 	ErrorCodeSkippedPaymentButEvaluated:                     true,
@@ -121,7 +119,6 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeFailedToGetOwnerChairs:                         "オーナーの椅子一覧の取得に失敗しました",
 	ErrorCodeIncorrectOwnerChairsData:                       "取得したオーナーの椅子一覧の情報が想定しているものと異なります",
 	ErrorCodeTooOldNearbyChairsResponse:                     "取得した付近の椅子情報が古すぎます",
-	ErrorCodeUncontrollableRequestReceived:                  "アサインされたライドがベンチマーカー外で作られたものであるため処理できません",
 	ErrorCodeChairReceivedDataIsWrong:                       "椅子が受け取った通知の内容が想定と異なります",
 	ErrorCodeWrongNearbyChairs:                              "取得した付近の椅子情報に不備があります",
 	ErrorCodeLackOfNearbyChairs:                             "付近の椅子情報が想定よりも足りていません",
