@@ -118,8 +118,10 @@ func (c *Chair) Tick(ctx *Context) error {
 			if c.State == ChairStateActive {
 				c.Request.Statuses.Lock()
 
+				c.Request.BenchRequestAcceptTime = time.Now()
 				err := c.Client.SendAcceptRequest(ctx, c, c.Request)
 				if err != nil {
+					c.Request.BenchRequestAcceptTime = time.Time{}
 					c.Request.Statuses.Unlock()
 
 					return WrapCodeError(ErrorCodeFailedToAcceptRequest, err)
@@ -131,7 +133,6 @@ func (c *Chair) Tick(ctx *Context) error {
 				c.Request.Statuses.Chair = RequestStatusDispatching
 				c.Request.StartPoint = null.ValueFrom(c.Location.Current())
 				c.Request.MatchedAt = ctx.CurrentTime()
-				c.Request.BenchMatchedAt = time.Now()
 
 				c.Request.Statuses.Unlock()
 

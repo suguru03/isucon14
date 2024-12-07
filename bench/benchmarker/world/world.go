@@ -341,7 +341,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			return fmt.Errorf("ID:%sの椅子は指定の範囲内にありません", chair.ID)
 		}
 		for _, req := range c.RequestHistory.BackwardIter() {
-			if req.BenchMatchedAt.After(baseTime.Add(-3 * time.Second)) {
+			if req.BenchRequestAcceptTime.After(baseTime.Add(-3 * time.Second)) {
 				// nearbychairsのリクエストを送った3秒前以降にマッチされている場合は許容する
 				break
 			}
@@ -373,9 +373,9 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	}
 	if len(errs) > 0 {
 		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, errors.Join(errs...))})
-		errs = nil
 	}
 
+	var suspiciousChairs []*Chair
 	for chair := range w.EmptyChairs.Iter() {
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			ok := false
@@ -392,14 +392,37 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 
 			c := chair.Location.GetCoordByTime(baseTime)
 			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
-				// ソフトエラーとして処理する
-				errs = append(errs, fmt.Errorf("含まれるべき椅子が含まれていません: chair_id=%s", chair.ServerID))
+				// 少なくとも3秒間は止まっていて、範囲内に入っているようである
+				// 3秒後のチェック対象に入れる
+				suspiciousChairs = append(suspiciousChairs, chair)
 			}
 		}
 	}
-	// 2個までは無くても許容する
-	if len(errs) >= 3 {
-		go w.PublishEvent(&EventSoftError{Error: CodeError(ErrorCodeLackOfNearbyChairs)})
+	if len(suspiciousChairs) > 0 {
+		go func() {
+			// レスポンスを受け取った瞬間ではベンチマーカーとwebapp間で空いてる椅子の乖離があり得るので
+			// 3秒後に同期されたことを期待して、3秒後に実際に含まれるべきが全て含まれていたかどうかをチェックする
+			time.Sleep(3 * time.Second)
+
+			ng := 0
+			for _, chair := range suspiciousChairs {
+				ok := false
+				for _, req := range chair.RequestHistory.BackwardIter() {
+					// suspiciousChairsに入ってる時点で、baseTime-3sとbaseTimeの時間の椅子の座標は同じ(止まっている)という前提があるので、
+					// benchRequestAcceptTime < baseTime < ServerCompletedAt なら含まれていなくて良い
+					if req.ServerCompletedAt.After(baseTime) && req.BenchRequestAcceptTime.Before(baseTime) {
+						ok = true
+						break
+					}
+				}
+				if !ok {
+					ng++
+				}
+			}
+			if ng > 0 {
+				w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, fmt.Errorf("不足数%d台", ng))})
+			}
+		}()
 	}
 	return nil
 }
