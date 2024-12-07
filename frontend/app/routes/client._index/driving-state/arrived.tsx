@@ -14,10 +14,15 @@ import confetti from "canvas-confetti";
 export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   const { data } = useClientContext();
   const [rating, setRating] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string>();
 
   const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.preventDefault();
+      if (rating < 1 || rating > 5) {
+        setErrorMessage("評価は1から5の間でなければなりません。")
+        return;
+      }
       try {
         void fetchAppPostRideEvaluation({
           pathParams: {
@@ -50,6 +55,7 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
   }, []);
 
   return (
+    <>
     <Form className="w-full h-full flex flex-col items-center justify-center max-w-md mx-auto">
       <div className="flex flex-col items-center gap-6 mb-14">
         <PinIcon className="size-[90px]" color={colors.red[500]} />
@@ -77,6 +83,8 @@ export const Arrived = ({ onEvaluated }: { onEvaluated: () => void }) => {
           評価して料金を支払う
         </Button>
       </div>
+      {errorMessage && <Text variant="danger" className="mt-2">{errorMessage}</Text>}
     </Form>
+    </>
   );
 };
