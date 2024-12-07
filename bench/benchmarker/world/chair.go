@@ -426,6 +426,26 @@ func (c *Chair) HandleNotification(event NotificationEvent) error {
 		c.World.EmptyChairs.Delete(c)
 		c.matchingData = data
 
+	case *ChairNotificationEventDispatching:
+		if err := c.ValidateChairNotificationEvent(data.ServerRequestID, data.ChairNotificationEvent); err != nil {
+			return WrapCodeError(ErrorCodeChairReceivedDataIsWrong, err)
+		}
+
+	case *ChairNotificationEventDispatched:
+		if err := c.ValidateChairNotificationEvent(data.ServerRequestID, data.ChairNotificationEvent); err != nil {
+			return WrapCodeError(ErrorCodeChairReceivedDataIsWrong, err)
+		}
+
+	case *ChairNotificationEventCarrying:
+		if err := c.ValidateChairNotificationEvent(data.ServerRequestID, data.ChairNotificationEvent); err != nil {
+			return WrapCodeError(ErrorCodeChairReceivedDataIsWrong, err)
+		}
+
+	case *ChairNotificationEventArrived:
+		if err := c.ValidateChairNotificationEvent(data.ServerRequestID, data.ChairNotificationEvent); err != nil {
+			return WrapCodeError(ErrorCodeChairReceivedDataIsWrong, err)
+		}
+
 	case *ChairNotificationEventCompleted:
 		request := c.Request
 		if request == nil {
