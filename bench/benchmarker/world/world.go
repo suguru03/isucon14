@@ -375,13 +375,22 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		go w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeTooOldNearbyChairsResponse, errors.Join(errs...))})
 	}
 
-	var suspiciousChairs []*Chair
+	type suspiciousChair struct {
+		// 疑わしい椅子
+		chair *Chair
+		// レスポンスを受け取った時点での最新のライド(nilの場合もあり)
+		req *Request
+	}
+
+	var suspiciousChairs []*suspiciousChair
 	for chair := range w.EmptyChairs.Iter() {
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			ok := false
-			for _, req := range chair.RequestHistory.BackwardIter() {
+			var req *Request
+			for _, r := range chair.RequestHistory.BackwardIter() {
+				req = r
 				// baseTimeよりも3秒前以降に完了状態に遷移している場合は、含まれていなくても許容する
-				if req.ServerCompletedAt.After(baseTime.Add(-3 * time.Second)) {
+				if r.ServerCompletedAt.After(baseTime.Add(-3 * time.Second)) {
 					ok = true
 				}
 				break
@@ -394,10 +403,14 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			if c.Equals(chair.Location.GetCoordByTime(baseTime.Add(-3*time.Second))) && c.DistanceTo(current) <= distance {
 				// 少なくとも3秒間は止まっていて、範囲内に入っているようである
 				// 3秒後のチェック対象に入れる
-				suspiciousChairs = append(suspiciousChairs, chair)
+				suspiciousChairs = append(suspiciousChairs, &suspiciousChair{
+					chair: chair,
+					req:   req,
+				})
 			}
 		}
 	}
+
 	if len(suspiciousChairs) > 0 {
 		go func() {
 			// レスポンスを受け取った瞬間ではベンチマーカーとwebapp間で空いてる椅子の乖離があり得るので
@@ -405,23 +418,26 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 			time.Sleep(3 * time.Second)
 
 			ng := 0
-			for _, chair := range suspiciousChairs {
-				ok := false
-				for _, req := range chair.RequestHistory.BackwardIter() {
-					if !req.ServerCompletedAt.IsZero() && !req.ServerCompletedAt.Before(baseTime.Add(-3*time.Second)) {
-						// 完了日時がbaseTime-3sよりも後のリクエストだけを見る
-						// baseTime-3sとbaseTimeの座標が少なくとも一致しているので、ずっと止まっていると見なす
+			for _, sus := range suspiciousChairs {
+				req := sus.req
+				if req == nil {
+					// req == nilということはnearbychair時点では何もライドが割り当てられてなかった椅子なので、ここで最初のリクエストを取ってきてみる
+					for _, r := range sus.chair.RequestHistory.Iter() {
+						req = r
 						break
 					}
-					// nearbyChairsのリクエストを送ってから３秒以内にマッチの通知が送られているなら含まれていなくて良い
-					if !req.BenchRequestAcceptTime.IsZero() && req.BenchRequestAcceptTime.Before(baseTime.Add(3*time.Second)) {
-						ok = true
-						break
+					// まだ無いということは含まれてないとおかしい
+					if req == nil {
+						ng++
+						continue
 					}
 				}
-				if !ok {
-					ng++
+
+				// nearbyChairsのリクエストを送ってから３秒以内にreqのマッチの通知が送られているなら含まれていなくて良い
+				if req.BenchRequestAcceptTime.Before(baseTime.Add(3 * time.Second)) {
+					continue
 				}
+				ng++
 			}
 			if ng > 0 {
 				w.PublishEvent(&EventSoftError{Error: WrapCodeError(ErrorCodeLackOfNearbyChairs, fmt.Errorf("不足数%d台", ng))})
