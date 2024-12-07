@@ -387,6 +387,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			ok := false
 			var req *Request
+			// この時点での、この椅子に割り当てられている最新のライドを見る
 			for _, r := range chair.RequestHistory.BackwardIter() {
 				req = r
 				// baseTimeよりも3秒前以降に完了状態に遷移している場合は、含まれていなくても許容する
