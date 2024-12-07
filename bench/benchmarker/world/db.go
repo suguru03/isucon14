@@ -9,12 +9,14 @@ import (
 type RequestDB struct {
 	counter int
 	m       map[RequestID]*Request
+	m2      map[string]*Request
 	lock    sync.RWMutex
 }
 
 func NewRequestDB() *RequestDB {
 	return &RequestDB{
-		m: make(map[RequestID]*Request),
+		m:  map[RequestID]*Request{},
+		m2: map[string]*Request{},
 	}
 }
 
@@ -25,6 +27,7 @@ func (db *RequestDB) Create(req *Request) *Request {
 	db.counter++
 	req.ID = RequestID(db.counter)
 	db.m[req.ID] = req
+	db.m2[req.ServerID] = req
 	return req
 }
 
@@ -37,14 +40,7 @@ func (db *RequestDB) Get(id RequestID) *Request {
 func (db *RequestDB) GetByServerID(serverID string) *Request {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
-
-	// TODO ハッシュマップで持って引くように
-	for _, req := range db.m {
-		if req.ServerID == serverID {
-			return req
-		}
-	}
-	return nil
+	return db.m2[serverID]
 }
 
 func (db *RequestDB) Iter() iter.Seq2[RequestID, *Request] {
@@ -89,12 +85,14 @@ type DBEntry[K ~int] interface {
 type GenericDB[K ~int, V DBEntry[K]] struct {
 	counter int
 	m       map[K]V
+	m2      map[string]V
 	lock    sync.RWMutex
 }
 
 func NewGenericDB[K ~int, V DBEntry[K]]() *GenericDB[K, V] {
 	return &GenericDB[K, V]{
-		m: map[K]V{},
+		m:  map[K]V{},
+		m2: map[string]V{},
 	}
 }
 
@@ -105,6 +103,7 @@ func (db *GenericDB[K, V]) Create(v V) V {
 	db.counter++
 	v.SetID(K(db.counter))
 	db.m[K(db.counter)] = v
+	db.m2[v.GetServerID()] = v
 	return v
 }
 
@@ -115,17 +114,9 @@ func (db *GenericDB[K, V]) Get(id K) V {
 }
 
 func (db *GenericDB[K, V]) GetByServerID(serverID string) V {
-	var zero V
 	db.lock.RLock()
 	defer db.lock.RUnlock()
-
-	// TODO ハッシュマップで持って引くように
-	for _, req := range db.m {
-		if req.GetServerID() == serverID {
-			return req
-		}
-	}
-	return zero
+	return db.m2[serverID]
 }
 
 func (db *GenericDB[K, V]) Iter() iter.Seq2[K, V] {

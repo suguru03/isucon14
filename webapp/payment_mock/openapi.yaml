@@ -6,7 +6,7 @@ servers:
   - url: "http://localhost:8081/"
     description: api
 paths:
-  /payment:
+  /payments:
     post:
       summary: 決済を行う
       description: ""

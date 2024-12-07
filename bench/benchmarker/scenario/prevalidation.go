@@ -288,8 +288,6 @@ func validateSuccessFlow(ctx context.Context, clientConfig webapp.ClientConfig) 
 		requestID = result.RideID
 	}
 
-	// TODO: 登録された直後の椅子の状態を確認する
-
 	// GET /api/app/notifications
 	{
 		for result, err := range userClient.AppGetNotification(ctx) {
