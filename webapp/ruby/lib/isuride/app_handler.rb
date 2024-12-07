@@ -455,7 +455,7 @@ module Isuride
       def get_chair_stats(tx, chair_id)
         rides = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC', chair_id)
 
-        total_rides_count = rides.size
+        total_rides_count = 0
         total_evaluation = 0.0
         rides.each do |ride|
           ride_statuses = tx.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at', ride.fetch(:id))
@@ -480,6 +480,7 @@ module Isuride
             next
           end
 
+          total_rides_count += 1
           total_evaluation = ride.fetch(:evaluation)
         end
 
