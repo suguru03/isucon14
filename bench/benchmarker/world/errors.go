@@ -79,6 +79,8 @@ const (
 	ErrorCodeMatchingTimeout
 	// ErrorCodeUserReceivedDataIsWrong ユーザーが通知から受け取ったデータが想定と異なります
 	ErrorCodeUserReceivedDataIsWrong
+	// ErrorCodeUserSkippedPayment 評価は完了していますが支払いがされていません
+	ErrorCodeSkippedPaymentButEvaluated
 )
 
 var CriticalErrorCodes = map[ErrorCode]bool{
@@ -91,6 +93,7 @@ var CriticalErrorCodes = map[ErrorCode]bool{
 	ErrorCodeUncontrollableRequestReceived:                  true,
 	ErrorCodeMatchingTimeout:                                true,
 	ErrorCodeEvaluateTimeout:                                true,
+	ErrorCodeSkippedPaymentButEvaluated:                     true,
 }
 
 var ErrorTexts = map[ErrorCode]string{
@@ -124,6 +127,7 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeLackOfNearbyChairs:                             "付近の椅子情報が想定よりも足りていません",
 	ErrorCodeMatchingTimeout:                                "ライドが長時間マッチングされませんでした",
 	ErrorCodeUserReceivedDataIsWrong:                        "ユーザーが受け取った通知の内容が想定と異なります",
+	ErrorCodeSkippedPaymentButEvaluated:                     "評価は完了していますが支払いがされていません",
 }
 
 type codeError struct {

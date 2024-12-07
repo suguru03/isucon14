@@ -16,12 +16,6 @@ func (s *Scenario) Validation(ctx context.Context, step *isucandar.BenchmarkStep
 	s.paymentServer.Close()
 	s.sendResultWait.Wait()
 
-	actual := s.world.PaymentDB.TotalPayment() + s.TotalDiscount()
-	expected := s.TotalSales()
-	if actual != expected {
-		s.contestantLogger.Error("決済サーバーで決済された額とユーザーが支払うべき額が一致していません", slog.Int64("diff(actual-expected)", actual-expected))
-	}
-
 	for _, region := range s.world.Regions {
 		s.contestantLogger.Info("最終地域情報",
 			slog.String("名前", region.Name),
