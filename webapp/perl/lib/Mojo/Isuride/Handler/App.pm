@@ -496,7 +496,8 @@ use constant AppGetNotificationResponseData => {
 };
 
 use constant AppGetNotificationResponse => {
-    data => json_type_null_or_anyof(AppGetNotificationResponseData),
+  data           => json_type_null_or_anyof(AppGetNotificationResponseData),
+  retry_after_ms => JSON_TYPE_INT,
 };
 
 sub app_get_notification ($c) {
@@ -507,7 +508,7 @@ sub app_get_notification ($c) {
     my $ride = $db->select_row(q{SELECT * FROM rides WHERE user_id = ? ORDER BY created_at DESC LIMIT 1}, $user->{id});
 
     unless (defined $ride) {
-        return $c->render_json(HTTP_OK, { data => undef }, AppGetNotificationResponse);
+        return $c->render_json(HTTP_OK, { data => undef, retry_after_ms => 30 }, AppGetNotificationResponse);
     }
 
     my $yet_sent_ride_status = $db->select_row(q{SELECT * FROM ride_statuses WHERE ride_id = ? AND app_sent_at IS NULL ORDER BY created_at ASC LIMIT 1}, $ride->{id});
@@ -537,6 +538,7 @@ sub app_get_notification ($c) {
             created_at => unix_milli_from_str($ride->{created_at}),
             update_at  => unix_milli_from_str($ride->{updated_at}),
         },
+        retry_after_ms => 30,
     };
 
     if ($ride->{chair_id}) {
