@@ -774,7 +774,7 @@ func getChairStats(ctx context.Context, tx *sqlx.Tx, chairID string) (appGetNoti
 		return stats, err
 	}
 
-	totalRideCount := len(rides)
+	totalRideCount := 0
 	totalEvaluation := 0.0
 	for _, ride := range rides {
 		rideStatuses := []RideStatus{}
@@ -807,6 +807,7 @@ func getChairStats(ctx context.Context, tx *sqlx.Tx, chairID string) (appGetNoti
 			continue
 		}
 
+		totalRideCount++
 		totalEvaluation += float64(*ride.Evaluation)
 	}
 
