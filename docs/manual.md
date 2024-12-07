@@ -366,13 +366,12 @@ $ cat webapp/sql/1-schema.sql | sudo mysql isuride
 - 取得した付近の椅子情報が古すぎます
 - アサインされたライドがベンチマーカー外で作られたものであるため処理できません
 
-<!-- TODO: 要検討 -->
 ### 猶予時間について
 - `POST /api/chair/coordinate` の反映
   - `GET /api/app/nearby-chairs` で返される椅子の座標は過去3秒以内に `POST /api/chair/coordinate` で送信された座標である必要があります。
-  - `GET /api/owner/chairs` で返される椅子の移動距離合計は3秒以内に反映される必要があります。
-- 配車依頼
-  - 作成された配車依頼は30秒以内に椅子とマッチされユーザーに通知される必要があります。
+  - `GET /api/owner/chairs` で返される椅子の移動距離合計に反映されるまでに3秒の猶予が許容されます。
+- 配車依頼 `POST /api/app/rides` の反映
+  - 作成された配車依頼は30秒以内に椅子とマッチされ、`GET /api/app/notification`でユーザーに通知される必要があります。
 
 ## スコア計算
 以下に示す要素の合計がスコアとなります。

@@ -62,13 +62,6 @@ stateDiagram-v2
   COMPLETED --> [*]
 ```
 
-## 反映までの猶予時間について
-一部のAPIは他のリクエストへの反映までに許容される猶予時間があります。
-
-- `POST /api/chair/coordinate`でレスポンスを返してから、`GET /api/owner/chairs`に情報の更新が反映されるまで3秒の猶予が許容されます。
-- `GET /api/chair/notification`でレスポンスを返してから、`GET /api/app/nearby-chairs`に情報の更新が反映されるまで3秒の猶予が許容されます。
-- 配車依頼が作成されてから、`GET /api/chair/notification`にマッチが報告されるまで**30秒**の猶予が許容されます。
-
 ## 通知エンドポイント
 ISURIDEではクライアントに配車状態の変化を通知するための2つのエンドポイントが実装されています。
 - ユーザー向け通知：　`/api/app/notification`
