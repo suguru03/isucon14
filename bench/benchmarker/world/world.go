@@ -378,8 +378,8 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 	type suspiciousChair struct {
 		// 疑わしい椅子
 		chair *Chair
-		// レスポンスを受け取った時点での最新のライド(nilの場合もあり)
-		req *Request
+		// レスポンスを受け取った時点で最後に完了しているライド(nilの場合もあり)
+		lastReq *Request
 	}
 
 	var suspiciousChairs []*suspiciousChair
@@ -387,7 +387,7 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 		if !checked[chair.ServerID] && chair.matchingData == nil && chair.Request == nil && chair.ActivatedAt.Before(baseTime) {
 			ok := false
 			var req *Request
-			// この時点での、この椅子に割り当てられている最新のライドを見る
+			// この時点での、この椅子に割り当てられていた最後の完了済みのライドを見る
 			for _, r := range chair.RequestHistory.BackwardIter() {
 				req = r
 				// baseTimeよりも3秒前以降に完了状態に遷移している場合は、含まれていなくても許容する
@@ -405,8 +405,8 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 				// 少なくとも3秒間は止まっていて、範囲内に入っているようである
 				// 3秒後のチェック対象に入れる
 				suspiciousChairs = append(suspiciousChairs, &suspiciousChair{
-					chair: chair,
-					req:   req,
+					chair:   chair,
+					lastReq: req,
 				})
 			}
 		}
@@ -420,18 +420,23 @@ func (w *World) checkNearbyChairsResponse(baseTime time.Time, current Coordinate
 
 			ng := 0
 			for _, sus := range suspiciousChairs {
-				req := sus.req
-				if req == nil {
-					// req == nilということはnearbychair時点では何もライドが割り当てられてなかった椅子なので、ここで最初のリクエストを取ってきてみる
-					for _, r := range sus.chair.RequestHistory.Iter() {
+				var req *Request
+				// lastReqの次のReqがあればそれを取る。lastReqが無いなら先頭のを取る
+				next := sus.lastReq == nil
+				for _, r := range sus.chair.RequestHistory.Iter() {
+					if next {
 						req = r
 						break
 					}
-					// まだ無いということは含まれてないとおかしい
-					if req == nil {
-						ng++
-						continue
+					if r.ID == sus.lastReq.ID {
+						next = true
 					}
+				}
+
+				// まだ無いということは含まれてないとおかしい
+				if req == nil {
+					ng++
+					continue
 				}
 
 				// nearbyChairsのリクエストを送ってから３秒以内にreqのマッチの通知が送られているなら含まれていなくて良い
