@@ -467,7 +467,7 @@ func (w *World) handleTickError(err error) {
 		_ = w.ErrorCounter.Add(err)
 		w.criticalErrorCh <- err
 	} else {
-		w.contestantLogger.Error(err.Error())
+		w.contestantLogger.Warn(err.Error())
 		if err2 := w.ErrorCounter.Add(err); err2 != nil {
 			w.criticalErrorCh <- err2
 		}
