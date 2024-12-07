@@ -53,7 +53,7 @@ module Isuride
 
       db.xquery('INSERT INTO chairs (id, owner_id, name, model, is_active, access_token) VALUES (?, ?, ?, ?, ?, ?)', chair_id, owner.fetch(:id), req.name, req.model, false, access_token)
 
-      cookies.set(:chair_session, value: access_token, path: '/')
+      cookies.set(:chair_session, httponly: false, value: access_token, path: '/')
       status(201)
       json(id: chair_id, owner_id: owner.fetch(:id))
     end
