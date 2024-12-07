@@ -87,7 +87,7 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 			alreadyProcessed := false
 			if !newPayment {
 				for _, processed := range s.processedPayments.ToSlice() {
-					if processed.payment == p {
+					if processed.payment.IdempotencyKey == p.IdempotencyKey {
 						alreadyProcessed = true
 						break
 					}
@@ -99,13 +99,13 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 				if p.Status.Err != nil {
 					s.errChan <- p.Status.Err
 				}
-				s.failureCounts.Set(token, 0)
 			}
-			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
+			if rand.IntN(100) > failurePercentage || failureCount >= 4 || alreadyProcessed {
 				writeResponse(w, p.Status)
 			} else {
 				writeRandomError(w)
 			}
+			s.failureCounts.Set(token, 0)
 			return
 		}
 	} else {
