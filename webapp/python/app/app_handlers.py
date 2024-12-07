@@ -592,14 +592,12 @@ class AppGetNotificationResponse(BaseModel):
 
 @router.get(
     "/notification",
-    response_model=AppGetNotificationResponse,
     status_code=HTTPStatus.OK,
     response_model_exclude_none=True,
 )
 def app_get_notification(
     user: Annotated[User, Depends(app_auth_middleware)],
-    response: Response,
-) -> AppGetNotificationResponse | Response:
+) -> AppGetNotificationResponse:
     with engine.begin() as conn:
         row = conn.execute(
             text(
