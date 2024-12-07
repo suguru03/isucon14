@@ -260,7 +260,7 @@ func (c *Client) appGetNotification(ctx context.Context, nested bool) iter.Seq2[
 				line := scanner.Text()
 				if strings.HasPrefix(line, "data:") {
 					err := json.Unmarshal([]byte(line[5:]), &request.Data)
-					if !yield(request, err) || err != nil {
+					if !yield(request, err) {
 						return
 					}
 				}
