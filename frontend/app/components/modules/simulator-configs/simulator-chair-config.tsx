@@ -26,9 +26,11 @@ const progress = (
   const currentToEnd =
     Math.abs(end.latitude - current.latitude) +
     Math.abs(end.longitude - current.longitude);
-  return Math.max(
-    Math.min(((startToEnd - currentToEnd) / startToEnd) * 100, 100),
-    0,
+  return Math.floor(
+    Math.max(
+      Math.min(((startToEnd - currentToEnd) / startToEnd) * 100, 100),
+      0,
+    ),
   );
 };
 
