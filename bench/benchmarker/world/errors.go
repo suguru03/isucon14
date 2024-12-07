@@ -77,9 +77,9 @@ const (
 	ErrorCodeMatchingTimeout
 	// ErrorCodeUserReceivedDataIsWrong ユーザーが通知から受け取ったデータが想定と異なります
 	ErrorCodeUserReceivedDataIsWrong
-	// ErrorCodeSkippedPaymentButEvaluated 評価は完了していますが支払いがされていません
+	// ErrorCodeSkippedPaymentButEvaluated 評価が完了しているのに、支払いが行われていないライドが存在します
 	ErrorCodeSkippedPaymentButEvaluated
-	// ErrorCodeWrongPaymentRequest 決済サーバーに誤った支払いのリクエストが発生しています
+	// ErrorCodeWrongPaymentRequest 決済サーバーに誤った支払いがリクエストされました
 	ErrorCodeWrongPaymentRequest
 )
 
@@ -124,8 +124,8 @@ var ErrorTexts = map[ErrorCode]string{
 	ErrorCodeLackOfNearbyChairs:                             "付近の椅子情報が想定よりも足りていません",
 	ErrorCodeMatchingTimeout:                                "ライドが長時間マッチングされませんでした",
 	ErrorCodeUserReceivedDataIsWrong:                        "ユーザーが受け取った通知の内容が想定と異なります",
-	ErrorCodeSkippedPaymentButEvaluated:                     "評価は完了していますが支払いがされていません",
-	ErrorCodeWrongPaymentRequest:                            "決済サーバーに誤った支払いのリクエストが発生しています",
+	ErrorCodeSkippedPaymentButEvaluated:                     "評価は完了しているが、支払いが行われていないライドが存在します",
+	ErrorCodeWrongPaymentRequest:                            "決済サーバーに誤った支払いがリクエストされました",
 }
 
 type codeError struct {
