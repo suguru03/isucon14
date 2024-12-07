@@ -106,10 +106,9 @@ func (p *Owner) Tick(ctx *Context) error {
 				return WrapCodeError(ErrorCodeSalesMismatched, err)
 			}
 			if increase := desiredChairNum(res.Total) - p.createChairTryCount; increase > 0 {
-				ctx.ContestantLogger().Info("一定の売上が立ったためオーナーの椅子が増加します", slog.Int("id", int(p.ID)), slog.Int("increase", increase))
+				ctx.ContestantLogger().Info("一定の売上が立ったためオーナーの椅子が増加します", slog.String("名前", p.RegisteredData.Name), slog.Int("増加数", increase))
 				for range increase {
 					p.createChairTryCount++
-					// TODO どのモデルを増やすか
 					models := p.ChairModels[modelSpeeds[(p.createChairTryCount-1)%len(modelSpeeds)]]
 					_, err := p.World.CreateChair(ctx, &CreateChairArgs{
 						Owner:             p,
