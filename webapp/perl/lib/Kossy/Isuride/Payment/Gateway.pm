@@ -82,10 +82,6 @@ sub request_payment_gateway_post_payment ($payment_gateway_url, $token, $param, 
 
                 my $payments = decode_json($get_res_body);
 
-                unless (check_params($payments, json_type_arrayof(PaymentGatewayPostPaymentResponseOne))) {
-                    die { message => 'failed to decode the request body as json' };
-                }
-
                 my $rides = $retrieve_rides_order_by_created_at_asc->();
 
                 if (scalar $rides->@* != scalar $payments->@*) {
