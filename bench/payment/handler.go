@@ -61,8 +61,6 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"message": "リクエストペイロードがサーバーに記録されているものと異なります"})
 			return
 		}
-		writeResponse(w, p.Status)
-		return
 	} else {
 		p.Token = token
 		p.Amount = req.Amount
@@ -81,14 +79,16 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	if failurePercentage > 50 {
 		failurePercentage = 50
 	}
-	failureCount, _ := s.failureCounts.GetOrSetDefault(token, func() int { return 0 })
-	if rand.IntN(100) > failurePercentage || failureCount >= 4 {
+	retryCount, _ := s.retryCounts.GetOrSetDefault(token, func() int { return -1 })
+	s.retryCounts.Set(token, retryCount+1)
+	if rand.IntN(100) > failurePercentage || retryCount >= 4 {
 		// lock はここでしか触らない。lock が true の場合は idempotency key が同じリクエストが処理中の場合のみ
 		if p.locked.CompareAndSwap(false, true) {
+			defer p.locked.Store(false)
 			alreadyProcessed := false
 			if !newPayment {
 				for _, processed := range s.processedPayments.ToSlice() {
-					if processed.payment == p {
+					if processed.payment.IdempotencyKey == p.IdempotencyKey {
 						alreadyProcessed = true
 						break
 					}
@@ -100,18 +100,15 @@ func (s *Server) PostPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 				if p.Status.Err != nil {
 					s.errChan <- p.Status.Err
 				}
-				s.failureCounts.Delete(token)
-				p.locked.Store(false) // idenpotency key が同じリクエストが来たときにエラーを返さないように
 			}
-			if rand.IntN(100) > failurePercentage || failureCount >= 4 {
+			if rand.IntN(100) > failurePercentage || retryCount >= 4 {
+				s.retryCounts.Set(token, 0)
 				writeResponse(w, p.Status)
 			} else {
 				writeRandomError(w)
 			}
 			return
 		}
-	} else {
-		s.failureCounts.Set(token, failureCount+1)
 	}
 
 	// 不安定なエラーを再現
