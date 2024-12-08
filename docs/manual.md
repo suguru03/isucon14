@@ -310,7 +310,7 @@ cat webapp/sql/1-schema.sql | sudo mysql isuride
   - `POST /api/initialize`（30秒でタイムアウト）
   - `POST /api/owner/owners`（複数回実行。各リクエストは10秒、処理全体は20秒でタイムアウト）
   - `POST /api/chair/chairs`（複数回実行。各リクエストは10秒、処理全体は20秒でタイムアウト）
-  - `POST /api/user/users`（複数回実行。各リクエストは10秒、処理全体は20秒でタイムアウト）
+  - `POST /api/app/users`（複数回実行。各リクエストは10秒、処理全体は20秒でタイムアウト）
 - アプリケーション整合性チェック（数秒～数十秒）
 - 負荷テスト（60秒）
 - 最終チェック（数秒～数十秒）
