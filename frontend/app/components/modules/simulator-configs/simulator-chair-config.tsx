@@ -17,13 +17,21 @@ const progress = (
   current: Coordinate,
   end: Coordinate,
 ): number => {
-  const distance =
+  const startToEnd =
     Math.abs(end.latitude - start.latitude) +
     Math.abs(end.longitude - start.longitude);
-  const progress =
+  if (startToEnd === 0) {
+    return 100;
+  }
+  const currentToEnd =
     Math.abs(end.latitude - current.latitude) +
     Math.abs(end.longitude - current.longitude);
-  return Math.floor(((distance - progress) / distance) * 100);
+  return Math.floor(
+    Math.max(
+      Math.min(((startToEnd - currentToEnd) / startToEnd) * 100, 100),
+      0,
+    ),
+  );
 };
 
 const ChairProgress: FC<{
