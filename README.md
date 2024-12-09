@@ -39,7 +39,7 @@ ISUCON14で使用したTLS証明書は`provisioning/ansible/roles/nginx/files/et
 
 以下の設定で起動してください。このAMIは予告なく利用できなくなる可能性があります。
 - リージョン: `ap-northeast-1`
-- AMI-ID: `ami-041289d910c114864`
+- AMI-ID: `ami-0e334c50145a3ee41`
 
 ### 自分でAMIをビルドする場合
 
