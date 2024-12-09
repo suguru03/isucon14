@@ -10,18 +10,15 @@ tasks:
     dir: ./development
   down:
     cmds:
-      - docker compose -f compose-local.yml down -v
+      - docker compose -f compose-local.yml down -v --remove-orphans
     dir: ./development
   migrate:
+    deps:
+      - up
     cmds:
       - sed /^USE\ isuride\;/d < webapp/sql/1-schema.sql | mysqldef -p isucon isuride
     sources:
       - webapp/sql/1-schema.sql
-    deps:
-      - up
-  go:backend:
-    - task: go:build
-    - task: go:run
   go:build:
     cmd: go build -o isuride{{exeExt}} .
     dir: webapp/go
@@ -30,12 +27,9 @@ tasks:
       - go.mod
       - go.sum
   go:run:
+    deps:
+      - go:build
     cmd: ./isuride{{exeExt}}
-    dir: webapp/go
-  go:run:vm:
-    cmds:
-      - go build -o isuride{{exeExt}} .
-      - sudo systemctl restart isuride-go
     dir: webapp/go
   perl:run:
     cmd: carton exec plackup -s Starlet -p 8080 -Ilib -r app.psgi
