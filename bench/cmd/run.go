@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/isucon/isucandar"
+	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel"
+
 	"github.com/isucon/isucon14/bench/benchmarker/metrics"
 	"github.com/isucon/isucon14/bench/benchmarker/scenario"
 	"github.com/isucon/isucon14/bench/benchrun"
 	"github.com/isucon/isucon14/bench/benchrun/gen/isuxportal/resources"
-	"github.com/spf13/cobra"
-	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -23,6 +24,8 @@ var (
 	targetAddr string
 	// ペイメントサーバのURL
 	paymentURL string
+	// ペイメントサーバーがバインドするポート番号
+	paymentBindPort int
 	// 負荷走行秒数 (0のときは負荷走行を実行せずprepareのみ実行する)
 	loadTimeoutSeconds int64
 	// 再起動後のデータ保持チェックモードかどうか
@@ -107,7 +110,7 @@ var runCmd = &cobra.Command{
 			return nil
 		}
 
-		s := scenario.NewScenario(targetURL, targetAddr, paymentURL, contestantLogger, reporter, otel.Meter("isucon14_benchmarker"), loadTimeoutSeconds == 0, skipStaticFileSanityCheck)
+		s := scenario.NewScenario(targetURL, targetAddr, paymentURL, paymentBindPort, contestantLogger, reporter, otel.Meter("isucon14_benchmarker"), loadTimeoutSeconds == 0, skipStaticFileSanityCheck)
 
 		b, err := isucandar.NewBenchmark(
 			isucandar.WithoutPanicRecover(),
@@ -147,6 +150,7 @@ func init() {
 	runCmd.Flags().StringVar(&targetURL, "target", "http://localhost:8080", "benchmark target url")
 	runCmd.Flags().StringVar(&targetAddr, "addr", "", "benchmark target ip:port")
 	runCmd.Flags().StringVar(&paymentURL, "payment-url", "http://localhost:12345", "payment server URL")
+	runCmd.Flags().IntVar(&paymentBindPort, "payment-bind-port", 12345, "payment server bind port")
 	runCmd.Flags().Int64VarP(&loadTimeoutSeconds, "load-timeout", "t", 60, "load timeout in seconds (When this value is 0, load does not run and only prepare is run)")
 	runCmd.Flags().BoolVar(&failOnError, "fail-on-error", false, "fail on error")
 	runCmd.Flags().BoolVar(&postValidationMode, "only-post-validation", false, "post validation mode")
