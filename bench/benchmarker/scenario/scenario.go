@@ -61,7 +61,7 @@ type Scenario struct {
 	sendResultWait            sync.WaitGroup
 }
 
-func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
+func NewScenario(target, addr, paymentURL string, paymentBindPort int, logger *slog.Logger, reporter benchrun.Reporter, meter metric.Meter, prepareOnly bool, skipStaticFileSanityCheck bool) *Scenario {
 	completedRequestChan := make(chan *world.Request, 1000)
 	worldClient := worldclient.NewWorldClient(context.Background(), webapp.ClientConfig{
 		TargetBaseURL:         target,
@@ -75,7 +75,7 @@ func NewScenario(target, addr, paymentURL string, logger *slog.Logger, reporter 
 	paymentErrChan := make(chan error, 1000)
 	paymentServer := payment.NewServer(w.PaymentDB, 30*time.Millisecond, paymentErrChan)
 	go func() {
-		http.ListenAndServe(":12345", paymentServer)
+		http.ListenAndServe(fmt.Sprintf(":%d", paymentBindPort), paymentServer)
 	}()
 
 	usersAttributeSets := map[world.UserState]attribute.Set{
